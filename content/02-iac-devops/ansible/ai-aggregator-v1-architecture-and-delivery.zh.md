@@ -284,3 +284,106 @@ Vault API: `https://vault.svc.plus` (KV v2 挂载于 `kv/data/...`)
 5. **账号执行层：保留独立 VPS / Spot 实例上的 CPA**
    - 上游 Provider（OpenAI/Claude/Grok）的 OAuth 登录、刷新握手和 CLI 进程必须维持原生网络和持久化进程。
    - 专心充当纯粹的私网上游 Adapter，对公网完全不可见。
+
+---
+
+## 十一、总体架构设计：两平面与双引擎映射
+
+AI 聚合服务体系确立了“凭据平面（Vault）”与“声明平面（GitOps）”严格解耦的两平面原则，同时在运行时建立“边缘调度路由引擎”与“账号执行引擎”的双引擎映射。
+
+### 1. 总体架构拓扑图
+```
+                                     [ 用户终端 (IDE / Web / 开发者) ]
+                                                    │
+                                                    │ HTTPS: https://ai.svc.plus
+                                                    ▼
+                     ┌─────────────────────────────────────────────────────────────┐
+                     │                 Cloudflare 边缘分流引擎                     │
+                     │  - Cloudflare Pages: 托管 "Token 配额分析" 前端 Web 控制台     │
+                     │  - Cloudflare Workers: 边缘 API 网关、Key 预检、缓存、速率限制  │
+                     └──────────────────────────────┬──────────────────────────────┘
+                                                    │ mTLS / 内部签名
+                                                    ▼
+                     ┌─────────────────────────────────────────────────────────────┐
+                     │              GCP Cloud Run (Serverless Gateway)             │
+                     │  - 运行 New API (容器化)，支持自动缩容至 0 (Scale to zero)   │
+                     │  - 模型稳定别名映射 (codex-main, claude-main, grok-main)    │
+                     │  - 协议原生转发 (/v1/responses, /v1/messages, /v1/chat)     │
+                     │  - 凭据集成：GCP Secret Manager / Vault                    │
+                     └───────────────┬─────────────────────────────┬───────────────┘
+                                     │                             │
+                                     │ PostgreSQL 连接池            │ WireGuard / 加密私网隧道
+                                     ▼                             ▼
+   ┌───────────────────────────────────────────────┐     ┌─────────────────────────────────────┐
+   │         Supabase Cloud (Free Tier)            │     │       VPS 账号执行引擎 (CPA)         │
+   │  - 托管 PostgreSQL 数据库 (替代本地 SQLite)      │     │  - 必须常驻 VPS (账号执行层)         │
+   │  - Token 配额、7 天滚动用量、缓存命中时序分析     │     │  - 1:1:1:1 账号隔离 (单实例单账号)   │
+   │  - Row Level Security (RLS) & REST API        │     │  - tmpfs 认证注入 + Vault CAS 刷新  │
+   │  - 为 Cloudflare Pages 前端直接提供用量查询   │     │  - CPA 仅内网绑定，对外零暴露        │
+   └───────────────────────────────────────────────┘     └─────────────────────────────────────┘
+```
+
+### 2. 两平面职责矩阵
+| 平面 | 承载仓库 / 基础设施 | 核心职责 | 绝对安全红线 |
+| :--- | :--- | :--- | :--- |
+| **声明平面**<br>(Declarative GitOps Plane) | `gitops/` 仓库 | 声明期望拓扑状态、节点引用 (`node_ref`)、监听端口、模型稳定映射、域名路由规则、制品校验和 | **严禁任何 Token、密码、OAuth bundle、私钥进入 Git！** 即使是 UAT 测试环境也不例外。 |
+| **凭据平面**<br>(Credential Vault Plane) | `https://vault.svc.plus`<br>(KV v2 Engine) | 托管所有 Provider 原生 OAuth JSON、内部通讯 Bearer Token、数据库连接串、客户端 Key | **单写者 CAS 回写、仅在 `/run` tmpfs 内存中暂存、模式 0700**；严禁多实例共享凭据目录。 |
+
+### 3. 双引擎映射与数据流
+- **引擎一：边缘调度路由引擎 (Edge Routing Engine)**
+  - 由 **Cloudflare Pages + Cloudflare Workers + GCP Cloud Run / VPS Caddy** 构成。
+  - 职责：处理域名绑定（`ai.svc.plus`）、静态前端资产分发、客户端 API Key 格式校验、速率限制、防刷防御与模型别名路由。
+  - 数据流向：客户端请求到达边缘后，Worker 将 API 流量无损送达 New API，同时前台静态看板通过只读匿名 Key 直连 Supabase 获取可视化时序图表。
+- **引擎二：账号适配执行引擎 (Account Execution Engine)**
+  - 由 **VPS 上的 CLIProxyAPI (CPA) 实例群 + CodeAgent CLI** 构成。
+  - 职责：作为 OpenAI/Codex、Anthropic/Claude、xAI/Grok 的底层协议适配器与账号池管理器。
+  - 数据流向：CPA 从受控 tmpfs 读取账号凭据，与上游模型供应商握手；Token 刷新时自动触发单写者 CAS 写回 Vault，完全隐藏在私网中，不对公网开放任何管理入口。
+
+---
+
+## 十二、Walkthrough: AI Aggregator 多仓库规范交付、流水线执行与闭环验证
+
+本架构已严格按照“先落地设计文档，再编码实施，闭环验证修订设计文档”的准则，完成全链路多仓库落地、分支管理与 CI/CD 自动化流水线验证。
+
+### 1. 多仓库特性分支与关联 Pull Request
+所有 4 个关联仓库均已建立统一规范的特性分支 `feat/ai-aggregator-v1-delivery` 并开启正式 PR：
+
+| 仓库名称 | 特性分支 | 关联 Pull Request | 交付物料与核心变更 |
+| :--- | :--- | :--- | :--- |
+| **`platform-ops-toolkit`** | `feat/ai-aggregator-v1-delivery` | [PR #688](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/688) | 增加 `validate_ai_aggregator_manifest.py` 静态校验器与 `.github/workflows/ai-aggregator-v1.yml` 自动化流水线 |
+| **`gitops`** | `feat/ai-aggregator-v1-delivery` | [PR #229](https://github.com/ai-workspace-infra/gitops/pull/229) | 增加 `topology/uat/selfhost/ai-aggregator.yaml` UAT 拓扑声明，涵盖 AWS Spot t4g 1h 属性与账号矩阵 |
+| **`playbooks`** | `feat/ai-aggregator-v1-delivery` | [PR #431](https://github.com/ai-workspace-infra/playbooks/pull/431) | 增加 `ai_aggregator_v1` Ansible Role 与 `deploy-ai-aggregator-v1.yml`，实现无密钥渲染、tmpfs 隔离与 Caddy Basic Auth |
+| **`knowledge`** | `feat/ai-aggregator-v1-delivery` | [PR #46](https://github.com/ai-workspace-services/knowledge/pull/46) | 落地完整架构设计、选型裁决、AWS Spot 约束及 Serverless 演进规范 |
+
+### 2. 自动化流水线执行记录（全绿通过）
+在 PR #688 触发的 GitHub Actions 自动化校验中，所有关联工作流均成功跑通：
+
+1. **`AI Aggregator v1` 流水线**
+   - **Run ID**: [`34572392295`](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/34572392295)
+   - **状态**: **SUCCESS** (耗时 11 秒)
+   - **验证依据**: 自动跨仓库拉取 GitOps 特性分支，校验拓扑合规性、AWS Spot t4g 1h 规格限制、CPA 实例/端口唯一性及 Vault 路径引用语法。
+2. **`Validate Release PR` 流水线**
+   - **Run ID**: [`34572392185`](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/34572392185)
+   - **状态**: **SUCCESS** (耗时 27 秒)
+   - **验证依据**: 跨仓库门禁与分支合规性检查全部通过。
+3. **`Selfhost Orchestrator` 流水线**
+   - **Run ID**: [`34572393269`](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/34572393269)
+   - **状态**: **SUCCESS** (耗时 30 秒)
+   - **验证依据**: 自动化编排器环境预检通过。
+4. **GitOps 安全扫描**
+   - **Run ID**: [`34572473547`](https://github.com/ai-workspace-infra/gitops/actions/runs/34572473547)
+   - **状态**: **SUCCESS** (`gitleaks` 0 警告，零敏感信息泄漏)。
+
+### 3. 本地与端到端闭环验证结果
+- **Ansible 语法校验**:
+  ```bash
+  $ cd playbooks && ansible-playbook --syntax-check -i localhost, deploy-ai-aggregator-v1.yml
+  playbook: deploy-ai-aggregator-v1.yml  # SUCCESS
+  ```
+- **Manifest 静态校验**:
+  ```bash
+  $ python3 platform-ops-toolkit/scripts/ci/validate_ai_aggregator_manifest.py gitops/topology/uat/selfhost/ai-aggregator.yaml
+  valid PersonalAIAggregator manifest: .../gitops/topology/uat/selfhost/ai-aggregator.yaml  # SUCCESS
+  ```
+- **可视化前端产物**:
+  交互式仪表盘 [`token_usage_dashboard.html`](file:///Users/shenlan/.gemini/antigravity/brain/c2936dc3-490c-4bbb-950b-6b0c81c832e7/token_usage_dashboard.html) 已构建就绪，像素级还原 Token 配额分析、缓存命中率、用量柱状图与推理等级分析。
