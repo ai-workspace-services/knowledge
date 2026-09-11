@@ -2,7 +2,7 @@
 
 状态：正式规划规范基线 (Normative Baseline)  
 适用环境：`uat`, `prod`  
-统一入口域名：`ai.svc.plus`
+统一入口域名：`ai.onwalk.net` (UAT) / `ai.svc.plus` (PROD)
 
 ---
 
@@ -75,7 +75,7 @@
 
 ---
 
-## 二、域名 ai.svc.plus 流量拓扑与路由规则
+## 二、域名分流与环境映射 (UAT: ai.onwalk.net / PROD: ai.svc.plus)
 
 统一对外入口收敛至 `https://ai.svc.plus`，通过 Cloudflare 边缘 Worker 实现零信任智能分流：
 
