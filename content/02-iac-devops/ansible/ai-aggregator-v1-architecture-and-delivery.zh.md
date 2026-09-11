@@ -228,3 +228,59 @@ Vault API: `https://vault.svc.plus` (KV v2 挂载于 `kv/data/...`)
 3. **当前落地状态**:
    - 已落地：多仓库特性分支 `feat/ai-aggregator-v1-delivery`、架构设计基线文档、UAT GitOps 拓扑声明、Playbook 编排角色草案及 Toolkit 校验脚本。
    - 待实施：真实的固定出口 IP 采集、AWS Spot t4g 1h 实例拉起、私网联通性核实、上游锁定二进制制品构建与 SHA-256 计算、OAuth 登录与 Vault CAS 联调。
+
+---
+
+## 十、现代化云原生与 Serverless 演进（Cloudflare + GCP Cloud Run + Supabase）
+
+当聚合服务从单节点 VPS 进一步演进时，核心原则为：**非 CPA 节点全量上 Serverless 云原生，CPA 节点保持独立 VPS 账号执行层**。
+
+### 1. 现代化分工拓扑
+```
+                                     [ 用户终端 (IDE / Web / 开发者) ]
+                                                    │
+                                                    │ HTTPS
+                                                    ▼
+                     ┌─────────────────────────────────────────────────────────────┐
+                     │                 Cloudflare 边缘托管层                       │
+                     │  - Cloudflare Pages: 托管 "Token 配额分析" 前端 Web 控制台     │
+                     │  - Cloudflare Workers: 边缘 API 网关、Key 预检、缓存、速率限制  │
+                     └──────────────────────────────┬──────────────────────────────┘
+                                                    │ mTLS / 内部签名
+                                                    ▼
+                     ┌─────────────────────────────────────────────────────────────┐
+                     │              GCP Cloud Run (Serverless Gateway)             │
+                     │  - 运行 New API (容器化)，支持自动缩容至 0 (Scale to zero)   │
+                     │  - 模型稳定别名映射 (codex-main, claude-main, grok-main)    │
+                     │  - 协议原生转发 (/v1/responses, /v1/messages, /v1/chat)     │
+                     │  - 凭据集成：GCP Secret Manager / Vault                    │
+                     └───────────────┬─────────────────────────────┬───────────────┘
+                                     │                             │
+                                     │ PostgreSQL 连接池            │ WireGuard / 加密私网隧道
+                                     ▼                             ▼
+   ┌───────────────────────────────────────────────┐     ┌─────────────────────────────────────┐
+   │         Supabase Cloud (Free Tier)            │     │          VPS 专属执行节点 (CPA)      │
+   │  - 托管 PostgreSQL 数据库 (替代本地 SQLite)      │     │  - 必须常驻 VPS (账号执行层)         │
+   │  - Token 配额、7 天滚动用量、缓存命中时序分析     │     │  - 1:1:1:1 账号隔离 (单实例单账号)   │
+   │  - Row Level Security (RLS) & REST API        │     │  - tmpfs 认证注入 + Vault CAS 刷新  │
+   │  - 为 Cloudflare Pages 前端直接提供用量查询   │     │  - CPA 仅内网绑定，对外零暴露        │
+   └───────────────────────────────────────────────┘     └─────────────────────────────────────┘
+```
+
+### 2. 核心组件定位与优势
+1. **前端展示：Cloudflare Pages**
+   - 托管类似截图风格的“Token 配额分析”交互式控制台（单页静态应用 SPA）。
+   - 全球边缘 CDN 分发，秒级加载，完全免疫网络攻击，零服务器运维。
+2. **边缘调度与防护：Cloudflare Workers**
+   - 负责统一入口鉴权与请求转发。
+   - 客户端 API Key 格式预校验、防刷限流（Rate Limiting）及 CORS 自动化处理。
+3. **核心网关层：GCP Cloud Run**
+   - 容器化运行 New API，取代在 VPS 手工常驻进程。
+   - 自动弹性扩缩容（具备 Scale-to-Zero 能力），夜间无请求时零计费。
+   - 原生集成 Google Secret Manager，开箱即用高可用 HTTPS 终端。
+4. **统一状态与数据库：Supabase Cloud (Free Tier)**
+   - 免费提供 500MB 托管 PostgreSQL 与连接池（PgBouncer），解决本地 SQLite 无法多实例共享与容易写锁的问题。
+   - 提供内置 RLS（行级安全）与自动生成的 REST API，前端控制台可直连 Supabase 安全拉取 Token 用量报表与图表数据。
+5. **账号执行层：保留独立 VPS / Spot 实例上的 CPA**
+   - 上游 Provider（OpenAI/Claude/Grok）的 OAuth 登录、刷新握手和 CLI 进程必须维持原生网络和持久化进程。
+   - 专心充当纯粹的私网上游 Adapter，对公网完全不可见。
