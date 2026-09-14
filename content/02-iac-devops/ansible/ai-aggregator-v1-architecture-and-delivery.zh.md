@@ -196,31 +196,36 @@ spec:
 ## 六、账号矩阵与 Vault 凭据平面
 
 ### 1. 账号矩阵（非敏感声明）
-| 实例 ID | 平台 / 账号别名 | node_ref | 本机端口 | 账号 Vault 路径 |
+| 实例 ID | 平台 / 账号别名 | node_ref | 本机端口 | 数据库记录 |
 | :--- | :--- | :--- | :--- | :--- |
-| `cpa-codex-01` | OpenAI / Codex CLI（账号邮箱见 GitOps） | UAT: `cpa-codex-01`；Prod: `tky-proxy.svc.plus` | 8317 | `kv/<env>/ai-aggregator/accounts/cpa-codex-01` |
-| `cpa-codex-02` | OpenAI / Codex CLI（账号邮箱见 GitOps） | UAT: `cpa-codex-02`；Prod: `tky-proxy.svc.plus` | 8320 | `kv/<env>/ai-aggregator/accounts/cpa-codex-02` |
-| `cpa-claude-01` | Anthropic / Claude Code（账号邮箱见 GitOps） | UAT: `cpa-claude-01`；Prod: `tky-proxy.svc.plus` | 8318 | `kv/<env>/ai-aggregator/accounts/cpa-claude-01` |
-| `cpa-grok-01` | xAI / Grok CLI（账号邮箱见 GitOps） | UAT: `cpa-grok-01`；Prod: `tky-proxy.svc.plus` | 8319 | `kv/<env>/ai-aggregator/accounts/cpa-grok-01` |
+| `cpa-codex-01` | OpenAI / Codex CLI（账号邮箱见 GitOps） | UAT: `cpa-codex-01`；Prod: `tky-proxy.svc.plus` | 8317 | `ai_aggregator_accounts` + `ai_aggregator_instances` |
+| `cpa-codex-02` | OpenAI / Codex CLI（账号邮箱见 GitOps） | UAT: `cpa-codex-02`；Prod: `tky-proxy.svc.plus` | 8320 | `ai_aggregator_accounts` + `ai_aggregator_instances` |
+| `cpa-claude-01` | Anthropic / Claude Code（账号邮箱见 GitOps） | UAT: `cpa-claude-01`；Prod: `tky-proxy.svc.plus` | 8318 | `ai_aggregator_accounts` + `ai_aggregator_instances` |
+| `cpa-grok-01` | xAI / Grok CLI（账号邮箱见 GitOps） | UAT: `cpa-grok-01`；Prod: `tky-proxy.svc.plus` | 8319 | `ai_aggregator_accounts` + `ai_aggregator_instances` |
 
 - 严格遵循 **1:1:1:1 隔离模型**：1 个 CPA 实例 绑定 1 个 Provider 账号 对应 1 个独立 Unix 用户 对应 1 个独立 Vault Secret。
 
 ### 2. Vault KV v2 路径与内容规范
 Vault API: `https://vault.svc.plus` (KV v2 挂载于 `kv/data/...`)
 
-- `kv/<env>/ai-aggregator/database/postgresql`: `new_api_dsn`, `litellm_dsn`, `backup_credentials`。
+- `kv/<env>/ai-aggregator/database`: `new_api_dsn`, `litellm_dsn`, `backup_credentials`。
 - `kv/<env>/ai-aggregator/gateway/new-api`: `session_secret`, `crypto_secret`, `bootstrap_admin_password`, `api_client_token`。
 - `kv/<env>/ai-aggregator/gateway/litellm`: `master_key`, `proxy_secret`。
 - `kv/<env>/ai-aggregator/gateway/caddy`: `admin_password_hash`。
 - `kv/<env>/ai-aggregator/litellm/providers/<provider>`: `api_key`（仅 `openai`、`anthropic`、`xai`）。
-- `kv/<env>/ai-aggregator/accounts/<id>`: `oauth_bundle`（完整、版本化认证 JSON 对象），`refresh_token`。
-- `kv/<env>/ai-aggregator/instances/<id>`: `channel_token`（New API -> CPA 专用的内部通讯凭据）。
+- `kv/<env>/ai-aggregator/gateway/cpa/<id>`: 仅保存 `oauth_bundle` 与 `channel_token`；这是 CPA 运行所必需的最小敏感材料。
 - `kv/<env>/ai-aggregator/clients/<client-id>`: `client_token`（外部客户端接入 Token）。
 
-`accounts/<id>` 与 `instances/<id>` 必须按 CPA 实例一一对应；同一 Provider 账号不能在两个实例同时激活。上述路径只出现在 Vault 引用中，实际值不得写入 Git、文档、Terraform state、CI artifact、Ansible facts 或 systemd unit。
+`accounts/<id>` 与 `instances/<id>` 是 PostgreSQL 中的逻辑记录，不是 Vault KV 路径。数据库保存账号邮箱、Provider、CLI、节点、端口、状态、模型映射和 Vault 引用；不保存 OAuth token、API key、session secret 或 channel token 明文。上述 Secret 值只允许存在 Vault 和运行时 tmpfs，不得写入 Git、文档、Terraform state、CI artifact、Ansible facts 或 systemd unit。
+
+建议最小数据库记录：
+
+- `ai_aggregator_accounts(id, provider, cli, account_email, status, vault_auth_ref)`。
+- `ai_aggregator_instances(id, account_id, node_ref, bind_address, port, vault_channel_ref, status)`。
+- `ai_aggregator_instances` 与 `ai_aggregator_accounts` 为一对一绑定；一个账号不得同时绑定多个活动 CPA 实例。
 
 ### 3. 凭据隔离与单写者 CAS 约束
-1. **最小权限**: 每个 CPA 实例专属身份只能读取属于其 `accounts/<alias>` 的路径，禁止通配读取全部账号。
+1. **最小权限**: 每个 CPA 实例专属身份只能读取属于其 `gateway/cpa/<id>` 的路径，禁止通配读取全部账号；数据库账号只允许访问 AI Aggregator schema。
 2. **运行时存储**: 凭据落地仅允许在 `/run/ai-aggregator/` 等受限 `tmpfs` 内存文件系统中暂存，文件属主 `ai-aggregator`，权限 `0700`；严禁落盘持久盘，检查 core dump 与 swap 避免泄露。
 3. **OAuth 刷新单写者**:
    - Vault Agent **不负责**刷新 Provider OAuth。
