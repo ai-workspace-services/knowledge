@@ -206,16 +206,25 @@ spec:
 - 严格遵循 **1:1:1:1 隔离模型**：1 个 CPA 实例 绑定 1 个 Provider 账号 对应 1 个独立 Unix 用户 对应 1 个独立 Vault Secret。
 
 ### 2. Vault KV v2 路径与内容规范
-Vault API: `https://vault.svc.plus` (KV v2 挂载于 `kv/data/...`)
+Vault API: `https://vault.svc.plus`。以下是 v1 唯一约定的逻辑 KV 路径；`<env>` 只能是 `uat` 或 `prod`，`<id>` 是 CPA 实例 ID：
 
+```text
+kv/<env>/ai-aggregator/litellm/providers/*
+kv/<env>/ai-aggregator/database/new-api
+kv/<env>/ai-aggregator/database/litellm
+kv/<env>/ai-aggregator/database/backup
+kv/<env>/ai-aggregator/gateway/*
+kv/<env>/ai-aggregator/cpa/<id>
+```
+
+若使用 Vault KV v2 API，以上逻辑路径对应 `kv/data/<env>/ai-aggregator/...`；GitOps 的 `secret_ref` 使用不含 `data` 的逻辑路径。各路径只保存以下最小敏感字段：
+
+- `kv/<env>/ai-aggregator/litellm/providers/*`: 按 Provider 分路径保存 `openai#api_key`、`anthropic#api_key`、`xai#api_key`。
 - `kv/<env>/ai-aggregator/database/new-api`: `dsn`。
 - `kv/<env>/ai-aggregator/database/litellm`: `dsn`。
 - `kv/<env>/ai-aggregator/database/backup`: `credentials`。
-- `kv/<env>/ai-aggregator/gateway/new-api`: `session_secret`, `crypto_secret`, `bootstrap_admin_password`, `api_client_token`。
-- `kv/<env>/ai-aggregator/gateway/litellm`: `master_key`, `proxy_secret`。
-- `kv/<env>/ai-aggregator/gateway/caddy`: `admin_password_hash`。
-- `kv/<env>/ai-aggregator/litellm/providers/<provider>`: `api_key`（仅 `openai`、`anthropic`、`xai`）。
-- `kv/<env>/ai-aggregator/cpa/<id>`: 仅保存 `oauth_bundle` 与 `channel_token`；这是 CPA 运行所必需的最小敏感材料。
+- `kv/<env>/ai-aggregator/gateway/*`: Caddy、New API、LiteLLM 的运行时密钥；例如 `gateway/caddy#admin_password_hash`、`gateway/new-api#session_secret`、`gateway/litellm#master_key`。
+- `kv/<env>/ai-aggregator/cpa/<id>`: 仅保存该 CPA 实例所需的 `oauth_bundle` 与 `channel_token`。
 
 `accounts/<id>` 与 `instances/<id>` 是 PostgreSQL 中的逻辑记录，不是 Vault KV 路径。数据库保存账号邮箱、Provider、CLI、节点、端口、状态、模型映射和 Vault 引用；不保存 OAuth token、API key、session secret 或 channel token 明文。上述 Secret 值只允许存在 Vault 和运行时 tmpfs，不得写入 Git、文档、Terraform state、CI artifact、Ansible facts 或 systemd unit。
 
