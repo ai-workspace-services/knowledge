@@ -156,18 +156,18 @@ Guance 在本系列中是一项被持续观察、使用和核算的可观测 Saa
 
 | # | 微信公众号主标题 | XHS 封面标题 | 核心观点 | Guance 植入点 | 真实实践与证据要求 |
 | ---: | --- | --- | --- | --- | --- |
-| 01 | 产品上线不是结束：我先给一个人的系统做了观测盲区盘点 | 产品上线后，所有问题最后都找我 | 先识别独立产品哪里会失明，再决定是否需要 SaaS | 只把 Guance 定义为未来 90 天的长测服务 | 盘点 XWorkmate/XConnect 的用户入口、API、数据库、外部依赖、部署节点、现有告警和未知区域 |
-| 02 | 不拆 Grafana，我怎样把第一个真实服务接入 Guance？ | 旧监控不用扔，SaaS 怎么先接一个服务？ | 用最小范围试点验证兼容性和接入成本 | 数据接入、开放采集和工作空间；不展开产品全景 | 选一个低风险服务，记录配置改动、接入耗时、资源开销、字段完整性和回退方式 |
-| 03 | 接入可观测 SaaS 的第一周，我先建立了哪些基线？ | 刚接监控，别急着堆 20 张大盘 | 没有正常基线，后面的异常和收益都无法判断 | 场景视图、基础设施、日志和应用数据按需要组合 | 记录 7 天请求量、错误率、P95、主机资源、日志量和 Guance 用量，不追求大而全 |
-| 04 | 第一次真实告警：它有没有在用户反馈前找到我？ | 监控终于报警了，但这条有用吗？ | 告警价值取决于是否可行动，而不是消息数量 | 监控器、事件、恢复通知和移动查看只服务于本次告警 | 保留触发条件、时间线、误报/漏报、处理动作和用户影响；优化一次阈值 |
-| 05 | CPU 只有 20%，用户为什么还说我的 App 很卡？ | 服务器健康，用户却一直说卡 | 基础设施正常不等于真实用户体验正常 | 在本案例中使用 RUM、前端错误或 Session Replay，并按需关联 Trace | 选择一次真实慢会话；脱敏后拆解 DNS、网络、资源加载、API 和前端错误 |
-| 06 | 一个 Bug，从用户点击一路追到 PostgreSQL | 我终于不用 SSH 五台机器找日志了 | SaaS 的价值在于保留上下文并缩短证据路径 | 在同一问题中串联用户会话、Trace、日志、SQL 和资源 | 捕获可复现故障并保留 Trace ID；展示定位、修复、复测和实际节省的步骤 |
-| 07 | 服务都显示 Healthy，为什么海外用户还是打不开？ | 我从东京、香港、新加坡测试自己 | 内部状态不能替代用户所在地的外部验证 | 针对 Web/API/DNS 只使用本案例需要的拨测与告警 | 固定三地、频率和成功标准；对比服务端健康、网络结果和真实访问反馈 |
-| 08 | AI 一天做完的改动，上线后我怎样确认没有变差？ | AI 发版更快，回归问题也来得更快 | 发布速度提高后，更需要用版本与线上信号验证变化 | 用版本标签、错误、时延、用户体验和 CI 数据做发布前后比较 | 选择一条 AI 生成的真实改动，记录发布窗口、回归、回滚或确认结果 |
-| 09 | PostgreSQL 变慢那晚，我如何判断是 SQL、连接池还是主机？ | 慢 SQL 不一定是数据库慢 | 独立开发者需要跨层证据，而不是凭经验逐个猜 | 按问题使用 APM Span、数据库指标、日志与主机资源 | 复盘一次连接池、锁、慢查询或资源压力问题；列出错误假设和最终证据 |
-| 10 | 没有值班团队，我怎样把一次夜间故障变成可复用流程？ | 独立开发者的值班群里只有一个人 | SaaS 应帮个人保存现场、减少重复劳动并形成 Runbook | 事件上下文、告警历史、知识记录和支持服务 | 还原发现、响应、定位、修复、验证与复盘；统计被打断时间和下次可自动化步骤 |
-| 11 | Coding Agent 花掉的 Token，最终有没有变成可发布的功能？ | Codex 很忙，但它真的在交付吗？ | Agent 成本只有归到产品、任务和结果才对独立开发有意义 | 使用 Agent Session/Trace/Tool/Skill 数据解释一次真实交付 | 将一次 Codex 任务关联到 commit、测试、部署与结果；识别重试、循环、成本和内容采集边界 |
-| 12 | 使用 Guance 90 天后：一个独立开发者到底值不值得买可观测 SaaS？ | 90 天后，我还会为监控 SaaS 付费吗？ | 续费判断应来自时间、成本、故障和用户体验的真实变化 | 汇总 90 天实际使用能力、计费、服务体验和退出路径 | 对比接入前后定位时间、告警质量、维护工时、用量、费用、盲区与保留的自建能力 |
+| 01 | 从自建 Grafana + OTel 全家桶到观测云免费个人版：Cloudflare、Cloud Run、Supabase 的 UAT 监控迁移实录 | 我的 Grafana 不拆，先把 UAT 接进观测云 | 先以现有基础监控为底座，用免费个人版验证 SaaS 的增量价值 | Guance 免费个人版、开放采集、工作空间与 UAT 最小链路 | 以 `console-cloudflare-uat.onwalk.net` 为入口，记录 Cloudflare Pages/Workers、Cloud Run `uat-accounts/content/billing`、Supabase `xworktech` 的接入范围、配置改动、用量和回退方式 |
+| 02 | AI 辅助 Grafana 面板迁移：从资源、指标、流量、压测面板到观测云的重建与取舍 | AI 帮我迁移 Grafana 面板，哪些该保留？ | 面板迁移不是复制 UI，而是重新判断哪些指标能帮助用户和发布决策 | Guance Dashboard、指标/日志/Trace 关联与 AI 辅助整理；不承诺一键迁移 | 以 `observability.svc.plus/grafana/` 的资源、流量、压测、服务健康面板为样本，AI 生成迁移清单，逐项核对字段、查询、告警和截图差异 |
+| 03 | Cloudflare → Worker → Cloud Run → Supabase：我如何为 UAT 建立第一条完整 Trace？ | 一次页面访问到底经过了几层？ | 没有跨层上下文，独立开发者只能在多个面板之间猜 | Trace、日志关联、服务与版本标签 | 记录 `console-cloudflare-uat.onwalk.net` 一次登录或内容读取的 trace id、route、revision、区域和数据库耗时 |
+| 04 | serverless-orchestrator 发布后，Guance 告警能否在用户反馈前发现问题？ | 发布后第一条告警，真的有用吗？ | 告警要与 release tag 和用户影响关联，才值得一个人响应 | 监控器、事件、恢复通知与发布标记 | 对一次 UAT 发布记录 workflow run、release tag、Cloud Run revision、错误率和告警处理时间 |
+| 05 | `console-cloudflare-uat.onwalk.net` 页面为何变慢：CPU 正常时如何找到真实用户体验问题 | UAT 页面卡，到底是谁的锅？ | 基础设施正常不等于浏览器体验正常 | RUM、前端错误或 Session Replay，并按需关联 Trace | 选择一次 UAT 慢会话，脱敏拆解 Cloudflare 边缘、资源加载、API 和前端错误 |
+| 06 | 一个 XWorkmate Bug，从用户点击一路追到 Supabase PostgreSQL | 不用 SSH，能不能直接找到数据库慢点？ | SaaS 的价值在于保留上下文并缩短证据路径 | 会话、Trace、日志、SQL 与资源的关联 | 捕获可复现故障并保留 Trace ID；展示定位、修复、复测和实际节省的步骤 |
+| 07 | Cloudflare Edge 显示正常，为什么 UAT 用户仍然打不开？ | 从不同地区打开，结果完全不一样 | 内部状态不能替代用户所在地的外部验证 | 针对 UAT Web/API/DNS 的拨测与告警 | 固定地区、频率和成功标准；对比 `console-cloudflare-uat.onwalk.net` 服务端健康与访问反馈 |
+| 08 | AI 改完一个 Worker/Cloud Run 服务后，我如何用 UAT 数据确认没有变差？ | AI 发版快，回归也来得快 | 发布速度提高后，更需要用版本与线上信号验证变化 | 版本标签、错误、时延、用户体验和 CI 数据对比 | 选择一条 AI 生成的真实改动，关联 workflow、Worker 边界、Cloud Run revision 与 UAT 回归结果 |
+| 09 | Supabase 变慢那晚：SQL、连接池、Cloud Run 冷启动还是 Cloudflare 超时？ | 数据库慢，可能根本不是数据库 | 独立开发者需要跨层证据，而不是凭经验逐个猜 | APM Span、数据库指标、日志与资源上下文 | 复盘一次 `xworktech` 数据链路问题，列出错误假设和最终证据 |
+| 10 | 没有值班团队，我怎样把一次 UAT/PROD 故障变成可复用流程？ | 独立开发者的值班群里只有一个人 | SaaS 应帮个人保存现场、减少重复劳动并形成 Runbook | 事件上下文、告警历史、知识记录和支持服务 | 用 `serverless-orchestrator` 或 `hybrid-orchestrator` 的一次故障还原发现、响应、定位、修复与验证 |
+| 11 | XWorkmate/Codex 花掉的 Token，最终有没有变成可发布的功能？ | Agent 很忙，但它真的在交付吗？ | Agent 成本只有归到产品、任务和结果才对独立开发有意义 | Agent Session/Trace/Tool/Skill 数据解释一次真实交付 | 将一次 AI 任务关联到 commit、测试、`serverless-orchestrator` 部署与 UAT 结果；识别重试、循环、成本和内容采集边界 |
+| 12 | 从 UAT 到 PROD 使用 Guance 90 天后：XWorkTech 到底值不值得付费？ | 90 天后，我还会同时用 Grafana 和 Guance 吗？ | 续费判断应来自时间、成本、故障和用户体验的真实变化 | 汇总双栈实际使用能力、计费、服务体验和退出路径 | 对比接入前后定位时间、告警质量、维护工时、用量、费用、盲区与保留的自建 Grafana 能力 |
 
 ### 4.1 统一实践案例结构
 
@@ -281,6 +281,25 @@ P9  收藏清单 / 互动问题（可选）
 ## 6. 第 13 篇起：54 篇长期合作题库
 
 长期题库共 54 篇（#13–#66）。其中 48 篇按四个 12 篇季度组织，依次回答“怎么选、怎么接、怎么长期用”和“如何进入 Data + AI/Agent 进阶场景”；另有 6 篇跨季度深水案例，用于长期合作中的产品升级、退出演练、读者共创和年度研究。实际签约时每季度最低锁定 12 篇；如全部按周连续发布，完整题库覆盖约 54 周。
+
+### XWorkTech 实践候选优先级（从 54 篇中优先锁题）
+
+以下候选把长期题库落到现有的 `observability.svc.plus/grafana/`、`console-cloudflare-uat.onwalk.net`、Cloudflare Workers、Cloud Run、Supabase `xworktech` 和 GitHub Actions；它们可作为 2027 各季度的优先锁题，其他题目继续保留为通用独立开发场景。
+
+| 原编号 | XWorkTech 候选标题 | 公众号证据 | XHS 视觉切口 |
+| ---: | --- | --- | --- |
+| 15 | 自建 Grafana + OTel 与 Guance：XWorkTech 为什么选择混合观测 | 两套系统职责、数据流、维护工时和回退 | “Grafana 不拆，Guance 先接一条链” |
+| 22 | 用 30 天 POC 验证 Cloudflare UAT 到 Guance 是否值得 | 一个入口、一个服务、三个故障、统一成功标准 | 30 天试用结果卡片 |
+| 26 | 我没有推倒 Grafana，只把 UAT 最小链路接入 Guance | 双栈配置、字段契约、接入耗时和回退 | 旧监控与新 SaaS 并排对照 |
+| 27 | OpenTelemetry 双写：Cloud Run 和 Worker 数据如何同时保留 | Collector 路由、采样、资源开销与数据一致性 | “观测数据不站队”架构图 |
+| 29 | 一次 `console-cloudflare-uat.onwalk.net` 请求的完整 Trace | Pages/SSR/Gateway/Cloud Run/Supabase 上下文传播 | 一条请求穿过 9 个边界 |
+| 30 | UAT Console 的第一条真实用户体验数据 | RUM、前端错误、API 与发布版本关联 | 页面卡顿瀑布图 |
+| 35 | 从 `serverless-orchestrator` 到 Cloud Run revision 的发布观测 | workflow run、release tag、部署后验证与指标对比 | 发布前后曲线对撞 |
+| 39 | 用户说“卡”时，如何用历史基线定位到 Cloudflare 或 Supabase | 地域、版本、Trace、数据库耗时 | 用户反馈 → Trace → 修复 |
+| 40 | AI 生成改动上线后的回归：UAT 数据如何决定回滚 | 版本、错误率、P95、RUM 与 rollback checkpoint | 回滚按钮前后的曲线 |
+| 44 | 外部 API、Cloud Run、Edge Gateway 谁先变慢？ | 外部调用 Trace、超时、fallback 与用户影响 | 2500ms 超时分层图 |
+| 51 | XWorkmate/Codex 的 Token 是否变成了可交付版本 | Session、Tool、commit、测试、部署结果 | Token 数字与交付结果对账 |
+| 59 | 自建 Grafana + Guance + AI：一年后混合架构是否成立 | 双路采集、成本、SLO、告警与退出演练 | 三层观测栈年度复盘 |
 
 ### 2027 Q1｜怎么选择可观测 SaaS（#13–#24）
 
