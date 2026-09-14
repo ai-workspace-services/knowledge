@@ -1,6 +1,7 @@
 # 个人 AI 聚合服务 v1：架构、选型与实施交付契约
 
-状态：设计基线；尚未完成节点部署、OAuth 登录或请求验收。配置中的节点与域名为候选，必须通过预检后启用。
+状态：v1 实施基线；默认 disabled，尚未完成真实节点部署、OAuth 登录或请求验收。
+v1 公共入口只有 Caddy；Cloudflare Worker/Pages、Cloud Run、Bedrock、Vertex AI、Azure Foundry 均不在 v1 运行链路。
 
 ---
 
@@ -16,23 +17,65 @@
            │
            │ 127.0.0.1 内部转发 (API 直通 Bearer / Console 叠加 Basic Auth)
            ▼
-  [ New API (:3000) ] ── (Token 校验 / 模型稳定映射 / 统一日志 / SQLite 状态)
+  [ New API (:3000) ] ── (Token 校验 / 模型稳定映射 / 统一日志 / PostgreSQL 状态)
            │
            │ 私网 / WireGuard / 宿主 loopback (禁止公网直接暴露)
-           ├── CPA Codex 逻辑 Channel (:8317)       ── tmpfs 认证 ──► OpenAI / Codex 账号池 (A/B/C)
-           ├── CPA Claude Code 逻辑 Channel (:8318) ── tmpfs 认证 ──► Anthropic / Claude 账号池 (A/B)
-           └── CPA Grok 逻辑 Channel (:8319)        ── tmpfs 认证 ──► xAI / Grok 账号池 (A/B)
+           ├── CPA Codex 逻辑 Channels (:8317/:8320) ── tmpfs 认证 ──► OpenAI / Codex 账号实例
+           ├── CPA Claude Code 逻辑 Channel (:8318)   ── tmpfs 认证 ──► Anthropic / Claude 账号实例
+           └── CPA Grok 逻辑 Channel (:8319)          ── tmpfs 认证 ──► xAI / Grok 账号实例
+
+ [ Caddy direct.ai.* ] ──► LiteLLM (:4000) ──► 官方 OpenAI / Anthropic / xAI API
 ```
 
-外部客户端永远只看到统一入口（例如 `https://ai.svc.plus`）和分发的业务 Key（`sk-newapi-xxxxxxxx`），完全不知道底层的 CPA 地址、CPA 内部通信 Key 以及具体的 OAuth Token。
+这里是两条并列的聚合承载链路：`New API → CPA` 面向订阅账号和 CLI/IDE
+应用适配，`LiteLLM` 面向官方 API 的统一协议、模型路由和直连调用；LiteLLM
+不作为 CPA 的前置代理，二者也不互相串联。客户端根据需要选择 `ai.*` 或
+`direct.ai.*`，但两者都必须经过 Caddy 的 HTTPS、IP 白名单和独立 token 校验。
+
+外部客户端只看到两个受控聚合入口之一（`https://ai.svc.plus` 或
+`https://direct.ai.svc.plus`）和分发的业务 Key（`sk-client-xxxxxxxx`），完全不知道底层的
+CPA 地址、CPA 内部通信 Key 以及具体的 OAuth Token。
+
+### 3. 第三方客户端接入目标
+
+v1 的完成定义包含“第三方客户端可配置接入”，而不仅是服务端进程启动：
+
+| 客户端 | 推荐入口 | 北向协议 | 默认链路 | 备注 |
+| :--- | :--- | :--- | :--- | :--- |
+| Claude Code / Claude SDK | `https://ai.svc.plus` | Anthropic Messages (`/v1/messages`) | New API → CPA Claude | 使用独立 client token；不得把账号 OAuth 放到客户端 |
+| Codex CLI / OpenAI SDK | `https://ai.svc.plus/v1` | OpenAI Responses / Chat | New API → CPA Codex | 使用 `codex-main` 稳定别名 |
+| Android Studio Third-Party Remote Provider | `https://direct.ai.svc.plus/v1` | OpenAI-compatible Chat / Models | LiteLLM → 官方 API | 使用 `anthropic-api` 等已声明模型并刷新模型列表 |
+| 其他 IDE / SDK / Web SaaS | `https://direct.ai.svc.plus/v1` 或 `https://ai.svc.plus/v1` | OpenAI-compatible | 按 client profile 选择并列承载链路 | 只发放设备或应用级 token |
+
+Claude Code 的 gateway 配置使用 `ANTHROPIC_BASE_URL` 和 `ANTHROPIC_AUTH_TOKEN`，其中 token 由本机密钥链或 Vault helper 提供；不写入项目文件。Android Studio 的远程模型配置需要 HTTPS API endpoint、API key，并通过 `/v1/models` 刷新模型；因此 Caddy、模型列表和 Bearer token 校验都是 v1 验收项。详见 [Anthropic LLM gateway configuration](https://docs.anthropic.com/en/docs/claude-code/llm-gateway) 和 [Android Studio remote model](https://developer.android.com/studio/gemini/use-a-remote-model)。
+
+GitOps 中的 `client_profiles` 是非敏感接入契约；实际 token 只使用对应的 `clients/<client-id>` Vault 路径。客户端接入前必须通过固定 IP 白名单，客户端配置不得包含 CPA 地址、OAuth token 或数据库凭据。
+
+推荐接入方式：
+
+```bash
+# Claude Code：走 New API -> CPA Claude；值由本机密钥链 / Vault helper 注入
+export ANTHROPIC_BASE_URL="https://ai.svc.plus"
+export ANTHROPIC_AUTH_TOKEN="<从本机安全存储读取的 client token>"
+claude
+
+# OpenAI-compatible SDK / IDE：走 New API -> CPA Codex
+export OPENAI_BASE_URL="https://ai.svc.plus/v1"
+export OPENAI_API_KEY="<从本机安全存储读取的 client token>"
+```
+
+Android Studio 配置为 Tools → AI → Model Providers → Third-Party Remote Provider，URL 填
+`https://direct.ai.svc.plus/v1`，API key 填 Android Studio 专用 client token，点击 Refresh
+确认能看到 `anthropic-api`、`openai-api` 或 `xai-api` 等模型。Android Studio 的 Chat 与 AI Agent
+是 v1 目标能力；依赖 Google/Gemini 特有协议的功能不作为 v1 兼容承诺。
 
 ### 2. 两种部署模式
 - **模式一：独立部署 (Standalone)**
   - **适用场景**：全新独立节点或后续物理迁移。
-  - **架构特征**：本项目直接管理 Caddy；绑定独立公网域名；管理 New API、CPA 等全套 systemd 单元及 SQLite 状态。
+  - **架构特征**：本项目直接管理 Caddy；绑定独立公网域名；管理 New API、LiteLLM、CPA 等全套 systemd 单元及 PostgreSQL 连接。
 - **模式二：嵌入 AI Workspace (Embedded - v1 首选)**
   - **适用场景**：复用现有运行节点（如 `jp-xhttp-contabo.svc.plus`）。
-  - **架构特征**：**复用宿主机已有的 Caddy 网关**，仅通过 `conf.d` 引入经过验证的路由片段；不修改或覆盖现有 LiteLLM 配置，New API 与 LiteLLM 在不同端口并行运行；LiteLLM 保留在客户端回退链路中，支持按客户端和模型平滑灰度切流。
+  - **架构特征**：**复用宿主机已有的 Caddy 网关**，通过 `conf.d` 引入两个域名路由；New API 与 LiteLLM 在不同端口并行运行。New API→CPA 面向 AI App，LiteLLM 面向直接 AI API，互不串联。
 
 两种模式统一由同一套 GitOps 拓扑模型与 Ansible Role 交付：
 ```yaml
@@ -40,10 +83,11 @@ spec:
   deployment_mode: embedded # 或 standalone
   entrypoint:
     domain: ai.svc.plus
+    direct_api_domain: direct.ai.svc.plus
     reuse_existing_caddy: true
   upstream:
-    primary: new-api
-    rollback: litellm
+    app_gateway: new-api
+    direct_api: litellm
 ```
 
 ---
@@ -83,13 +127,15 @@ spec:
 | 组件 | CPU 预留 | 内存预留 | 磁盘占用 | 关键说明 |
 | :--- | :--- | :--- | :--- | :--- |
 | **Caddy** | 0.1–0.3 核 | 30–80 MB | 极少 | 仅做 TLS、IP 白名单与反向代理，开销极低 |
-| **New API** | 0.5–1 核 | 150–400 MB | 1–5 GB (SQLite) | v1 单节点使用内置 SQLite，无需外置 DB |
+| **New API** | 0.5–1 核 | 150–400 MB | 1–5 GB | PostgreSQL 状态库，数据库连接从 Vault 注入 |
+| **LiteLLM** | 0.5–1 核 | 200–600 MB | 1–5 GB | 直接聚合 OpenAI/Anthropic/xAI API，数据库独立 |
 | **单个 CPA 实例** | 0.3–1 核 | 100–300 MB | 100–500 MB | 纯协议适配层开销轻量，OAuth 状态暂存 |
 | **CodeAgent CLI** | 0.5–2 核 | 200–800 MB | 1–5 GB (缓存) | 运行时主要资源消耗者（依赖解析、代码索引、缓存） |
 | **系统与日志余量**| 1 核 | 1–2 GB | 5–10 GB | 保障 OS 稳定、监控探针与轮转日志安全 |
 
 - **最低可运行配置 (2 vCPU / 4 GB RAM / 40 GB SSD)**: 承载 Caddy + New API + 1 个 CPA 实例。
-- **推荐个人全能配置 (4 vCPU / 8 GB RAM / 80 GB SSD)**: 承载 Caddy + New API + 3 个 CPA 实例 (Codex + Claude Code + Grok)。
+- **推荐 Gateway 配置 (4 vCPU / 8 GB RAM / 80 GB SSD)**: 承载 Caddy + New API + LiteLLM。
+- **每个 CPA 节点建议 (2 vCPU / 2–4 GB RAM / 40 GB SSD)**: 承载一个 CPA + 一个 CodeAgent CLI 账号实例。
 - **多实例横向扩展规则**: 每增加 1 个 CPA + CLI 实例，追加预留 `+1 vCPU`、`+512 MB 至 1 GB RAM`、`+5 GB SSD`。
 
 ---
@@ -99,13 +145,14 @@ spec:
 ### 1. 宿主机网络边界收敛
 宿主机执行 `ss -lntp`，**理想状态仅允许**：
 - `0.0.0.0:22` (SSH 受控运维端口)
-- `0.0.0.0:80` (HTTP 跳转)
 - `0.0.0.0:443` (Caddy HTTPS 唯一对外入口)
 - **严禁外部监听**：`0.0.0.0:3000` (New API) ❌, `0.0.0.0:8317-8319` (CPA) ❌。必须严格绑定 `127.0.0.1` 或加密私网。
 
-### 2. Caddy 双层认证防御
+### 2. Caddy 双域名与双层认证防御
 - **API 路径 (`/v1/*`, `/v1beta/*`)**:
   - 反向代理至 New API `:3000`，由 New API 严格校验客户端 Bearer Token。
+- **直接 API 域名 (`direct.ai.*`)**:
+  - `/v1/*` 反向代理至 LiteLLM `:4000`，由 LiteLLM 校验 direct API key。
 - **管理控制台 (`/`, `/console/*`)**:
   - 在 Caddy 层叠加 **Basic Auth**，然后再反代至 New API 后台，形成 **Caddy Basic Auth + New API Admin Login** 双层防护。
   - Caddy 使用物理连接源 IP 判定白名单；客户端自报 `X-Forwarded-For` 无效。空白名单部署直接阻断。
@@ -124,9 +171,9 @@ spec:
 ## 五、多账号池与路由治理最佳实践
 
 ### 1. 单层调度原则（收敛于 CPA）
-- CPA 原生支持 Codex/Claude/Grok 的多账号轮询与池化管理。
-- **严禁**在 New API 中为每个底层账号建立独立 Channel（会导致两层调度器竞态冲突与重试风暴）。
-- **正确规范**: 账号池由 CPA 全权管理；New API 仅建立 3 个逻辑 Channel（`CPA-Codex`, `CPA-Claude`, `CPA-Grok`），分别对应端口 8317, 8318, 8319。New API 日志按模型类别清晰可见，底层账号变更完全内聚于 CPA。
+- 每个 CPA 实例严格绑定一个账号；多个 CPA 实例通过 New API 的多个同类 channel 实现横向扩展。
+- New API 不把 LiteLLM 放在 CPA 前面；直接 API 请求走独立 LiteLLM 域名。
+- Codex 使用 `8317/8320`，Claude 使用 `8318`，Grok 使用 `8319`；远端地址由 CMDB 私网事实注入。
 
 ### 2. 模型稳定别名抽象 (Model Mapping)
 - 客户端绝不直连具体服务商底层模型名，而是在 New API 建立稳定别名映射：
@@ -151,20 +198,26 @@ spec:
 ### 1. 账号矩阵（非敏感声明）
 | 实例 ID | 平台 / 账号别名 | node_ref | 本机端口 | 账号 Vault 路径 |
 | :--- | :--- | :--- | :--- | :--- |
-| `codex-gpt-01` | openai/codex-gpt-01 | 待预检分配 (t4g.medium) | 8317 | `kv/<env>/ai-aggregator/accounts/codex-gpt-01` |
-| `claude-code-01`| anthropic/claude-code-01 | 待预检分配 (t4g.medium) | 8318 | `kv/<env>/ai-aggregator/accounts/claude-code-01` |
-| `grok-01` | xai/grok-01 | 待预检分配 (t4g.medium) | 8319 | `kv/<env>/ai-aggregator/accounts/grok-01` |
+| `cpa-codex-01` | OpenAI / Codex CLI（账号邮箱见 GitOps） | UAT: `cpa-codex-01`；Prod: `tky-proxy.svc.plus` | 8317 | `kv/<env>/ai-aggregator/accounts/cpa-codex-01` |
+| `cpa-codex-02` | OpenAI / Codex CLI（账号邮箱见 GitOps） | UAT: `cpa-codex-02`；Prod: `tky-proxy.svc.plus` | 8320 | `kv/<env>/ai-aggregator/accounts/cpa-codex-02` |
+| `cpa-claude-01` | Anthropic / Claude Code（账号邮箱见 GitOps） | UAT: `cpa-claude-01`；Prod: `tky-proxy.svc.plus` | 8318 | `kv/<env>/ai-aggregator/accounts/cpa-claude-01` |
+| `cpa-grok-01` | xAI / Grok CLI（账号邮箱见 GitOps） | UAT: `cpa-grok-01`；Prod: `tky-proxy.svc.plus` | 8319 | `kv/<env>/ai-aggregator/accounts/cpa-grok-01` |
 
 - 严格遵循 **1:1:1:1 隔离模型**：1 个 CPA 实例 绑定 1 个 Provider 账号 对应 1 个独立 Unix 用户 对应 1 个独立 Vault Secret。
 
 ### 2. Vault KV v2 路径与内容规范
 Vault API: `https://vault.svc.plus` (KV v2 挂载于 `kv/data/...`)
 
-- `kv/<env>/ai-aggregator/gateway`: `session_secret`, `crypto_secret`。
-- `kv/<env>/ai-aggregator/accounts/<alias>`: `oauth_bundle`（完整、版本化认证 JSON 对象），`refresh_token`。
+- `kv/<env>/ai-aggregator/database/postgresql`: `new_api_dsn`, `litellm_dsn`, `backup_credentials`。
+- `kv/<env>/ai-aggregator/gateway/new-api`: `session_secret`, `crypto_secret`, `bootstrap_admin_password`, `api_client_token`。
+- `kv/<env>/ai-aggregator/gateway/litellm`: `master_key`, `proxy_secret`。
+- `kv/<env>/ai-aggregator/gateway/caddy`: `admin_password_hash`。
+- `kv/<env>/ai-aggregator/litellm/providers/<provider>`: `api_key`（仅 `openai`、`anthropic`、`xai`）。
+- `kv/<env>/ai-aggregator/accounts/<id>`: `oauth_bundle`（完整、版本化认证 JSON 对象），`refresh_token`。
 - `kv/<env>/ai-aggregator/instances/<id>`: `channel_token`（New API -> CPA 专用的内部通讯凭据）。
 - `kv/<env>/ai-aggregator/clients/<client-id>`: `client_token`（外部客户端接入 Token）。
-- `kv/<env>/ai-aggregator/bootstrap`: `bootstrap_admin_password`（仅首次初始化使用，完成后立即吊销）。
+
+`accounts/<id>` 与 `instances/<id>` 必须按 CPA 实例一一对应；同一 Provider 账号不能在两个实例同时激活。上述路径只出现在 Vault 引用中，实际值不得写入 Git、文档、Terraform state、CI artifact、Ansible facts 或 systemd unit。
 
 ### 3. 凭据隔离与单写者 CAS 约束
 1. **最小权限**: 每个 CPA 实例专属身份只能读取属于其 `accounts/<alias>` 的路径，禁止通配读取全部账号。
@@ -202,6 +255,20 @@ Vault API: `https://vault.svc.plus` (KV v2 挂载于 `kv/data/...`)
 - **Stage 阶段防呆**: GitOps 未启用 (`enabled: false`)、IP 白名单为空、制品缺少 SHA-256 校验和、或 New API 启动命令未固定 loopback 时，Stage 必须直接阻断。
 - **Activate 顺序**: Vault 凭据注入 tmpfs 就绪 ──► CPA 实例启动并健康 ──► New API 启动并绑定 127.0.0.1 ──► Caddy validate 检查通过并 reload。
 
+### 3. GitOps 如何声明和使用资源
+
+`spec.infrastructure` 是环境资源使用契约，服务声明与资源声明分离：
+
+| 环境 | GitOps provider / provisioner | 资源来源 | 生命周期 | 下游使用 |
+| :--- | :--- | :--- | :--- | :--- |
+| UAT | `aws` / `terraform` | `iac_modules/terraform-hcl-standard/aws-cloud/config/resources/uat/ai-aggregator.yaml` | AWS ARM64 Spot，60 分钟 | Terraform 输出 `cmdb_runtime`，渲染 inventory，Ansible 连接并部署 |
+| Prod | `existing` / `ansible` | 现有 CMDB/inventory 与持久 vhost/CPA 节点 | 持久，由 Terraform 排除 | Ansible 按 `inventory_host` 对账，不创建、不替换、不销毁节点 |
+
+UAT 每个 `nodes[].resource_ref` 对应资源 contract 中的一个显式 host；流水线读取
+`resource_contract.path`，渲染 Terraform，再把私网地址等非敏感输出写入临时 CMDB/inventory。
+Prod 的 `resource_ref` 指向现有 CMDB 节点，GitOps 只声明角色、绑定和服务配置，不接管节点生命周期。
+Vultr/GCP contract 只作为后续 provider adapter 的声明入口，v1 不自动应用。
+
 ---
 
 ## 八、验收矩阵与排障清单 (Acceptance Checklist)
@@ -214,8 +281,9 @@ Vault API: `https://vault.svc.plus` (KV v2 挂载于 `kv/data/...`)
 | **双层防御** | 访问后台控制台触发 Caddy Basic Auth；通过后方可进入 New API 登录页 | 浏览器访问 `/console` 或 `/` |
 | **Token 鉴权** | 白名单内 IP 缺少或使用错误 Bearer Token 时返回 `401 Unauthorized`；有效 Token 正常响应 | curl 带/不带 Bearer 验证 |
 | **模型与协议** | `/v1/models` 返回与 GitOps 声明一致；`/v1/responses` 与 `/v1/messages` SSE 流式交互与 Tool Calling 正常 | 真实流式客户端交互测试 |
+| **第三方客户端** | Claude Code 能完成一次 Messages 请求；Android Studio 能刷新 `/v1/models` 并完成 Chat/Agent 请求；OpenAI-compatible SDK 能完成 Chat/Responses 请求 | 使用对应 `client_profiles` 与独立 client token 验证 |
 | **单层调度** | 多次并发请求，CPA 内部多账号正常轮询，New API 仅感知单一 Channel，日志无调度冲突报错 | 查看 New API 渠道日志 |
-| **故障隔离** | 模拟单个 CPA 进程停止 (`systemctl stop cliproxyapi@codex-gpt-01`)，仅该模型 Channel 返回不可用，其余正常 | systemd 进程停止实验 |
+| **故障隔离** | 模拟单个 CPA 进程停止 (`systemctl stop cliproxyapi-cpa-codex-01.service`)，仅该模型 Channel 返回不可用，其余 CPA 和 LiteLLM 链路正常 | systemd 进程停止实验 |
 | **凭据持久化** | 检查持久盘 `/var/lib`、systemd unit、环境文件及日志，确认不存在任何明文 Token / OAuth 凭据 | 磁盘与文件 grep 扫描 |
 | **一键回滚** | 触发回滚指令后，客户端流量迅速切回原 LiteLLM 链路，版本和数据状态保持一致 | 验证客户端 fallback 到 LiteLLM |
 
@@ -223,15 +291,17 @@ Vault API: `https://vault.svc.plus` (KV v2 挂载于 `kv/data/...`)
 
 ## 九、备份与待实施状态
 
-1. **数据库备份**: SQLite 升级前必须进行一致性冷备并直接加密输出，严禁先输出明文 SQL dump。
+1. **数据库备份**: New API 与 LiteLLM 使用独立 PostgreSQL 数据库和用户；升级前分别执行一致性备份，备份流直接加密并通过 Vault 中的备份凭据写入受控存储，严禁生成明文 SQL dump。
 2. **OAuth 凭据备份**: 由 Vault 内建版本机制及 Vault 灾备系统保护，禁止打包运行时 tmpfs auth 目录。
 3. **当前落地状态**:
-   - 已落地：多仓库特性分支 `feat/ai-aggregator-v1-delivery`、架构设计基线文档、UAT GitOps 拓扑声明、Playbook 编排角色草案及 Toolkit 校验脚本。
-   - 待实施：真实的固定出口 IP 采集、AWS Spot t4g 1h 实例拉起、私网联通性核实、上游锁定二进制制品构建与 SHA-256 计算、OAuth 登录与 Vault CAS 联调。
+   - 已落地：四仓库的 v1 文档、GitOps UAT/Prod 声明、Ansible systemd/Caddy/Vault 注入角色、AWS Spot 渲染 contract、AWS/Vultr/GCP provider contract、manifest 校验器与 UAT 流水线骨架。
+   - 待实施：提交并合并各仓库变更、配置 GitHub OIDC/Vault role 与 AWS role、填入固定 SSH/API 白名单、锁定并发布 New API/CPA/LiteLLM 制品、真实节点部署、OAuth 人工登录、New API channel 建立和完整 smoke test。
 
 ---
 
-## 十、现代化云原生与 Serverless 演进（Cloudflare + GCP Cloud Run + Supabase）
+## 十、后续云原生与 Serverless 演进（非 v1 运行链路）
+
+本节只记录后续演进选项。Cloudflare Worker/Pages、GCP Cloud Run、Supabase 不属于 v1 部署路径，不能替换 v1 的 Caddy、宿主持久进程或 PostgreSQL 运行约束。
 
 当聚合服务从单节点 VPS 进一步演进时，核心原则为：**非 CPA 节点全量上 Serverless 云原生，CPA 节点保持独立 VPS 账号执行层**。
 
@@ -287,7 +357,9 @@ Vault API: `https://vault.svc.plus` (KV v2 挂载于 `kv/data/...`)
 
 ---
 
-## 十一、总体架构设计：两平面与双引擎映射
+## 十一、v1 事实模型与后续演进边界
+
+以下云原生拓扑仅作为未来拆分参考；v1 的事实拓扑仍是“Caddy → New API → CPA”与“Caddy → LiteLLM”，且 Caddy 是唯一公网 HTTPS 入口。
 
 AI 聚合服务体系确立了“凭据平面（Vault）”与“声明平面（GitOps）”严格解耦的两平面原则，同时在运行时建立“边缘调度路由引擎”与“账号执行引擎”的双引擎映射。
 
@@ -341,49 +413,19 @@ AI 聚合服务体系确立了“凭据平面（Vault）”与“声明平面（
 
 ---
 
-## 十二、Walkthrough: AI Aggregator 多仓库规范交付、流水线执行与闭环验证
+## 十二、实施闭环与当前状态
 
-本架构已严格按照“先落地设计文档，再编码实施，闭环验证修订设计文档”的准则，完成全链路多仓库落地、分支管理与 CI/CD 自动化流水线验证。
+交付顺序固定为：
 
-### 1. 多仓库特性分支与关联 Pull Request
-所有 4 个关联仓库均已建立统一规范的特性分支 `feat/ai-aggregator-v1-delivery` 并开启正式 PR：
+1. 先提交 knowledge、GitOps、playbooks、Terraform contract 和 toolkit 的文档/配置变更。
+2. PR 阶段执行 YAML、Vault 引用、CPA 矩阵、Terraform、Ansible、Caddy 模板和 secret scan。
+3. 合并后仅在显式开启 `AI_AGGREGATOR_UAT_ENABLED=true` 且已配置 AWS/Vault/OIDC 变量时自动创建 AWS ARM64 Spot UAT。
+4. UAT 使用本地 Terraform state，流水线结束或失败时执行 destroy；实例自身在 60 分钟内自动关机并终止。
+5. CPA OAuth 必须人工登录；完成后人工确认 Vault 写回、New API channel、协议 smoke test，再启用 provider。
+6. Prod 只允许受保护环境手动触发 Ansible，复用既有持久节点，不执行 Terraform 创建、替换或销毁。
 
-| 仓库名称 | 特性分支 | 关联 Pull Request | 交付物料与核心变更 |
-| :--- | :--- | :--- | :--- |
-| **`platform-ops-toolkit`** | `feat/ai-aggregator-v1-delivery` | [PR #688](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/688) | 增加 `validate_ai_aggregator_manifest.py` 静态校验器与 `.github/workflows/ai-aggregator-v1.yml` 自动化流水线 |
-| **`gitops`** | `feat/ai-aggregator-v1-delivery` | [PR #229](https://github.com/ai-workspace-infra/gitops/pull/229) | 增加 `topology/uat/selfhost/ai-aggregator.yaml` UAT 拓扑声明，涵盖 AWS Spot t4g 1h 属性与账号矩阵 |
-| **`playbooks`** | `feat/ai-aggregator-v1-delivery` | [PR #431](https://github.com/ai-workspace-infra/playbooks/pull/431) | 增加 `ai_aggregator_v1` Ansible Role 与 `deploy-ai-aggregator-v1.yml`，实现无密钥渲染、tmpfs 隔离与 Caddy Basic Auth |
-| **`knowledge`** | `feat/ai-aggregator-v1-delivery` | [PR #46](https://github.com/ai-workspace-services/knowledge/pull/46) | 落地完整架构设计、选型裁决、AWS Spot 约束及 Serverless 演进规范 |
+当前本地实现状态：
 
-### 2. 自动化流水线执行记录（全绿通过）
-在 PR #688 触发的 GitHub Actions 自动化校验中，所有关联工作流均成功跑通：
-
-1. **`AI Aggregator v1` 流水线**
-   - **Run ID**: [`34572392295`](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/34572392295)
-   - **状态**: **SUCCESS** (耗时 11 秒)
-   - **验证依据**: 自动跨仓库拉取 GitOps 特性分支，校验拓扑合规性、AWS Spot t4g 1h 规格限制、CPA 实例/端口唯一性及 Vault 路径引用语法。
-2. **`Validate Release PR` 流水线**
-   - **Run ID**: [`34572392185`](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/34572392185)
-   - **状态**: **SUCCESS** (耗时 27 秒)
-   - **验证依据**: 跨仓库门禁与分支合规性检查全部通过。
-3. **`Selfhost Orchestrator` 流水线**
-   - **Run ID**: [`34572393269`](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/34572393269)
-   - **状态**: **SUCCESS** (耗时 30 秒)
-   - **验证依据**: 自动化编排器环境预检通过。
-4. **GitOps 安全扫描**
-   - **Run ID**: [`34572473547`](https://github.com/ai-workspace-infra/gitops/actions/runs/34572473547)
-   - **状态**: **SUCCESS** (`gitleaks` 0 警告，零敏感信息泄漏)。
-
-### 3. 本地与端到端闭环验证结果
-- **Ansible 语法校验**:
-  ```bash
-  $ cd playbooks && ansible-playbook --syntax-check -i localhost, deploy-ai-aggregator-v1.yml
-  playbook: deploy-ai-aggregator-v1.yml  # SUCCESS
-  ```
-- **Manifest 静态校验**:
-  ```bash
-  $ python3 platform-ops-toolkit/scripts/ci/validate_ai_aggregator_manifest.py gitops/topology/uat/selfhost/ai-aggregator.yaml
-  valid PersonalAIAggregator manifest: .../gitops/topology/uat/selfhost/ai-aggregator.yaml  # SUCCESS
-  ```
-- **可视化前端产物**:
-  交互式仪表盘 [`token_usage_dashboard.html`](file:///Users/shenlan/.gemini/antigravity/brain/c2936dc3-490c-4bbb-950b-6b0c81c832e7/token_usage_dashboard.html) 已构建就绪，像素级还原 Token 配额分析、缓存命中率、用量柱状图与推理等级分析。
+- 已完成：四仓库的非敏感契约、systemd/Caddy/Vault 注入模板、CPA 一实例一账号矩阵、AWS Spot UAT contract、Vultr/GCP adapter contract、manifest validator 和流水线骨架。
+- 尚未声称完成：远端 PR/CI 全绿、真实 UAT 创建、Vault role 配置、制品 SHA-256 锁定、私网连通、OAuth 登录、New API channel 初始化、协议和备份恢复验收。
+- 发生失败时，先保留旧 Caddy 配置；回滚步骤为恢复上一版本模板与 channel 声明、执行 `caddy validate`、reload，必要时将入口切回原 LiteLLM upstream。
