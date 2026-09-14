@@ -32,6 +32,7 @@ status: planning
 
 - [年度内容合作方案](./00-annual-content-plan.md)：季度最低合约 12 篇、后续 54 篇周更题库、发布节奏、2027 续约和素材规范。
 - [Guance 深度调研与事实基线](./01-guance-research-brief.md)：产品矩阵、独立开发价值、公开案例、表达边界和官方来源。
+- [XWorkTech × Guance 接入路线图](./02-xworktech-guance-integration-roadmap.md)：结合 Cloudflare UAT、Cloud Run、Supabase、GitHub Actions 与 XWorkmate 的 UAT → PROD 分阶段实践。
 - [文章工作区](./articles/README.md)：后续逐篇稿件的命名、状态与交付清单。
 - [素材工作区](./assets/README.md)：截图、数据、架构图、授权与脱敏要求。
 
