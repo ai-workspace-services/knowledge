@@ -113,15 +113,17 @@ spec:
 
 ---
 
-## 三、资源预算与测试环境硬约束 (Spot t4g 1h)
+## 三、资源预算与测试环境硬约束（可选 provider，Spot 1h）
 
-### 1. 测试与验证阶段硬约束 (AWS Spot t4g 1h)
+### 1. 测试与验证阶段硬约束（AWS / GCP / VPS 可选）
 > [!IMPORTANT]
-> **测试阶段统一计算规格：AWS Spot t4g.medium (ARM64) 1小时生命周期实例！**
-> - **实例类型**：`t4g.small` (2 vCPU / 2 GiB) 或 `t4g.medium` (2 vCPU / 4 GiB ARM64)。
+> **UAT provider 由 GitOps 的 `spec.infrastructure.provider` 声明，流水线不得写死 AWS。**
+> - AWS 默认使用 `t4g.small`（2 vCPU / 2 GiB）或 `t4g.medium`（2 vCPU / 4 GiB ARM64）。
+> - GCP 默认使用 `e2-medium`（2 vCPU / 4 GiB AMD64），用于 CPA 桌面、浏览器 OAuth 和 node_exporter。
+> - VPS 使用对应 provider contract 声明的 2 vCPU / 2–4 GiB 规格。
 > - **竞价模式**：`spot_instance: true`（one-time 临时竞价实例）。
 > - **硬性生命周期限制**：`max_runtime_minutes: 60`。实例启动时通过 `user_data` 注入到期自动关机脚本（`sleep 3600 && /sbin/shutdown -h now`），结合 AWS `instance_initiated_shutdown_behavior: terminate` 实现物理自动销毁，坚决杜绝因人工遗忘产生的闲置计费。
-> - **架构构建要求**：所有构建物料（New API 二进制、CPA 二进制）必须提供 Linux `arm64` 原生二进制及对应 SHA-256 校验和。
+> - **架构构建要求**：制品架构必须与 provider contract 一致，并提供对应 SHA-256 校验和。
 
 ### 2. 生产与长效运行容量规划
 | 组件 | CPU 预留 | 内存预留 | 磁盘占用 | 关键说明 |
@@ -135,7 +137,7 @@ spec:
 
 - **最低可运行配置 (2 vCPU / 4 GB RAM / 40 GB SSD)**: 承载 Caddy + New API + 1 个 CPA 实例。
 - **推荐 Gateway 配置 (4 vCPU / 8 GB RAM / 80 GB SSD)**: 承载 Caddy + New API + LiteLLM。
-- **每个 CPA 节点建议 (2 vCPU / 2–4 GB RAM / 40 GB SSD)**: 承载一个 CPA + 一个 CodeAgent CLI 账号实例。
+- **每个 CPA 节点建议 (2 vCPU / 4 GB RAM / 40 GB SSD)**: 承载一个 CPA + 一个 CodeAgent CLI 账号实例；2 vCPU / 2 GB 仅用于无桌面的 headless 模式。
 - **多实例横向扩展规则**: 每增加 1 个 CPA + CLI 实例，追加预留 `+1 vCPU`、`+512 MB 至 1 GB RAM`、`+5 GB SSD`。
 
 ---
@@ -224,7 +226,7 @@ kv/<env>/ai-aggregator/cpa/<id>
 - `kv/<env>/ai-aggregator/database/litellm`: `dsn`。
 - `kv/<env>/ai-aggregator/database/backup`: `credentials`。
 - `kv/<env>/ai-aggregator/gateway/*`: Caddy、New API、LiteLLM 的运行时密钥；例如 `gateway/caddy#admin_password_hash`、`gateway/new-api#session_secret`、`gateway/litellm#master_key`。
-- `kv/<env>/ai-aggregator/cpa/<id>`: 仅保存该 CPA 实例所需的 `oauth_bundle` 与 `channel_token`。
+- `kv/<env>/ai-aggregator/cpa/<id>`: 保存该 CPA 实例所需的 `oauth_bundle` 与 `channel_token`；启用 XRDP 时增加 `desktop_password`。这是 CPA 节点的最小敏感材料集合。
 
 `accounts/<id>` 与 `instances/<id>` 是 PostgreSQL 中的逻辑记录，不是 Vault KV 路径。数据库保存账号邮箱、Provider、CLI、节点、端口、状态、模型映射和 Vault 引用；不保存 OAuth token、API key、session secret 或 channel token 明文。上述 Secret 值只允许存在 Vault 和运行时 tmpfs，不得写入 Git、文档、Terraform state、CI artifact、Ansible facts 或 systemd unit。
 
@@ -248,6 +250,25 @@ kv/<env>/ai-aggregator/cpa/<id>
 ---
 
 ## 七、四仓库协作与流水线闭环 (Delivery Pipeline)
+
+### 0. Provider 矩阵与 CPA 桌面部署
+
+UAT 资源由 GitOps 声明选择，workflow 只分派到匹配的 adapter：
+
+| provider | 资源 adapter | 默认 CPA 规格 | CPA 节点动作 |
+| :--- | :--- | :--- | :--- |
+| `aws` | AWS Spot Terraform | t4g.medium，2C4G ARM64 | `deploy_ai_desktop.yml` + node_exporter |
+| `gcp` | GCP Spot Terraform | e2-medium，2C4G AMD64 | `deploy_ai_desktop.yml` + node_exporter |
+| `vps` | VPS Terraform contract | 2C2G–2C4G | 按 contract 启用桌面与监控 |
+| `existing` | CMDB + Ansible | Prod 持久节点 | 不创建/销毁 Terraform 资源 |
+
+每个 UAT adapter 执行同一闭环：
+`render → terraform validate/apply → CMDB/inventory → CPA service stage → CPA 组 desktop + node_exporter → verify → destroy`。
+GCP UAT 显式展开 Gateway 1 台和 CPA 4 台 Spot 实例，生成的
+`ai_aggregator_cpa` 组只包含四个 CPA 节点。远程桌面密码从
+`kv/data/uat/ai-aggregator/cpa/<id>#desktop_password` 临时注入；文件只在
+runner 生命周期内存在，不进入 Git、inventory、Terraform state 或 CI
+artifact。OAuth bundle 仍从同一条 CPA Vault 记录读取。
 
 ### 1. 仓库职责与事实源
 | 仓库 | 关键路径 | 核心职责 |
