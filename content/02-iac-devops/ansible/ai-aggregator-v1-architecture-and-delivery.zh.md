@@ -3,6 +3,78 @@
 状态：v1 实施基线；默认 disabled，尚未完成真实节点部署、OAuth 登录或请求验收。
 v1 公共入口只有 Caddy；Cloudflare Worker/Pages、Cloud Run、Bedrock、Vertex AI、Azure Foundry 均不在 v1 运行链路。
 
+架构图单独维护于：[AI Gateway v1 架构图](./ai-aggregator-v1-architecture-diagram.zh.md)。
+
+## 零、先看架构图：CPA 节点 = AI Desktop Role + CodeAgent + 单账号 CPA
+
+```mermaid
+flowchart LR
+    U[Claude Code / Codex CLI / Android Studio / SDK / Web SaaS]
+    C[Caddy :443\nTLS + IP 白名单]
+    K[Kong :8000\nJWT/Key Auth + Tenant ACL\nRate Limit + Host Route + Audit]
+    N[New API :3000\nCPA Channel / Model Alias / Health]
+    L[LiteLLM :4000\n官方 OpenAI / Anthropic / xAI]
+    D1[AI Desktop Role\nCodex CPA + CodeAgent]
+    D2[AI Desktop Role\nClaude CPA + CodeAgent]
+    D3[AI Desktop Role\nGrok CPA + CodeAgent]
+    V[(Vault\n仅 DB/Gateway/Provider Key)]
+    P[(PostgreSQL\nKong/New API/LiteLLM 独立 DB)]
+    U --> C --> K
+    K -->|ai.*| N
+    K -->|direct.ai.*| L
+    N --> D1
+    N --> D2
+    N --> D3
+    L --> O[官方 API]
+    V -.运行时注入.-> K
+    V -.运行时注入.-> N
+    V -.运行时注入.-> L
+    K --- P
+    N --- P
+    L --- P
+```
+
+这张图的关键约束是：`AI Desktop Role` 只落在 CPA 执行节点；它提供桌面、浏览器、CodeAgent Runtime 和基础监控，随后由 `ai_aggregator_v1` role 安装一个实例一个账号的 CPA。Gateway 节点不安装 CPA/CodeAgent，CPA 节点不承担 Caddy、Kong、New API 或 LiteLLM。
+
+## 零点一、项目任务拆解与实施计划
+
+| 阶段 | 任务 | 主要落点 | 完成条件 |
+| :--- | :--- | :--- | :--- |
+| A0 | 架构冻结 | `knowledge/.../ai-aggregator-v1-architecture-diagram.zh.md` | 两条入口链路、边界和节点职责明确 |
+| A1 | 环境声明 | `gitops/topology/uat|prod/selfhost/ai-aggregator.yaml` | UAT/Prod、域名、节点、CPA 矩阵和 `desktop_role` 可校验 |
+| A2 | 节点基线 | `playbooks/deploy_ai_desktop.yml`（`ai_desktop_cpa_codeagent=true`） | CPA 节点经 `AI Desktop Role` + `ai_agent_runtime` + `node_exporter` 部署 |
+| A3 | CPA 对账 | `playbooks/roles/vhosts/ai_aggregator_v1` | 本地加密 auth 目录、CodeAgent workspace、CPA systemd unit 就绪 |
+| A4 | Gateway 对账 | 同上 role | Caddy → Kong → New API/LiteLLM、PostgreSQL、Vault 运行时注入就绪 |
+| A5 | 凭据权限 | `platform-ops-toolkit/docs/vault` | Vault 最小路径和 GitHub OIDC 环境隔离通过 |
+| A6 | 流水线 | `platform-ops-toolkit/.github/workflows/ai-aggregator-v1.yml` | CPA Desktop 基线先于 CPA stage，UAT/Prod 目标可选择 |
+| A7 | UAT 验证 | `stage → OAuth → validate → activate` | 四个 CPA 分别人工登录，协议/租户/故障隔离通过 |
+| A8 | Prod 推进 | 受保护环境 + 现有持久节点 | 先 disabled，对账、回滚验证后再启用流量 |
+
+### 运行阶段定义
+
+1. `plan`：只解析 GitOps、检查资源契约、Ansible 语法和安全约束，不连接真实节点。
+2. `provision`：仅 UAT 可选，按 GitOps 资源契约创建 AWS ARM64 Spot 节点；每个 CPA 节点 2C2G 起步，建议 2C4G。
+3. `stage`：先执行 `deploy_ai_desktop.yml -e ai_desktop_cpa_codeagent=true -e ai_desktop_remote_enabled=false -e ai_desktop_manage_user=false`，再执行 `deploy-ai-aggregator-v1.yml`；只准备基线、目录、systemd、路由和临时凭据，不启用公网流量。
+4. `OAuth`：操作者分别进入四个 CPA 的 AI Desktop 会话，完成对应账号登录；OAuth bundle 只写入该实例本地加密 `auth/` 目录，绝不复制到 Vault 或 Git。
+5. `validate`：检查本地 auth、CPA 健康、New API channel、Kong 租户 Token、三类协议和故障隔离。
+6. `activate`：仅在人工确认四个 OAuth 与 smoke test 后启动生产链路；Prod 需要 environment approval，UAT 资源仍受 60 分钟自动销毁约束。
+
+### CPA 节点基线的实际执行关系
+
+```text
+deploy_ai_desktop.yml -e ai_desktop_cpa_codeagent=true -e ai_desktop_remote_enabled=false
+  └─ roles/vhosts/ai_desktop
+       ├─ XFCE/XRDP
+       ├─ roles/ai_agent_runtime   → Codex / Claude Code Runtime
+       └─ roles/vhosts/node_exporter
+  └─ deploy-ai-aggregator-v1.yml
+       └─ roles/vhosts/ai_aggregator_v1 → 单账号 CPA / 本地 auth / CodeAgent workspace
+```
+
+Grok 在 v1 中作为 CPA provider/channel 纳入矩阵；仓库现有 Agent Runtime 没有预设一个未经审核的 Grok CLI npm 包，因此不会伪造或自动安装该包。Grok CPA 的账号登录和适配由 CPA 节点承载，待确定受信任 CLI 制品后再追加到该节点的 CodeAgent 包清单。
+
+为避免新增桌面密码类凭据，流水线在云节点上默认关闭 XRDP 的密码登录，保留 XFCE、浏览器和 Agent Runtime 基线；OAuth 人工操作通过受控 SSH 会话完成。若后续确需图形化 XRDP，只能从现有加密 inventory/Vault contract 注入密码，并且只允许私网或 SSH 隧道访问，禁止开放公网 `3389`。
+
 ---
 
 ## 一、目标、调用链路与部署模式
