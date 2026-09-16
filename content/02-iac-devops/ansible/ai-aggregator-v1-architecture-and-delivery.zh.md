@@ -15,22 +15,24 @@ v1 公共入口只有 Caddy；Cloudflare Worker/Pages、Cloud Run、Bedrock、Ve
            ▼
    [ Caddy 网关 (:443) ]
            │
-           │ 127.0.0.1 内部转发 (API 直通 Bearer / Console 叠加 Basic Auth)
+           │ 127.0.0.1 内部转发（仅 TLS 终止与 IP 白名单）
            ▼
-  [ New API (:3000) ] ── (Token 校验 / 模型稳定映射 / 统一日志 / PostgreSQL 状态)
+  [ Kong (:8000) ] ── (JWT/Key Auth / Tenant ACL / Rate Limit / Audit Metadata)
+           ├── [ New API (:3000) ] ── (模型别名 / CPA Channel / PostgreSQL 状态)
            │
            │ 私网 / WireGuard / 宿主 loopback (禁止公网直接暴露)
            ├── CPA Codex 逻辑 Channels (:8317/:8320) ── 节点加密 auth ──► OpenAI / Codex 账号实例
            ├── CPA Claude Code 逻辑 Channel (:8318)   ── 节点加密 auth ──► Anthropic / Claude 账号实例
            └── CPA Grok 逻辑 Channel (:8319)          ── 节点加密 auth ──► xAI / Grok 账号实例
 
- [ Caddy direct.ai.* ] ──► LiteLLM (:4000) ──► 官方 OpenAI / Anthropic / xAI API
+ [ Caddy direct.ai.* ] ──► [ Kong (:8000) ] ──► LiteLLM (:4000) ──► 官方 OpenAI / Anthropic / xAI API
 ```
 
 这里是两条并列的聚合承载链路：`New API → CPA` 面向订阅账号和 CLI/IDE
-应用适配，`LiteLLM` 面向官方 API 的统一协议、模型路由和直连调用；LiteLLM
-不作为 CPA 的前置代理，二者也不互相串联。客户端根据需要选择 `ai.*` 或
-`direct.ai.*`，但两者都必须经过 Caddy 的 HTTPS、IP 白名单和独立 token 校验。
+应用适配，`LiteLLM` 面向官方 API 的统一协议、模型路由和直连调用；Kong
+只负责多租户入口访问控制，不承担 Provider 聚合。LiteLLM 不作为 CPA 的前置代理，
+二者也不互相串联。客户端根据需要选择 `ai.*` 或 `direct.ai.*`，但两者都必须经过
+Caddy 的 HTTPS、IP 白名单和 Kong 的统一 Token 校验。
 
 外部客户端只看到两个受控聚合入口之一（`https://ai.svc.plus` 或
 `https://direct.ai.svc.plus`）和分发的业务 Key（`sk-client-xxxxxxxx`），完全不知道底层的
@@ -42,14 +44,14 @@ v1 的完成定义包含“第三方客户端可配置接入”，而不仅是�
 
 | 客户端 | 推荐入口 | 北向协议 | 默认链路 | 备注 |
 | :--- | :--- | :--- | :--- | :--- |
-| Claude Code / Claude SDK | `https://ai.svc.plus` | Anthropic Messages (`/v1/messages`) | New API → CPA Claude | 使用独立 client token；不得把账号 OAuth 放到客户端 |
-| Codex CLI / OpenAI SDK | `https://ai.svc.plus/v1` | OpenAI Responses / Chat | New API → CPA Codex | 使用 `codex-main` 稳定别名 |
-| Android Studio Third-Party Remote Provider | `https://direct.ai.svc.plus/v1` | OpenAI-compatible Chat / Models | LiteLLM → 官方 API | 使用 `anthropic-api` 等已声明模型并刷新模型列表 |
+| Claude Code / Claude SDK | `https://ai.svc.plus` | Anthropic Messages (`/v1/messages`) | Kong → New API → CPA Claude | 使用租户 JWT/Key；不得把账号 OAuth 放到客户端 |
+| Codex CLI / OpenAI SDK | `https://ai.svc.plus/v1` | OpenAI Responses / Chat | Kong → New API → CPA Codex | 使用 `codex-main` 稳定别名 |
+| Android Studio Third-Party Remote Provider | `https://direct.ai.svc.plus/v1` | OpenAI-compatible Chat / Models | Kong → LiteLLM → 官方 API | 使用 `anthropic-api` 等已声明模型并刷新模型列表 |
 | 其他 IDE / SDK / Web SaaS | `https://direct.ai.svc.plus/v1` 或 `https://ai.svc.plus/v1` | OpenAI-compatible | 按 client profile 选择并列承载链路 | 只发放设备或应用级 token |
 
 Claude Code 的 gateway 配置使用 `ANTHROPIC_BASE_URL` 和 `ANTHROPIC_AUTH_TOKEN`，其中 token 由本机密钥链或 Vault helper 提供；不写入项目文件。Android Studio 的远程模型配置需要 HTTPS API endpoint、API key，并通过 `/v1/models` 刷新模型；因此 Caddy、模型列表和 Bearer token 校验都是 v1 验收项。详见 [Anthropic LLM gateway configuration](https://docs.anthropic.com/en/docs/claude-code/llm-gateway) 和 [Android Studio remote model](https://developer.android.com/studio/gemini/use-a-remote-model)。
 
-GitOps 中的 `client_profiles` 是非敏感接入契约；实际 client token 由 New API 管理并保存其哈希到 PostgreSQL，Vault 不保存客户端 token。客户端接入前必须通过固定 IP 白名单，客户端配置不得包含 CPA 地址、OAuth token 或数据库凭据。
+GitOps 中的 `client_profiles` 是非敏感接入契约；实际租户/应用 Token 由 Kong Consumer 管理并保存到 Kong PostgreSQL，Vault 不保存客户端 token。客户端接入前必须通过固定 IP 白名单，客户端配置不得包含 CPA 地址、OAuth token、Kong Admin 凭据或数据库凭据。
 
 推荐接入方式：
 
@@ -127,6 +129,7 @@ spec:
 | 组件 | CPU 预留 | 内存预留 | 磁盘占用 | 关键说明 |
 | :--- | :--- | :--- | :--- | :--- |
 | **Caddy** | 0.1–0.3 核 | 30–80 MB | 极少 | 仅做 TLS、IP 白名单与反向代理，开销极低 |
+| **Kong** | 0.2–0.5 核 | 150–300 MB | 0.5–2 GB | PostgreSQL-backed 多租户认证、ACL、限流、审计元数据；不使用 etcd |
 | **New API** | 0.5–1 核 | 150–400 MB | 1–5 GB | PostgreSQL 状态库，数据库连接从 Vault 注入 |
 | **LiteLLM** | 0.5–1 核 | 200–600 MB | 1–5 GB | 直接聚合 OpenAI/Anthropic/xAI API，数据库独立 |
 | **单个 CPA 实例** | 0.3–1 核 | 100–300 MB | 100–500 MB | 纯协议适配层开销轻量，OAuth 状态保存在节点加密目录 |
@@ -134,7 +137,7 @@ spec:
 | **系统与日志余量**| 1 核 | 1–2 GB | 5–10 GB | 保障 OS 稳定、监控探针与轮转日志安全 |
 
 - **最低可运行配置 (2 vCPU / 4 GB RAM / 40 GB SSD)**: 承载 Caddy + New API + 1 个 CPA 实例。
-- **推荐 Gateway 配置 (4 vCPU / 8 GB RAM / 80 GB SSD)**: 承载 Caddy + New API + LiteLLM。
+- **推荐 Gateway 配置 (4 vCPU / 8 GB RAM / 80 GB SSD)**: 承载 Caddy + Kong + New API + LiteLLM。
 - **每个 CPA 节点建议 (2 vCPU / 2–4 GB RAM / 40 GB SSD)**: 承载一个 CPA + 一个 CodeAgent CLI 账号实例。
 - **多实例横向扩展规则**: 每增加 1 个 CPA + CLI 实例，追加预留 `+1 vCPU`、`+512 MB 至 1 GB RAM`、`+5 GB SSD`。
 
@@ -148,14 +151,12 @@ spec:
 - `0.0.0.0:443` (Caddy HTTPS 唯一对外入口)
 - **严禁外部监听**：`0.0.0.0:3000` (New API) ❌, `0.0.0.0:8317-8319` (CPA) ❌。必须严格绑定 `127.0.0.1` 或加密私网。
 
-### 2. Caddy 双域名与双层认证防御
-- **API 路径 (`/v1/*`, `/v1beta/*`)**:
-  - 反向代理至 New API `:3000`，由 New API 严格校验客户端 Bearer Token。
-- **直接 API 域名 (`direct.ai.*`)**:
-  - `/v1/*` 反向代理至 LiteLLM `:4000`，由 LiteLLM 校验 direct API key。
-- **管理控制台 (`/`, `/console/*`)**:
-  - 在 Caddy 层叠加 **Basic Auth**，然后再反代至 New API 后台，形成 **Caddy Basic Auth + New API Admin Login** 双层防护。
-  - Caddy 使用物理连接源 IP 判定白名单；客户端自报 `X-Forwarded-For` 无效。空白名单部署直接阻断。
+### 2. Caddy 与 Kong 的单一职责
+- **Caddy**：只做 HTTPS、证书、物理源 IP 白名单和安全 Header；两个域名统一反代至 Kong `127.0.0.1:8000`，不再维护 New API/LiteLLM 的路径分流，也不校验业务 Token。
+- **Kong**：只做 JWT/Key Auth、Tenant ACL、请求/并发限流、Host Route 和审计元数据；Admin API `127.0.0.1:8001`，不对公网开放。
+- **AI 路由**：`ai.* → Kong → New API → CPA`；`direct.ai.* → Kong → LiteLLM → 官方 API`。
+- **管理面**：Caddy 不发布 Kong Admin、New API Admin 或 LiteLLM Admin；运维通过 SSH port-forward 或节点本地访问。Kong 的租户 Consumer/ACL 配置进入 Kong PostgreSQL，由受控同步任务维护。
+- Caddy 使用物理连接源 IP 判定白名单；客户端自报 `X-Forwarded-For` 无效。空白名单部署直接阻断。
 
 ### 3. CPA Management API 彻底关闭
 - CPA 默认暴露的 `/v0/management` 必须在配置文件中彻底禁用公网访问：
@@ -168,7 +169,46 @@ spec:
 
 ---
 
-## 五、多账号池与路由治理最佳实践
+## 五、Kong 最小多租户实施设计
+
+### 1. 部署模式
+
+Kong 使用 Traditional DB-backed 模式，PostgreSQL 只保存 Kong 的 Routes、Services、Consumers、ACL 和 Plugin 配置；不部署 etcd、Kong hybrid control plane、Kong Manager 或 Redis。Kong Proxy 监听 `127.0.0.1:8000`，Admin API 监听 `127.0.0.1:8001`，两个端口均不进入公网防火墙。
+
+Gateway PostgreSQL 集群内使用独立数据库和用户：
+
+```text
+kong       → Kong 路由、Consumer、ACL、插件配置
+new_api    → New API 业务状态和 CPA channel
+litellm    → LiteLLM 用量、成本和 Provider 状态
+```
+
+### 2. 单一职责
+
+| 组件 | v1 唯一职责 | 不承担 |
+| :--- | :--- | :--- |
+| Caddy | TLS、证书、物理源 IP 白名单、安全 Header、转发至 Kong | Token、租户路由、模型路由、Prompt 日志 |
+| Kong | JWT/Key Auth、Tenant ACL、请求限流、Host Route、审计元数据 | CPA OAuth、Provider API Key、模型成本、CPA 调度 |
+| New API | CPA Claude/GPT/Grok 聚合、Model Alias、CPA Channel、Account Health | 官方 API 直连聚合 |
+| LiteLLM | OpenAI/Anthropic/xAI 官方 API 聚合、Retry、Usage/Cost | CPA 前置代理、租户入口认证 |
+| CPA | 一实例一账号、本地 OAuth auth、上游协议适配 | 集中式 OAuth Vault、公共入口、租户账务 |
+
+### 3. 多租户配置边界
+
+GitOps 只声明租户的 `tenant_id`、应用、允许入口、模型别名、限流策略和启停状态；受控同步任务负责将 Kong Consumer、ACL membership、JWT 公钥凭据、JWT `jti` 和吊销状态写入 Kong/PostgreSQL。JWT bearer token 本身不存储；原始 OAuth Token、Provider API Key 不进入 Git、Terraform state、systemd unit 或 CI artifact。
+
+Kong v1 同时保留 `jwt` 和 `key-auth` 的契约，但每个环境只启用一种入口认证模式；默认使用 JWT。未完成租户凭据同步时，认证 Route 保持拒绝请求，不允许匿名回退。Kong AI Proxy v1 关闭，LiteLLM 是唯一官方 Provider 聚合器。
+
+### 4. 运行路由
+
+```text
+ai.<env-domain>          → Kong Host Route → New API → CPA
+direct.ai.<env-domain>   → Kong Host Route → LiteLLM → 官方 API
+```
+
+Kong Route 只按 Host 和 `/v1` 路径匹配；Caddy 不再重复维护 New API/LiteLLM 上游地址。Kong Admin API 只在本机可访问，基础 Route/Plugin 由 Ansible 通过 loopback Admin API 幂等对账，租户 Consumer/ACL/JWT credential 由独立受控同步任务管理。
+
+## 六、多账号池与路由治理最佳实践
 
 ### 1. 单层调度原则（收敛于 CPA）
 - 每个 CPA 实例严格绑定一个账号；多个 CPA 实例通过 New API 的多个同类 channel 实现横向扩展。
@@ -189,11 +229,11 @@ spec:
   - 保留 `/v1/models`：供客户端自动发现能力。
 
 ### 4. 设备级 API Key 隔离
-- 严禁全局共用单一 Master Key。按客户端与设备独立派发专属 Key（`sk-macbook-xxx`, `sk-desktop-xxx`），单设备密钥泄露时可在 New API 秒级单独吊销。
+- 严禁全局共用单一 Master Key。按租户、客户端与设备在 Kong Consumer 中独立派发 Token（`tenant/application/device`），单设备凭据泄露时只吊销对应 Consumer；New API/LiteLLM Master Key 仅用于内部服务通信。
 
 ---
 
-## 六、账号矩阵与 Vault 凭据平面
+## 七、账号矩阵与 Vault 凭据平面
 
 ### 1. 账号矩阵（非敏感声明）
 | 实例 ID | 平台 / 账号别名 | node_ref | 本机端口 | 数据库记录 |
@@ -212,12 +252,12 @@ v1 只允许以下路径：
 
 - `kv/<env>/ai-aggregator/database/new-api`: `dsn`。
 - `kv/<env>/ai-aggregator/database/litellm`: `dsn`。
-- `kv/<env>/ai-aggregator/gateway/caddy`: `admin_basic_auth_hash`。
+- `kv/<env>/ai-aggregator/database/kong`: `dsn`。
 - `kv/<env>/ai-aggregator/gateway/new-api`: `session_secret`, `crypto_secret`, `jwt_private_key`, `jwt_issuer`, `jwt_audience`。
 - `kv/<env>/ai-aggregator/gateway/litellm`: `master_key`, `proxy_secret`。
 - `kv/<env>/ai-aggregator/litellm/providers/<provider>`: `endpoint`, `api_key`（仅 `openai`、`anthropic`、`xai`）。
 
-`accounts/<id>`、`instances/<id>`、`clients/<id>` 是 PostgreSQL 中的动态逻辑记录，不是 Vault KV 路径。数据库保存账号邮箱、Provider、CLI、节点、端口、状态、模型映射、client token 哈希、JWT `jti` 与吊销状态；不得保存 OAuth token 明文。
+`accounts/<id>`、`instances/<id>`、`clients/<id>` 是 PostgreSQL 中的动态逻辑记录，不是 Vault KV 路径。数据库保存账号邮箱、Provider、CLI、节点、端口、状态、模型映射、Kong Consumer/token hash、JWT `jti` 与吊销状态；不得保存 OAuth token 明文。
 
 CPA OAuth 不集中写入 Vault 或数据库。每个 CPA 节点由操作者完成 Provider 登录，OAuth bundle 只保存在 `/var/lib/ai-aggregator/cpa/<id>/auth/` 的节点加密目录中。New API 用 Vault 中的 JWT 私钥动态签发短期、实例级 channel JWT；CPA 仅用节点上的非敏感公钥验证。不得将任何 secret 写入 Git、文档、Terraform state、CI artifact、Ansible facts 或 systemd unit。
 
@@ -228,7 +268,7 @@ CPA OAuth 不集中写入 Vault 或数据库。每个 CPA 节点由操作者完�
 - `ai_aggregator_instances` 与 `ai_aggregator_accounts` 为一对一绑定；一个账号不得同时绑定多个活动 CPA 实例。
 
 ### 3. 凭据隔离与动态 JWT 约束
-1. **最小权限**: Gateway 运行身份只能读取本环境的 `database/*`、`gateway/*` 和 `litellm/providers/*`；CPA 不需要 Vault 读取权限。
+1. **最小权限**: Kong 只读取本环境的 `database/kong`；New API 只读取 `database/new-api` 与 `gateway/new-api`；LiteLLM 只读取 `database/litellm`、`gateway/litellm` 与 `litellm/providers/*`；CPA 不需要 Vault 读取权限。
 2. **运行时存储**: Gateway 临时凭据只允许落在 `/run/ai-aggregator/` tmpfs；CPA OAuth 保存在节点级加密的 `/var/lib/ai-aggregator/cpa/<id>/auth/`，文件属主为对应 CPA 用户、权限 `0700`。
 3. **动态 JWT**: New API 使用 Vault 私钥签发短期 JWT，CPA 使用非敏感公钥校验 `issuer`、实例级 `audience`、`exp` 和 `jti`；过期、错实例和重放必须拒绝。
 4. **OAuth 生命周期**: UAT Spot 销毁后 OAuth 随节点销毁；Prod 持久节点重启后从本地加密目录恢复。节点丢失或 Provider refresh 失效时必须人工重新登录。
@@ -238,7 +278,7 @@ CPA OAuth 不集中写入 Vault 或数据库。每个 CPA 节点由操作者完�
 
 ---
 
-## 七、四仓库协作与流水线闭环 (Delivery Pipeline)
+## 八、四仓库协作与流水线闭环 (Delivery Pipeline)
 
 ### 1. 仓库职责与事实源
 | 仓库 | 关键路径 | 核心职责 |
@@ -260,7 +300,7 @@ CPA OAuth 不集中写入 Vault 或数据库。每个 CPA 节点由操作者完�
 ```
 
 - **Stage 阶段防呆**: GitOps 未启用 (`enabled: false`)、IP 白名单为空、制品缺少 SHA-256 校验和、或 New API 启动命令未固定 loopback 时，Stage 必须直接阻断。
-- **Activate 顺序**: Gateway Vault 凭据注入 tmpfs 就绪 ──► CPA 本地 auth 与 JWT 公钥就绪并启动 ──► LiteLLM 启动 ──► New API 启动并绑定 127.0.0.1 ──► Caddy validate 检查通过并 reload。
+- **Activate 顺序**: Gateway Vault 凭据注入 tmpfs 就绪 ──► Kong PostgreSQL migration 与启动 ──► Kong 两个 Host Route/认证/限流插件对账 ──► CPA 本地 auth 就绪并启动 ──► LiteLLM 启动 ──► New API 启动并绑定 127.0.0.1 ──► Caddy validate 检查通过并 reload。
 
 ### 3. GitOps 如何声明和使用资源
 
@@ -278,17 +318,17 @@ Vultr/GCP contract 只作为后续 provider adapter 的声明入口，v1 不自�
 
 ---
 
-## 八、验收矩阵与排障清单 (Acceptance Checklist)
+## 九、验收矩阵与排障清单 (Acceptance Checklist)
 
 | 验证项 | 成功条件 | 检查方法 |
 | :--- | :--- | :--- |
 | **静态校验** | YAML/schema、Ansible syntax、模板渲染、systemd/Caddy 配置检查通过 | Toolkit 校验脚本 & `ansible-playbook --syntax-check` |
 | **网络边界** | 公网直接访问 `:3000` (New API) 或 `:8317-8319` (CPA) 超时或拒绝；宿主机仅监听 22/80/443 | `ss -lntp` 检查监听地址 |
 | **IP 白名单** | 非白名单 IP 访问 Caddy `:443` 返回 `403 Forbidden`；伪造 `X-Forwarded-For` 头无效 | curl 模拟非白名单 IP 测试 |
-| **双层防御** | 访问后台控制台触发 Caddy Basic Auth；通过后方可进入 New API 登录页 | 浏览器访问 `/console` 或 `/` |
+| **管理面隔离** | Kong Admin、New API Admin、LiteLLM Admin 均不经公网 Caddy 发布，仅通过 SSH port-forward 或节点本地访问 | 检查公网路由与 `127.0.0.1:8001` |
 | **Token 鉴权** | 白名单内 IP 缺少或使用错误 Bearer Token 时返回 `401 Unauthorized`；有效 Token 正常响应 | curl 带/不带 Bearer 验证 |
 | **模型与协议** | `/v1/models` 返回与 GitOps 声明一致；`/v1/responses` 与 `/v1/messages` SSE 流式交互与 Tool Calling 正常 | 真实流式客户端交互测试 |
-| **第三方客户端** | Claude Code 能完成一次 Messages 请求；Android Studio 能刷新 `/v1/models` 并完成 Chat/Agent 请求；OpenAI-compatible SDK 能完成 Chat/Responses 请求 | 使用对应 `client_profiles` 与独立 client token 验证 |
+| **第三方客户端** | Claude Code 能完成一次 Messages 请求；Android Studio 能刷新 `/v1/models` 并完成 Chat/Agent 请求；OpenAI-compatible SDK 能完成 Chat/Responses 请求 | 使用对应 `client_profiles` 与 Kong Consumer Token 验证 |
 | **单层调度** | 多次并发请求，CPA 内部多账号正常轮询，New API 仅感知单一 Channel，日志无调度冲突报错 | 查看 New API 渠道日志 |
 | **故障隔离** | 模拟单个 CPA 进程停止 (`systemctl stop cliproxyapi-cpa-codex-01.service`)，仅该模型 Channel 返回不可用，其余 CPA 和 LiteLLM 链路正常 | systemd 进程停止实验 |
 | **凭据持久化** | 检查持久盘 `/var/lib`、systemd unit、环境文件及日志，确认不存在任何明文 Token / OAuth 凭据 | 磁盘与文件 grep 扫描 |
@@ -296,7 +336,7 @@ Vultr/GCP contract 只作为后续 provider adapter 的声明入口，v1 不自�
 
 ---
 
-## 九、备份与待实施状态
+## 十、备份与待实施状态
 
 1. **数据库备份**: New API 与 LiteLLM 使用独立 PostgreSQL 数据库和用户；升级前分别执行一致性备份，备份流直接加密并通过 Vault 中的备份凭据写入受控存储，严禁生成明文 SQL dump。
 2. **OAuth 凭据备份**: 不进入 Vault。Prod 节点依赖加密磁盘；禁止把 auth 目录打包到 CI artifact 或普通备份。节点丢失时通过人工 OAuth 恢复。
@@ -306,7 +346,7 @@ Vultr/GCP contract 只作为后续 provider adapter 的声明入口，v1 不自�
 
 ---
 
-## 十、后续云原生与 Serverless 演进（非 v1 运行链路）
+## 十一、后续云原生与 Serverless 演进（非 v1 运行链路）
 
 本节只记录后续演进选项。Cloudflare Worker/Pages、GCP Cloud Run、Supabase 不属于 v1 部署路径，不能替换 v1 的 Caddy、宿主持久进程或 PostgreSQL 运行约束。
 
@@ -364,7 +404,7 @@ Vultr/GCP contract 只作为后续 provider adapter 的声明入口，v1 不自�
 
 ---
 
-## 十一、v1 事实模型与后续演进边界
+## 十二、v1 事实模型与后续演进边界
 
 以下云原生拓扑仅作为未来拆分参考；v1 的事实拓扑仍是“Caddy → New API → CPA”与“Caddy → LiteLLM”，且 Caddy 是唯一公网 HTTPS 入口。
 
@@ -420,7 +460,7 @@ AI 聚合服务体系确立了“凭据平面（Vault）”与“声明平面（
 
 ---
 
-## 十二、实施闭环与当前状态
+## 十三、实施闭环与当前状态
 
 交付顺序固定为：
 
