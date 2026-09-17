@@ -255,7 +255,7 @@ jobs:
 
 * **多云声明式 IaC 模块库**：`github.com/ai-workspace-infra/iac_modules`
 * **跨云 Serverless 穿透与网络控制面**：`github.com/ai-workspace-infra/global-mesh`（控制台演示：`console-serverless-uat.onwalk.net/panel/global-mesh`）
-* **异构小鸡配置收敛剧本**：`github.com/ai-workspace-infra/playbooks`
+* **异构 VPS 配置收敛剧本**：`github.com/ai-workspace-infra/playbooks`
 * **AI 驱动的自动化迁移与 FinOps 巡检工具**：`github.com/ai-workspace-infra/platform-ops-toolkit`
 * **零凭据声明式 GitOps 流水线**：`github.com/ai-workspace-infra/gitops`
 
