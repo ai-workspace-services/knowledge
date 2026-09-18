@@ -1,5 +1,6 @@
-# 为什么成熟的 Tailscale 与纯 WireGuard 都不够用？我选择自建 Zero 零信任私网
+# 一个人、4台设备、5端全平台（一）：成熟方案为何不够？自建零信任私网
 
+> **原题**：为什么成熟的 Tailscale 与纯 WireGuard 都不够用？我选择自建 XConnect Zero 零信任私网  
 > **作者**：沈蓝（IT 运维老兵 / 独立开发者）  
 > **分类**：架构实践 / 网络工程 / 独立开发产品日志  
 > **关键词**：WireGuard, Tailscale, Zero Trust, XConnect Zero, UDP QoS, 混合云, 多端测试  
