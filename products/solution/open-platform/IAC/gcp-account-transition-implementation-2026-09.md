@@ -544,11 +544,12 @@ upstream 的链路。公开 canonical DNS cutover 不属于本次。
 | 单 VM 成本方案 | 未开始 | 尚未创建 VM、部署 Compose、压测或切换 origin |
 
 当前结论：两个目标项目已经创建并可读，账单、组织、区域和必需 API 已对齐；无关项目清理已完成。
-GitOps canonical audience 修复（PR #307）、Terraform state 导入幂等修复（PR #1010）和 bootstrap
-GitOps ref 修复（PR #1011）已合并。UAT 已完成 bootstrap，但首次 Cloud Run redeploy 在 GCP
+GitOps canonical audience 修复（PR #307）、Terraform state 导入幂等修复（PR #1010）、bootstrap
+GitOps ref 修复（PR #1011）、显式短期 token pre-check（PR #1012）和目标项目镜像构建发布（PR
+#1013）已合并。UAT 已完成 bootstrap，但首次 Cloud Run redeploy 在 GCP
 认证阶段被旧 audience 拒绝；需在新账号授权后按最新 GitOps ref 重新 apply UAT/PROD WIF，随后重跑
-UAT/PROD Cloud Run。PROD 的 WIF provider、runtime KV、Artifact Registry、镜像、Cloud Run 服务
-和域名 upstream 仍未就绪。
+UAT/PROD Cloud Run。目标 Artifact Registry 需先创建 `serverless` repository；PROD 的 WIF
+provider、runtime KV、镜像、Cloud Run 服务和域名 upstream 仍未就绪。
 
 当前新账号可见的开放账单账号有 `01180B-F40C7F-BADE24`（UAT/PROD 当前使用）和
 `01E22A-D31C1A-B94A52`。UAT 已沿用 PROD 账单账号并完成绑定；如未来需要改绑，再由项目负责人
