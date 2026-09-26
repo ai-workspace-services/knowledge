@@ -539,22 +539,22 @@ upstream 的链路。公开 canonical DNS cutover 不属于本次。
 | UAT bootstrap KV | 已清理 | apply 后 token 已撤销并 scrub，仅保留项目校验字段；不记录 token |
 | PROD bootstrap KV | 已清理 | apply 后 token 已 scrub，仅保留项目校验字段；不记录 token |
 | GCP bootstrap token | 已绕过 | 本地 CLI 使用新账号完成部署；后续 bootstrap 不再依赖过期 ADC，使用 GitHub OIDC/WIF |
-| Cloud Run upstream | 通过 | GitOps PR #308 已将 UAT/PROD serverless、hybrid、selfhost fallback 更新为新 `asia-east1` `run.app` URL |
+| Cloud Run upstream | 通过 | GitOps PR #308 已将 UAT/PROD serverless、hybrid、selfhost fallback 更新为新 `asia-east1` `run.app` URL；PR #309 清理了 UAT 旧项目 ID 与 Terraform state namespace |
 | 镜像 | 通过 | UAT 使用 `daily-build-2026.09.25-r1`；PROD 使用 `v2026.09.13-r4`，六个服务均部署成功 |
 | 单 VM 成本方案 | 未开始 | 尚未创建 VM、部署 Compose、压测或切换 origin |
 
-当前结论：账号、项目、账单、区域、API、WIF、Vault、Artifact Registry 和 Cloud Run 部署均已完成；平台修复 PR #1014、#1015 已合并。UAT 部署运行 `36242316355`，PROD 部署运行 `36242819576`，两次运行的 Cloud Run、Gate 和 Verify/Summary 均成功。
+当前结论：账号、项目、账单、区域、API、WIF、Vault、Artifact Registry 和 Cloud Run 部署均已完成；平台修复 PR #1014、#1015、#1016 已合并。UAT 部署运行 `36242316355`，PROD 部署运行 `36242819576`，两次运行的 Cloud Run、Gate 和 Verify/Summary 均成功。
 
 ## 5.1 本次部署与公网链路核验记录（2026-09-26）
 
 | 环境 | 服务 | 项目 / 区域 | 最新就绪修订 | 运行时身份 | 镜像 | 入口状态 |
 |---|---|---|---|---|---|---|
-| UAT | `uat-accounts` | `open-platform-uat / asia-east1` | `uat-accounts-00001-q2g` | `142822217216-compute@developer.gserviceaccount.com` | `asia-east1-docker.pkg.dev/open-platform-uat/serverless/accounts:daily-build-2026.09.25-r1` | 100% 最新修订；Ingress `all`；未授权请求 403 |
-| UAT | `uat-content-service` | `open-platform-uat / asia-east1` | `uat-content-service-00001-ffm` | 同上 | `asia-east1-docker.pkg.dev/open-platform-uat/serverless/content-service:daily-build-2026.09.25-r1` | 100% 最新修订；Ingress `all`；未授权请求 403 |
-| UAT | `uat-billing-service` | `open-platform-uat / asia-east1` | `uat-billing-service-00001-rnh` | 同上 | `asia-east1-docker.pkg.dev/open-platform-uat/serverless/billing-service:daily-build-2026.09.25-r1` | 100% 最新修订；Ingress `all`；未授权请求 403 |
-| PROD | `prod-accounts` | `open-platform-prod / asia-east1` | `prod-accounts-00001-l4q` | `986070475391-compute@developer.gserviceaccount.com` | `asia-east1-docker.pkg.dev/open-platform-prod/serverless/accounts:v2026.09.13-r4` | 100% 最新修订；Ingress `all`；未授权请求 403 |
-| PROD | `prod-content-service` | `open-platform-prod / asia-east1` | `prod-content-service-00001-thr` | 同上 | `asia-east1-docker.pkg.dev/open-platform-prod/serverless/content-service:v2026.09.13-r4` | 100% 最新修订；Ingress `all`；未授权请求 403 |
-| PROD | `prod-billing-service` | `open-platform-prod / asia-east1` | `prod-billing-service-00001-ktq` | 同上 | `asia-east1-docker.pkg.dev/open-platform-prod/serverless/billing-service:v2026.09.13-r4` | 100% 最新修订；Ingress `all`；未授权请求 403 |
+| UAT | `uat-accounts` | `open-platform-uat / asia-east1` | `uat-accounts-00001-q2g` | `142822217216-compute@developer.gserviceaccount.com` | `asia-east1-docker.pkg.dev/open-platform-uat/serverless/accounts:daily-build-2026.09.25-r1` | 100% 最新修订；Ingress `all`；Invoker IAM check disabled；`/readyz` 200 |
+| UAT | `uat-content-service` | `open-platform-uat / asia-east1` | `uat-content-service-00001-ffm` | 同上 | `asia-east1-docker.pkg.dev/open-platform-uat/serverless/content-service:daily-build-2026.09.25-r1` | 100% 最新修订；Ingress `all`；Invoker IAM check disabled；`/readyz` 200 |
+| UAT | `uat-billing-service` | `open-platform-uat / asia-east1` | `uat-billing-service-00001-rnh` | 同上 | `asia-east1-docker.pkg.dev/open-platform-uat/serverless/billing-service:daily-build-2026.09.25-r1` | 100% 最新修订；Ingress `all`；Invoker IAM check disabled；`/readyz` 200 |
+| PROD | `prod-accounts` | `open-platform-prod / asia-east1` | `prod-accounts-00001-l4q` | `986070475391-compute@developer.gserviceaccount.com` | `asia-east1-docker.pkg.dev/open-platform-prod/serverless/accounts:v2026.09.13-r4` | 100% 最新修订；Ingress `all`；Invoker IAM check disabled；`/readyz` 200 |
+| PROD | `prod-content-service` | `open-platform-prod / asia-east1` | `prod-content-service-00001-thr` | 同上 | `asia-east1-docker.pkg.dev/open-platform-prod/serverless/content-service:v2026.09.13-r4` | 100% 最新修订；Ingress `all`；Invoker IAM check disabled；`/readyz` 200 |
+| PROD | `prod-billing-service` | `open-platform-prod / asia-east1` | `prod-billing-service-00001-ktq` | 同上 | `asia-east1-docker.pkg.dev/open-platform-prod/serverless/billing-service:v2026.09.13-r4` | 100% 最新修订；Ingress `all`；Invoker IAM check disabled；`/readyz` 200 |
 
 实际 Cloud Run URL：
 
@@ -563,7 +563,7 @@ upstream 的链路。公开 canonical DNS cutover 不属于本次。
 
 `https://console.svc.plus/` 返回 `200`，响应标记为 `x-frontend-route: ssr-public`；访问 `https://console.svc.plus/api/v1/health` 返回 `404` 且带有 `x-upstream-route: cloud-run-serverless` 和 Cloud Trace 标记，证明公网入口已将 API 请求送入 Serverless Cloud Run 链路。未携带业务 Bearer token 的 `/api/health` 返回 `401`，符合认证边界。
 
-GitOps PR [#308](https://github.com/ai-workspace-infra/gitops/pull/308) 已合并（merge commit `9af3d466c63ccc8d8c1a173636709b85ec73d1cd`），更新了 UAT/PROD 的 serverless、hybrid、selfhost Cloud Run origin 与 fallback upstream。GitOps PR [#309](https://github.com/ai-workspace-infra/gitops/pull/309) 已合并（merge commit `869719c731de65656bf7e0fa4558c0b98fdc3eec`），清理了 UAT workload 声明中的旧项目 ID 与 Terraform state namespace；JP/SG/US 区域型 agent-proxy 的区域保持不变。
+GitOps PR [#308](https://github.com/ai-workspace-infra/gitops/pull/308) 已合并（merge commit `9af3d466c63ccc8d8c1a173636709b85ec73d1cd`），更新了 UAT/PROD 的 serverless、hybrid、selfhost Cloud Run origin 与 fallback upstream。PR [#309](https://github.com/ai-workspace-infra/gitops/pull/309) 已合并（merge commit `869719c731de65656bf7e0fa4558c0b98fdc3eec`），清理了 UAT 旧项目 ID 与 Terraform state namespace。
 
 ## 5.2 运行时环境变量与 Secret 引用核验
 
@@ -577,13 +577,18 @@ GitOps PR [#308](https://github.com/ai-workspace-infra/gitops/pull/308) 已合�
 
 ## 5.3 Cloudflare 公网链路复核结果
 
-Cloudflare-only redeploy 使用正式控制面标签 `v2026.09.26-r2`，运行 `36244010766`。Frontend Router、SSR、Edge Gateway、Pages 和 custom-domain reconcile 均成功；最终公网 CORS 校验失败，不能把本次运行标记为完整链路通过。
+初次 Cloudflare-only redeploy 使用正式控制面标签 `v2026.09.26-r2`，运行 `36244010766`；当时因组织策略拒绝 `allUsers` IAM 成员而在最终公网校验失败。平台 PR [#1016](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1016) 已将 Cloud Run 部署脚本改为 `--no-invoker-iam-check`，不写入 `allUsers` binding，兼容组织 `constraints/iam.allowedPolicyMemberDomains`。
 
-- 新项目的 Cloud Run 服务直接访问返回 403。尝试添加 `allUsers` 的 `roles/run.invoker` 时被 Organization Policy `constraints/iam.allowedPolicyMemberDomains` 拒绝；当前组织策略只允许客户 `C03o77np9` 的成员。
-- 这意味着旧截图中的“公开访问”设置不能直接复制到新项目。需要组织管理员为目标项目提供公开 invoker 例外，或为 Cloudflare Edge Gateway 配置受支持的 GCP 身份认证后再重跑公网验证。
-- `xworktech.com/ai-workspace?entry=trial` 当前仍返回 302 到 `https://svc.plus/ai-workspace?entry=trial`，与生产校验脚本要求的同源 200 不一致；这属于现有域名契约问题，需单独确认 canonical platform origin 后修正。
+随后对 UAT/PROD 六个服务逐一更新该 annotation，`run.googleapis.com/invoker-iam-disabled=true`，IAM policy 不含 `allUsers`，且保持原有 Ready revision 与 100% 流量。UAT 三个服务和 PROD 三个服务的 `run.app/readyz` 均复核为 HTTP 200；PROD Accounts 首次探针返回启动中的 503，等待业务存储初始化后恢复 200。
 
-在上述两项未解决前，Cloud Run revision、GitOps origin 和 Worker 发布状态是通过的，但 `console.svc.plus` 到新 Cloud Run 的完整业务链路仍处于待修复状态。
+公网链路最终复核：
+
+- `https://console.svc.plus/`：HTTP 200，`x-frontend-route: ssr-public`。
+- `https://console.svc.plus/api/v1/health`：HTTP 404，但带 `x-upstream-route: cloud-run-serverless`，说明请求已到达新 Accounts Cloud Run；该路径不是应用已声明的健康 API。
+- `https://billing-serverless-prod.svc.plus/readyz`：HTTP 200，`x-upstream-route: cloud-run-billing`，响应 `{"database":"ok","status":"ready"}`。
+- `accounts-serverless-prod.svc.plus` 的 CORS preflight：HTTP 204。
+
+因此 Cloudflare 到新 Cloud Run 的路由和 IAM 访问链路已闭环。`xworktech.com/ai-workspace?entry=trial` 仍返回 302 到 `https://svc.plus/ai-workspace?entry=trial`，这是独立的既有 canonical 域名契约问题，不影响本次 Cloud Run 账号迁移验证。
 
 当前新账号可见的开放账单账号有 `01180B-F40C7F-BADE24`（UAT/PROD 当前使用）和
 `01E22A-D31C1A-B94A52`。UAT 已沿用 PROD 账单账号并完成绑定；如未来需要改绑，再由项目负责人
