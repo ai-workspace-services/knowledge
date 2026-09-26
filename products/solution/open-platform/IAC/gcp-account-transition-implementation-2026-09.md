@@ -78,15 +78,16 @@ Supabase/internal token 与 `KNOWLEDGE_REPO_PATH/URL/REF`。没有读取或记�
 | `open-platform-prod` | `986070475391` | 新账号可读 |
 
 PROD 目标项目在 `asia-east1` 当前没有 Cloud Run 服务，也没有 Artifact Registry 仓库；UAT 新项目
-已创建但相关 API 尚未启用，因此服务/仓库清单待 API 启用后复核。此前 GitOps 中的
+已创建且目标 API 已启用，因此服务/仓库清单仍为空，等待无状态部署。此前 GitOps 中的
 `xworktech-open-platform-uat/prod` 已确认是错误项目 ID，已修正为 `open-platform-uat` /
-`open-platform-prod`。runtime KV 值尚未写入或读取。
+`open-platform-prod`。runtime KV 已读取，当前仍保留旧项目/区域键，待新版 `finalize` 替换。
 
 ## 0.1 迁移脚本 pre-check 阶段
 
-`scripts/gcp/gcp_account_migration.sh` 的 `plan` 是只读检查；`prepare` 只有在 ADC 和 Vault
-session 都有效时才会继续绑定账单、启用 API 和写入 bootstrap KV。脚本不会把 token 写入参数、
-日志或 Git。
+`scripts/gcp/gcp_account_migration.sh` 的 `plan` 是只读检查；`prepare` 会在任何账单/API
+变更前先验证 Vault，并解析一个短期 GCP token。默认 `--token-source=auto` 按以下顺序尝试：
+显式 `GCP_ACCESS_TOKEN`、ADC、当前 `gcloud` 活动账号 token。脚本不会把 token 写入参数、日志
+或 Git；因此 ADC 失效时，只要当前 `gcloud` 账号仍有效，流程可以非交互式继续。
 
 先设置当前目标参数：
 
@@ -109,8 +110,16 @@ export VAULT_ADDR=https://vault.svc.plus
 scripts/gcp/gcp_account_migration.sh plan
 ```
 
-如果出现 `invalid_grant: Token has been expired or revoked` 或 ADC scope 未 consent，先清理
-本机失效 ADC 并用无浏览器流程重新授权 `cloud-platform` scope：
+推荐先直接运行 `plan`。若输出 `gcp_bootstrap_token=available (source=auto)`，不需要额外
+建立 ADC，可直接执行：
+
+```bash
+scripts/gcp/gcp_account_migration.sh prepare --link-billing
+```
+
+如果组织策略要求 bootstrap 必须使用 ADC，可显式切换严格模式；出现
+`invalid_grant: Token has been expired or revoked` 或 ADC scope 未 consent 时，先清理本机
+失效 ADC 并用无浏览器流程重新授权 `cloud-platform` scope：
 
 ```bash
 gcloud auth application-default revoke --quiet
@@ -119,8 +128,10 @@ gcloud auth application-default login \
   --scopes=https://www.googleapis.com/auth/cloud-platform
 ```
 
-命令会输出一次性 URL 和授权码。浏览器中选择 `haitaopan@xworktech.com` 并同意
-`cloud-platform` scope；回到终端后验证，但不要打印 token：
+如果命令进入 remote bootstrap 提示，请在另一台可打开浏览器的终端运行它打印出的完整
+`--remote-bootstrap` 命令，在浏览器中选择 `haitaopan@xworktech.com` 并同意
+`cloud-platform` scope，再把命令输出复制回原终端。不要把 URL、授权码或 token 发到聊天中。
+严格 ADC 模式验证：
 
 ```bash
 gcloud auth application-default print-access-token >/dev/null \
@@ -129,14 +140,14 @@ VAULT_ADDR="$VAULT_ADDR" vault token lookup >/dev/null \
   && echo 'VAULT_SESSION=available'
 ```
 
-ADC 和 Vault 都通过后再执行：
+ADC 和 Vault 都通过后，以严格 ADC 模式执行：
 
 ```bash
-scripts/gcp/gcp_account_migration.sh prepare --link-billing
+scripts/gcp/gcp_account_migration.sh prepare --link-billing --token-source=adc
 ```
 
-账单/API 已经完成时，重复执行是幂等的；如果只需要重新写 bootstrap KV，可使用
-`--skip-api-enable`，但仍会先验证 ADC 和 Vault session。
+账单/API 已经完成时，重复执行是幂等的；如果只需要绑定账单并启用 API、不写 bootstrap KV，
+可使用 `--skip-bootstrap`。如果只需要重新写 bootstrap KV，可使用 `--skip-api-enable`。
 
 ## 1. 授予新管理员访问
 
@@ -502,21 +513,23 @@ upstream 的链路。公开 canonical DNS cutover 不属于本次。
 | 目标 Cloud Run 服务 | 未就绪 | 两个项目的 `asia-east1` 当前均为空，符合全新部署前状态 |
 | Artifact Registry 仓库 | 未就绪 | 两个项目的 `asia-east1` 当前均没有仓库 |
 | GitHub OIDC/WIF | 未就绪 | 新 UAT 没有 `github-actions/github` provider；PROD provider 存在但声明的 `github-actions-prod` 尚未创建，需按目标项目重新 bootstrap |
-| Vault runtime session | 通过（字段待写） | Vault session 可用；`kv/uat/serverless/gcp` 和 `kv/prod/serverless/gcp` 的 WIF 字段尚未写入 |
-| GCP ADC bootstrap token | 阻塞 | 当前 ADC 返回 `invalid_grant`；需按 §0.1 使用 `--no-browser` 重新 consent `cloud-platform` scope |
+| Vault runtime session | 通过（需清理 legacy key） | Vault session 可用；两个 serverless KV 路径现有 version 分别为 UAT `9`、PROD `1`，key 列表仍包含 `GCP_PROJECT_ID/GCP_REGION`，需由新版 `finalize` 替换为仅 WIF provider/Service Account |
+| GCP bootstrap token | 通过（auto） | ADC 当前返回 `invalid_grant`，但 `gcloud auth print-access-token` 可由活动新账号取得短期 token；只有严格 `--token-source=adc` 才需重新 consent |
 | Cloud Run upstream | 未就绪 | GitOps topology 仍指向旧 `xworktech / asia-northeast1` URL，必须在新服务创建后替换真实 `status.url` |
 | 镜像 | 未就绪 | 目标 Artifact Registry 尚无仓库，不能执行 Cloud Run deploy |
 | 单 VM 成本方案 | 未开始 | 尚未创建 VM、部署 Compose、压测或切换 origin |
 
 当前结论：两个目标项目已经创建并可读，账单、组织、区域和必需 API 已对齐；无关项目清理已完成。
-当前第一阻塞项是本机 GCP ADC 凭据已过期/撤销，需按 §0.1 重新 consent `cloud-platform` scope。
+当前第一阻塞项是 UAT/PROD 的 WIF bootstrap 与无状态服务部署；本机 ADC 过期不阻塞默认 `auto`
+模式，因为活动新账号可以提供短期 token。
 UAT/PROD 的 WIF provider、deploy Service Account、Vault runtime 字段、Artifact Registry、镜像、
-Cloud Run 服务和域名 upstream 仍未就绪。当前迁移分支的 GCP manifest/OIDC project、audience 和
-region 已通过本地合约校验，但尚未合并到 `main`。ADC 恢复后先执行 OIDC bootstrap，再写入
-serverless runtime KV，最后创建仓库/推送镜像并执行 UAT。
+Cloud Run 服务和域名 upstream 仍未就绪。GitOps、platform-ops-toolkit 和 knowledge 相关 PR
+已合并到 `main`；ADC 恢复后先执行 OIDC bootstrap，再用新版 `finalize` 清理并写入 serverless
+runtime KV，最后创建仓库/推送镜像并执行 UAT。
 
-当前新账号可见的开放账单账号有 `01180B-F40C7F-BADE24`（PROD 当前使用）和
-`01E22A-D31C1A-B94A52`。绑定 UAT 前必须由项目负责人选定一个账单账号：
+当前新账号可见的开放账单账号有 `01180B-F40C7F-BADE24`（UAT/PROD 当前使用）和
+`01E22A-D31C1A-B94A52`。UAT 已沿用 PROD 账单账号并完成绑定；如未来需要改绑，再由项目负责人
+明确选择另一个账单账号：
 
 ```bash
 gcloud billing projects link open-platform-uat \
