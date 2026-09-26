@@ -112,7 +112,21 @@ scripts/gcp/gcp_account_migration.sh plan
 ```
 
 推荐先直接运行 `plan`。若输出 `gcp_bootstrap_token=available (source=auto)`，不需要额外
-建立 ADC，可直接执行：
+建立 ADC，可直接执行。若本机 ADC 已失效，但管理员已经在受控终端取得一个仍有效的短期
+OAuth token，可以显式传入；脚本会把该 token 写入临时权限文件，让项目查询、账单/API 操作和
+bootstrap 全部使用同一个 token，不依赖失效的本地 ADC：
+
+```bash
+GCP_ACCESS_TOKEN="$SHORT_LIVED_TOKEN" \
+  scripts/gcp/gcp_account_migration.sh prepare \
+  --token-source=explicit \
+  --skip-api-enable
+```
+
+`SHORT_LIVED_TOKEN` 只存在于当前 shell 环境和临时文件，命令完成后自动删除；不要把实际值写入
+聊天、GitHub、文档或 shell history。没有有效短期 token 时，按下方 `--no-browser` 流程重新授权。
+
+如果 `plan` 已显示 token 可用，且账单/API 尚未完成，再执行准备阶段：
 
 ```bash
 scripts/gcp/gcp_account_migration.sh prepare --link-billing
