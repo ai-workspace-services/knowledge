@@ -80,7 +80,8 @@ Supabase/internal token 与 `KNOWLEDGE_REPO_PATH/URL/REF`。没有读取或记�
 PROD 目标项目在 `asia-east1` 当前没有 Cloud Run 服务，也没有 Artifact Registry 仓库；UAT 新项目
 已创建且目标 API 已启用，因此服务/仓库清单仍为空，等待无状态部署。此前 GitOps 中的
 `xworktech-open-platform-uat/prod` 已确认是错误项目 ID，已修正为 `open-platform-uat` /
-`open-platform-prod`。runtime KV 已读取，当前仍保留旧项目/区域键，待新版 `finalize` 替换。
+`open-platform-prod`。UAT runtime KV 已完成 legacy key 清理（version `10`，仅保留 WIF provider
+和 deploy Service Account）；PROD 等 bootstrap 完成后再执行同样替换。
 
 ## 0.1 迁移脚本 pre-check 阶段
 
@@ -318,10 +319,10 @@ account，并从 bootstrap 输出获取新值。
      --project=open-platform-uat
    ```
 
-2. 将本迁移分支中两个 OIDC 声明合并到 GitOps `main`，并把
-   `platform-ops-toolkit/.github/workflows/gcp-oidc-bootstrap.yml` 的 GitOps checkout ref 更新
-   为该合并提交 SHA。运行 workflow 前必须确认它读取的是包含
-   `open-platform-uat` / `open-platform-prod` 的声明，不能使用旧的固定 SHA。
+2. 将两个 OIDC 声明合并到 GitOps `main`。当前声明已统一使用规范的数字项目号 audience：
+   UAT `142822217216`、PROD `986070475391`；这与 `google-github-actions/auth` 的默认 audience
+   一致。`gcp-oidc-bootstrap.yml` 已固定到 GitOps 合并提交
+   `7b8528e2dad579ec8bd38e743510ee8dc7721c78`，运行 workflow 前仍要确认 ref 没有回退。
 
 3. 管理员在受控终端建立短期 bootstrap 输入。推荐使用短期 ADC token，不生成长期 key：
 
@@ -419,13 +420,13 @@ vault kv get -format=json kv/prod/serverless/gcp \
   | jq '{version:.data.metadata.version, keys:(.data.data|keys)}'
 ```
 
-将各环境 runtime path 更新为：
+将各环境 runtime path 更新为（项目 ID 和区域由 GitOps manifest 读取，不写入该运行时 KV）：
 
 | KV path | 必须值 | 来自 |
 | --- | --- | --- |
-| `kv/uat/serverless/gcp` | `GCP_PROJECT_ID=open-platform-uat`; `GCP_REGION=asia-east1` | GitOps UAT GCP manifest |
-| `kv/prod/serverless/gcp` | `GCP_PROJECT_ID=open-platform-prod`; `GCP_REGION=asia-east1` | GitOps PROD GCP manifest |
-| 同上 | `GCP_WORKLOAD_IDENTITY_PROVIDER`、`GCP_SERVICE_ACCOUNT_EMAIL` | 对应环境 OIDC bootstrap 输出 |
+| `kv/uat/serverless/gcp` | `GCP_WORKLOAD_IDENTITY_PROVIDER`、`GCP_SERVICE_ACCOUNT_EMAIL` | UAT OIDC bootstrap 输出 |
+| `kv/prod/serverless/gcp` | `GCP_WORKLOAD_IDENTITY_PROVIDER`、`GCP_SERVICE_ACCOUNT_EMAIL` | PROD OIDC bootstrap 输出 |
+| GitOps manifest | `project_id`、`region` | 分别为 `open-platform-uat`/`open-platform-prod`、`asia-east1` |
 
 用 Vault KV v2 的 `vault kv patch` 只更新已确认字段；保留同路径的其他 key。写入后再次只读核对
 字段是否与 GitOps 一致，并记录 KV version 和 key 名，不记录凭据值。写入由管理员在 Vault
@@ -519,22 +520,21 @@ upstream 的链路。公开 canonical DNS cutover 不属于本次。
 | Secret Manager / STS / IAM Credentials API | 通过 | UAT/PROD 均已启用 |
 | 目标 Cloud Run 服务 | 未就绪 | 两个项目的 `asia-east1` 当前均为空，符合全新部署前状态 |
 | Artifact Registry 仓库 | 未就绪 | 两个项目的 `asia-east1` 当前均没有仓库 |
-| GitHub OIDC/WIF | 未就绪 | 新 UAT 没有 `github-actions/github` provider；PROD provider 存在但声明的 `github-actions-prod` 尚未创建，需按目标项目重新 bootstrap |
-| Vault runtime session | 通过（需清理 legacy key） | Vault session 可用；两个 serverless KV 路径现有 version 分别为 UAT `9`、PROD `1`，key 列表仍包含 `GCP_PROJECT_ID/GCP_REGION`，需由新版 `finalize` 替换为仅 WIF provider/Service Account |
-| UAT bootstrap KV | 通过 | `kv/CICD/uat/gcp-bootstrap/xworktech` version `2` 已写入；只记录 `GCP_ACCESS_TOKEN` 和 `GCP_PROJECT_ID` 键名，token 本身不进入文档 |
-| PROD bootstrap KV | 通过 | `kv/CICD/prod/gcp-bootstrap/xworktech` version `2` 已写入；只记录键名，token 本身不进入文档 |
-| GCP bootstrap token | 通过（auto） | ADC 当前返回 `invalid_grant`，但 `gcloud auth print-access-token` 可由活动新账号取得短期 token；只有严格 `--token-source=adc` 才需重新 consent |
+| GitHub OIDC/WIF | UAT 已创建，待 audience reconcile；PROD apply 待重跑 | UAT bootstrap apply 已完成；首次 Cloud Run redeploy 发现旧 provider audience 与 auth 默认 audience 不一致，GitOps canonical audience 与 bootstrap ref 已修正 |
+| Vault runtime session | UAT 已完成，PROD 待写入 | UAT `kv/uat/serverless/gcp` version `10` 仅含 WIF provider/Service Account；PROD 仍待 bootstrap/finalize |
+| UAT bootstrap KV | 已清理 | apply 后 token 已撤销并 scrub，仅保留项目校验字段；不记录 token |
+| PROD bootstrap KV | 待新账号授权后重写 | 上一次短期 token 已失效并 scrub；不记录 token |
+| GCP bootstrap token | 当前阻塞 | 本机 `gcloud` 新账号 refresh token 已失效，系统锁屏导致重新授权尚未完成；解锁后重新生成短期 token |
 | Cloud Run upstream | 未就绪 | GitOps topology 仍指向旧 `xworktech / asia-northeast1` URL，必须在新服务创建后替换真实 `status.url` |
 | 镜像 | 未就绪 | 目标 Artifact Registry 尚无仓库，不能执行 Cloud Run deploy |
 | 单 VM 成本方案 | 未开始 | 尚未创建 VM、部署 Compose、压测或切换 origin |
 
 当前结论：两个目标项目已经创建并可读，账单、组织、区域和必需 API 已对齐；无关项目清理已完成。
-当前第一阻塞项是 UAT/PROD 的 WIF bootstrap 与无状态服务部署；本机 ADC 过期不阻塞默认 `auto`
-模式，因为活动新账号可以提供短期 token。
-UAT/PROD 的 WIF provider、deploy Service Account、Vault runtime 字段、Artifact Registry、镜像、
-Cloud Run 服务和域名 upstream 仍未就绪。GitOps、platform-ops-toolkit 和 knowledge 相关 PR
-已合并到 `main`；ADC 恢复后先执行 OIDC bootstrap，再用新版 `finalize` 清理并写入 serverless
-runtime KV，最后创建仓库/推送镜像并执行 UAT。
+GitOps canonical audience 修复（PR #307）、Terraform state 导入幂等修复（PR #1010）和 bootstrap
+GitOps ref 修复（PR #1011）已合并。UAT 已完成 bootstrap，但首次 Cloud Run redeploy 在 GCP
+认证阶段被旧 audience 拒绝；需在新账号授权后按最新 GitOps ref 重新 apply UAT/PROD WIF，随后重跑
+UAT/PROD Cloud Run。PROD 的 WIF provider、runtime KV、Artifact Registry、镜像、Cloud Run 服务
+和域名 upstream 仍未就绪。
 
 当前新账号可见的开放账单账号有 `01180B-F40C7F-BADE24`（UAT/PROD 当前使用）和
 `01E22A-D31C1A-B94A52`。UAT 已沿用 PROD 账单账号并完成绑定；如未来需要改绑，再由项目负责人
