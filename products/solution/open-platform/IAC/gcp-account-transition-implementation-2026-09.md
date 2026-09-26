@@ -563,7 +563,7 @@ upstream 的链路。公开 canonical DNS cutover 不属于本次。
 
 `https://console.svc.plus/` 返回 `200`，响应标记为 `x-frontend-route: ssr-public`；访问 `https://console.svc.plus/api/v1/health` 返回 `404` 且带有 `x-upstream-route: cloud-run-serverless` 和 Cloud Trace 标记，证明公网入口已将 API 请求送入 Serverless Cloud Run 链路。未携带业务 Bearer token 的 `/api/health` 返回 `401`，符合认证边界。
 
-GitOps PR [#308](https://github.com/ai-workspace-infra/gitops/pull/308) 已合并（merge commit `9af3d466c63ccc8d8c1a173636709b85ec73d1cd`），更新了 UAT/PROD 的 serverless、hybrid、selfhost Cloud Run origin 与 fallback upstream。
+GitOps PR [#308](https://github.com/ai-workspace-infra/gitops/pull/308) 已合并（merge commit `9af3d466c63ccc8d8c1a173636709b85ec73d1cd`），更新了 UAT/PROD 的 serverless、hybrid、selfhost Cloud Run origin 与 fallback upstream。GitOps PR [#309](https://github.com/ai-workspace-infra/gitops/pull/309) 已合并（merge commit `869719c731de65656bf7e0fa4558c0b98fdc3eec`），清理了 UAT workload 声明中的旧项目 ID 与 Terraform state namespace；JP/SG/US 区域型 agent-proxy 的区域保持不变。
 
 ## 5.2 运行时环境变量与 Secret 引用核验
 
