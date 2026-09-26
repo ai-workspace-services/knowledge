@@ -575,6 +575,16 @@ GitOps PR [#308](https://github.com/ai-workspace-infra/gitops/pull/308) 已合�
 
 敏感值不写入 GitOps 或本实施文档；部署工作流从 Vault 读取后注入运行时。若后续要求 Cloud Run 服务描述中也不保留明文敏感值，应把 accounts/content/billing 的敏感变量逐项改为 Secret Manager `valueSource.secretKeyRef`，并在部署前同步对应 Vault KV 到 Secret Manager。
 
+## 5.3 Cloudflare 公网链路复核结果
+
+Cloudflare-only redeploy 使用正式控制面标签 `v2026.09.26-r2`，运行 `36244010766`。Frontend Router、SSR、Edge Gateway、Pages 和 custom-domain reconcile 均成功；最终公网 CORS 校验失败，不能把本次运行标记为完整链路通过。
+
+- 新项目的 Cloud Run 服务直接访问返回 403。尝试添加 `allUsers` 的 `roles/run.invoker` 时被 Organization Policy `constraints/iam.allowedPolicyMemberDomains` 拒绝；当前组织策略只允许客户 `C03o77np9` 的成员。
+- 这意味着旧截图中的“公开访问”设置不能直接复制到新项目。需要组织管理员为目标项目提供公开 invoker 例外，或为 Cloudflare Edge Gateway 配置受支持的 GCP 身份认证后再重跑公网验证。
+- `xworktech.com/ai-workspace?entry=trial` 当前仍返回 302 到 `https://svc.plus/ai-workspace?entry=trial`，与生产校验脚本要求的同源 200 不一致；这属于现有域名契约问题，需单独确认 canonical platform origin 后修正。
+
+在上述两项未解决前，Cloud Run revision、GitOps origin 和 Worker 发布状态是通过的，但 `console.svc.plus` 到新 Cloud Run 的完整业务链路仍处于待修复状态。
+
 当前新账号可见的开放账单账号有 `01180B-F40C7F-BADE24`（UAT/PROD 当前使用）和
 `01E22A-D31C1A-B94A52`。UAT 已沿用 PROD 账单账号并完成绑定；如未来需要改绑，再由项目负责人
 明确选择另一个账单账号：
