@@ -149,11 +149,12 @@ scripts/gcp/gcp_account_migration.sh prepare --link-billing --token-source=adc
 账单/API 已经完成时，重复执行是幂等的；如果只需要绑定账单并启用 API、不写 bootstrap KV，
 可使用 `--skip-bootstrap`。如果只需要重新写 bootstrap KV，可使用 `--skip-api-enable`。
 
-2026-09-26 实际执行结果：活动账号为 `haitaopan@xworktech.com`；UAT `prepare --link-billing
---token-source=auto` 成功，账单仍为 `01180B-F40C7F-BADE24`，所需 API 全部启用，且
-`kv/CICD/uat/gcp-bootstrap/xworktech` 已写入 version `2`。复核只读取 KV 键名，当前为
-`GCP_ACCESS_TOKEN,GCP_PROJECT_ID`，没有把 token 写入记录。下一步运行 OIDC bootstrap workflow；
-provider 和 deploy Service Account 在 workflow 成功前保持未创建状态。
+2026-09-26 实际执行结果：活动账号为 `haitaopan@xworktech.com`；UAT 和 PROD 的
+`prepare --link-billing --token-source=auto` 均成功，账单均为 `01180B-F40C7F-BADE24`，
+所需 API 各 5 项全部启用。`kv/CICD/uat/gcp-bootstrap/xworktech` 与
+`kv/CICD/prod/gcp-bootstrap/xworktech` 均已写入 version `2`。复核只读取 KV 键名，当前均为
+`GCP_ACCESS_TOKEN,GCP_PROJECT_ID`，没有把 token 写入记录。下一步运行 UAT OIDC bootstrap
+workflow；provider 和 deploy Service Account 在 workflow 成功前保持未创建状态。
 
 ## 1. 授予新管理员访问
 
@@ -521,6 +522,7 @@ upstream 的链路。公开 canonical DNS cutover 不属于本次。
 | GitHub OIDC/WIF | 未就绪 | 新 UAT 没有 `github-actions/github` provider；PROD provider 存在但声明的 `github-actions-prod` 尚未创建，需按目标项目重新 bootstrap |
 | Vault runtime session | 通过（需清理 legacy key） | Vault session 可用；两个 serverless KV 路径现有 version 分别为 UAT `9`、PROD `1`，key 列表仍包含 `GCP_PROJECT_ID/GCP_REGION`，需由新版 `finalize` 替换为仅 WIF provider/Service Account |
 | UAT bootstrap KV | 通过 | `kv/CICD/uat/gcp-bootstrap/xworktech` version `2` 已写入；只记录 `GCP_ACCESS_TOKEN` 和 `GCP_PROJECT_ID` 键名，token 本身不进入文档 |
+| PROD bootstrap KV | 通过 | `kv/CICD/prod/gcp-bootstrap/xworktech` version `2` 已写入；只记录键名，token 本身不进入文档 |
 | GCP bootstrap token | 通过（auto） | ADC 当前返回 `invalid_grant`，但 `gcloud auth print-access-token` 可由活动新账号取得短期 token；只有严格 `--token-source=adc` 才需重新 consent |
 | Cloud Run upstream | 未就绪 | GitOps topology 仍指向旧 `xworktech / asia-northeast1` URL，必须在新服务创建后替换真实 `status.url` |
 | 镜像 | 未就绪 | 目标 Artifact Registry 尚无仓库，不能执行 Cloud Run deploy |
