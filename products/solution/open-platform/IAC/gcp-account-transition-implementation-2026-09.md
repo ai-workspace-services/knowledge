@@ -80,7 +80,63 @@ Supabase/internal token 与 `KNOWLEDGE_REPO_PATH/URL/REF`。没有读取或记�
 PROD 目标项目在 `asia-east1` 当前没有 Cloud Run 服务，也没有 Artifact Registry 仓库；UAT 新项目
 已创建但相关 API 尚未启用，因此服务/仓库清单待 API 启用后复核。此前 GitOps 中的
 `xworktech-open-platform-uat/prod` 已确认是错误项目 ID，已修正为 `open-platform-uat` /
-`open-platform-prod`。当前 Vault CLI 没有有效 session，runtime KV 值尚未读取。
+`open-platform-prod`。runtime KV 值尚未写入或读取。
+
+## 0.1 迁移脚本 pre-check 阶段
+
+`scripts/gcp/gcp_account_migration.sh` 的 `plan` 是只读检查；`prepare` 只有在 ADC 和 Vault
+session 都有效时才会继续绑定账单、启用 API 和写入 bootstrap KV。脚本不会把 token 写入参数、
+日志或 Git。
+
+先设置当前目标参数：
+
+```bash
+cd /Users/shenlan/workspaces/ai-workspace-infra/platform-ops-toolkit
+
+export GCP_ENVIRONMENT=uat
+export GCP_PROJECT_ID=open-platform-uat
+export GCP_REGION=asia-east1
+export GCP_ACCOUNT_ID=xworktech
+export GCP_BILLING_ACCOUNT=01180B-F40C7F-BADE24
+export GCP_GITOPS_MANIFEST=/Users/shenlan/workspaces/ai-workspace-infra/gitops/resources/xworktech.com/uat/gcp/open-platform-uat.yaml
+export GCP_OIDC_CONFIG=/Users/shenlan/workspaces/ai-workspace-infra/gitops/resources/xworktech.com/uat/gcp/github-actions-oidc.yaml
+export VAULT_ADDR=https://vault.svc.plus
+```
+
+执行 pre-check：
+
+```bash
+scripts/gcp/gcp_account_migration.sh plan
+```
+
+如果出现 `invalid_grant: Token has been expired or revoked` 或 ADC scope 未 consent，先清理
+本机失效 ADC 并用无浏览器流程重新授权 `cloud-platform` scope：
+
+```bash
+gcloud auth application-default revoke --quiet
+gcloud auth application-default login \
+  --no-browser \
+  --scopes=https://www.googleapis.com/auth/cloud-platform
+```
+
+命令会输出一次性 URL 和授权码。浏览器中选择 `haitaopan@xworktech.com` 并同意
+`cloud-platform` scope；回到终端后验证，但不要打印 token：
+
+```bash
+gcloud auth application-default print-access-token >/dev/null \
+  && echo 'GCP_ADC_TOKEN=available'
+VAULT_ADDR="$VAULT_ADDR" vault token lookup >/dev/null \
+  && echo 'VAULT_SESSION=available'
+```
+
+ADC 和 Vault 都通过后再执行：
+
+```bash
+scripts/gcp/gcp_account_migration.sh prepare --link-billing
+```
+
+账单/API 已经完成时，重复执行是幂等的；如果只需要重新写 bootstrap KV，可使用
+`--skip-api-enable`，但仍会先验证 ADC 和 Vault session。
 
 ## 1. 授予新管理员访问
 
@@ -435,29 +491,29 @@ upstream 的链路。公开 canonical DNS cutover 不属于本次。
 | `gcloud` 活动账号 | 通过 | `haitaopan@xworktech.com` 为 ACTIVE |
 | 新账号项目级 IAM | 通过（需后续收敛） | UAT/PROD 当前均可读；现场策略显示 `haitaopan@xworktech.com` 拥有 `roles/owner`，迁移稳定后再按最小权限拆分，不在本次重部署中撤销 |
 | 新账号无关项目清理 | 通过 | 截图中的 5 个 Project ID 已删除并从 `gcloud projects list` 复核消失；`open-platform-uat` 与 `open-platform-prod` 保留 |
-| UAT 账单账号 | 阻塞 | `open-platform-uat` 当前 `billingEnabled=false`，因此 Cloud Run/Artifact Registry/Secret Manager 等 API 无法启用；需先绑定账单账号 |
+| UAT 账单账号 | 通过 | `open-platform-uat` 已绑定 `billingAccounts/01180B-F40C7F-BADE24` |
 | UAT 目标项目 | 通过 | `open-platform-uat`，项目号 `142822217216` |
 | PROD 目标项目 | 通过 | `open-platform-prod`，项目号 `986070475391` |
 | 组织归属 | 通过 | 两个项目均属于 Organization `744119519286` |
 | 区域 | 通过 | 目标区域统一为 `asia-east1` |
-| Cloud Run API | 部分就绪 | PROD 已启用 `run.googleapis.com`；新 UAT `open-platform-uat` 尚未启用 |
-| Artifact Registry API | 部分就绪 | PROD 已启用 `artifactregistry.googleapis.com`；新 UAT 尚未启用 |
-| Secret Manager / STS / IAM Credentials API | 部分就绪 | PROD 已启用；新 UAT 尚未完成 API 启用 |
+| Cloud Run API | 通过 | UAT/PROD 均启用 `run.googleapis.com` |
+| Artifact Registry API | 通过 | UAT/PROD 均启用 `artifactregistry.googleapis.com` |
+| Secret Manager / STS / IAM Credentials API | 通过 | UAT/PROD 均已启用 |
 | 目标 Cloud Run 服务 | 未就绪 | 两个项目的 `asia-east1` 当前均为空，符合全新部署前状态 |
 | Artifact Registry 仓库 | 未就绪 | 两个项目的 `asia-east1` 当前均没有仓库 |
 | GitHub OIDC/WIF | 未就绪 | 新 UAT 没有 `github-actions/github` provider；PROD provider 存在但声明的 `github-actions-prod` 尚未创建，需按目标项目重新 bootstrap |
-| Vault runtime session | 未就绪 | 本机没有有效 Vault session，无法核对/写入两个 serverless/gcp 路径 |
+| Vault runtime session | 通过（字段待写） | Vault session 可用；`kv/uat/serverless/gcp` 和 `kv/prod/serverless/gcp` 的 WIF 字段尚未写入 |
+| GCP ADC bootstrap token | 阻塞 | 当前 ADC 返回 `invalid_grant`；需按 §0.1 使用 `--no-browser` 重新 consent `cloud-platform` scope |
 | Cloud Run upstream | 未就绪 | GitOps topology 仍指向旧 `xworktech / asia-northeast1` URL，必须在新服务创建后替换真实 `status.url` |
 | 镜像 | 未就绪 | 目标 Artifact Registry 尚无仓库，不能执行 Cloud Run deploy |
 | 单 VM 成本方案 | 未开始 | 尚未创建 VM、部署 Compose、压测或切换 origin |
 
-当前结论：两个目标项目已经创建并可读，组织和区域已对齐；无关项目清理已完成。PROD 账单和
-API 正常，但 UAT `open-platform-uat` 尚未绑定账单账号，导致必要 API 无法启用，这是当前第一
-阻塞项。UAT/PROD 的 WIF provider、deploy Service Account、Vault runtime、Artifact Registry、
-镜像、Cloud Run 服务和域名 upstream 仍未就绪。当前迁移分支的 GCP manifest/OIDC project、
-audience 和 region 已通过本地合约校验，但尚未合并到 `main`。先为 UAT 绑定账单并启用 API，
-再合并 GitOps 修正、执行 OIDC bootstrap、登录 Vault 写入 runtime identity，最后创建仓库/推送
-镜像并执行 UAT。
+当前结论：两个目标项目已经创建并可读，账单、组织、区域和必需 API 已对齐；无关项目清理已完成。
+当前第一阻塞项是本机 GCP ADC 凭据已过期/撤销，需按 §0.1 重新 consent `cloud-platform` scope。
+UAT/PROD 的 WIF provider、deploy Service Account、Vault runtime 字段、Artifact Registry、镜像、
+Cloud Run 服务和域名 upstream 仍未就绪。当前迁移分支的 GCP manifest/OIDC project、audience 和
+region 已通过本地合约校验，但尚未合并到 `main`。ADC 恢复后先执行 OIDC bootstrap，再写入
+serverless runtime KV，最后创建仓库/推送镜像并执行 UAT。
 
 当前新账号可见的开放账单账号有 `01180B-F40C7F-BADE24`（PROD 当前使用）和
 `01E22A-D31C1A-B94A52`。绑定 UAT 前必须由项目负责人选定一个账单账号：
