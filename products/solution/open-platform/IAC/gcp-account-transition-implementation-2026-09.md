@@ -565,6 +565,16 @@ upstream 的链路。公开 canonical DNS cutover 不属于本次。
 
 GitOps PR [#308](https://github.com/ai-workspace-infra/gitops/pull/308) 已合并（merge commit `9af3d466c63ccc8d8c1a173636709b85ec73d1cd`），更新了 UAT/PROD 的 serverless、hybrid、selfhost Cloud Run origin 与 fallback upstream。
 
+## 5.2 运行时环境变量与 Secret 引用核验
+
+本次核验只记录名称，不记录任何值。UAT/PROD 的三类服务配置如下：
+
+- `accounts`：基础运行变量、Supabase/内部服务连接参数、OAuth、Stripe、XWorkmate、CORS 与 SMTP 变量；`SMTP_USERNAME`、`SMTP_PASSWORD` 使用 Secret Manager 引用 `smtp-username`、`smtp-password`。
+- `content-service`：`APP_ENV`、`ENV`、`SUPABASE_CONNECT_URI`、`INTERNAL_SERVICE_TOKEN`、`KNOWLEDGE_REPO_PATH`、`KNOWLEDGE_REPO_URL`、`KNOWLEDGE_REPO_REF`；当前无 Secret Manager 引用。
+- `billing-service`：`APP_ENV`、`ENV`、`SUPABASE_CONNECT_URI`、`INTERNAL_SERVICE_TOKEN`、`DB_MAX_OPEN_CONNS`、`DB_MAX_IDLE_CONNS`、`BILLING_INGEST_MODE`；当前无 Secret Manager 引用。
+
+敏感值不写入 GitOps 或本实施文档；部署工作流从 Vault 读取后注入运行时。若后续要求 Cloud Run 服务描述中也不保留明文敏感值，应把 accounts/content/billing 的敏感变量逐项改为 Secret Manager `valueSource.secretKeyRef`，并在部署前同步对应 Vault KV 到 Secret Manager。
+
 当前新账号可见的开放账单账号有 `01180B-F40C7F-BADE24`（UAT/PROD 当前使用）和
 `01E22A-D31C1A-B94A52`。UAT 已沿用 PROD 账单账号并完成绑定；如未来需要改绑，再由项目负责人
 明确选择另一个账单账号：
