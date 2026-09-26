@@ -532,24 +532,38 @@ upstream 的链路。公开 canonical DNS cutover 不属于本次。
 | Cloud Run API | 通过 | UAT/PROD 均启用 `run.googleapis.com` |
 | Artifact Registry API | 通过 | UAT/PROD 均启用 `artifactregistry.googleapis.com` |
 | Secret Manager / STS / IAM Credentials API | 通过 | UAT/PROD 均已启用 |
-| 目标 Cloud Run 服务 | 未就绪 | 两个项目的 `asia-east1` 当前均为空，符合全新部署前状态 |
-| Artifact Registry 仓库 | 未就绪 | 两个项目的 `asia-east1` 当前均没有仓库 |
-| GitHub OIDC/WIF | UAT 已创建，待 audience reconcile；PROD apply 待重跑 | UAT bootstrap apply 已完成；首次 Cloud Run redeploy 发现旧 provider audience 与 auth 默认 audience 不一致，GitOps canonical audience 与 bootstrap ref 已修正 |
-| Vault runtime session | UAT 已完成，PROD 待写入 | UAT `kv/uat/serverless/gcp` version `10` 仅含 WIF provider/Service Account；PROD 仍待 bootstrap/finalize |
+| 目标 Cloud Run 服务 | 通过 | UAT/PROD 六个服务均已在 `asia-east1` Ready，最新修订 100% 流量 |
+| Artifact Registry 仓库 | 通过 | UAT/PROD 均使用 `asia-east1` 的 `serverless` 仓库并成功推送部署镜像 |
+| GitHub OIDC/WIF | 通过 | UAT/PROD provider、对应 deploy Service Account 已 bootstrap，GitHub Actions 部署成功 |
+| Vault runtime session | 通过 | `kv/uat/serverless/gcp`、`kv/prod/serverless/gcp` 已写入 WIF provider 与 Service Account；bootstrap token 已按流程清理 |
 | UAT bootstrap KV | 已清理 | apply 后 token 已撤销并 scrub，仅保留项目校验字段；不记录 token |
-| PROD bootstrap KV | 待新账号授权后重写 | 上一次短期 token 已失效并 scrub；不记录 token |
-| GCP bootstrap token | 当前阻塞 | 本机 `gcloud` 新账号 refresh token 已失效，系统锁屏导致重新授权尚未完成；解锁后重新生成短期 token |
-| Cloud Run upstream | 未就绪 | GitOps topology 仍指向旧 `xworktech / asia-northeast1` URL，必须在新服务创建后替换真实 `status.url` |
-| 镜像 | 未就绪 | 目标 Artifact Registry 尚无仓库，不能执行 Cloud Run deploy |
+| PROD bootstrap KV | 已清理 | apply 后 token 已 scrub，仅保留项目校验字段；不记录 token |
+| GCP bootstrap token | 已绕过 | 本地 CLI 使用新账号完成部署；后续 bootstrap 不再依赖过期 ADC，使用 GitHub OIDC/WIF |
+| Cloud Run upstream | 通过 | GitOps PR #308 已将 UAT/PROD serverless、hybrid、selfhost fallback 更新为新 `asia-east1` `run.app` URL |
+| 镜像 | 通过 | UAT 使用 `daily-build-2026.09.25-r1`；PROD 使用 `v2026.09.13-r4`，六个服务均部署成功 |
 | 单 VM 成本方案 | 未开始 | 尚未创建 VM、部署 Compose、压测或切换 origin |
 
-当前结论：两个目标项目已经创建并可读，账单、组织、区域和必需 API 已对齐；无关项目清理已完成。
-GitOps canonical audience 修复（PR #307）、Terraform state 导入幂等修复（PR #1010）、bootstrap
-GitOps ref 修复（PR #1011）、显式短期 token pre-check（PR #1012）和目标项目镜像构建发布（PR
-#1013）已合并。UAT 已完成 bootstrap，但首次 Cloud Run redeploy 在 GCP
-认证阶段被旧 audience 拒绝；需在新账号授权后按最新 GitOps ref 重新 apply UAT/PROD WIF，随后重跑
-UAT/PROD Cloud Run。目标 Artifact Registry 需先创建 `serverless` repository；PROD 的 WIF
-provider、runtime KV、镜像、Cloud Run 服务和域名 upstream 仍未就绪。
+当前结论：账号、项目、账单、区域、API、WIF、Vault、Artifact Registry 和 Cloud Run 部署均已完成；平台修复 PR #1014、#1015 已合并。UAT 部署运行 `36242316355`，PROD 部署运行 `36242819576`，两次运行的 Cloud Run、Gate 和 Verify/Summary 均成功。
+
+## 5.1 本次部署与公网链路核验记录（2026-09-26）
+
+| 环境 | 服务 | 项目 / 区域 | 最新就绪修订 | 运行时身份 | 镜像 | 入口状态 |
+|---|---|---|---|---|---|---|
+| UAT | `uat-accounts` | `open-platform-uat / asia-east1` | `uat-accounts-00001-q2g` | `142822217216-compute@developer.gserviceaccount.com` | `asia-east1-docker.pkg.dev/open-platform-uat/serverless/accounts:daily-build-2026.09.25-r1` | 100% 最新修订；Ingress `all`；未授权请求 403 |
+| UAT | `uat-content-service` | `open-platform-uat / asia-east1` | `uat-content-service-00001-ffm` | 同上 | `asia-east1-docker.pkg.dev/open-platform-uat/serverless/content-service:daily-build-2026.09.25-r1` | 100% 最新修订；Ingress `all`；未授权请求 403 |
+| UAT | `uat-billing-service` | `open-platform-uat / asia-east1` | `uat-billing-service-00001-rnh` | 同上 | `asia-east1-docker.pkg.dev/open-platform-uat/serverless/billing-service:daily-build-2026.09.25-r1` | 100% 最新修订；Ingress `all`；未授权请求 403 |
+| PROD | `prod-accounts` | `open-platform-prod / asia-east1` | `prod-accounts-00001-l4q` | `986070475391-compute@developer.gserviceaccount.com` | `asia-east1-docker.pkg.dev/open-platform-prod/serverless/accounts:v2026.09.13-r4` | 100% 最新修订；Ingress `all`；未授权请求 403 |
+| PROD | `prod-content-service` | `open-platform-prod / asia-east1` | `prod-content-service-00001-thr` | 同上 | `asia-east1-docker.pkg.dev/open-platform-prod/serverless/content-service:v2026.09.13-r4` | 100% 最新修订；Ingress `all`；未授权请求 403 |
+| PROD | `prod-billing-service` | `open-platform-prod / asia-east1` | `prod-billing-service-00001-ktq` | 同上 | `asia-east1-docker.pkg.dev/open-platform-prod/serverless/billing-service:v2026.09.13-r4` | 100% 最新修订；Ingress `all`；未授权请求 403 |
+
+实际 Cloud Run URL：
+
+- UAT：`uat-accounts-4ueoyqlpbq-de.a.run.app`、`uat-content-service-4ueoyqlpbq-de.a.run.app`、`uat-billing-service-4ueoyqlpbq-de.a.run.app`。
+- PROD：`prod-accounts-b7wzzanztq-de.a.run.app`、`prod-content-service-b7wzzanztq-de.a.run.app`、`prod-billing-service-b7wzzanztq-de.a.run.app`。
+
+`https://console.svc.plus/` 返回 `200`，响应标记为 `x-frontend-route: ssr-public`；访问 `https://console.svc.plus/api/v1/health` 返回 `404` 且带有 `x-upstream-route: cloud-run-serverless` 和 Cloud Trace 标记，证明公网入口已将 API 请求送入 Serverless Cloud Run 链路。未携带业务 Bearer token 的 `/api/health` 返回 `401`，符合认证边界。
+
+GitOps PR [#308](https://github.com/ai-workspace-infra/gitops/pull/308) 已合并（merge commit `9af3d466c63ccc8d8c1a173636709b85ec73d1cd`），更新了 UAT/PROD 的 serverless、hybrid、selfhost Cloud Run origin 与 fallback upstream。
 
 当前新账号可见的开放账单账号有 `01180B-F40C7F-BADE24`（UAT/PROD 当前使用）和
 `01E22A-D31C1A-B94A52`。UAT 已沿用 PROD 账单账号并完成绑定；如未来需要改绑，再由项目负责人
