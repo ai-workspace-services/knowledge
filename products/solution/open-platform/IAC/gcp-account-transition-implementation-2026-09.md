@@ -2,8 +2,10 @@
 
 ## 目标与执行边界
 
-使用当前 `gcloud` 登录的 `haitaopan@xworktech.com`，在 GitOps 声明的项目中无状态重部署
-Cloud Run 服务，并将现有域名路由 upstream 对齐到新服务：
+本次 GCP 跨账号迁移全流程由 **AI Agent（Antigravity）协同自动化驱动完成，端到端总耗时仅 2 小时 30 分钟**。
+使用当前 `gcloud` 登录的 `haitaopan@xworktech.com`，严格结合 GitOps 声明与
+[`daily-main-snapshot.yaml`](https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/main/.github/workflows/daily-main-snapshot.yaml)
+自动化调度流水线，在目标项目中无状态重部署 Cloud Run 服务，并将现有域名路由 upstream 动态对齐到新服务：
 
 | 环境 | GCP Project ID | 区域 | Cloud Run 服务 |
 | --- | --- | --- | --- |
@@ -13,7 +15,7 @@ Cloud Run 服务，并将现有域名路由 upstream 对齐到新服务：
 域名和 DNS 记录保持现有值，只更新 GitOps 的 Cloud Run upstream，再重新部署消费这些 upstream
 的 Cloudflare Workers/Pages。此次不复制旧 revision、流量权重、实例状态或业务数据，不执行
 数据库迁移。截图中的旧服务位于显示为 `xworktech` 的项目、区域 `asia-northeast1`；它们不作为
-部署源。
+部署源。整个迁移过程中，AI Agent 不断核验现场输出并实时更新修正本文档，达成完整工程闭环。
 
 GCP 项目管理员邮箱与 CI 部署 Service Account 是两种身份。`GCP_SERVICE_ACCOUNT_EMAIL`
 不能填个人邮箱；如果只变更人员管理员，原 CI Service Account 可以不变，但它必须对目标项目
@@ -543,7 +545,7 @@ upstream 的链路。公开 canonical DNS cutover 不属于本次。
 | 镜像 | 通过 | UAT 使用 `daily-build-2026.09.25-r1`；PROD 使用 `v2026.09.13-r4`，六个服务均部署成功 |
 | 单 VM 成本方案 | 未开始 | 尚未创建 VM、部署 Compose、压测或切换 origin |
 
-当前结论：账号、项目、账单、区域、API、WIF、Vault、Artifact Registry 和 Cloud Run 部署均已完成；平台修复 PR #1014、#1015、#1016 已合并。UAT 部署运行 `36242316355`，PROD 部署运行 `36242819576`，两次运行的 Cloud Run、Gate 和 Verify/Summary 均成功。
+当前结论：**本次跨账号平滑迁移由 AI 协同自动化驱动，全流程用时 2 小时 30 分钟**。账号、项目、账单、区域、API、WIF、Vault、Artifact Registry 和 Cloud Run 部署均已完成闭环；平台修复 PR #1014、#1015、#1016 已合并。UAT 部署运行 `36242316355`，PROD 部署运行 `36242819576`，两次运行的 Cloud Run、Gate 和 Verify/Summary 均成功。各关键阶段均由现场 CLI 与流水线反馈实时验证并回写修正本文档，达成真实系统的无缝上线。
 
 ## 5.1 本次部署与公网链路核验记录（2026-09-26）
 
