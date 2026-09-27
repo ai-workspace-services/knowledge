@@ -4,6 +4,7 @@
 > 关联 P0：[`ai-workspace-infra/platform-ops-toolkit#805`](https://github.com/ai-workspace-infra/platform-ops-toolkit/issues/805) — GCP bootstrap E2E
 > Project Board：https://github.com/orgs/ai-workspace-infra/projects/2
 > 涉及仓库：`platform-ops-toolkit`（workflows/scripts/docs/tests）、`iac_modules`（Terraform 模块）、`gitops`（环境/资源声明）
+> 交接文档（当前进度/下一步执行细节，先看这个）：同目录 `gcp-oidc-bootstrap-handoff.md`
 > 最后更新：2026-09-22
 
 ## 1. 背景与目标
@@ -308,25 +309,27 @@ GitHub Actions OIDC token
 | `iac_modules` | PR #324 | 修正项目 ID；`deploy_service_account_roles` 新增 `compute.networkAdmin`；新增 `platform_services` API 前移；模板/变量/generate.py 条件渲染改造 | ✅ 已合并（main `2ba98f3`） |
 | `platform-ops-toolkit` | PR #855 | 修正项目 ID；`iac_ref`/`ref:` 更新为上述两个新 SHA；`gcp-iac-pipeline.yml` 按 manifest 隔离 state workspace | ✅ 已合并（main 含 `a77f3e2` 与合并提交 `dcb679f`） |
 | `platform-ops-toolkit` | PR #870 | `bootstrap_gcp_auth_kv.sh` 新增 `--auth-json`/`revoke`；contract test 新增对应断言；howto 文档新增"一次性 Admin SA key"章节 | ✅ 已合并（main `ccf892f`） |
+| `platform-ops-toolkit` | PR #881 | `gcp-oidc-bootstrap.yml` 消费 `GCP_AUTH_JSON`（in-job 换 token + job 内自动吊销一次性凭据）；两个环境的 Vault policy HCL 放开对应字段的 create/update/delete；contract test 与 howto 同步更新 | ✅ 已合并（main `03974c6`） |
 | Epic `#804` | Issue body | 新增"凭据分层约定"章节，明确 Bootstrap 允许一次性 Admin JSON key、日常流水线禁止任何固定 JSON key | ✅ 已更新（GitHub 上直接编辑生效） |
 
 ### 关于合并方式的说明
 
-由于本次工作在一个隔离的云端会话中完成，该会话的 git 出站请求被仓库授权代理拒绝（`access denied by the git proxy: ... is not in this session's authorized repository set`），无法直接 `git push` 到这三个仓库。所有实际的 PR 提交、CI 检查、合并动作，都是通过交付到用户本机的可执行脚本（`~/Downloads/gcp-auth-json-pr.sh`）、由用户在本地终端运行 `gh` CLI 完成的：clone → 应用 patch → 本地跑 contract test → push → `gh pr create` → 轮询 CI checks → 全绿后 squash merge。四项改动（gitops #274、iac_modules #324、platform-ops-toolkit #855、platform-ops-toolkit #870）均已按此方式合并完毕。
+由于本次工作在一个隔离的云端会话中完成，该会话的 git 出站请求被仓库授权代理拒绝（`access denied by the git proxy: ... is not in this session's authorized repository set`），无法直接 `git push` 到这三个仓库。所有实际的 PR 提交、CI 检查、合并动作，都是通过交付到用户本机的可执行脚本、由用户在本地终端运行 `gh` CLI 完成的：clone → 应用 patch → 本地跑 contract test → push → `gh pr create` → 轮询 CI checks → 全绿后 squash merge。五项改动（gitops #274、iac_modules #324、platform-ops-toolkit #855、#870、#881）均已按此方式合并完毕。
 
 ## 10. 尚未完成的工作
 
-1. **`gcp-oidc-bootstrap.yml` 消费 `GCP_AUTH_JSON`**：目前 workflow 只读 `GCP_ACCESS_TOKEN`。下一步需要在 workflow 里判断 Vault 记录中是否存在 `GCP_AUTH_JSON`，若存在则用 `google-github-actions/auth@v2` 的 `credentials_json` 输入（`create_credentials_file: false`，不落盘）换取短期 token，apply 成功后在同一个 Job 内调用第 4 节的 `revoke_auth_json` 逻辑（或等价的 Terraform/gcloud 步骤）。这是一个独立 PR，不在本轮 `--auth-json` 助手脚本 PR 的范围内。
-2. **真实的 UAT E2E 验证从未在任何自动化环境里跑过**：本次工作在的云端沙箱既不能访问 Terraform provider registry（`registry.terraform.io` 等被出站策略拦截），也无法代替用户触发 GitHub Actions workflow，因此"Bootstrap plan → apply → runtime plan → Spot VM apply → destroy"这条链路目前只完成了**静态/离线验证**（模板渲染逻辑、contract test、`terraform fmt -check`、桩 `gcloud`/`vault` 的行为测试），真实的 `terraform plan`/`apply` 结果需要用户在本机触发 workflow 后回填。
-3. **完整 E2E 执行顺序**（`feat/gcp-bootstrap-auth-json` 合并后按序执行）：
-   - 用 token 或 `--auth-json` 模式刷新 `kv/CICD/uat/gcp-bootstrap/xworktech`；
-   - 触发 `GCP OIDC Bootstrap`：`environment=uat`，`action=plan` → 确认预检权限齐全、plan 只包含 WIF Pool/Provider/deploy SA/IAM binding；
-   - 同参数 `action=apply` → 确认 WIF 认证自检通过、UAT 无法访问 PROD、`kv/uat/platform/oidc/xworktech` 已写入、（若使用 `--auth-json`）一次性凭据已吊销；
-   - 触发 `gcp-iac-pipeline.yml`：`gcp_resource_manifest=resources/xworktech.com/uat/gcp/spot-validation-uat.yaml`，`deploy_action=plan` → 确认只 plan 网络 + 一个 Spot 实例，state workspace 为 `spot-validation-uat`；
-   - `deploy_action=apply` → 确认真实创建的实例 `provisioningModel == SPOT`；
-   - 验证完成后 `deploy_action=destroy` 清理该一次性验证资源；
-   - 回填结果到 `#805`/`#806`，并按 Epic `#804` 的完成定义逐项勾选。
-4. **PROD 环境**：本方案的所有改动对 UAT/PROD 是对称的（PROD 项目 ID 同样已修正为 `xwork-open-platform-prod`），但按 Epic 约定，PROD 的 bootstrap/apply 必须经过受保护 GitHub Environment 审批，本轮工作未涉及 PROD 的实际执行。
+**代码层面的工作已经全部合并完毕**（包括 workflow 消费 `GCP_AUTH_JSON` 并自动吊销，见上表 PR #881）。剩下的都是需要真实环境/人工权限的收尾动作：
+
+1. **Vault Policy 同步到真实 Vault**：PR #881 放开了 `scripts/vault/policies/*.hcl` 里的 capabilities（bootstrap secret 的 create/update/delete），但这只是声明式代码，需要有 Vault 管理员 token 的人手动跑一次：
+   ```bash
+   export VAULT_ADDR=https://vault.svc.plus
+   bash scripts/create_vault_service_repo_roles.sh --apply --env uat
+   bash scripts/create_vault_service_repo_roles.sh --apply --env prod
+   ```
+   在这一步跑完之前，如果触发了 `--auth-json` bootstrap，workflow 的自动吊销会在 Vault 侧降级为警告（GCP 侧的 key 删除/SA 禁用不受影响，照常成功）。
+2. **真实的 UAT E2E 验证从未在任何自动化环境里跑过**：本次工作所在的云端沙箱既不能访问 Terraform provider registry，也没有 `gh` CLI / GitHub 凭据，无法代替用户触发 GitHub Actions workflow，因此"Bootstrap plan → apply → runtime plan → Spot VM apply → destroy"这条链路目前只完成了**静态/离线验证**（模板渲染逻辑、contract test、`terraform fmt -check`、桩 `gcloud`/`vault`/`curl` 的行为测试），真实的 `terraform plan`/`apply` 结果需要用户在本机触发 workflow 后回填。
+3. **一键验证脚本已交付**：为完成上述真实 E2E 验证，已经准备好 `gcp-e2e-verification.sh`（发给用户 + 写到 Mac `~/Downloads/`），按用户明确要求默认使用 `--auth-json` 一次性凭据模式（bootstrap job 用完当场吊销，之后 runtime 全程只走 GitHub OIDC → Vault JWT role → Google WIF），串联：Vault Policy 同步 → 组织策略临时豁免（若需要）→ 自动创建 `gcp-bootstrap-uat` 服务账号并生成一次性 key → 触发 `GCP OIDC Bootstrap`（plan → 确认 → apply，并核对自动吊销日志）→ 触发 `gcp-iac-pipeline.yml`（manifest=`spot-validation-uat`，plan → 确认 → apply → 持有约 1 小时 → destroy）。完整设计说明和执行细节见交接文档（文首链接）第 4 节。跑完后把脚本打印的 5 个 GitHub Actions run 链接回填到 `#805`/`#806`，按 Epic `#804` 的完成定义逐项勾选。
+4. **PROD 环境**：本方案的所有改动对 UAT/PROD 是对称的（PROD 项目 ID 同样已修正为 `xwork-open-platform-prod`），但按 Epic 约定，PROD 的 bootstrap/apply 必须经过受保护 GitHub Environment 审批，本轮工作未涉及 PROD 的实际执行；等 UAT 链路验证通过后再考虑。
 
 ## 11. 关键路径速查
 
