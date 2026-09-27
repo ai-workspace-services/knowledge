@@ -2,7 +2,7 @@
 
 ## 目标与执行边界
 
-本次 GCP 跨账号迁移全流程由 **AI Agent（Antigravity）协同自动化驱动完成，端到端总耗时仅 2 小时 30 分钟**。
+本次 GCP 跨账号迁移全流程由 **AI Agent（ChatGPT APP）协同自动化驱动完成，端到端总耗时仅 2 小时 30 分钟**。
 使用当前 `gcloud` 登录的 `haitaopan@xworktech.com`，严格结合 GitOps 声明与
 [`daily-main-snapshot.yaml`](https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/main/.github/workflows/daily-main-snapshot.yaml)
 自动化调度流水线，在目标项目中无状态重部署 Cloud Run 服务，并将现有域名路由 upstream 动态对齐到新服务：
