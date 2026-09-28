@@ -572,6 +572,50 @@ done
 curl -fsS https://vault.svc.plus/v1/sys/health
 ```
 
+### 12.3.1 XConnect overlay DNS implementation
+
+The single source of truth for private DNS is `spec.dns` in the GitOps shared
+Vault topology. The pipeline passes it through
+`scripts/node_deploy/xconnect_stage.py` as `xconnect_gateway_dns_*` and
+`xconnect_one_dns_*` Ansible variables, so a joining node does not need a
+manually maintained DNS address.
+
+The Gateway (`10.79.0.1`) runs the lightweight `dnsmasq` forwarder alongside
+the XConnect data plane and listens on `xconone0` at `10.79.0.1:53`:
+
+- records in `spec.dns.records` are answered locally, for example
+  `internal-xworkmate-bridge.svc.plus -> 10.79.0.7`;
+- `shared.internal` is marked as a local authoritative zone;
+- names not present in the local zone are forwarded to
+  `spec.dns.upstream_servers` (by default `1.1.1.1` and `8.8.8.8`) for public
+  recursive resolution;
+- dnsmasq binds only the overlay interface and address, never the public NIC.
+
+After a Linux XConnect One joins, `systemd-resolved` installs the Gateway DNS
+on `xconone0` and adds route-only domains for `shared.internal` and `svc.plus`.
+By default `/etc/resolv.conf` points to the resolved stub. Private names
+therefore use the Gateway while public names keep the host's normal resolver
+path. If all queries must traverse the Gateway, add `~.` to the client route
+domains; the Gateway will then recurse to the public DNS servers.
+
+The native macOS XConnect One CLI does not change the system resolver. Create
+the following files on an enrolled Mac:
+
+```bash
+sudo mkdir -p /etc/resolver
+printf 'nameserver 10.79.0.1\n' | sudo tee /etc/resolver/shared.internal
+printf 'nameserver 10.79.0.1\n' | sudo tee /etc/resolver/svc.plus
+```
+
+The XWorkMate app uses `https://internal-xworkmate-bridge.svc.plus`. The
+`internal-` prefix distinguishes the private entry point from the public
+hostname. Do not use an overlay IP, port 8787, or XRDP. The private record
+resolves to `10.79.0.7`. Caddy loads `tls_fullchain_pem_b64` and
+`tls_key_pem_b64` from Vault `kv/data/CICD/domains/svc.plus` and validates SAN,
+expiry, and key pairing before reloading. Enter a valid Bridge user Bearer
+token in the app's access-token field; do not use a Vault token or XConnect
+enrollment token.
+
 ### 12.4 KV reconciliation
 
 Recursively list KV v2 metadata paths read-only and compare the old and new entry points by mount set, mount version, secret-path count, and a digest of sorted paths. Do not read or print secret values. Matching paths do not prove business semantics; a service owner may perform a controlled canary read if needed.
