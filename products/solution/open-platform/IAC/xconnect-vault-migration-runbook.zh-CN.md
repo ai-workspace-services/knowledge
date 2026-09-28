@@ -619,6 +619,45 @@ done
 curl -fsS https://vault.svc.plus/v1/sys/health
 ```
 
+### 12.3.1 XConnect Overlay DNS 实现
+
+内网 DNS 的唯一声明源是 GitOps shared Vault 拓扑中的 `spec.dns`。流水线
+通过 `scripts/node_deploy/xconnect_stage.py` 将这段声明分别转换为
+`xconnect_gateway_dns_*` 和 `xconnect_one_dns_*` Ansible 变量，因此节点接入
+时不需要在主机上手工维护 DNS 地址。
+
+Gateway (`10.79.0.1`) 与 XConnect 数据面运行在同一台主机上，使用轻量级
+`dnsmasq` 监听 `xconone0` 的 `10.79.0.1:53`：
+
+- `spec.dns.records` 中的私有记录由 Gateway 直接回答，例如
+  `internal-xworkmate-bridge.svc.plus -> 10.79.0.7`；
+- `shared.internal` 由 `local` 区域标记为内网权威区域；
+- 其它域名不写入本地区域，转发到 `spec.dns.upstream_servers`（默认
+  `1.1.1.1`、`8.8.8.8`）递归解析；
+- dnsmasq 只绑定 Overlay 接口和地址，不对公网网卡开放 53 端口。
+
+Linux XConnect One 接入后由 `systemd-resolved` 在 `xconone0` 上安装该
+Gateway DNS，并为 `shared.internal`、`svc.plus` 设置路由域；默认将
+`/etc/resolv.conf` 指向 resolved stub。这样内网域名走 Gateway，公网域名
+仍按主机既有解析路径工作；如需所有查询都经 Gateway，可将客户端配置扩展
+为 `~.`，由 Gateway 再递归到公共 DNS。
+
+macOS 原生 XConnect One CLI 不修改系统 resolver。需要在接入机器创建：
+
+```bash
+sudo mkdir -p /etc/resolver
+printf 'nameserver 10.79.0.1\n' | sudo tee /etc/resolver/shared.internal
+printf 'nameserver 10.79.0.1\n' | sudo tee /etc/resolver/svc.plus
+```
+
+XWorkMate App 使用 `https://internal-xworkmate-bridge.svc.plus`，用
+`internal-` 前缀区分私网入口和公网域名，不使用 Overlay IP、8787 或 XRDP
+端口。该主机名由内网记录解析到 `10.79.0.7`，Caddy 使用从
+Vault `kv/data/CICD/domains/svc.plus` 读取的 `tls_fullchain_pem_b64` 和
+`tls_key_pem_b64`，在部署时校验证书 SAN、有效期和私钥匹配后再加载。
+XWorkMate App 的“访问令牌”填写有效的 Bridge 用户 Bearer token；不要填写
+Vault token 或 XConnect enrollment token。
+
 ### 12.4 KV 对账
 
 只读递归列出 KV v2 metadata path，比较旧、新入口的：
