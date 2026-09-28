@@ -629,8 +629,14 @@ curl -fsS https://vault.svc.plus/v1/sys/health
 Gateway (`10.79.0.1`) 与 XConnect 数据面运行在同一台主机上，使用轻量级
 `dnsmasq` 监听 `xconone0` 的 `10.79.0.1:53`：
 
-- `spec.dns.records` 中的私有记录由 Gateway 直接回答，例如
-  `internal-xworkmate-bridge.svc.plus -> 10.79.0.7`；
+- 新 One 通过 Accounts 加入后获得唯一 overlay `/32`；Gateway 每次同步
+  验证签名配置并从中生成 `<device-id>.shared.internal -> <overlay-ip>`，
+  dnsmasq 读取自动生成的 hosts 文件，因此不需要为新节点手工填写 IP；
+- 撤销设备后，下一次 Gateway 签名配置同步会删除对应 A 记录；
+- `spec.dns.records` 只声明服务别名和目标 `device_id`，例如
+  `internal-xworkmate-bridge.svc.plus -> xconnect-linux-secops-shenlan-inspiron-5415-ops`；
+  Gateway 将别名动态解析到该 One 当前分配的 overlay IP。设备离线或未加入时
+  不发布该别名。
 - `shared.internal` 由 `local` 区域标记为内网权威区域；
 - 其它域名不写入本地区域，转发到 `spec.dns.upstream_servers`（默认
   `1.1.1.1`、`8.8.8.8`）递归解析；
@@ -652,11 +658,19 @@ printf 'nameserver 10.79.0.1\n' | sudo tee /etc/resolver/svc.plus
 
 XWorkMate App 使用 `https://internal-xworkmate-bridge.svc.plus`，用
 `internal-` 前缀区分私网入口和公网域名，不使用 Overlay IP、8787 或 XRDP
-端口。该主机名由内网记录解析到 `10.79.0.7`，Caddy 使用从
+端口。该服务别名随 `10.79.0.7` 上已登记的 SecOPS One 当前 overlay 地址变化，Caddy 使用从
 Vault `kv/data/CICD/domains/svc.plus` 读取的 `tls_fullchain_pem_b64` 和
 `tls_key_pem_b64`，在部署时校验证书 SAN、有效期和私钥匹配后再加载。
 XWorkMate App 的“访问令牌”填写有效的 Bridge 用户 Bearer token；不要填写
 Vault token 或 XConnect enrollment token。
+
+验证新加入 One 的自动记录和公网递归：
+
+```bash
+dig +short @10.79.0.1 xconnect-linux-secops-shenlan-inspiron-5415-ops.shared.internal
+dig +short @10.79.0.1 internal-xworkmate-bridge.svc.plus
+dig +short @10.79.0.1 example.com
+```
 
 ### 12.4 KV 对账
 

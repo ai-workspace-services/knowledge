@@ -583,8 +583,17 @@ manually maintained DNS address.
 The Gateway (`10.79.0.1`) runs the lightweight `dnsmasq` forwarder alongside
 the XConnect data plane and listens on `xconone0` at `10.79.0.1:53`:
 
-- records in `spec.dns.records` are answered locally, for example
-  `internal-xworkmate-bridge.svc.plus -> 10.79.0.7`;
+- when Accounts enrolls a new One, it assigns a unique overlay `/32`; on each
+  sync the Gateway verifies its signed peer configuration and generates
+  `<device-id>.shared.internal -> <overlay-ip>` in the hosts file consumed by
+  dnsmasq, so operators do not enter a new node's address manually;
+- after device revocation, the next signed Gateway configuration sync removes
+  its A record;
+- `spec.dns.records` declares service aliases by target `device_id`, for
+  example `internal-xworkmate-bridge.svc.plus ->
+  xconnect-linux-secops-shenlan-inspiron-5415-ops`; the Gateway resolves the
+  alias to that One's current overlay address. The alias is absent while the
+  device is not enrolled.
 - `shared.internal` is marked as a local authoritative zone;
 - names not present in the local zone are forwarded to
   `spec.dns.upstream_servers` (by default `1.1.1.1` and `8.8.8.8`) for public
@@ -609,12 +618,21 @@ printf 'nameserver 10.79.0.1\n' | sudo tee /etc/resolver/svc.plus
 
 The XWorkMate app uses `https://internal-xworkmate-bridge.svc.plus`. The
 `internal-` prefix distinguishes the private entry point from the public
-hostname. Do not use an overlay IP, port 8787, or XRDP. The private record
-resolves to `10.79.0.7`. Caddy loads `tls_fullchain_pem_b64` and
+hostname. Do not use an overlay IP, port 8787, or XRDP. The service alias
+follows the current overlay address of the enrolled SecOPS One (currently
+`10.79.0.7`). Caddy loads `tls_fullchain_pem_b64` and
 `tls_key_pem_b64` from Vault `kv/data/CICD/domains/svc.plus` and validates SAN,
 expiry, and key pairing before reloading. Enter a valid Bridge user Bearer
 token in the app's access-token field; do not use a Vault token or XConnect
 enrollment token.
+
+Verify a newly enrolled One's automatic record and public recursion:
+
+```bash
+dig +short @10.79.0.1 xconnect-linux-secops-shenlan-inspiron-5415-ops.shared.internal
+dig +short @10.79.0.1 internal-xworkmate-bridge.svc.plus
+dig +short @10.79.0.1 example.com
+```
 
 ### 12.4 KV reconciliation
 
