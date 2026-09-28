@@ -17,6 +17,11 @@
 2. **Selfhost Orchestrator**：负责 Terraform VPS、主机初始化、Caddy、Docker、监控探针、Agent Proxy 和 Selfhost 业务部署。
 3. **Serverless Orchestrator**：负责 Cloudflare Pages/Workers、Cloud Run、Supabase 及 Serverless 业务发布。
 
+其中 `web-saas` 不是二选一的运行时：Selfhost 承载完整后端栈和 PostgreSQL origin，
+Serverless 同时承载 Cloud Run、Supabase 以及 Cloudflare Pages/Workers。Cloudflare
+Workers 是统一 SSR/edge gateway，默认将请求路由到 Selfhost origin，只有健康状态、容量
+或显式策略允许时才分流到 Cloud Run。
+
 本架构不把所有资源强行纳入 Terraform：
 
 - `terraform` 资源必须有独立 state 和独立锁范围。
@@ -154,7 +159,7 @@ Serverless 不负责创建 Akamai、AWS 或 GCP VPS；VPS 资源由 Selfhost/IaC
 | 顺序 | Namespace | 管理模式 | Provider | 目标规格/位置 | 生命周期 |
 |---:|---|---|---|---|---|
 | 1 | `open-platform` | `terraform` | `akamai-cloud` | 2C4G | 常驻 |
-| 2 | `web-saas` | `existing+serverless` | `gcp-cloud` | 复用现有 Vault node 0 + Serverless | external |
+| 2 | `web-saas` | `existing+serverless` | `gcp-cloud` | 复用现有 Vault node 0 承载 Selfhost 全栈，并部署 Serverless 面 | external |
 | 3 | `ai-workspace` | `existing-selfhost` | GCP/private logical identity | 4C8G；复用 `10.79.0.7` | external |
 | 4 | `agent-proxy-jp` | `terraform` | `aws-cloud` | AWS JP，2C2G | ephemeral |
 | 5 | `agent-proxy-us` | `terraform` | `gcp-cloud` | GCP US，2C2G | ephemeral |
@@ -175,7 +180,8 @@ Phase 1: Terraform readiness
 
 Phase 2: Zero Trust and workloads
   XConnect Zero: tw-xconnect.svc.plus
-      -> web-saas Serverless
+      -> web-saas Selfhost full-stack origin
+      -> web-saas Serverless (Cloud Run + Supabase + Pages/Workers)
       -> ai-workspace existing-selfhost: 10.79.0.7
       -> agent-proxy-jp application
       -> agent-proxy-us application
@@ -406,7 +412,8 @@ UAT 默认使用 `selfhost-first`，DNS 默认 `none`，避免验证阶段误切
   -> open-platform
   -> JP/US/SG Terraform readiness
   -> XConnect Zero: tw-xconnect.svc.plus
-  -> web-saas Serverless
+  -> web-saas Selfhost full-stack origin
+  -> web-saas Serverless (Cloud Run + Supabase + Pages/Workers)
   -> AI Workspace existing-selfhost: 10.79.0.7
   -> JP/US/SG Agent Proxy application
   -> TW/PH existing inventory + Playbook
