@@ -114,6 +114,48 @@
 - 有明确的 DNS 回滚入口和观察窗口；
 - 任一 gate 失败时停止，不绕过 `stage_plan.py` 或 live-state 检查。
 
+
+### 4.4 相关仓库与职责边界
+
+迁移不是在单一仓库中完成的。以下边界用于判断“声明正确但运行时不对”与“运行时正确但声明落后”两类问题：
+
+| 仓库 | 关键文件/目录 | 迁移后的职责 | 对比基准 |
+| --- | --- | --- | --- |
+| `ai-workspace-infra/gitops` | `resources/svc.plus/shared/vault/server.yaml` | Vault 服务合同：域名、旧源、Raft leader/peers、迁移阶段和 SSH/overlay 入口 | 旧节点资料与当前 live Raft 状态 |
+| `ai-workspace-infra/gitops` | `resources/xworktech.com/shared/gcp/vault-shared.yaml` | `open-platform-prod` 的实际 shared GCP 资源、zone、机型、host key、SSH 模式 | `gcloud compute`/CMDB 实例、地址、磁盘和状态 |
+| `ai-workspace-infra/gitops` | `vpn-overlay/shared/xconnect-vault-shared.yaml` | `net_shared_vault` 的 CIDR、Gateway、One、operator 设备、VLESS transport 和 SSH policy | Accounts signed-config、节点 `status`、WireGuard peer |
+| `ai-workspace-infra/platform-ops-toolkit` | `.github/workflows/vault-server.yml` | 唯一 Vault 入口：声明解析、IaC、节点 stage、DNS 验证/切换/回滚 | Actions run、step summary、live-state gate |
+| `ai-workspace-infra/platform-ops-toolkit` | `scripts/node_deploy/{resolve_vault_server_declaration.py,stage_plan.py,xconnect_stage.py,verify_vault_stage.py}` | 将 GitOps 合同转换为 inventory、XConnect invite、Playbook extra-vars 和只读验收 | 输出合同、节点探针、Raft/DNS/XConnect 验收结果 |
+| `ai-workspace-infra/playbooks` | `deploy_vault_shared_services.yml`、`roles/vhosts/{vault,xconnect_gateway,xconnect_one,vault_gateway_frontend}` | 改变主机：安装 Vault/Caddy/Xray/WireGuard、写配置、启停 systemd；不初始化/解封 Vault | `systemctl`、配置文件、端口和日志 |
+| `ai-workspace-service/accounts` | `internal/overlay`、`api/overlay_v1.go` | XConnect 控制面：网络、设备、凭证、signed-config、ACK 和 peer 撤销 | Accounts API 响应、设备 generation、Gateway peer 快照 |
+| `ai-workspace-infra/iac-modules*` | GCP workload namespace/renderer、Terraform state | 将 GCP 声明渲染为实例、地址、磁盘、防火墙和 IAM | Terraform plan/state 与 GCP CMDB |
+| `ai-workspace-service/knowledge` | 本运行手册 | 方案、证据索引、变更顺序和回滚规则；不作为运行时配置源 | Git commit、Actions run ID、现场记录 |
+
+迁移后必须同时满足三种一致性：
+
+1. **声明一致性**：GitOps 的节点数、overlay 地址、角色和迁移源与批准的目标拓扑一致。
+2. **资源一致性**：CMDB/GCP 实例、静态地址、磁盘、zone、host key 与 provider manifest 一致。
+3. **运行时一致性**：Vault Raft peers、Accounts signed-config、XConnect handshake、DNS 结果与前两者一致。
+
+任何一层不一致时，先停止下一阶段；不要通过手工改主机配置掩盖 GitOps 差异。修复声明后重新执行 `plan` 或只读 stage，再继续 apply。
+
+### 4.5 迁移后声明与实际状态对比
+
+当前 live shared 环境与扩容模板要分开看：
+
+| 对象 | 当前 live 稳态 | 保留的扩容模板/历史对象 | 验证方式 |
+| --- | --- | --- | --- |
+| Vault GCP 资源 | 仅 `vault-prod-0`，`asia-east1-a`，`RUNNING` | `vault-prod-1/2` 可在 prod 模板中重新声明 | `gcloud compute instances list`、CMDB resolver |
+| Vault Raft | `vault-prod-0` 单 voter/leader | 三节点加入顺序由 `members: 3`、`peers` 声明控制 | `vault operator raft list-peers` |
+| XConnect Gateway | `vault-prod-0`，`10.79.0.1` | One 地址 `10.79.0.2/10.79.0.3` 是三节点扩容目标 | Gateway signed-config、`wg show` |
+| LAN SecOPS One | `10.79.0.7`，独立 device ID，systemd 持久运行 | 不属于 Vault Raft voter | Accounts device、`xconnect-one status`、Mac → `10.79.0.7` |
+| 操作 Mac One | 当前重邀请设备为 `10.79.0.9` | 旧设备登记保留，待单独撤销窗口处理 | GitOps operator device、signed-config、`utun7` |
+| 旧节点 | `46.250.251.132`/`vault-2`，独立 server，暂停观察 | 不由 GCP destroy 删除 | 旧节点服务状态、DNS 与 Vault health |
+| DNS | `vault.svc.plus` 指向 GCP 当前入口 | 回滚目标仍是旧节点 | 多 resolver `dig`、HTTPS health |
+
+这里的“数量对比”必须分成资源数、Raft voter 数、Accounts active device 数和 KV path 数，不能把四种数量混成一个结论。尤其是 operator/LAN One 设备不是 Vault voter，旧节点也不应因缩容被 Terraform 删除。
+
+
 ## 5. 统一流水线入口
 
 所有阶段使用 `platform-ops-toolkit/.github/workflows/vault-server.yml`。每次 dispatch 只执行一类动作：
@@ -222,6 +264,81 @@ nc -vz <peer-overlay-or-private-address> 8201
 ```
 
 验收标准：所有预期 peer 有最近 WireGuard handshake；overlay ping 成功；8200/8201 双向可达；公网扫描不能看到 8200/8201 或 UDP 51820。
+
+
+### 7.4 XConnect 建立的完整时序
+
+XConnect 建立分为“声明、控制面 bootstrap、主机 enrollment、signed-config、数据面重载”五个阶段。每阶段的产物不同，排障时应先确定停在哪一层：
+
+```text
+GitOps topology
+   │  immutable commit
+   ▼
+Bootstrap workflow / xconnect_stage.py
+   │  X-Service-Token 仅在 runner 内存中使用
+   ▼
+Accounts net_shared_vault + one-use invite
+   │  xconnect://join/...，0600 临时文件或受控 Vault 路径
+   ▼
+Gateway/One join
+   │  本地生成 WG private key，交换设备凭证
+   ▼
+Signed-config + ACK
+   │  peer、地址、transport、policy、generation
+   ▼
+Caddy TLS :443 → Xray socket/UDP relay → WireGuard :51820
+```
+
+1. **声明拓扑**：`vpn-overlay/shared/xconnect-vault-shared.yaml` 定义 `net_shared_vault`、`10.79.0.0/24`、Gateway `10.79.0.1`、节点/操作设备和 `vless-xhttp` 参数。GitOps 只放 public key、ID、地址和路径，不放 token、private key 或 join URI。
+2. **创建网络和邀请**：`xconnect-zero-cloud.yaml` 的 `declared-network` profile 或 Vault server 的 XConnect stage 使用 reviewed manifest。`dry-run` 只校验；`apply` 调用 Accounts 的 `POST /api/internal/overlay/networks/bootstrap`，请求包含 owner、network、Gateway public key/地址、transport 和 invite 元数据；网络由 Accounts 持有，邀请按 device ID、role、platform、TTL 绑定。返回的 `join_uri` 只写入 runner 的 `0600` 临时文件或受控 Vault 路径，不能进入日志。
+3. **Gateway enrollment**：Gateway 先生成本地 WireGuard identity，再用 Gateway 一次性邀请 join。Accounts 不接收 Gateway private key，只保存 public key、设备状态和 credential hash。Gateway 取得自己的设备凭证和签名验证材料。
+4. **One enrollment**：每个 GCP peer、旧节点、LAN SecOPS、Mac 都必须有独立 device ID 和一次性邀请。One 在本地生成 private key，通过 `/api/overlay/v1/enrollment/signed-config` 获取配置并向对应 generation ACK。
+5. **Gateway peer snapshot**：Gateway 通过 `/api/overlay/v1/gateway/signed-config` 获取 active One peer、allowed IP、Gateway relay 和 transport 参数。Gateway 重载后，`wg show` 才会出现新 peer；只有 Accounts 登记不代表数据面已经生效。
+6. **传输链路**：One 本地 WireGuard 把包交给 Xray 的 loopback relay；Xray 通过 VLESS + TLS/XHTTP 访问 `vault-xconnect.svc.plus:443/xconnect`；Caddy 在 Gateway 终止 TLS 并把请求转发到 `/run/xconnect-gateway/xray.sock`；Gateway Xray 再把流量送入本地 WireGuard peer。
+7. **持久化**：Gateway/One 的 systemd 服务使用 `Restart=on-failure`、固定 state directory 和 sync watcher；Mac 使用 LaunchDaemon，LAN SecOPS 使用 `xconnect-one-secops.service`。重启后应复用已登记 device credential，而不是重新生成未登记的临时 peer。
+
+### 7.5 XConnect 控制面 API 与数据面检查点
+
+| 检查点 | 控制面证据 | 主机/数据面证据 | 失败含义 |
+| --- | --- | --- | --- |
+| 网络存在 | Accounts network `net_shared_vault` | topology ID/CIDR 相同 | bootstrap 未完成或网络 ID 错误 |
+| 设备已登记 | device ID、role、platform、status active | `xconnect-one status` 显示 `joined: true` | invite 未消费或设备冲突 |
+| signed-config 已应用 | generation/revision、ACK | `runtime.applied: true`、接口存在 | 凭证有效但本地未同步 |
+| Gateway 已加载 peer | Gateway signed-config 含 device public key/address | Gateway `wg show` 有 peer、handshake 更新时间刷新 | Gateway sync/reload 未执行 |
+| overlay 可达 | allowed IP 与 policy 正确 | `ping`、TCP 8200/8201 | WireGuard/Xray/防火墙路径异常 |
+| Vault 可达 | 不由 XConnect 控制面保证 | `curl /v1/sys/health`、`nc 8200/8201` | overlay 通但 Vault listener/ACL 错误 |
+
+One 的 `/api/overlay/v1/enrollment/signed-config` 和 Gateway 的 `/api/overlay/v1/gateway/signed-config` 是两个不同快照，不要用 One 配置替代 Gateway peer 配置。控制面短暂不可用时，已加载的数据面可继续转发；但新设备、撤销和 peer 变更必须等控制面恢复并完成 sync。
+
+### 7.6 本次迁移的 XConnect 实例对比
+
+| 角色 | device ID/节点 | 地址 | 建立方式 | 当前用途 |
+| --- | --- | ---: | --- | --- |
+| Gateway | `vault-prod-0` | `10.79.0.1` | Gateway one-use invite + Gateway signed-config | VLESS 入口、WireGuard relay、Vault 私网入口 |
+| Vault One 模板 | `vault-prod-1` | `10.79.0.2` | One invite，扩容时消费 | Raft voter/standby（当前未部署） |
+| Vault One 模板 | `vault-prod-2` | `10.79.0.3` | One invite，扩容时消费 | Raft voter/standby（当前未部署） |
+| 旧 Vault One | `vault-legacy` | `10.79.0.4` | 迁移源独立 One enrollment | 旧节点数据面/回滚观察 |
+| LAN SecOPS One | `xconnect-linux-secops-shenlan-inspiron-5415-ops` | `10.79.0.7` | 独立 One invite + systemd | 运维访问，不加入 Raft |
+| Mac One | `xconnect-darwin-haitaodemacbook-pro-rejoin.local` | `10.79.0.9` | 重邀请后复用受保护 credential | 运维访问，不加入 Raft |
+
+`.5` 和 `.8` 等历史分配不能因为“看起来空闲”就手工复用；地址是否可用以 Accounts signed-config 和 active device 记录为准。
+
+### 7.7 XConnect 建立/重载操作顺序
+
+```text
+1. 修改并 review GitOps topology
+2. XConnect Zero bootstrap dry-run
+3. XConnect Zero bootstrap apply（生成 one-use invite）
+4. Gateway frontend（Caddy TLS + Xray socket）
+5. Gateway identity/enrollment
+6. One/旧节点/LAN/Mac 逐设备 enrollment
+7. Gateway peer sync/reload
+8. handshake + overlay ping + TCP 8200/8201
+9. 再执行 Vault fresh/join/cutover 或 DNS 操作
+```
+
+若某个 One `joined=true` 但 Gateway `wg show` 没有该 peer，不能重复在本机生成 key 或直接改 allowed-ips；应先检查 Gateway signed-config generation、Gateway sync service、Accounts device status，然后只重载 Gateway。若 device ID 已存在，重新生成同 ID invite 可能返回 `state_conflict/device_conflict`；应使用受控 revoke/re-enroll 流程或新的明确 device ID，并同步更新 GitOps policy。
+
 
 ## 8. 阶段 C：新集群 fresh 部署路径
 

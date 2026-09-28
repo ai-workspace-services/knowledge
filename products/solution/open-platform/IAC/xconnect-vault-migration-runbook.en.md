@@ -112,6 +112,48 @@ Before changing anything, confirm:
 - a DNS rollback target and observation window are defined;
 - a failed gate stops the run; no `stage_plan.py` or live-state check is bypassed.
 
+
+### 4.4 Repository responsibilities and boundaries
+
+The migration is implemented across several repositories. These boundaries distinguish a declaration drift problem from a runtime reconciliation problem:
+
+| Repository | Key files/directories | Post-migration responsibility | Comparison source |
+| --- | --- | --- | --- |
+| `ai-workspace-infra/gitops` | `resources/svc.plus/shared/vault/server.yaml` | Vault service contract: domain, legacy source, Raft leader/peers, migration stages, SSH/overlay entry points | Legacy records and live Raft state |
+| `ai-workspace-infra/gitops` | `resources/xworktech.com/shared/gcp/vault-shared.yaml` | Actual shared GCP resources in `open-platform-prod`: zones, machine type, host keys, SSH mode | `gcloud compute`/CMDB instances, addresses, disks and status |
+| `ai-workspace-infra/gitops` | `vpn-overlay/shared/xconnect-vault-shared.yaml` | `net_shared_vault` CIDR, Gateway, One nodes, operator devices, VLESS transport and SSH policy | Accounts signed-config, device status and WireGuard peers |
+| `ai-workspace-infra/platform-ops-toolkit` | `.github/workflows/vault-server.yml` | Single Vault entry point for declaration resolution, IaC, node stages, DNS verify/switch/rollback | Actions run, step summary and live-state gates |
+| `ai-workspace-infra/platform-ops-toolkit` | `scripts/node_deploy/{resolve_vault_server_declaration.py,stage_plan.py,xconnect_stage.py,verify_vault_stage.py}` | Convert the GitOps contract into inventory, XConnect invitations, Playbook extra-vars and read-only checks | Rendered contract, node probes and Raft/DNS/XConnect results |
+| `ai-workspace-infra/playbooks` | `deploy_vault_shared_services.yml`, `roles/vhosts/{vault,xconnect_gateway,xconnect_one,vault_gateway_frontend}` | Change hosts: install Vault/Caddy/Xray/WireGuard, write configuration and manage systemd; never initialize or unseal Vault | `systemctl`, configuration, ports and logs |
+| `ai-workspace-service/accounts` | `internal/overlay`, `api/overlay_v1.go` | XConnect control plane: networks, devices, credentials, signed-config, ACK and revocation | Accounts API, device generation and Gateway peer snapshot |
+| `ai-workspace-infra/iac-modules*` | GCP workload namespace/renderer and Terraform state | Render GCP declarations into instances, addresses, disks, firewall and IAM | Terraform plan/state and GCP CMDB |
+| `ai-workspace-service/knowledge` | This runbook | Solution, evidence index, ordering and rollback rules; never a runtime configuration source | Git commit, Actions run ID and operator record |
+
+The post-migration state must satisfy three kinds of consistency:
+
+1. **Declaration consistency**: node count, overlay addresses, roles and migration source match the approved topology.
+2. **Resource consistency**: CMDB/GCP instances, addresses, disks, zones and host keys match the provider manifest.
+3. **Runtime consistency**: Vault Raft peers, Accounts signed-config, XConnect handshakes and DNS results agree with both declarations and resources.
+
+When one layer disagrees with another, stop before the next stage. Do not hide GitOps drift by hand-editing a host. Fix the declaration, rerun `plan` or a read-only stage, and only then apply.
+
+### 4.5 Post-migration declaration versus live-state comparison
+
+The live shared state and the retained scale-out template are separate objects:
+
+| Object | Current live steady state | Retained scale-out or historical object | Verification |
+| --- | --- | --- | --- |
+| Vault GCP resources | Only `vault-prod-0`, `asia-east1-a`, `RUNNING` | `vault-prod-1/2` can be declared again for scale-out | `gcloud compute instances list`, CMDB resolver |
+| Vault Raft | `vault-prod-0` is the single voter/leader | Three-node join order is controlled by `members: 3` and `peers` | `vault operator raft list-peers` |
+| XConnect Gateway | `vault-prod-0`, `10.79.0.1` | One addresses `10.79.0.2/10.79.0.3` are scale-out targets | Gateway signed-config, `wg show` |
+| LAN SecOPS One | `10.79.0.7`, independent device ID, persistent systemd service | Not a Vault Raft voter | Accounts device, `xconnect-one status`, Mac → `10.79.0.7` |
+| Operations Mac One | Re-enrolled device currently uses `10.79.0.9` | Old registration remains for a separate revoke window | GitOps operator device, signed-config, `utun7` |
+| Legacy node | `46.250.251.132`/`vault-2`, independent server under observation | Not deleted by GCP IaC | Legacy service state, DNS and Vault health |
+| DNS | `vault.svc.plus` points to the current GCP entry point | Legacy target remains the rollback target | Multiple resolver `dig`, HTTPS health |
+
+Always compare resource count, Raft voter count, active Accounts device count and KV path count separately. An operator/LAN One is not a Vault voter, and the legacy node must not be destroyed as a side effect of GCP scale-down.
+
+
 ## 5. Workflow entry point
 
 All stages use `platform-ops-toolkit/.github/workflows/vault-server.yml`. Dispatch one class of action at a time:
@@ -213,6 +255,81 @@ nc -vz <peer-overlay-or-private-address> 8201
 ```
 
 Every expected peer must have a recent WireGuard handshake; overlay ping must succeed; TCP 8200/8201 must work both ways; and public scans must not see 8200/8201 or UDP 51820.
+
+
+### 7.4 Complete XConnect establishment sequence
+
+XConnect establishment has five layers: declaration, control-plane bootstrap, host enrollment, signed-config delivery, and data-plane reload. Troubleshooting must identify the layer that stopped:
+
+```text
+GitOps topology
+   │  immutable commit
+   ▼
+Bootstrap workflow / xconnect_stage.py
+   │  X-Service-Token exists only in runner memory
+   ▼
+Accounts net_shared_vault + one-use invite
+   │  xconnect://join/... in a 0600 ephemeral file or controlled Vault path
+   ▼
+Gateway/One join
+   │  WireGuard private key generated locally
+   ▼
+Signed-config + ACK
+   │  peers, addresses, transport, policy, generation
+   ▼
+Caddy TLS :443 → Xray socket/UDP relay → WireGuard :51820
+```
+
+1. **Declare topology**: `vpn-overlay/shared/xconnect-vault-shared.yaml` defines `net_shared_vault`, `10.79.0.0/24`, Gateway `10.79.0.1`, nodes/operators and the `vless-xhttp` parameters. GitOps contains IDs, addresses, public keys and paths, never tokens, private keys or join URIs.
+2. **Create network and invitation**: the `declared-network` profile of `xconnect-zero-cloud.yaml`, or the Vault server XConnect stage, consumes the reviewed manifest. `dry-run` validates only; `apply` calls Accounts `POST /api/internal/overlay/networks/bootstrap` with the owner, network, Gateway public key/address, transport and invite metadata. Each invite is bound to a device ID, role, platform and TTL. The returned `join_uri` is written only to a runner `0600` file or controlled Vault path and never to logs.
+3. **Enroll Gateway**: the Gateway generates its local WireGuard identity and consumes a Gateway one-use invite. Accounts receives only the public key and stores device state and a credential hash; the Gateway receives its device credential and signature verification material.
+4. **Enroll One devices**: each GCP peer, legacy node, LAN SecOPS node and Mac has its own device ID and one-use invite. One generates its private key locally, fetches `/api/overlay/v1/enrollment/signed-config`, and ACKs the corresponding generation.
+5. **Load the Gateway peer snapshot**: the Gateway fetches active One peers, allowed IPs, relay and transport settings from `/api/overlay/v1/gateway/signed-config`. A device being registered in Accounts does not mean its peer is loaded; `wg show` changes only after Gateway sync/reload.
+6. **Transport path**: the One WireGuard packet enters the local Xray loopback relay; Xray connects through VLESS + TLS/XHTTP to `vault-xconnect.svc.plus:443/xconnect`; Caddy terminates TLS and forwards to `/run/xconnect-gateway/xray.sock`; Gateway Xray sends the traffic to the local WireGuard peer.
+7. **Persistence**: Gateway/One systemd services use `Restart=on-failure`, a stable state directory and a sync watcher. The Mac uses a LaunchDaemon and LAN SecOPS uses `xconnect-one-secops.service`. Reboots reuse the enrolled device credential rather than generating an unregistered temporary peer.
+
+### 7.5 XConnect control-plane API and data-plane checkpoints
+
+| Checkpoint | Control-plane evidence | Host/data-plane evidence | Failure meaning |
+| --- | --- | --- | --- |
+| Network exists | Accounts network `net_shared_vault` | Topology ID/CIDR match | Bootstrap incomplete or wrong network ID |
+| Device enrolled | device ID, role, platform, active status | `xconnect-one status` reports `joined: true` | Invite not consumed or device conflict |
+| Signed-config applied | generation/revision and ACK | `runtime.applied: true`, interface exists | Credential is valid but local sync failed |
+| Gateway peer loaded | Gateway signed-config contains key/address | Gateway `wg show` has peer and fresh handshake | Gateway sync/reload is missing |
+| Overlay reachable | allowed IP and policy are correct | `ping`, TCP 8200/8201 | WireGuard/Xray/firewall path failure |
+| Vault reachable | Not guaranteed by the control plane | `curl /v1/sys/health`, `nc 8200/8201` | Vault listener or ACL failure |
+
+The One `/api/overlay/v1/enrollment/signed-config` and Gateway `/api/overlay/v1/gateway/signed-config` are different snapshots. Do not use a One config as a Gateway peer config. A short control-plane outage may leave an already-loaded data plane forwarding, but new enrollment, revocation and peer changes wait for control-plane recovery and sync.
+
+### 7.6 XConnect roles in this migration
+
+| Role | Device/node | Address | Establishment | Current purpose |
+| --- | --- | ---: | --- | --- |
+| Gateway | `vault-prod-0` | `10.79.0.1` | Gateway one-use invite + Gateway signed-config | VLESS ingress, WireGuard relay and private Vault entry |
+| Vault One template | `vault-prod-1` | `10.79.0.2` | One invite during scale-out | Raft voter/standby (not deployed in the current live state) |
+| Vault One template | `vault-prod-2` | `10.79.0.3` | One invite during scale-out | Raft voter/standby (not deployed in the current live state) |
+| Legacy Vault One | `vault-legacy` | `10.79.0.4` | Independent One enrollment for migration source | Legacy data plane and rollback observation |
+| LAN SecOPS One | `xconnect-linux-secops-shenlan-inspiron-5415-ops` | `10.79.0.7` | Independent One invite + systemd | Operations access, not Raft |
+| Mac One | `xconnect-darwin-haitaodemacbook-pro-rejoin.local` | `10.79.0.9` | Re-enrollment with protected credential | Operations access, not Raft |
+
+Historical allocations such as `.5` or `.8` must not be manually reused because they appear free. Accounts signed-config and active-device state are the source of truth for address availability.
+
+### 7.7 XConnect establishment/reload order
+
+```text
+1. Change and review the GitOps topology
+2. XConnect Zero bootstrap dry-run
+3. XConnect Zero bootstrap apply (one-use invite)
+4. Gateway frontend (Caddy TLS + Xray socket)
+5. Gateway identity/enrollment
+6. Enroll One/legacy/LAN/Mac devices one at a time
+7. Sync/reload Gateway peers
+8. Handshake + overlay ping + TCP 8200/8201
+9. Only then run Vault fresh/join/cutover or DNS stages
+```
+
+If a One reports `joined=true` but Gateway `wg show` has no peer, do not generate another local key or hand-edit allowed IPs. Check Gateway signed-config generation, the Gateway sync service and Accounts device status, then reload the Gateway. If a device ID already exists, issuing another invite with the same ID may return `state_conflict` or `device_conflict`; use the controlled revoke/re-enroll flow or a new explicit device ID, then update the GitOps policy.
+
 
 ## 8. Phase C: fresh cluster deployment
 
