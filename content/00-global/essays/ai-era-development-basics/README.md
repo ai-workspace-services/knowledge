@@ -17,6 +17,9 @@ Engineering Decision Canvas · 工程决策画布
 | [08-api-request.md](08-api-request.md) | 一次 API 请求到底经过谁 |
 | [09-npm-pnpm-packagejson.md](09-npm-pnpm-packagejson.md) | npm、pnpm、package.json 为什么能让项目跑起来 |
 | [10-ai-era-minimum-stack.md](10-ai-era-minimum-stack.md) | AI 时代真正需要掌握什么 |
+| [11-series-essay.md](11-series-essay.md) | 从刀耕火种到 AI 编程：十期合集文章 |
+| [2026-09-29-from-primitive-tools-to-ai-coding.zh.md](../2026-09-29-from-primitive-tools-to-ai-coding.zh.md) | 旗舰深度特稿（中文）：从刀耕火种到 AI 编程 |
+| [2026-09-29-from-primitive-tools-to-ai-coding.en.md](../2026-09-29-from-primitive-tools-to-ai-coding.en.md) | Architectural Essay (EN): From Primitive Tools to AI Coding |
 
 ## 推荐发布方式
 
@@ -117,4 +120,3 @@ Engineering Decision Canvas · 工程决策画布
 > That makes architectural judgment, system boundaries, contracts and verification more—not less—important.
 >
 > **Understand the boundary first. Then let AI accelerate implementation.**
-
