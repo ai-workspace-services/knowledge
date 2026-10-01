@@ -122,6 +122,8 @@ Gemini CLI 通过统一网关接入需要单独验证客户端支持的 Provider
 
 逐平台前置检查、回调隧道和登录后验证见 [CPA OAuth 操作 TLDR](./ai-aggregator-cpa-oauth-tldr.zh.md)。当前四个实例包含两个 Codex，Grok 仍需单独部署。
 
+登录命令必须先进入对应实例用户可访问的工作目录；从 root 的 `/root` 目录直接 `runuser` 会导致 CLI 的 `stat .: permission denied`。
+
 ```bash
 ssh -t root@10.79.0.7
 

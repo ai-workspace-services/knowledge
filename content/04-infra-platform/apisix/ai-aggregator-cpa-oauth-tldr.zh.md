@@ -45,6 +45,7 @@ stat -c '%U %G %a' "/var/lib/ai-aggregator/cpa/$cpa_id/auth"
 ## OpenAI：Codex 设备登录
 
 ```bash
+cd /var/lib/ai-aggregator/cpa-codex-01
 runuser -u cpa-codex-01 -- /opt/ai-aggregator/cliproxyapi \
   --config /run/ai-aggregator/cpa-codex-01.yaml \
   --codex-device-login --no-browser
@@ -55,6 +56,7 @@ runuser -u cpa-codex-01 -- /opt/ai-aggregator/cliproxyapi \
 第二个账号使用独立实例，浏览器确认 `manbuzhe2008@gmail.com`：
 
 ```bash
+cd /var/lib/ai-aggregator/cpa-codex-02
 runuser -u cpa-codex-02 -- /opt/ai-aggregator/cliproxyapi \
   --config /run/ai-aggregator/cpa-codex-02.yaml \
   --codex-device-login --no-browser
@@ -63,6 +65,7 @@ runuser -u cpa-codex-02 -- /opt/ai-aggregator/cliproxyapi \
 ## Anthropic：Claude OAuth
 
 ```bash
+cd /var/lib/ai-aggregator/cpa-claude-01
 runuser -u cpa-claude-01 -- /opt/ai-aggregator/cliproxyapi \
   --config /run/ai-aggregator/cpa-claude-01.yaml \
   --claude-login --no-browser
@@ -75,6 +78,7 @@ runuser -u cpa-claude-01 -- /opt/ai-aggregator/cliproxyapi \
 前置条件：GitOps 已声明 `cpa-grok-01`，Unix 用户、配置文件、加密 auth 目录及 systemd 服务均已部署。当前 Home-Lab 尚不满足该条件。
 
 ```bash
+cd /var/lib/ai-aggregator/cpa-grok-01
 runuser -u cpa-grok-01 -- /opt/ai-aggregator/cliproxyapi \
   --config /run/ai-aggregator/cpa-grok-01.yaml \
   --xai-login --no-browser
@@ -87,6 +91,7 @@ runuser -u cpa-grok-01 -- /opt/ai-aggregator/cliproxyapi \
 当前 CPA Google 入口使用 Antigravity：
 
 ```bash
+cd /var/lib/ai-aggregator/cpa-antigravity-01
 runuser -u cpa-antigravity-01 -- /opt/ai-aggregator/cliproxyapi \
   --config /run/ai-aggregator/cpa-antigravity-01.yaml \
   --antigravity-login --no-browser
@@ -109,7 +114,7 @@ ssh -N -o ExitOnForwardFailure=yes \
 
 ## 登录完成：恢复服务 → 验证 → 启用
 
-登录通常先保持服务运行；若 CLI 报端口或文件冲突，只停该实例并在退出后恢复。可使用下面的 shell 包装，确保普通失败或中断后重新启动该实例：
+登录进程必须从实例用户可访问的工作目录启动。否则从 root 的 `/root` 目录直接 `runuser` 时，Go 程序执行 `stat .` 会得到 `permission denied`。若 CLI 报端口或文件冲突，可只停该实例并在退出后恢复。可使用下面的 shell 包装，确保普通失败或中断后重新启动该实例：
 
 ```bash
 (
@@ -117,6 +122,7 @@ ssh -N -o ExitOnForwardFailure=yes \
   login_flag=--claude-login
   trap 'systemctl start "ai-aggregator-$cpa_id.service"' EXIT
   systemctl stop "ai-aggregator-$cpa_id.service" || exit 1
+  cd "/var/lib/ai-aggregator/$cpa_id" || exit 1
   runuser -u "$cpa_id" -- /opt/ai-aggregator/cliproxyapi \
     --config "/run/ai-aggregator/$cpa_id.yaml" "$login_flag" --no-browser
 )
