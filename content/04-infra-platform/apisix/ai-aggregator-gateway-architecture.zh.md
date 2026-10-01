@@ -172,7 +172,7 @@ kv/<env>/ai-aggregator/litellm/providers/xai
 
 不再使用 `accounts/*`、`instances/*`、`clients/*`、`cpa/*`、`database/backup`。数据库备份凭据沿用现有数据库基础设施契约。
 
-当前 Home-Lab APISIX 仍从历史 `gateway/kong` 读取 bootstrap client key。迁移到 `gateway/apisix` 是待完成项，旧值不应直接写入 GitOps。
+Home-Lab 客户端凭据已迁移到 `kv/uat/ai-aggregator/gateway/apisix#bootstrap_client_key`。历史 `gateway/kong` 记录暂时保留，不再作为客户端凭据来源；禁止将值写入 GitOps。
 
 ## 仓库交接与部署流程
 
@@ -200,7 +200,7 @@ Home-Lab 为当前持久节点部署；AWS/GCP Spot UAT 可由环境声明选择
 
 最后一次节点检查确认 Caddy、APISIX、New API、LiteLLM 和四个 CPA 服务全部 active；Kong disabled，未监听 `8000/8001`。APISIX、New API、LiteLLM 仅监听 `127.0.0.1:9080/3000/4000`。
 
-Caddy validate 与 reload 通过；HTTPS 未授权请求返回 `401`；APISIX 本地白名单地址加 Token 返回 `200`。HTTPS 携带有效 Token 的完整验收尚未完成。当前有效配置仅使用 `ai-internal.onwalk.net`，`direct-ai.onwalk.net` 仅存在于旧备份。
+Caddy validate 与 reload 通过；HTTPS 未授权请求返回 `401`；有效 Bearer 或 `x-api-key` 查询模型目录返回 `200`。这只证明入口认证与目录链路可用，真实推理、streaming 和 SDK 端到端验收仍待完成。当前有效配置仅使用 `ai-internal.onwalk.net`，`direct-ai.onwalk.net` 仅存在于旧备份。
 
 当前 Caddy 使用 Vault 注入的已有证书，自动签发尚未实现。节点 LAN 地址曾变化导致 reload 失败，现已修复；后续应从 inventory 获取地址，避免长期固化 DHCP 地址。
 
@@ -227,3 +227,9 @@ APISIX 修复包括匹配 Runtime Lua 库、让 worker 能读取非敏感配置�
 - [Vault 与 GitOps 规格](../../02-iac-devops/ansible/ai-aggregator-vault-and-gitops-specification.zh.md)
 
 上述历史文档含 Kong、双域名或旧状态描述；当前 Home-Lab 选型以本文为准，具体部署仍以当前 GitOps 和节点实测为准。
+
+## 最后对接与验证 TLDR
+
+完成 OAuth 后，按 [AI Aggregator Gateway 对接与验证 TLDR](./ai-aggregator-client-acceptance-tldr.zh.md) 执行统一 Token、OpenAI/Anthropic SDK、模型目录、streaming 和 IDE/Agent 验收。客户端使用 `AI_GATEWAY_CLIENT_KEY`，APISIX 认证后注入独立 New API 内部 Token；SDK 无须额外添加自定义认证头。
+
+2026-10-01 已修复内部认证，Bearer 与 `x-api-key` 查询模型列表均返回 `200`，四个 New API 渠道已启用。真实推理验收尚未完成：Claude 返回上游 `403`，Google 测试失败，GPT 尚无成功证据。最新验收快照和可执行命令集中在上述 TLDR，不将模型目录可见等同于推理成功。
