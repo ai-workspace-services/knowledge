@@ -100,6 +100,8 @@ In the next installment, we will dive inside the gateway's routing and security 
 
 ### 1. X (Twitter) Thread
 
+![X/Twitter Banner (16:9 Aspect Ratio)](/assets/images/gateway-01-x-cover.png)
+
 **Tweet 1 (Hook)**:
 Tired of juggling ChatGPT Plus, Claude Team, and commercial API keys across different CLIs and IDEs?
 

@@ -100,6 +100,8 @@ category: essays
 
 ### 1. 微信公众号 & 朋友圈文案
 
+![微信公众号首图推荐（2.35:1 宽幅比例）](/assets/images/gateway-01-wechat-cover.png)
+
 > **标题备选**：
 > 1. 再也不用多账号切换了：手把手教你搭建个人专属全能 AI 聚合网关（选型篇）
 > 2. 别再手动切 Token 了！我用 APISIX + Caddy 撸了一套全能 AI 聚合网关
@@ -118,6 +120,8 @@ Caddy (TLS) + APISIX Standalone (鉴权/限流) + New API (模型目录) + LiteL
 ---
 
 ### 2. 小红书爆款图文文案
+
+![小红书竖版海报（3:4 比例）](/assets/images/gateway-01-xhs-cover.png)
 
 **笔记封面大字**：
 🔥 告别多账号切换！
@@ -149,6 +153,8 @@ IDE 挂着 Antigravity、Android Studio；
 ---
 
 ### 3. X (Twitter) Thread / 文章
+
+![X/Twitter 宽幅卡片（16:9 比例）](/assets/images/gateway-01-x-cover.png)
 
 **Tweet 1 (Hook)**:
 Tired of constantly switching between ChatGPT Plus, Claude Team subscriptions, and official API keys across different CLIs and IDEs? 
