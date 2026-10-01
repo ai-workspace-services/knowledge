@@ -2,6 +2,8 @@
 
 > 状态：规划基线
 >
+> 身份和状态的操作契约：[多云身份 Bootstrap 与状态契约](11-cloud-oidc-bootstrap-contract.zh.md)。
+>
 > 适用环境：UAT；SIT、PROD 可复用同一架构，但必须使用各自的 Vault 路径、账号、状态前缀和发布策略。
 >
 > 关联仓库：
