@@ -1,5 +1,7 @@
 # 个人 AI 聚合服务 v1：架构、选型与实施交付契约
 
+> 更新入口（2026-10-01）：[AI Aggregator Gateway：APISIX Standalone 与 Home-Lab 架构](../../04-infra-platform/apisix/ai-aggregator-gateway-architecture.zh.md)。本文保留历史交付基线，其中 Kong、双域名和“尚未部署”的描述不代表当前 Home-Lab 状态；当前选型与已验证范围请见新文档。
+
 状态：v1 实施基线；默认 disabled，尚未完成真实节点部署、OAuth 登录或请求验收。
 v1 公共入口只有 Caddy；Cloudflare Worker/Pages、Cloud Run、Bedrock、Vertex AI、Azure Foundry 均不在 v1 运行链路。
 
