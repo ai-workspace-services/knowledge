@@ -44,6 +44,61 @@ stat -c '%U %G %a' "/var/lib/ai-aggregator/cpa/$cpa_id/auth"
 
 ## OpenAI：Codex 设备登录
 
+当前 Home-Lab 的 Codex device flow 需要在 AI Desktop 远程桌面中打开设备登录页面。SSH 终端只负责启动 CPA 和显示设备码，远程桌面浏览器负责完成 Google/ChatGPT 登录。
+
+### Codex-01 完整步骤
+
+在本地终端窗口 1 连接 Home-Lab：
+
+```bash
+ssh -t root@10.79.0.7
+```
+
+在 Home-Lab root shell 中逐行执行：
+
+```bash
+cpa_id=cpa-codex-01
+cd "/var/lib/ai-aggregator/$cpa_id" || exit 1
+systemctl stop "ai-aggregator-$cpa_id.service"
+runuser -u "$cpa_id" -- /opt/ai-aggregator/cliproxyapi \
+  --config "/run/ai-aggregator/$cpa_id.yaml" \
+  --codex-device-login --no-browser
+```
+
+终端会显示类似下面的信息：
+
+```text
+Starting Codex device authentication...
+Codex device URL: https://auth.openai.com/codex/device
+Codex device code: <DEVICE_CODE>
+```
+
+设备码只用于本次登录，不要复制到聊天、工单、日志或截图。保持 SSH 窗口运行，不要按 Ctrl-C。
+
+在 Home-Lab 的 `ai_desktop` 远程桌面中：
+
+1. 打开浏览器。
+2. 访问终端显示的 `Codex device URL`，不要手工改写域名。
+3. 输入终端显示的 `<DEVICE_CODE>`。
+4. 登录矩阵指定的账号 `manbuzhe2009@qq.com`。
+5. 完成授权后回到 SSH 窗口，等待出现登录成功或认证完成提示。
+
+成功后，在 SSH 窗口按 `Ctrl-C` 结束登录进程，再启动服务：
+
+```bash
+systemctl start ai-aggregator-cpa-codex-01.service
+systemctl is-active ai-aggregator-cpa-codex-01.service
+```
+
+检查本地认证结果，只输出文件名：
+
+```bash
+find /var/lib/ai-aggregator/cpa/cpa-codex-01/auth \
+  -maxdepth 2 -type f -printf '%P\n'
+```
+
+如果浏览器提示设备码过期、无效或账号错误，关闭当前登录进程，重新执行完整步骤生成新设备码；不要重复使用旧 code。
+
 ```bash
 cd /var/lib/ai-aggregator/cpa-codex-01
 runuser -u cpa-codex-01 -- /opt/ai-aggregator/cliproxyapi \
@@ -51,9 +106,7 @@ runuser -u cpa-codex-01 -- /opt/ai-aggregator/cliproxyapi \
   --codex-device-login --no-browser
 ```
 
-在 Mac 浏览器打开终端显示的验证页面，输入设备码，确认账号为 `manbuzhe2009@qq.com`。等待 SSH 终端显示登录成功；设备登录不需要 localhost 回调隧道。
-
-第二个账号使用独立实例，浏览器确认 `manbuzhe2008@gmail.com`：
+第二个账号使用完全独立的实例和登录流程。确认账号为 `manbuzhe2008@gmail.com`：
 
 ```bash
 cd /var/lib/ai-aggregator/cpa-codex-02
@@ -62,44 +115,93 @@ runuser -u cpa-codex-02 -- /opt/ai-aggregator/cliproxyapi \
   --codex-device-login --no-browser
 ```
 
+这里也要在 AI Desktop 远程桌面打开终端显示的设备 URL，输入新生成的设备码；不能复用 Codex-01 的 code 或浏览器账号状态。
+
 ## Anthropic：Claude OAuth
 
+### Claude 完整步骤
+
 ```bash
-cd /var/lib/ai-aggregator/cpa-claude-01
+cpa_id=cpa-claude-01
+cd "/var/lib/ai-aggregator/$cpa_id" || exit 1
+systemctl stop "ai-aggregator-$cpa_id.service"
 runuser -u cpa-claude-01 -- /opt/ai-aggregator/cliproxyapi \
   --config /run/ai-aggregator/cpa-claude-01.yaml \
   --claude-login --no-browser
 ```
 
-打开终端显示的授权 URL，确认 `haitaopanhq@gmail.com`。按 CPA 提示完成回调或输入授权结果，不自行猜测流程。
+在 AI Desktop 远程桌面浏览器中打开终端显示的授权 URL，确认账号为
+`haitaopanhq@gmail.com`，完成授权后回到 SSH 窗口等待成功提示。若 CPA 明确提示 localhost 回调，按本文后面的 SSH 隧道步骤处理。
+
+完成后按 `Ctrl-C`，恢复服务并检查：
+
+```bash
+systemctl start ai-aggregator-cpa-claude-01.service
+systemctl is-active ai-aggregator-cpa-claude-01.service
+find /var/lib/ai-aggregator/cpa/cpa-claude-01/auth \
+  -maxdepth 2 -type f -printf '%P\n'
+```
+
+失败或账号错误时结束当前进程，从停服务步骤重新开始；每次使用新的授权流程。
 
 ## xAI：Grok OAuth（实例部署后）
 
 前置条件：GitOps 已声明 `cpa-grok-01`，Unix 用户、配置文件、加密 auth 目录及 systemd 服务均已部署。当前 Home-Lab 尚不满足该条件。
 
 ```bash
-cd /var/lib/ai-aggregator/cpa-grok-01
+cpa_id=cpa-grok-01
+cd "/var/lib/ai-aggregator/$cpa_id" || exit 1
+systemctl stop "ai-aggregator-$cpa_id.service"
 runuser -u cpa-grok-01 -- /opt/ai-aggregator/cliproxyapi \
   --config /run/ai-aggregator/cpa-grok-01.yaml \
   --xai-login --no-browser
 ```
 
-按终端实际提示完成 xAI 登录。账号以部署时批准的矩阵声明为准；不将官方 xAI API Key 当作 OAuth bundle。
+按终端实际提示，在 AI Desktop 远程桌面浏览器中打开授权页面（如果输出 URL），使用部署时批准的 xAI 账号完成授权。不要将官方 xAI API Key 当作 OAuth bundle。
+
+授权成功后按 `Ctrl-C`，再执行：
+
+```bash
+systemctl start ai-aggregator-cpa-grok-01.service
+systemctl is-active ai-aggregator-cpa-grok-01.service
+find /var/lib/ai-aggregator/cpa/cpa-grok-01/auth \
+  -maxdepth 2 -type f -printf '%P\n'
+```
+
+当前 Home-Lab 尚未部署此实例；GitOps、Unix 用户、配置文件、auth 目录和 systemd 服务就绪前不要执行。
 
 ## Google：Antigravity OAuth 与 Gemini CLI
 
 当前 CPA Google 入口使用 Antigravity：
 
 ```bash
-cd /var/lib/ai-aggregator/cpa-antigravity-01
+cpa_id=cpa-antigravity-01
+cd "/var/lib/ai-aggregator/$cpa_id" || exit 1
+systemctl stop "ai-aggregator-$cpa_id.service"
 runuser -u cpa-antigravity-01 -- /opt/ai-aggregator/cliproxyapi \
   --config /run/ai-aggregator/cpa-antigravity-01.yaml \
   --antigravity-login --no-browser
 ```
 
-打开授权 URL，确认 `haitaopanhq@gmail.com`，等待终端完成。这仅登录 CPA Antigravity adapter；不代表独立 Gemini CLI 已登录，也不保证所有 Gemini 模型可调用。
+在 AI Desktop 远程桌面浏览器中打开终端显示的授权 URL，确认 `haitaopanhq@gmail.com`，等待终端完成。随后按 `Ctrl-C`，恢复并检查：
 
-当前 CPA `--help` 没有独立 Gemini 登录参数。若目标是 Gemini CLI 自身登录，应在该 CLI 用户会话中使用其当前版本的交互登录流程；若要新增 Gemini CPA adapter，先核对构建支持，再补实例。不要将 `.gemini/config/config.json` 或整个 `.gemini/` 复制到 CPA。
+```bash
+systemctl start ai-aggregator-cpa-antigravity-01.service
+systemctl is-active ai-aggregator-cpa-antigravity-01.service
+find /var/lib/ai-aggregator/cpa/cpa-antigravity-01/auth \
+  -maxdepth 2 -type f -printf '%P\n'
+```
+
+这仅登录 CPA Antigravity adapter；不代表独立 Gemini CLI 已登录，也不保证所有 Gemini 模型可调用。
+
+当前 CPA `--help` 没有独立 Gemini 登录参数。若目标是 Gemini CLI：
+
+1. 进入 AI Desktop 远程桌面，打开该 CodeAgent 用户的终端。
+2. 启动已安装的 `gemini` CLI，按当前版本交互提示选择 Google 登录。
+3. 在远程桌面浏览器中完成 Google 登录，确认 `haitaopanhq@gmail.com`。
+4. 回到 Gemini CLI，等待登录完成后再做最小模型列表或请求检查。
+
+不要凭空使用未在当前版本帮助中确认的 `gemini login` 参数，也不要将 `.gemini/config/config.json` 或整个 `.gemini/` 复制到 CPA、Vault、Git 或聊天。
 
 ## localhost 回调：Mac SSH 隧道
 
@@ -111,24 +213,6 @@ ssh -N -o ExitOnForwardFailure=yes \
 ```
 
 隧道保持运行至登录完成，再 Ctrl-C 关闭。回调端口不经过 Caddy/APISIX，不公开到网络；在服务器确认实际监听范围。若端口冲突，可先通过 `--oauth-callback-port` 指定端口，并同步调整隧道，以实际 CLI 提示为准。
-
-## 哪些步骤需要远程桌面
-
-默认登录路径不需要登录 Home-Lab 的远程桌面。SSH 终端负责启动 CPA，Mac 本地浏览器负责打开授权页面；需要 localhost 回调时使用上面的 SSH 隧道。
-
-| 操作 | SSH + 本地浏览器 | 远程桌面 |
-| --- | --- | --- |
-| Codex device OAuth | 需要 | 不需要 |
-| Claude OAuth URL | 需要 | 不需要 |
-| xAI OAuth URL | 需要 | 不需要 |
-| Google Gemini CLI 的终端登录 | 需要 | 通常不需要 |
-| Antigravity CPA OAuth URL | 需要 | 通常不需要 |
-| Antigravity/Gemini 必须在节点 GUI 中打开应用或浏览器 | 不足 | 需要 |
-| GUI 账号选择、图形化 2FA、浏览器插件或本地回调无法转发 | 不足 | 需要 |
-
-远程桌面只用于必须在 AI Desktop 节点内完成的图形化交互。它不改变 CPA 的认证归属：认证文件仍写入对应实例用户的本地加密 auth 目录。远程桌面会话结束后，CPA systemd 服务继续使用已保存的本地认证状态。
-
-当前 Home-Lab 的 `--codex-device-login`、`--claude-login` 和 `--antigravity-login` 均按 CPA CLI OAuth 方式设计，先使用 SSH + 本地浏览器；只有终端明确要求节点 GUI，或本地浏览器/SSH 隧道无法完成回调时，才进入 `ai_desktop` 远程桌面会话。不要为了普通设备码登录把 OAuth token 粘贴到远程桌面、聊天或命令行参数中。
 
 ## 登录完成：恢复服务 → 验证 → 启用
 
