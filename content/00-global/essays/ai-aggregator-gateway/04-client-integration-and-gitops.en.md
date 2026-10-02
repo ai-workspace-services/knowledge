@@ -18,7 +18,7 @@ category: essays
 
 > **Editor's Note**: After establishing the network topology and security boundaries, the most rewarding milestone is experiencing seamless zero-friction consumption on client developer workstations. How can all local Python automation scripts, command-line agents, and mainstream IDE plugins connect to the gateway without invasive modifications? How does this infrastructure achieve automated, repeatable delivery via GitOps and Ansible? As the fourth installment in our series, this article walks through practical client integrations and infrastructure automation.
 
-![Client Integration & GitOps Delivery Cover](/assets/images/gateway-04-integration-cover.png)
+![Engineering Decision Canvas: Client Integration & GitOps Automation](/assets/images/gateway-canvas-04-integration.png)
 
 ---
 

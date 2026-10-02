@@ -18,7 +18,7 @@ category: essays
 
 > **导读**：网关架构与安全防线搭建完毕后，最激动人心的时刻莫过于在客户端“无缝开箱即用”。如何让本地所有的 Python 脚本、命令行 Agent 以及主流 IDE 插件无需任何侵入式修改就能接入网关？整套基础设施如何通过 GitOps 和 Ansible 实现全自动化交付？本文作为实战系列的第四篇，将为你一一揭晓。
 
-![客户端接入与 GitOps 自动化编排交付](/assets/images/gateway-04-integration-cover.png)
+![工程决策画布：客户端零心智接入与 GitOps 自动化编排](/assets/images/gateway-canvas-04-integration.png)
 
 ---
 

@@ -152,6 +152,22 @@ Claude Code 使用同一环境变量，执行 `claude --model "$TEST_CLAUDE_MODE
 
 后续完成每个平台的最小请求，再验证 streaming、工具调用参数与结果往返、错误格式、跨租户拒绝、限流和单 CPA 故障隔离。记录协议、模型 ID、HTTP 状态、耗时和失败类别；不记录认证值或 OAuth 内容。官方 Provider/LiteLLM 路由需单独验证，本表不覆盖其可用性。
 
+### 2026-10-02 后续检查：OpenCode 与目录/放行差异
+
+当前 Home-Lab `/v1/models` 报告 42 个模型（目录数量，非推理成功数）。现场检查 APISIX `new-api-inference-allowlist` 的 `request-validation`，推理 `model` 枚举仍是 22 个；额外 20 个即使出现在目录里，也不能据此写成已放行。额外模型中的 5 个 `gpt-image-*` 是图片生成模型，不应作为 OpenCode 编码对话模型加入。两处配置须在 GitOps/Ansible 收敛后再次核对，不能把本段快照当作永久真值。
+
+OpenCode 使用自定义 OpenAI 兼容提供商，`npm` 设为 `@ai-sdk/openai-compatible`、`baseURL` 设为 `https://ai-internal.onwalk.net/v1`，模型 ID 精确匹配已放行目录。客户端 Key 使用 `{env:AI_GATEWAY_CLIENT_KEY}` 或 `/connect → Other`，不要写入仓库。`@ai-sdk/openai-compatible` 对应 Chat Completions；Responses 需另用 `@ai-sdk/openai` 并单独验收。配置格式见 [OpenCode Custom provider 官方文档](https://opencode.ai/docs/providers/#custom-provider)。本机示例配置路径为 `~/.config/opencode/opencode.json`，不应复制其中的环境/密钥状态到仓库。
+
+快速配合脚本：[verify-ai-aggregator-opencode.sh](./scripts/verify-ai-aggregator-opencode.sh)。它只列出目录数量并对三个当前放行的模型做最小 Chat 请求，输出 HTTP 状态、耗时和是否有非空响应；不输出密钥、请求/响应正文，也不修改服务。默认模型为 `gpt-5.6-luna`、`claude-sonnet-5`、`gemini-3-flash`；可用位置参数指定其他已放行模型。执行前在本机通过上文隐藏输入设置 `AI_GATEWAY_CLIENT_KEY`，并确认 VPN/内网可达：
+
+```bash
+bash content/04-infra-platform/apisix/scripts/verify-ai-aggregator-opencode.sh
+# 自选已放行模型，例如：
+bash content/04-infra-platform/apisix/scripts/verify-ai-aggregator-opencode.sh gpt-5.6-luna
+```
+
+判读：目录 `200` 只证明模型可见；推理 `401` 指向客户端认证，`403` 需区分 APISIX 白名单与上游拒绝，超时需分层检查 Caddy→APISIX→New API→CPA。脚本通过也只证明最小 Chat；仍需在 OpenCode 内实际验证对话、streaming、工具调用和 Responses。不要用 `curl -v`、`set -x` 或将包含 Key 的命令粘贴到日志。
+
 ## 7. 运维检查
 
 ```bash

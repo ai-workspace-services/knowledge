@@ -9,13 +9,13 @@
 
 ## 📚 文章索引与配图全览 / Series Index & Cover Gallery
 
-| 篇章 / Part | 封面配图 / Hero Banner | 中文版 / Chinese | 英文版 / English | 核心要点 / Highlights |
+| 篇章 / Part | 工程决策画布 / Decision Canvas | 中文版 / Chinese | 英文版 / English | 核心要点 / Highlights |
 | :---: | :---: | :--- | :--- | :--- |
-| **01** | ![选型篇](/assets/images/gateway-01-selection-cover.jpg) | [选型篇：Kong vs APISIX 深度抉择](./01-selection-kong-vs-apisix.zh.md) | [Part 1: Technology Selection](./01-selection-kong-vs-apisix.en.md) | 告别多账号割裂；APISIX Standalone GitOps 极简对账优势与无 DB 架构权衡。 |
-| **02** | ![架构篇](/assets/images/gateway-02-architecture-cover.jpg) | [架构篇：双层分流与安全契约](./02-architecture-and-traffic-routing.zh.md) | [Part 2: Architecture & Routing](./02-architecture-and-traffic-routing.en.md) | Caddy TLS 卸载 + APISIX 流量中枢；“单一网关 Token”无感解耦置换契约；Real-IP 信任链。 |
-| **03** | ![凭据篇](/assets/images/gateway-03-credentials-cover.jpg) | [凭据篇：CPA 矩阵与 Vault 注入](./03-cpa-matrix-and-vault-credentials.zh.md) | [Part 3: Credentials & Matrix](./03-cpa-matrix-and-vault-credentials.en.md) | CPA 单账号物理隔离防封号矩阵；0700 本地存储铁律；无头服务器 SSH 隧道 OAuth 回调；Vault tmpfs 内存化注入。 |
-| **04** | ![实战篇](/assets/images/gateway-04-integration-cover.png) | [实战篇：客户端接入与 GitOps 交付](./04-client-integration-and-gitops.zh.md) | [Part 4: Integration & GitOps](./04-client-integration-and-gitops.en.md) | 环境变量安全注入；OpenAI SDK、Responses 新协议、流式输出与 Claude Code 原生接入；Ansible 编排流水线。 |
-| **05** | ![排障篇](/assets/images/gateway-05-troubleshooting-cover.jpg) | [排障篇：真实推理避坑与运维复盘](./05-inference-troubleshooting-and-ops.zh.md) | [Part 5: Operations & Troubleshooting](./05-inference-troubleshooting-and-ops.en.md) | 四大可用性状态绝不等价；504 链路超时、403 风控阻断、连接异常排查；轻量级自动化探活脚本。 |
+| **01 选型篇** | ![选型画布](/assets/images/gateway-canvas-01-selection.png) | [选型篇：Kong vs APISIX 深度抉择](./01-selection-kong-vs-apisix.zh.md) | [Part 1: Technology Selection](./01-selection-kong-vs-apisix.en.md) | 告别多账号割裂；APISIX Standalone GitOps 极简对账优势与无 DB 架构权衡。 |
+| **02 架构篇** | ![架构画布](/assets/images/gateway-canvas-02-architecture.png) | [架构篇：双层分流与安全契约](./02-architecture-and-traffic-routing.zh.md) | [Part 2: Architecture & Routing](./02-architecture-and-traffic-routing.en.md) | Caddy TLS 卸载 + APISIX 流量中枢；“单一网关 Token”无感解耦置换契约；Real-IP 信任链。 |
+| **03 凭据篇** | ![凭据画布](/assets/images/gateway-canvas-03-credentials.png) | [凭据篇：CPA 矩阵与 Vault 注入](./03-cpa-matrix-and-vault-credentials.zh.md) | [Part 3: Credentials & Matrix](./03-cpa-matrix-and-vault-credentials.en.md) | CPA 单账号物理隔离防封号矩阵；0700 本地存储铁律；无头服务器 SSH 隧道 OAuth 回调；Vault tmpfs 内存化注入。 |
+| **04 实战篇** | ![实战画布](/assets/images/gateway-canvas-04-integration.png) | [实战篇：客户端接入与 GitOps 交付](./04-client-integration-and-gitops.zh.md) | [Part 4: Integration & GitOps](./04-client-integration-and-gitops.en.md) | 环境变量安全注入；OpenAI SDK、Responses 新协议、流式输出与 Claude Code 原生接入；Ansible 编排流水线。 |
+| **05 排障篇** | ![排障画布](/assets/images/gateway-canvas-05-troubleshooting.png) | [排障篇：真实推理避坑与运维复盘](./05-inference-troubleshooting-and-ops.zh.md) | [Part 5: Operations & Troubleshooting](./05-inference-troubleshooting-and-ops.en.md) | 四大可用性状态绝不等价；504 链路超时、403 风控阻断、连接异常排查；轻量级自动化探活脚本。 |
 
 ---
 

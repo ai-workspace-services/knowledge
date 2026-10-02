@@ -18,7 +18,7 @@ category: essays
 
 > **Editor's Note**: When integrating personal subscription accounts across multiple AI providers, the most formidable obstacle is rarely network connectivity—it is risk management and credential isolation. Running multiple accounts within shared processes or unsegmented user environments invites catastrophic cascading failures. As the third installment in the "All-in-One AI Aggregator Gateway" series, this article explores single-account physical isolation matrices, interactive OAuth procedures, and secure tmpfs injection powered by HashiCorp Vault.
 
-![CPA Account Matrix & Vault Credentials Cover](/assets/images/gateway-03-credentials-cover.jpg)
+![Engineering Decision Canvas: CPA Matrix & Dynamic Vault Injection](/assets/images/gateway-canvas-03-credentials.png)
 
 ---
 
