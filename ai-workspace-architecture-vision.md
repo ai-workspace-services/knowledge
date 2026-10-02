@@ -68,6 +68,39 @@ flowchart TB
 
 核心分工可概括为：**Lab 发现积木 → XConnect 标准化连接积木 → Infra 运行积木 → Services 组合成产品**。
 
+### 2.1 `ai-desktop-lab`：Desktop Experience / Reference Implementation
+
+`ai-desktop-lab` 是与四个核心组织协作的 Desktop Experience 组织，定位是 **桌面交互、桌面组件和参考实现的实验与孵化空间**，而不是第五个 Control Plane。其公开项目包括：
+
+- [XLaunch](https://github.com/ai-desktop-lab/XLaunch)：跨 macOS 与 Linux Desktop 的 AI Launcher / 应用启动体验。
+- [XDock](https://github.com/ai-desktop-lab/XDock)：经典桌面 Dock 体验。
+- [xworkmate-remote-desktop](https://github.com/ai-desktop-lab/xworkmate-remote-desktop)：Remote Desktop 客户端方向。
+- [isobuilder](https://github.com/ai-desktop-lab/isobuilder)：桌面/系统镜像构建方向。
+
+它与四组织的关系如下：
+
+| 协作对象 | `ai-desktop-lab` 提供 | `ai-desktop-lab` 不负责 |
+|---|---|---|
+| `ai-workspace-lab` | Desktop PoC、交互实验、参考实现 | 不直接承诺生产稳定性 |
+| `ai-workspace-services` | GUI 参考体验、桌面产品素材与能力反馈 | 不拥有 Auth、Billing 或 Workspace Control Plane |
+| `ai-workspace-xconnect` | Desktop 侧 Connector / Agent / Tool 集成需求 | 不定义全平台连接协议或 Provider Adapter |
+| `ai-workspace-infra` | Desktop Image、Remote Desktop、显示与节点基线需求 | 不管理 Cloud/Local/Edge 的完整交付平面 |
+
+因此，`ai-desktop-lab` 的产物可以沿 **Discover → Research → PoC → Evaluate → Standardize → Promote** 生命周期进入四个核心组织：Desktop Module 进入 Profile，交互能力进入 Services，连接需求进入 XConnect，镜像与运行基线进入 Infra。它是 Desktop 领域的专门化孵化与参考实现组织，而不是对四组织职责的替代。
+
+```mermaid
+flowchart LR
+    DL[ai-desktop-lab\nDesktop Experience / Reference Implementation]
+    L[ai-workspace-lab\nExplore]
+    S[ai-workspace-services\nCompose]
+    X[ai-workspace-xconnect\nConnect]
+    I[ai-workspace-infra\nRun]
+    DL -->|Desktop PoC / Research| L
+    DL -->|GUI / Product feedback| S
+    DL -->|Tool / Agent integration needs| X
+    DL -->|Image / Remote Desktop baseline| I
+```
+
 ## 3. 总体架构：Explore → Compose → Connect → Run
 
 这里的四个动词代表职责流，而不是强制的线性部署顺序。生产 Workspace 通常由 Services 编排 XConnect 的能力，并请求 Infra 在目标环境运行。
@@ -138,6 +171,8 @@ Contract 的长期要求：版本化、可校验、可扩展、可解释、可�
 | **CLI Only** | 自动化、低资源、远程开发 | CLI tools + Runtime + API/SSH + Storage |
 | **Tiny Desktop** | 轻量交互、低配置设备 | IceWM + Terminal + Browser/CLI + Runtime |
 | **Standard Desktop** | 日常开发与多工具协作 | XFCE + Terminal + Browser + Editors + Runtime |
+
+`ai-desktop-lab` 可作为 Desktop Module 与 Profile 的参考实现来源：XLaunch/XDock 属于桌面交互 Module，Remote Desktop 属于 Desktop Access Module，isobuilder 属于 Image/Delivery Tooling Module。是否进入生产 Profile，仍需经过 Lab 评估、Services 体验验收和 Infra 兼容性验证。
 
 ```mermaid
 flowchart TB
