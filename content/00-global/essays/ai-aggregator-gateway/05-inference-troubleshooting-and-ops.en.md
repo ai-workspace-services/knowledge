@@ -18,7 +18,7 @@ category: essays
 
 > **Editor's Note**: The most dangerous pitfall in AI infrastructure is premature satisfaction—daemons are running, ports are listening, and `/v1/models` returns HTTP 200, yet real user prompts encounter unexpected timeouts or upstream rejections. As the concluding installment of the "All-in-One AI Aggregator Gateway" series, this article explores real-world troubleshooting, analyzes common failure modes, and shares automated health verification scripts and operational maintenance practices.
 
-![AI Aggregator Gateway Troubleshooting Cover](/assets/images/gateway-05-troubleshooting-cover.jpg)
+![Engineering Decision Canvas: End-to-End Troubleshooting & Operations](/assets/images/gateway-canvas-05-troubleshooting.png)
 
 ---
 

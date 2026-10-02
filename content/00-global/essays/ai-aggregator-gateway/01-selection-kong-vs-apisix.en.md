@@ -18,7 +18,7 @@ category: essays
 
 > **Editor's Note**: In today's flourishing ecosystem of AI developer tools, engineers constantly juggle multiple subscription accounts, API keys, distinct base URLs, and divergent protocol endpoints. As the opening piece of the "All-in-One AI Aggregator Gateway" practical guide, this article explores the architectural background, component responsibilities, and why Apache APISIX Standalone was selected over Kong for this deployment.
 
-![AI Aggregator Gateway Selection Cover](/assets/images/gateway-01-selection-cover.jpg)
+![Engineering Decision Canvas: AI Gateway Technology Selection](/assets/images/gateway-canvas-01-selection.png)
 
 ---
 

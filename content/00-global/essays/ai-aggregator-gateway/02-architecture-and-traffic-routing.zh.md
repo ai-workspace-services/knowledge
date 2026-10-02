@@ -18,7 +18,7 @@ category: essays
 
 > **导读**：一个优秀的 AI 基础设施，对外部使用者而言应当如水和电一样自然——只需一个 URL、一个 Token，即可随心调用所有底座模型。本文是“全能 AI 聚合网关”实战系列的第二篇，我们将重点拆解系统的流量流向图谱、核心路由规划、以及关键的“网关鉴权与内部业务 Token 解耦”契约设计。
 
-![AI 聚合网关双层流量中枢与安全防线](/assets/images/gateway-02-architecture-cover.jpg)
+![工程决策画布：流量在网关内部如何流转](/assets/images/gateway-canvas-02-architecture.png)
 
 ---
 

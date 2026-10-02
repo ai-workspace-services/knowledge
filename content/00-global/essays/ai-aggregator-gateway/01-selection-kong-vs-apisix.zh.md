@@ -18,7 +18,7 @@ category: essays
 
 > **导读**：在各类 AI 辅助工具井喷的今天，开发者每天都在多个订阅账号、API Key、不同的 Base URL 和异构的协议端点之间来回切换。本文作为“全能 AI 聚合网关”实战系列的开篇，将深入剖析这套架构的产生背景、核心组件分工，以及在 API 网关选型中为何最终选择 Apache APISIX Standalone 而非 Kong。
 
-![AI 聚合网关选型与多账号聚合](/assets/images/gateway-01-selection-cover.jpg)
+![工程决策画布：个人 AI 聚合网关选型全景](/assets/images/gateway-canvas-01-selection.png)
 
 ---
 

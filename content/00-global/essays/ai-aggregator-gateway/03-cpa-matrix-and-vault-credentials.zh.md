@@ -18,7 +18,7 @@ category: essays
 
 > **导读**：在将多平台的个人订阅账号接入网关时，最棘手的问题往往不是网络连通，而是“账号风控与凭据安全”。若多账号混跑在同一用户或进程中，一个账号被限流或风控将直接导致全局雪崩。本文作为“全能 AI 聚合网关”实战系列的第三篇，将全景揭秘单账号物理隔离矩阵、平台 OAuth 登录技巧，以及通过 Vault 注入内存 tmpfs 的敏感凭据防泄漏规范。
 
-![CPA 账号矩阵隔离与 Vault 凭据注入](/assets/images/gateway-03-credentials-cover.jpg)
+![工程决策画布：多账号 OAuth 与 API Key 零泄露防线](/assets/images/gateway-canvas-03-credentials.png)
 
 ---
 

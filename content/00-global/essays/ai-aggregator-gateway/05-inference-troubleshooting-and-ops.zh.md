@@ -18,7 +18,7 @@ category: essays
 
 > **导读**：在构建 AI 聚合网关的过程中，最容易让人麻痹大意的是“表面上的健康”——服务跑起来了、端口监听了、甚至模型列表也能查出来了，但当真正敲下一个提示词时，却遭遇了无情的超时或拒绝。作为实战系列的收官之作，本文将带你直面真实世界的排障战场，剖析典型故障根因，分享自动化验证脚本与日常巡检心得。
 
-![AI 聚合网关排障实战与运维巡检](/assets/images/gateway-05-troubleshooting-cover.jpg)
+![工程决策画布：全链路排障实战与运维复盘](/assets/images/gateway-canvas-05-troubleshooting.png)
 
 ---
 

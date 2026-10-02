@@ -18,7 +18,7 @@ category: essays
 
 > **Editor's Note**: Well-designed AI infrastructure should function like utility electricity—invisible, dependable, and accessible via a single URL and a single token to invoke any foundation model. As the second installment in the "All-in-One AI Aggregator Gateway" guide, this article examines the end-to-end traffic flow, core route mapping, and the decoupled client-to-upstream authentication contract.
 
-![AI Aggregator Gateway Architecture Cover](/assets/images/gateway-02-architecture-cover.jpg)
+![Engineering Decision Canvas: End-to-End Traffic Routing](/assets/images/gateway-canvas-02-architecture.png)
 
 ---
 
