@@ -193,6 +193,6 @@ engineering teams can build resilient, high-performance systems that are **over 
 * What percentage of your current cloud bill is consumed by data egress, idle instances, and bundled GPU markups?
 * How is your platform team bridging the gap between traditional CPU services and dedicated GPU inference clusters?
 
-*Share your thoughts below, or explore the live Global Mesh architecture at [console.onwalk.net/products/global-mesh](https://console.onwalk.net/products/global-mesh).*
+*Share your thoughts below, or explore the live Global Mesh architecture at [console.onwalk.net/products/cloud-hub](https://console.onwalk.net/products/cloud-hub).*
 
 `#PlatformEngineering #CloudArchitecture #DevOps #ZeroTrust #FinOps #SoftwareEngineering #CloudComputing #Serverless #AIInfrastructure #GPUCompute #CTO #FullStack`

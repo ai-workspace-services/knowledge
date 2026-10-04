@@ -172,7 +172,7 @@ jobs:
 
 各云算力通过 IaC 拉起后，如何安全高效打通？传统公网绑定与企业专线均无法适应低成本多云架构。
 
-依托 [Global Mesh 核心架构控制台](https://console-serverless-uat.onwalk.net/panel/global-mesh)，系统在网络层实行**空间折叠**：
+依托 [Global Mesh 核心架构控制台](https://console-serverless-uat.onwalk.net/panel/cloud-hub)，系统在网络层实行**空间折叠**：
 
 1. **虚拟专网拓扑**：所有计算节点（包括 GCP Cloud Run 容器、Azure ACA 实例、UCloud 轻量云 VPS）启动时挂载轻量 Mesh 客户端，统一接入基于 WireGuard 的 Overlay 虚拟内网（`10.100.0.0/16`）。
 2. **全网零端口暴露（ZTNA）**：公网防火墙默认 DROP 所有未经由 Mesh 隧道的入站流量，彻底阻断公网扫描与爆破。
@@ -254,7 +254,7 @@ jobs:
 ### 开源工程与代码索引
 
 * **多云声明式 IaC 模块库**：`github.com/ai-workspace-infra/iac_modules`
-* **跨云 Serverless 穿透与网络控制面**：`github.com/ai-workspace-infra/global-mesh`（控制台演示：`console-serverless-uat.onwalk.net/panel/global-mesh`）
+* **跨云 Serverless 穿透与网络控制面**：`github.com/ai-workspace-infra/global-mesh`（控制台演示：`console-serverless-uat.onwalk.net/panel/cloud-hub`）
 * **异构 VPS 配置收敛剧本**：`github.com/ai-workspace-infra/playbooks`
 * **AI 驱动的自动化迁移与 FinOps 巡检工具**：`github.com/ai-workspace-infra/platform-ops-toolkit`
 * **零凭据声明式 GitOps 流水线**：`github.com/ai-workspace-infra/gitops`

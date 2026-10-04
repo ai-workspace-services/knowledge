@@ -5,8 +5,8 @@ hero:
   subtitle: 'Cloud-Neutral Global Service Mesh · Heterogeneous Compute Across 5 Core VPS Providers · 48+ Global PoPs · 0 Ingress Ports Exposed · 90%+ Cost Reduction'
   cta:
     label: 'Open Console'
-    href: 'https://console.onwalk.net/products/global-mesh'
-  downloadUrl: 'https://console.onwalk.net/products/global-mesh'
+    href: 'https://console.onwalk.net/products/cloud-hub'
+  downloadUrl: 'https://console.onwalk.net/products/cloud-hub'
   supportedPlatforms: 'macOS · Windows · Linux · iOS · Android · Web WASM'
 wizard:
   title: 'Connect to Global Mesh in 3 Steps'
@@ -15,7 +15,7 @@ wizard:
     - step: 1
       title: 'Generate Node Keys & Network Configuration'
       description: 'Generate trusted WireGuard overlay mesh keys in the console and assign dedicated overlay IPs (10.240.0.0/16).'
-      link: 'https://console.onwalk.net/products/global-mesh'
+      link: 'https://console.onwalk.net/products/cloud-hub'
       platforms: 'Linux · Docker · macOS · Windows · ARM64'
     - step: 2
       title: 'Configure Edge Ingress & 0-Port Security Policies'

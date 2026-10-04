@@ -5,8 +5,8 @@ hero:
   subtitle: 'Cloud-Neutral Global Service Mesh · 5 大核心 VPS 异构算力 · 48+ 全球 PoP · 0 端口公网入站暴露 · 成本节约 90%+'
   cta:
     label: '进入产品控制台'
-    href: 'https://console.onwalk.net/products/global-mesh'
-  downloadUrl: 'https://console.onwalk.net/products/global-mesh'
+    href: 'https://console.onwalk.net/products/cloud-hub'
+  downloadUrl: 'https://console.onwalk.net/products/cloud-hub'
   supportedPlatforms: 'macOS · Windows · Linux · iOS · Android · Web WASM'
 wizard:
   title: '3 步接入 Global Mesh 云中立服务网格'
@@ -15,7 +15,7 @@ wizard:
     - step: 1
       title: '生成节点密钥与网络配置'
       description: '在控制台生成受信 WireGuard 覆盖网密钥，分配专用内网 IP (10.240.0.0/16)。'
-      link: 'https://console.onwalk.net/products/global-mesh'
+      link: 'https://console.onwalk.net/products/cloud-hub'
       platforms: 'Linux · Docker · macOS · Windows · ARM64'
     - step: 2
       title: '配置边缘 Ingress 与 0 端口安全策略'
