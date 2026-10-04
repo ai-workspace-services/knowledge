@@ -172,7 +172,7 @@ Sensitive tokens exist solely in runner memory and are never persisted to disk o
 
 Once multi-cloud compute nodes are provisioned, establishing secure, low-latency inter-node communication is paramount.
 
-Leveraging the [Global Mesh Architectural Console](https://console-serverless-uat.onwalk.net/panel/global-mesh), the network layer performs **spatial folding**:
+Leveraging the [Global Mesh Architectural Console](https://console-serverless-uat.onwalk.net/panel/cloud-hub), the network layer performs **spatial folding**:
 
 1. **Virtual Overlay Topology**: Every compute instance—whether a GCP Cloud Run container, an Azure ACA container, or a raw UCloud VPS—joins an encrypted WireGuard overlay (`10.100.0.0/16`) on boot.
 2. **Zero Inbound Port Exposure (ZTNA)**: Public firewalls default to `DROP` for all non-tunnel ingress. Nodes communicate entirely via virtual overlay IPs, eliminating public attack surfaces.
@@ -254,7 +254,7 @@ By establishing a unified state contract in **AWS S3**, eliminating static secre
 ### Open-Source Code References
 
 * **Multi-Cloud Declarative IaC Modules**: `github.com/ai-workspace-infra/iac_modules`
-* **Serverless Cross-Cloud Mesh Controller**: `github.com/ai-workspace-infra/global-mesh` (Live Demo: `console-serverless-uat.onwalk.net/panel/global-mesh`)
+* **Serverless Cross-Cloud Mesh Controller**: `github.com/ai-workspace-infra/global-mesh` (Live Demo: `console-serverless-uat.onwalk.net/panel/cloud-hub`)
 * **Heterogeneous Node Convergence Playbooks**: `github.com/ai-workspace-infra/playbooks`
 * **AI-Driven Migration & FinOps Toolkit**: `github.com/ai-workspace-infra/platform-ops-toolkit`
 * **Zero-Secret Declarative GitOps Engine**: `github.com/ai-workspace-infra/gitops`
