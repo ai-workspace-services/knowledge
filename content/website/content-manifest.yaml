@@ -15,6 +15,8 @@ spec:
       - homepage/zh/hero.md
       - homepage/en/hero.md
     products:
+      - product/global-mesh/zh/hero.md
+      - product/global-mesh/en/hero.md
       - product/xconnect/zh/hero.md
       - product/xconnect/en/hero.md
       - product/xworkmate/zh/hero.md

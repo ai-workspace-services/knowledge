@@ -1,9 +1,9 @@
-# Global Mesh Product Guide & Cloud-Neutral Modern Architecture Whitepaper
+# Cloud hub Product Guide & Cloud-Neutral Modern Architecture Whitepaper
 
-> **Author**: Shen Lan (IT Infrastructure Architect / Independent Developer)  
-> **Product Module**: `products/global-mesh`  
-> **Category**: Product Manual / Cloud-Native Architecture / Zero-Trust Network / FinOps Practices  
-> **Keywords**: Global Mesh, Cloud-Neutral, Zero-Trust Network, WireGuard, Cloudflare R2, GCP Cloud Run, Supabase RLS, VictoriaMetrics, GitOps, 360° Closed-Loop  
+> **Author**: Shen Lan (IT Infrastructure Architect / Independent Developer)
+> **Product Module**: `products/global-mesh`
+> **Category**: Product Manual / Cloud-Native Architecture / Zero-Trust Network / FinOps Practices
+> **Keywords**: Cloud hub, Cloud-Neutral, Zero-Trust Network, WireGuard, Cloudflare R2, GCP Cloud Run, Supabase RLS, VictoriaMetrics, GitOps, 360° Closed-Loop
 
 ---
 
@@ -13,9 +13,9 @@ In an era where public cloud oligarchs (AWS, GCP, Azure) dominate computing and 
 1. **Network Egress Taxes and Private VPC Lock-in**: Cloud giants charge exorbitant public egress bandwidth fees (typically 0.08 to 0.12 USD per GB) and trap architectures inside proprietary VPC networks, making multi-cloud active-active deployments financially prohibitive;
 2. **Runaway Security and Operational Complexity**: Publicly exposed server nodes face continuous brute-force attacks, port scanning, and DDoS attempts. Meanwhile, juggling multiple fragmented cloud vendor consoles causes serious divergence between development, staging, and production release flows.
 
-**Global Mesh** was conceived to resolve these structural challenges. Engineered as an enterprise-grade cloud-neutral infrastructure nerve center, it embodies the philosophy of **"Serverless Elastic Compute · Zero-Egress Storage · Dual-Track Data Architecture · Full-Stack Telemetry without Blind Spots."** 
+**Cloud hub** was conceived to resolve these structural challenges. Engineered as an enterprise-grade cloud-neutral infrastructure nerve center, it embodies the philosophy of **"Serverless Elastic Compute · Zero-Egress Storage · Dual-Track Data Architecture · Full-Stack Telemetry without Blind Spots."**
 
-By harmonizing heterogeneous compute (48+ PoPs across 5 leading cost-effective VPS providers), modern edge networks (Cloudflare 300+ Anycast PoPs), Serverless control planes (GCP Cloud Run), and lightweight open-source data/telemetry stacks, Global Mesh delivers **0 ingress port exposure (ZTNA), 100% cross-region disaster recovery, and 90%+ total infrastructure cost savings**.
+By harmonizing heterogeneous compute (48+ PoPs across 5 leading cost-effective VPS providers), modern edge networks (Cloudflare 300+ Anycast PoPs), Serverless control planes (GCP Cloud Run), and lightweight open-source data/telemetry stacks, Cloud hub delivers **0 ingress port exposure (ZTNA), 100% cross-region disaster recovery, and 90%+ total infrastructure cost savings**.
 
 This whitepaper provides an in-depth product review and technical breakdown of `products/global-mesh`, detailing the five architectural pillars represented across the latest console visualization surfaces.
 
@@ -25,7 +25,7 @@ This whitepaper provides an in-depth product review and technical breakdown of `
 
 Real-time telemetry on the console's top-level dashboard verifies compliance with the following operational SLAs:
 
-![Global Mesh Core KPIs and VPS Matrix](../../../assets/images/global-mesh/01-vps-matrix.png)
+![Cloud hub Core KPIs and VPS Matrix](../../../assets/images/global-mesh/01-vps-matrix.png)
 
 - **5 Core VPS Providers Integrated**: Linode (Akamai), Hetzner Online, UCloud Global, Contabo, Vultr;
 - **48 Globally Active Real-Time PoPs**: Spanning Tier-1 facilities across the Americas, Europe, Asia-Pacific, and Oceania;
@@ -37,7 +37,7 @@ Real-time telemetry on the console's top-level dashboard verifies compliance wit
 
 ## Chapter 1: VPS Capabilities & 50-PoP Availability Zone Matrix
 
-To overcome the opacity of VPS hardware tiers and the friction of multi-vendor orchestration, Global Mesh incorporates an all-node **Availability Zone Cross-Matrix** driven by the `Live Sync Engine`. The platform supports automated health polling, sub-millisecond ping benchmarking, and complete probe audit trails.
+To overcome the opacity of VPS hardware tiers and the friction of multi-vendor orchestration, Cloud hub incorporates an all-node **Availability Zone Cross-Matrix** driven by the `Live Sync Engine`. The platform supports automated health polling, sub-millisecond ping benchmarking, and complete probe audit trails.
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
@@ -63,7 +63,7 @@ Inspecting the highlighted **Linode · Frankfurt** node:
 
 ## Chapter 2: 177-Country Precision Vector Map & Heterogeneous Compute Specs
 
-Under the **⚡️ VPS Compute PoP** tab, Global Mesh provides a unified 8:4 dual-column interactive surface pairing an inline 177-country vector world map with provider specifications:
+Under the **⚡️ VPS Compute PoP** tab, Cloud hub provides a unified 8:4 dual-column interactive surface pairing an inline 177-country vector world map with provider specifications:
 
 ![VPS Compute PoP Topology and 177-Country World Map](../../../assets/images/global-mesh/02-vps-pop-map.png)
 
@@ -89,7 +89,7 @@ Under the **⚡️ VPS Compute PoP** tab, Global Mesh provides a unified 8:4 dua
 
 ## Chapter 3: SaaS Zero-Trust Service Mesh Architecture Mapping
 
-Traditional infrastructure forces an agonizing compromise between "cloud monopoly lock-in (astronomical egress bills)" and "pure self-hosting (crippling maintenance burdens)." Global Mesh resolves this dilemma through a 5-node cloud-neutral topology:
+Traditional infrastructure forces an agonizing compromise between "cloud monopoly lock-in (astronomical egress bills)" and "pure self-hosting (crippling maintenance burdens)." Cloud hub resolves this dilemma through a 5-node cloud-neutral topology:
 
 ![SaaS Zero-Trust Service Mesh Topology](../../../assets/images/global-mesh/03-saas-mesh.png)
 
@@ -117,7 +117,7 @@ Traditional infrastructure forces an agonizing compromise between "cloud monopol
 
 ### 3.2 FinOps Multi-Cloud Hybrid Cost Reconciliation
 
-| Infrastructure Tier & Capability | Legacy Public Cloud (AWS / GCP) | Global Mesh Cloud-Neutral Hybrid | Efficiency & Savings |
+| Infrastructure Tier & Capability | Legacy Public Cloud (AWS / GCP) | Cloud hub Cloud-Neutral Hybrid | Efficiency & Savings |
 | :--- | :--- | :--- | :--- |
 | **Edge Distribution & Egress (5TB/mo)** | 400 ~ 600 USD (Egress fees) | **0 USD** (Cloudflare R2 0 Egress) | **100% saved**, breaking cloud egress taxes |
 | **Elastic Ingress Control (BFF)** | 80 ~ 150 USD (ALB/API Gateway) | **0 ~ 5 USD** (Cloud Run free tiers) | **95% saved**, true Scale-to-Zero |
@@ -129,7 +129,7 @@ Traditional infrastructure forces an agonizing compromise between "cloud monopol
 
 ## Chapter 4: Five-Layer Application Topology (Client - Edge - Control - Compute - Data)
 
-Global Mesh models application data flow through an elegant and symmetrical five-tier hierarchy:
+Cloud hub models application data flow through an elegant and symmetrical five-tier hierarchy:
 
 ![Five-Layer Application Topology Flow](../../../assets/images/global-mesh/04-app-topology.png)
 
@@ -165,7 +165,7 @@ The right-hand 4-column contextual sidebar establishes strict security baselines
 
 ## Chapter 5: 7-Dimensional IT Lifecycle Pipeline & 360° Closed-Loop State Machine
 
-An architecture without rigorous deployment discipline is doomed to decay. Global Mesh embodies the rules codified in `engineering-standards` and `operations-management`, delivering a stateful branch, immutable release tag, and 360° closed-loop state machine:
+An architecture without rigorous deployment discipline is doomed to decay. Cloud hub embodies the rules codified in `engineering-standards` and `operations-management`, delivering a stateful branch, immutable release tag, and 360° closed-loop state machine:
 
 ![7-Dimensional IT Lifecycle Pipeline and 360-Degree Closed Loop](../../../assets/images/global-mesh/05-lifecycle.png)
 
@@ -187,8 +187,8 @@ An architecture without rigorous deployment discipline is doomed to decay. Globa
        ▼                                          ▼                                          ▼
 [ 5. UAT Immutable Snapshot ]             [ Maintenance Branch: release/vX.Y ]        [ Emergency Loop: hotfix/* ]
 (uat-daily-build-YYYY.MM.DD-rN)                    │                                         │
-       │                                          ▼                                  Merged into release/vX.Y 
-       ▼                                [ 7. PROD SemVer Release Tag ]                 and cherry-picked 
+       │                                          ▼                                  Merged into release/vX.Y
+       ▼                                [ 7. PROD SemVer Release Tag ]                 and cherry-picked
 [ 6. UAT Automated Reconciliation ]       (vMAJOR.MINOR.PATCH strictly immutable)            back to main
 (Cross-repo snapshot reconciliation)               │                                         │
        │                                          ▼                                         │
@@ -220,6 +220,6 @@ An architecture without rigorous deployment discipline is doomed to decay. Globa
 
 ## Conclusion: The Triumph of Cloud-Neutral Engineering
 
-Global Mesh is more than an aggregation of cloud tools—it is a production-proven paradigm for modern cloud-neutral software delivery.
+Cloud hub is more than an aggregation of cloud tools—it is a production-proven paradigm for modern cloud-neutral software delivery.
 
 It proves conclusively: **without submitting to public cloud egress taxation or proprietary VPC lock-in, engineering teams can combine open protocols (WireGuard, VictoriaMetrics, ClickHouse, Supabase) with targeted edge services (Cloudflare, Cloud Run, cost-effective VPS fleets) to achieve global multi-platform connectivity, 0 ingress port exposure, and 360° closed-loop automation at 5% to 10% of traditional cloud infrastructure costs.**
