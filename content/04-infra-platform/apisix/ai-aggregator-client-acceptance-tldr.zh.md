@@ -1,5 +1,7 @@
 # AI Aggregator Gateway 对接与验证 TLDR
 
+> 本文为历史验收快照。当前统一使用 New API 用户 Key，Caddy 直连 New API；APISIX bootstrap key 与内部共享 Token 注入不再适用。当前配置、认证和验证流程见 [统一入口设计与任务](./ai-gateway-unified-entrypoint.zh.md)。
+
 本文衔接 [AI Aggregator Gateway：选型、架构与 Home-Lab 实施](./ai-aggregator-gateway-architecture.zh.md)，用于完成 CPA OAuth 后的客户端对接。验收记录日期：2026-10-01；记录是当时实测快照，重新部署后需重复检查。
 
 ## 1. 接入契约

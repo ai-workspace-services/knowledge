@@ -1,5 +1,7 @@
 # AI Aggregator Gateway：选型、架构与 Home-Lab 实施
 
+> 当前入口与认证设计已更新：请先阅读 [AI Gateway 统一入口：设计与任务](./ai-gateway-unified-entrypoint.zh.md)。2026-10-04 实测为 Caddy 直连 New API，APISIX/Kong 已停用；本文的 APISIX 分流及双 Key 方案属于历史记录。
+
 整理日期：2026-10-01。部署状态依据本次会话最后一次节点验证记录，本文写入时未重新连接节点；服务运行与真实模型调用验收分别记录。
 
 本文为 AI Aggregator Gateway 的统一阅读入口，整合 Caddy、Kong/APISIX 选型、多租户、New API、LiteLLM、CPA 矩阵、Google Antigravity / Gemini CLI、Vault 和部署验收。逐步操作见 [CPA OAuth TLDR](./ai-aggregator-cpa-oauth-tldr.zh.md)，历史交付资料见文末关联文档。
