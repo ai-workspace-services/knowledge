@@ -1,9 +1,9 @@
-# Global Mesh 产品介绍与云中立现代架构深度白皮书
+# Cloud hub 产品介绍与云中立现代架构深度白皮书
 
-> **作者**：沈蓝（IT 基础设施架构师 / 独立开发者）  
-> **产品模块**：`products/global-mesh`  
-> **分类**：产品手册 / 云原生架构 / 零信任网络 / FinOps 实践  
-> **关键词**：Global Mesh, 云中立, 零信任网络, WireGuard, Cloudflare R2, GCP Cloud Run, Supabase RLS, VictoriaMetrics, GitOps, 360° 闭环  
+> **作者**：沈蓝（IT 基础设施架构师 / 独立开发者）
+> **产品模块**：`products/global-mesh`
+> **分类**：产品手册 / 云原生架构 / 零信任网络 / FinOps 实践
+> **关键词**：Cloud hub, 云中立, 零信任网络, WireGuard, Cloudflare R2, GCP Cloud Run, Supabase RLS, VictoriaMetrics, GitOps, 360° 闭环
 
 ---
 
@@ -13,7 +13,7 @@
 1. **网络出网税与私网锁定**：公有云巨头收取高昂的公网流出带宽费用（通常每 GB 0.08 ~ 0.12 USD），并通过专有 VPC 机制将用户绑死在其生态内，跨云多活成本极其高昂；
 2. **安全与运维复杂度失控**：传统公网暴露的节点面临永无止境的暴力破解、端口扫描和 DDoS 攻击，而依赖多套异构云控制台又导致开发流、测试流和生产发布严重脱节。
 
-**Global Mesh（全球云中立服务网格）** 正是在此背景下诞生的企业级现代云中立基础设施中枢。它基于“**Serverless 弹性计算 · 零出网费用存储 · 双轨数据架构 · 全栈无死角遥测**”的设计哲学，将异构算力（5 大核心低成本 VPS 运营商的 48+ PoPs）、现代边缘云（Cloudflare 300+ Anycast PoPs）、Serverless 控制面（GCP Cloud Run）与开源轻量化数据/监控系统融为一体，构建起一套**全网 0 入站端口暴露（ZTNA）、跨云 100% 交叉容灾、成本节约 90%+** 的弹性架构。
+**Cloud hub（全球云中立服务网格）** 正是在此背景下诞生的企业级现代云中立基础设施中枢。它基于“**Serverless 弹性计算 · 零出网费用存储 · 双轨数据架构 · 全栈无死角遥测**”的设计哲学，将异构算力（5 大核心低成本 VPS 运营商的 48+ PoPs）、现代边缘云（Cloudflare 300+ Anycast PoPs）、Serverless 控制面（GCP Cloud Run）与开源轻量化数据/监控系统融为一体，构建起一套**全网 0 入站端口暴露（ZTNA）、跨云 100% 交叉容灾、成本节约 90%+** 的弹性架构。
 
 本文作为 `products/global-mesh` 的深度产品介绍与技术笔记，结合控制台最新的核心可视化看板，全方位拆解其背后的五大核心架构设计。
 
@@ -21,9 +21,9 @@
 
 ## 核心业务指标 (KPIs)
 
-根据控制台顶层实时遥测看板，Global Mesh 基础设施达成以下 SLA 准则：
+根据控制台顶层实时遥测看板，Cloud hub 基础设施达成以下 SLA 准则：
 
-![Global Mesh 核心指标与 VPS 矩阵](../../../assets/images/global-mesh/01-vps-matrix.png)
+![Cloud hub 核心指标与 VPS 矩阵](../../../assets/images/global-mesh/01-vps-matrix.png)
 
 - **5 大核心 VPS 运营商生态集成**：Linode (Akamai)、Hetzner Online、UCloud Global、Contabo、Vultr；
 - **48 个全球实时活跃 PoP 点**：覆盖美洲、欧洲、亚太、大洋洲主流核心数据中心；
@@ -35,7 +35,7 @@
 
 ## 第一章：VPS 算力能力与 50-PoP 可用区交叉矩阵
 
-为解决传统云主机规格不透明、跨运营商调度困难的痛点，Global Mesh 内置了由 `Live Sync Engine` 驱动的**全景节点可用区交叉矩阵**。系统支持动态节点健康状态抓取、毫秒级测速与探测日志溯源。
+为解决传统云主机规格不透明、跨运营商调度困难的痛点，Cloud hub 内置了由 `Live Sync Engine` 驱动的**全景节点可用区交叉矩阵**。系统支持动态节点健康状态抓取、毫秒级测速与探测日志溯源。
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
@@ -61,7 +61,7 @@
 
 ## 第二章：177 国高精内联矢量世界地图与异构算力规格
 
-在 **VPS 算力 PoP** 视图中，Global Mesh 提供了 177 国高精内联矢量世界地图与五大 VPS 运营商规格栏的左右 8:4 联动体系：
+在 **VPS 算力 PoP** 视图中，Cloud hub 提供了 177 国高精内联矢量世界地图与五大 VPS 运营商规格栏的左右 8:4 联动体系：
 
 ![VPS 算力 PoP 拓扑与 177 国高精地图](../../../assets/images/global-mesh/02-vps-pop-map.png)
 
@@ -87,7 +87,7 @@
 
 ## 第三章：SaaS 零信任服务网格架构映射
 
-传统架构往往在“全上大厂（成本飞涨）”与“全自建（维护成本极高）”之间进退两难。Global Mesh 的 **SaaS 零信任网格** 创造性地通过五层云中立组件拓扑，打造出低成本高韧性的解法：
+传统架构往往在“全上大厂（成本飞涨）”与“全自建（维护成本极高）”之间进退两难。Cloud hub 的 **SaaS 零信任网格** 创造性地通过五层云中立组件拓扑，打造出低成本高韧性的解法：
 
 ![SaaS 零信任服务网格拓扑图](../../../assets/images/global-mesh/03-saas-mesh.png)
 
@@ -115,7 +115,7 @@
 
 ### 3.2 FinOps 混合多云成本对账实战
 
-| 基础设施层级与能力 | AWS / GCP 传统公有云单月 | Global Mesh 云中立混合方案单月 | 架构弹性与成本对比 |
+| 基础设施层级与能力 | AWS / GCP 传统公有云单月 | Cloud hub 云中立混合方案单月 | 架构弹性与成本对比 |
 | :--- | :--- | :--- | :--- |
 | **边缘分发与出网带宽 (5TB/月)** | 400 ~ 600 USD (高昂出网费) | **0 USD** (Cloudflare R2 0元出网) | **节约 100%**，打破大厂网络税 |
 | **弹性业务接入 (BFF)** | 80 ~ 150 USD (ALB/API Gateway) | **0 ~ 5 USD** (Cloud Run 免费额度) | **节约 95%**，Scale-to-Zero |
@@ -127,7 +127,7 @@
 
 ## 第四章：应用架构五层流动模型 (端 - 边 - 控 - 算 - 数)
 
-Global Mesh 在应用架构层抽象出高度对称、逻辑分明的**端-边-控-算-数**五层流动模型：
+Cloud hub 在应用架构层抽象出高度对称、逻辑分明的**端-边-控-算-数**五层流动模型：
 
 ![应用架构拓扑网络五层模型](../../../assets/images/global-mesh/04-app-topology.png)
 
@@ -163,7 +163,7 @@ Global Mesh 在应用架构层抽象出高度对称、逻辑分明的**端-边-�
 
 ## 第五章：工程视角的 7 维生命周期与 360° 闭环发布状态图
 
-在真实的研发生命周期中，若仅有静态架构图而缺乏严谨的研发流水线，架构规范必然会随时间腐化。Global Mesh 完整落地了 `engineering-standards` 与 `operations-management` 规范，设计了有状态的分支、发布 Tag 与 360° 闭环状态图：
+在真实的研发生命周期中，若仅有静态架构图而缺乏严谨的研发流水线，架构规范必然会随时间腐化。Cloud hub 完整落地了 `engineering-standards` 与 `operations-management` 规范，设计了有状态的分支、发布 Tag 与 360° 闭环状态图：
 
 ![工程视角的生命周期与 360 度闭环状态图](../../../assets/images/global-mesh/05-lifecycle.png)
 
@@ -185,8 +185,8 @@ Global Mesh 在应用架构层抽象出高度对称、逻辑分明的**端-边-�
        ▼                                          ▼                                          ▼
 [ 5. UAT 不可变快照 ]                     [ 维护分支: release/vX.Y ]                 [ 紧急回路: hotfix/* ]
 (uat-daily-build-YYYY.MM.DD-rN)                    │                                         │
-       │                                          ▼                                  合入 release/vX.Y 
-       ▼                                [ 7. PROD 正式发布 Tag ]                       并 cherry-pick 
+       │                                          ▼                                  合入 release/vX.Y
+       ▼                                [ 7. PROD 正式发布 Tag ]                       并 cherry-pick
 [ 6. UAT 自动对账部署 ]                  (vMAJOR.MINOR.PATCH SemVer 规范)                   回写 main
 (跨仓库不可变快照对账)                             │                                         │
        │                                          ▼                                         │
@@ -218,6 +218,6 @@ Global Mesh 在应用架构层抽象出高度对称、逻辑分明的**端-边-�
 
 ## 结语：云中立工程哲学的胜利
 
-Global Mesh 不是单一技术的简单罗列，而是一套经过生产实战检验的现代化云中立工程范式。
+Cloud hub 不是单一技术的简单罗列，而是一套经过生产实战检验的现代化云中立工程范式。
 
 它向行业证明：**无需向公有云巨头缴纳昂贵的出网税与私网锁定金，仅凭现代开源协议框架（WireGuard、VictoriaMetrics、ClickHouse、Supabase）与精准的边缘计算架构（Cloudflare、Cloud Run、低成本 VPS），科技团队就能以传统方案 5%~10% 的极低综合成本，构建起支撑全球五端访问、0 端口公网暴露、高韧性自治与 360° 闭环发布的顶级企业级基础设施中枢。**
