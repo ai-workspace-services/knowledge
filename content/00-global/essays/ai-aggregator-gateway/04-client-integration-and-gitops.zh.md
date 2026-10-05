@@ -1,9 +1,9 @@
 ---
 title: 再也不用多账号切换了：手把手教你搭建个人专属全能 AI 聚合网关（四）—— 实战篇：统一客户端零心智接入与 GitOps 自动化编排交付
-description: 详细指导如何通过单一网关 Token 驱动 OpenAI SDK、Claude Code、Anthropic SDK 及各大 IDE 插件，并揭秘跨仓库协作与 Ansible/GitOps 声明式自动化交付流水线。
+description: 以 Home-Lab 当前部署为例，完成 XConnect、Caddy、New API、CPA 与 LiteLLM 的客户端接入、验证和可回滚交付。
 slug: ai-aggregator-gateway-04-integration
 lang: zh
-date: 2026-10-01T00:00:00Z
+date: 2026-10-05T00:00:00Z
 author: shenlan
 tags:
   - ai-gateway
@@ -16,266 +16,176 @@ category: essays
 
 # 再也不用多账号切换了：手把手教你搭建个人专属全能 AI 聚合网关（四）
 
-> **导读**：网关架构与安全防线搭建完毕后，最激动人心的时刻莫过于在客户端“无缝开箱即用”。如何让本地所有的 Python 脚本、命令行 Agent 以及主流 IDE 插件无需任何侵入式修改就能接入网关？整套基础设施如何通过 GitOps 和 Ansible 实现全自动化交付？本文作为实战系列的第四篇，将为你一一揭晓。
+前几篇解决了架构、路由和凭据隔离，真正上线还差最后一公里：客户端如何接入，Home-Lab 如何远程维护，配置如何从 Git 交付到主机，又如何在失败时回滚。
 
-![工程决策画布：客户端零心智接入与 GitOps 自动化编排](/assets/images/gateway-canvas-04-integration.png)
+本文按当前 Home-Lab 的实际运行基线编写。现行主链路不是“客户端直连 CPA”，也不是把 APISIX 当成唯一入口，而是：
 
----
-
-## 一、客户端接入准备：零心智负担的凭据注入
-
-在终端接入前，首先需要在客户端环境中准备好唯一的访问密钥 `AI_GATEWAY_CLIENT_KEY`。
-
-为了防止敏感 Token 被无意记录到 Shell 的历史记录文件（如 `~/.bash_history` 或 `~/.zsh_history`）中，强烈建议使用静默交互式命令进行赋值：
-
-```bash
-# Bash 环境安全输入网关 Token
-read -r -s -p 'Gateway token: ' AI_GATEWAY_CLIENT_KEY; printf '\n'
-export AI_GATEWAY_CLIENT_KEY
-
-# 若使用 macOS 默认的 zsh，可运行：
-read -r -s 'AI_GATEWAY_CLIENT_KEY?Gateway token: ' && export AI_GATEWAY_CLIENT_KEY
+```text
+OpenCode / SDK / IDE
+        ↓ XConnect-One VPN
+Caddy :443（TLS）
+        ↓
+New API :3000（用户、模型、额度、消费记录）
+        ├── CPA（订阅账号矩阵）
+        └── LiteLLM（官方 API）
 ```
 
-如果是运行在网关服务器本机的运维排障脚本，则可以直接读取 tmpfs 内存中的受控凭据文件：
+Home-Lab 主机为 `xworkmate-bridge.svc.plus`，VPN 地址为 `10.79.0.7`，统一域名为 `ai-internal.onwalk.net`。APISIX/Kong 是可选的认证、限流和租户网关模式；切换前必须单独验证，不能和直连模式同时占用 Caddy 的公网路由。
+
+## 一、先恢复 XConnect，再碰 AI Gateway
+
+XConnect-One 负责 VPN 互联，XConnect APP 负责桌面代理、托盘和后台运行。它们职责不同。SSH 失败时，先检查本机数据面和路由：
+
 ```bash
-AI_GATEWAY_CLIENT_KEY=$(< /run/ai-aggregator/apisix/client-key)
-export AI_GATEWAY_CLIENT_KEY
+ifconfig utun5
+route -n get 10.79.0.7
+nc -vz 10.79.0.7 22
+ssh -t root@10.79.0.7
 ```
 
----
+`utun5` 不存在或没有到 `10.79.0.7` 的路由时，先恢复 XConnect-One 会话；不要在无法确认网络路径的情况下重启 Caddy、New API 或 CPA。登录 Home-Lab 后，再使用远程桌面完成 CPA 的浏览器 OAuth。OAuth bundle 只留在对应实例的本地认证目录，不复制到客户端、Git 或 Vault。
 
-## 二、模型目录校验：快速探活第一步
+## 二、客户端凭据只进安全存储
 
-通过调用网关的 `/v1/models` 端点，不仅可以核对 DNS 解析与 TLS 证书链是否完备，还能实时获取当前所有通过 CPA 和官方通道挂载的可用模型 ID：
+客户端使用的是 New API 用户 API Key，不是 APISIX 的 `bootstrap_client_key`，也不是 CPA OAuth token。建议用静默输入临时注入当前 shell，避免把完整密钥写入命令历史：
 
 ```bash
-# 查询当前网关下发的所有模型标识
-curl --noproxy '*' -fsS \
-  -H "Authorization: Bearer ${AI_GATEWAY_CLIENT_KEY}" \
-  https://ai-internal.onwalk.net/v1/models \
-  | jq -r '.data[].id'
+printf 'New API user key: '
+read -r -s NEW_API_USER_KEY
+printf '\n'
+export NEW_API_USER_KEY
 ```
 
-如果内网 DNS 尚未完成泛解析更新，只需在 curl 参数中追加 `--resolve` 强制指定主机 IP：
+长期使用时，把密钥保存到 OpenCode 的账户凭据存储、操作系统钥匙串或企业密码管理器；不要写进 `opencode.json`、`.env`、README、GitHub Actions artifact 或截图。失效时在 New API 的 `/keys` 页面撤销并重新创建。
+
+## 三、先验证模型目录，再验证真实推理
+
+模型目录只能证明路由和权限可达，不能证明每个模型都能完成推理。外部 DNS 已指向 `10.79.0.7` 时直接请求；排查 DNS 时可以用 `--resolve` 固定目标地址，但仍保留 TLS 校验：
+
 ```bash
-curl --noproxy '*' -fsS \
+curl --http1.1 --fail-with-body \
   --resolve ai-internal.onwalk.net:443:10.79.0.7 \
-  -H "Authorization: Bearer ${AI_GATEWAY_CLIENT_KEY}" \
+  -H "Authorization: Bearer ${NEW_API_USER_KEY}" \
+  -D - \
   https://ai-internal.onwalk.net/v1/models \
   | jq -r '.data[].id'
 ```
-*注：正常生产验证严禁使用 `-k`（`--insecure`）跳过 TLS 证书校验。*
 
----
+不应使用 `-k` 绕过证书校验，也不要盲目添加 `--noproxy '*'`；Home-Lab 的访问依赖 XConnect 路由。然后从返回目录中挑选一个已验证的模型进行最小请求：
 
-## 三、主流客户端实操接入范式
+```bash
+MODEL=gpt-5.6-luna
+curl --http1.1 --fail-with-body \
+  -H "Authorization: Bearer ${NEW_API_USER_KEY}" \
+  -H 'Content-Type: application/json' \
+  https://ai-internal.onwalk.net/v1/chat/completions \
+  -d "{\"model\":\"${MODEL}\",\"messages\":[{\"role\":\"user\",\"content\":\"Reply with only OK.\"}],\"max_tokens\":16}"
+```
 
-### 1. Python + OpenAI SDK 极简接入
-OpenAI 官方 SDK 是目前绝大多数 Agent 与应用的基础依赖。通过指定 `base_url` 与 `api_key`，即可直接调用网关后端挂载的任意 GPT 系列模型（支持标准对话、新版 Responses 协议与流式输出）：
+Claude Messages 使用 Anthropic 原生头部：
+
+```bash
+curl --http1.1 --fail-with-body \
+  -H "x-api-key: ${NEW_API_USER_KEY}" \
+  -H 'anthropic-version: 2023-06-01' \
+  -H 'content-type: application/json' \
+  https://ai-internal.onwalk.net/v1/messages \
+  -d '{"model":"claude-sonnet-5","max_tokens":16,"messages":[{"role":"user","content":"Reply with only OK."}]}'
+```
+
+失败时按层定位：TLS/域名看 Caddy，`401` 看 New API 用户 Key，模型权限和余额看 New API 控制台，CPA 订阅看对应账号状态，官方 API 错误看 LiteLLM Provider 和用量日志。
+
+## 四、OpenAI、Claude Code 与 IDE 接入
+
+OpenAI SDK 使用统一的 `/v1` 前缀：
 
 ```python
 import os
 from openai import OpenAI
 
-# 初始化客户端，关闭内置多余重试，交由网关层处理
 client = OpenAI(
-    base_url='https://ai-internal.onwalk.net/v1',
-    api_key=os.environ['AI_GATEWAY_CLIENT_KEY'],
+    base_url="https://ai-internal.onwalk.net/v1",
+    api_key=os.environ["NEW_API_USER_KEY"],
     timeout=60,
-    max_retries=0
+    max_retries=0,
 )
-
-# 1. 常规单次对话 (Chat Completion)
-chat_resp = client.chat.completions.create(
-    model='gpt-5.6-luna',
-    messages=[{'role': 'user', 'content': 'Reply with only OK.'}]
+answer = client.chat.completions.create(
+    model="gpt-5.6-luna",
+    messages=[{"role": "user", "content": "Reply with only OK."}],
 )
-print("Chat Response:", chat_resp.choices[0].message.content)
-
-# 2. 新版 Codex 代码生成接口 (Responses)
-resp = client.responses.create(
-    model='gpt-5.6-luna',
-    input='Write a quicksort in Python.'
-)
-print("Responses API Output:", resp.output)
-
-# 3. 实时流式响应 (Streaming)
-print("Streaming Output: ", end="")
-stream = client.chat.completions.create(
-    model='gpt-5.6-luna',
-    messages=[{'role': 'user', 'content': 'Explain Paxos in one paragraph.'}],
-    stream=True
-)
-for chunk in stream:
-    if chunk.choices and chunk.choices[0].delta.content:
-        print(chunk.choices[0].delta.content, end='', flush=True)
-print()
+print(answer.choices[0].message.content)
 ```
 
-### 2. Anthropic SDK 与 Claude Code 命令行接入
-对于 Claude 体系，网关原生支持 Anthropic 的 `x-api-key` 与 `/v1/messages` 协议格式：
+Anthropic SDK 和 Claude Code 使用不带 `/v1` 的根地址：
 
 ```bash
-# 环境变量配置
-export ANTHROPIC_BASE_URL='https://ai-internal.onwalk.net'
-export ANTHROPIC_API_KEY="$AI_GATEWAY_CLIENT_KEY"
-
-# 在终端直接启动 Claude Code 编程 Agent
-claude --model "claude-sonnet-5"
+export ANTHROPIC_BASE_URL=https://ai-internal.onwalk.net
+export ANTHROPIC_API_KEY="$NEW_API_USER_KEY"
+claude --model claude-sonnet-5
 ```
 
-Python Anthropic SDK 同样天然兼容：
-```python
-from anthropic import Anthropic
-
-client = Anthropic(
-    base_url='https://ai-internal.onwalk.net',
-    api_key=os.environ['AI_GATEWAY_CLIENT_KEY'],
-    timeout=60,
-    max_retries=0
-)
-
-message = client.messages.create(
-    model='claude-sonnet-5',
-    max_tokens=64,
-    messages=[{'role': 'user', 'content': 'Reply with only OK.'}]
-)
-print("Claude Output:", message.content[0].text)
-```
-
-### 3. IDE 与各类第三方 Agent 适配
-针对 Cursor、VS Code 各种 AI 辅助插件或开源的 OpenDevin 等工具：
-* **API Key**：填入唯一的 `AI_GATEWAY_CLIENT_KEY`；
-* **OpenAI Base URL**：填入 `https://ai-internal.onwalk.net/v1`；
-* **模型选择**：直接填写从 `/v1/models` 中查询到的可用模型标识即可。
-
----
-
-## 四、跨仓库协作与 GitOps 自动化交付流水线
-
-为了保证基础设施的确定性与灾难恢复能力，整套网关代码按照职责被严密划分为五个标准仓库：
+OpenCode、Cursor、Android Studio 或其他 OpenAI-compatible 客户端，只需配置：
 
 ```text
-gateway              # 公共路由契约、模板渲染脚本、APISIX 插件定制
-gitops               # 多环境定义 (UAT/Prod)、节点 IP 拓扑、账号矩阵与租户声明
-playbooks            # Ansible 核心执行角色、依赖编译、系统用户创建与服务纳管
-platform-ops-toolkit # 部署前静态验证、冒烟测试脚本、流水线工具
-knowledge            # 架构规范、操作手册与部署文档沉淀
+Base URL: https://ai-internal.onwalk.net/v1
+API Key: 通过应用的安全凭据入口保存
+Model: 从 /v1/models 返回的真实模型 ID
 ```
 
-### 声明式自动化交付时序
+OpenCode 桌面版在 Providers/Add account 中建立自定义 Provider；CLI 使用其认证存储。`opencode.json` 可以保存 endpoint、Provider 和模型映射，但不保存 API Key。不同客户端对 Responses、Chat Completions、Messages 的支持不同，接入后应分别发送最小请求，不要只以模型下拉列表作为验收。
+
+## 五、固定版本的一行安装与部署
+
+公共组件仓库为 `ai-workspace-services/ai-aggregato-Gateway`。生产和 Home-Lab 都应固定审核过的 tag 或完整 commit，不能直接执行 `main`：
+
+```bash
+export REF=<reviewed-commit-or-tag>
+curl -fsSL "https://raw.githubusercontent.com/ai-workspace-services/ai-aggregato-Gateway/${REF}/scripts/home-lab/one-shell.sh" \
+  | bash -s -- --ref "$REF"
+```
+
+默认动作只有本地安装和预检，不会 SSH、不读取 Token，也不会修改 Home-Lab。对 `PersonalAIAggregator` GitOps 清单，先执行可审计的 `plan`：
+
+```bash
+curl -fsSL "https://raw.githubusercontent.com/ai-workspace-services/ai-aggregato-Gateway/${REF}/scripts/home-lab/one-shell.sh" \
+  | bash -s -- --ref "$REF" --operation plan \
+    --inventory /path/to/inventory.ini \
+    --manifest /path/to/ai-aggregator.yaml
+```
+
+只有在 `plan` 检查、人工 OAuth、模型推理、额度记录和回滚条件都完成后，才执行 `stage`、验证，再执行 `activate`。脚本不会接收或打印任何客户端密钥；Ansible role 从 Vault 注入服务秘密，CPA OAuth 仍由人工在远程桌面完成。
+
+当前 Home-Lab 直连 New API 的过渡声明使用 `UnifiedAIGateway`，必须显式指定现有 `ai-workspace-infra/playbooks/deploy_ai_gateway_direct_new_api.yml`，并以 `activate` 表示这是会修改 Caddy 的应用操作：
+
+```bash
+curl -fsSL "https://raw.githubusercontent.com/ai-workspace-services/ai-aggregato-Gateway/${REF}/scripts/home-lab/one-shell.sh" \
+  | bash -s -- --ref "$REF" --operation activate \
+    --inventory /path/to/inventory.ini \
+    --manifest /path/to/ai-gateway-unified.yaml \
+    --playbook /path/to/ai-workspace-infra/playbooks/deploy_ai_gateway_direct_new_api.yml
+```
+
+该过渡 playbook 会先检查 New API、本地保存 Caddy 片段、校验候选配置，再 reload；验证失败时恢复备份。它不是通用的 dry-run，执行前必须人工确认目标 inventory 和 manifest。APISIX/Kong 统一模式另有独立 playbook，不能通过这个直连入口误切换。
+
+## 六、GitOps 交付边界与真实闸门
+
+五个仓库各司其职：`gateway` 保存契约、renderer、脚本和 Home-Lab 文档；`gitops` 保存域名、节点、模型和生命周期；`playbooks` 负责 systemd、Caddy、New API、LiteLLM、CPA；`platform-ops-toolkit` 做 schema、secret scan、Ansible 和 UAT 编排；`knowledge` 保存架构与运维事实。
+
+实际交付顺序不是“提交 YAML 就自动上线”，而是：
 
 ```text
-[工程师提交 GitOps 变更]
-  │ (定义新的租户、修改限流配额或调整 CPA 渠道映射)
-  ▼
-[Toolkit 静态合规校验]
-  │ (校验 YAML Schema、检查凭据防泄露规则)
-  ▼
-[Ansible 编排流水线执行]
-  │ 1. 验证目标节点连通性与底层系统依赖；
-  │ 2. 从 HashiCorp Vault 安全读取动态密钥与数据库连接串；
-  │ 3. 动态渲染配置文件并写入内存 tmpfs (/run/ai-aggregator/)；
-  │ 4. 顺序拉起/重载各层服务：CPA 矩阵 -> LiteLLM -> New API -> APISIX；
-  ▼
-[Caddy 校验并重载]
-  │ caddy validate && caddy reload
-  ▼
-[自动化冒烟测试 (Smoke Test)]
-  │ 校验 /v1/models 返回状态码 200，并完成非流式最小推理探活；
-  ▼
-[激活 New API 对应渠道 (Channel Status=1)]
+Git PR → 静态校验 → plan → stage → 人工 OAuth
+      → /v1/models → 最小推理/streaming → 额度与回滚验证 → activate
 ```
 
-通过这一闭环流水线，所有配置改动有据可查、可回滚，杜绝了由于手动 SSH 修改服务器配置造成的“配置漂移”难题。
+当前 UAT 的 `PersonalAIAggregator` 清单仍可能是 `enabled: false` 或缺少固定 artifact revision；`UnifiedAIGateway` 即使声明 `enabled: true`，其 quota、CPA、LiteLLM acceptance 仍需要完成后才能激活。清单状态与主机实时状态必须分开核对，不能用“PR 已合并”替代线上验收。
 
----
+## 结语：统一入口只是开始
 
-## 五、小结
+客户端最终只记住一个域名、一个用户 Key 和一组标准模型名；复杂度被留在 New API 的用户与额度账本、CPA 的账号隔离、LiteLLM 的官方 Provider 适配，以及可审计的 GitOps 交付链中。真正可靠的标准不是“页面能打开”，而是每次变更都有固定版本、明确闸门、真实推理证据和可执行回滚。
 
-通过标准协议映射与双层认证解耦，终端开发者可以用极低的成本快速享受多平台大模型聚合的便利；配合成熟的 GitOps 与 Ansible 编排，整套系统具备了工业级的交付韧性。
-
-然而，在真实场景中，服务启动了、接口通了，就代表能够稳定推理了吗？答案往往是否定的！下一篇我们将直面最真实的运维“深水区”：
+下一篇将进入最容易踩坑的深水区：
 **《再也不用多账号切换了：手把手教你搭建个人专属全能 AI 聚合网关（五）—— 排障篇：真实推理避坑实测与 Home-Lab 运维巡检复盘》**。
 
----
-
-## 六、多平台发布矩阵适配（微信公众号 / 小红书 / X）
-
-### 1. 微信公众号 & 朋友圈文案
-
-> **标题备选**：
-> 1. 一行代码驱动 Claude Code 与 OpenAI SDK：AI 聚合网关极简接入实战
-> 2. 再也不用多账号切换了：客户端零心智接入与 GitOps 自动化交付（实战篇）
-> 3. 从 Python 到 Cursor：如何用一套网关 Token 搞定所有 AI 工具链？
-
-**推文导语与摘要**：
-网关搭好了，怎么用最爽？本文给出终端开发者最关心的极简接入代码：无论是官方 OpenAI Python SDK、Claude Code 终端 Agent，还是 Cursor 与主流 IDE 插件，只需一行环境变量即可直连聚合网关。同时完整公开跨仓库协作的 Ansible 与 GitOps 自动化发布流水线，教你打造可回滚、自校验的生产级交付闭环。
-
-**朋友圈转发文案**：
-最爽的时刻终于来了！AI 聚合网关客户端无缝开箱实操：
-无需任何客户端魔改，OpenAI SDK、Responses 新协议、流式输出、Claude Code 终端命令行，全部原生支持！
-环境变量安全注入：`read -r -s` 彻底防止 Token 写入终端历史文件。
-整套网关的 Ansible 角色和 GitOps 自动对账流程也全部开源整理，感兴趣的赶紧抄作业！👇
-
----
-
-### 2. 小红书爆款图文文案
-
-**笔记封面大字**：
-⚡ 一行代码连所有 AI 工具！
-💻 Claude Code / OpenAI SDK 实战
-🔄 GitOps 全自动运维流水线
-
-**正文内容**：
-敲黑板！！你们要的【客户端极简接入教程】终于整理好了！🎉
-不管你是写 Python 脚本的算法同学，还是天天用 Claude Code 的全栈老哥，甚至只用 Cursor 的小白，看完直接抄作业：
-
-1️⃣ **终端配置一行搞定**：
-```bash
-read -r -s -p 'Gateway token: ' AI_GATEWAY_CLIENT_KEY; export AI_GATEWAY_CLIENT_KEY
-```
-悄悄用静默输入，再也不怕把 API Key 误存进终端历史记录啦！
-2️⃣ **OpenAI SDK / Python 原生直连**：
-直接给 `base_url='https://ai-internal.onwalk.net/v1'`，不管是常规对话还是流式输出（Streaming），丝滑得像在用官方服务！
-3️⃣ **Claude Code 终端 Agent 原生支持**：
-直接声明 `ANTHROPIC_BASE_URL` 和 `ANTHROPIC_API_KEY`，在命令行敲下 `claude --model "claude-sonnet-5"`，自动走网关分流！
-4️⃣ **GitOps 全自动交付**：
-改改 YAML 声明，Ansible 自动拉取 Vault 密钥、渲染 tmpfs 内存配置、重启生效，完全不需要手动登服务器！
-
-终极篇《504超时与403封号排障指南》马上发，记得先点赞收藏～✨
-
-🏷️ #AI编程 #ClaudeCode #Python开发 #GitOps #程序员生产力 #Cursor #自动化运维
-
----
-
-### 3. X (Twitter) Thread / 文章
-
-**Tweet 1 (Hook)**:
-The final mile of great AI infrastructure:
-How do you plug OpenAI SDK, Claude Code, and IDE plugins into your self-hosted gateway with ZERO friction?
-
-Here is Part 4 of the AI Aggregator Gateway: Practical integration & GitOps pipelines 🧵👇
-
-**Tweet 2 (Safe Credential Sourcing)**:
-Never hardcode tokens or let them pollute your shell history!
-Use silent interactive prompts:
-`read -r -s -p 'Gateway token: ' AI_GATEWAY_CLIENT_KEY; export AI_GATEWAY_CLIENT_KEY`
-One token now powers every downstream CLI, agent, and script.
-
-**Tweet 3 (Native SDK Interoperability)**:
-Full protocol parity:
-- **OpenAI Python SDK**: Native Chat, new Codex Responses, and live token streaming via standard `base_url`.
-- **Claude Code**: Terminal agent connects natively by setting `ANTHROPIC_BASE_URL`.
-- **IDEs (Cursor / VS Code)**: Standard endpoint mapping with zero custom plugins required.
-
-**Tweet 4 (Declarative GitOps Delivery)**:
-No snowflake servers!
-1. Commit tenant/channel YAML to Git.
-2. Toolkit validates schemas.
-3. Ansible pulls Vault secrets, renders tmpfs configs, and reloads systemd daemons.
-4. Automated smoke probes run before activating channels.
-
-Next: The reality check! Diagnosing 504 timeouts, 403 blocks, and process crashes!
-Like & Repost to support open-source engineering 🚀 #OpenAI #ClaudeCode #DevOps #GitOps #Python
+原文与完整 CPA OAuth 操作可继续阅读：
+[AI Aggregator Gateway：CPA OAuth 登录与凭据隔离 TLDR](https://github.com/ai-workspace-services/knowledge/blob/main/content/04-infra-platform/apisix/ai-aggregator-cpa-oauth-tldr.zh.md)
