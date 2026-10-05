@@ -141,10 +141,12 @@ OpenCode 桌面版在 Providers/Add account 中建立自定义 Provider；CLI �
 ```bash
 export REF=<reviewed-commit-or-tag>
 curl -fsSL "https://raw.githubusercontent.com/ai-workspace-services/ai-aggregato-Gateway/${REF}/scripts/home-lab/one-shell.sh" \
-  | bash -s -- --ref "$REF"
+  | bash
 ```
 
-默认动作只有本地安装和预检，不会 SSH、不读取 Token，也不会修改 Home-Lab。对 `PersonalAIAggregator` GitOps 清单，先执行可审计的 `plan`：
+无参数时默认使用当前 Home-Lab：`ai-internal.onwalk.net`、`10.79.0.7`、`xconnect`，并执行 `activate`。它不会输出或接收任何凭据。公网 VPS、私网 NAT 或其他域名通过高级参数覆盖；只生成目标文件时使用 `bash -s -- --operation plan`。
+
+对 `PersonalAIAggregator` GitOps 清单，仍建议先执行可审计的 `plan`：
 
 ```bash
 curl -fsSL "https://raw.githubusercontent.com/ai-workspace-services/ai-aggregato-Gateway/${REF}/scripts/home-lab/one-shell.sh" \
@@ -152,6 +154,59 @@ curl -fsSL "https://raw.githubusercontent.com/ai-workspace-services/ai-aggregato
     --inventory /path/to/inventory.ini \
     --manifest /path/to/ai-aggregator.yaml
 ```
+
+如果目标是已有的单节点 VPS 或云主机，可以让脚本生成非敏感的 inventory 和单节点清单。三种网络模式的含义是：
+
+```text
+public      ：SSH/服务公网 IP → DNS 公网 IP → Caddy 公网接口
+private-nat ：SSH/服务私网 IP → DNS 公网 IP → NAT/端口转发 → Caddy 私网接口
+xconnect    ：SSH/服务 XConnect IP → split-horizon DNS XConnect IP → Caddy XConnect 接口
+```
+
+公网节点示例：
+
+```bash
+curl -fsSL "https://raw.githubusercontent.com/ai-workspace-services/ai-aggregato-Gateway/${REF}/scripts/home-lab/one-shell.sh" \
+  | bash -s -- --ref "$REF" \
+    --domain ai.example.com \
+    --target-ip 198.51.100.20 \
+    --network-mode public
+```
+
+私网 NAT 节点必须把 SSH 私网地址和 DNS 公网地址分开：
+
+```bash
+curl -fsSL "https://raw.githubusercontent.com/ai-workspace-services/ai-aggregato-Gateway/${REF}/scripts/home-lab/one-shell.sh" \
+  | bash -s -- --ref "$REF" \
+    --domain ai.example.com \
+    --target-ip 10.0.0.10 \
+    --dns-ip 198.51.100.20 \
+    --network-mode private-nat
+```
+
+Home-Lab 使用 XConnect-One 地址：
+
+```bash
+curl -fsSL "https://raw.githubusercontent.com/ai-workspace-services/ai-aggregato-Gateway/${REF}/scripts/home-lab/one-shell.sh" \
+  | bash -s -- --ref "$REF" \
+    --domain ai-internal.onwalk.net \
+    --target-ip 10.79.0.7 \
+    --network-mode xconnect
+```
+
+脚本不会申请云资源、修改 DNS 或生成凭据。公网模式默认使用 Caddy 自动 TLS；XConnect 模式默认使用已有 runtime TLS 文件。生成清单后，仍需确认主机前置条件、Vault 访问和人工 OAuth。
+
+以上命令默认只生成目标文件；确认 DNS、TLS、Vault 和主机前置条件后，加上 `--operation activate` 才会调用 bundled direct-New-API playbook 执行远程变更：
+
+```bash
+curl -fsSL "https://raw.githubusercontent.com/ai-workspace-services/ai-aggregato-Gateway/${REF}/scripts/home-lab/one-shell.sh" \
+  | bash -s -- --ref "$REF" --operation activate \
+    --domain ai.example.com \
+    --target-ip 198.51.100.20 \
+    --network-mode public
+```
+
+这不是云资源 provisioning；目标机仍需预先具备 SSH/sudo、Caddy、New API、LiteLLM、CPA、Vault 运行时注入和数据库。
 
 只有在 `plan` 检查、人工 OAuth、模型推理、额度记录和回滚条件都完成后，才执行 `stage`、验证，再执行 `activate`。脚本不会接收或打印任何客户端密钥；Ansible role 从 Vault 注入服务秘密，CPA OAuth 仍由人工在远程桌面完成。
 
