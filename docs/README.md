@@ -24,6 +24,7 @@ These four collections define the public navigation for `docs.svc.plus`.
 
 ## Canonical Bilingual Pages / 双语规范页
 
+- Multi-cloud platform engineering white paper / 多云平台工程技术白皮书：[English](reference/multi-cloud-platform-engineering-whitepaper.en.md) / [中文](reference/multi-cloud-platform-engineering-whitepaper.zh.md)
 - `docs/en/architecture.md` / `docs/zh/architecture.md`
 - `docs/en/design.md` / `docs/zh/design.md`
 - `docs/en/deployment.md` / `docs/zh/deployment.md`

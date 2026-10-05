@@ -30,3 +30,7 @@ The documentation is now grouped around four navigation lanes:
 - [User guide](user-guide.md)
 - [Developer guide](developer-guide.md)
 - [Vibe coding reference](vibe-coding-reference.md)
+
+## Platform engineering white paper
+
+- [Multi-Cloud Platform Engineering Technical White Paper](../reference/multi-cloud-platform-engineering-whitepaper.en.md)

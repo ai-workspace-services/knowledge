@@ -2,6 +2,13 @@
 
 云原生应用工坊的内容资产仓库，用于存放工程信号、技术长文、随笔与 Workshop 文档。
 
+## 多云平台工程技术白皮书
+
+- [中文版](docs/reference/multi-cloud-platform-engineering-whitepaper.zh.md)
+- [English version](docs/reference/multi-cloud-platform-engineering-whitepaper.en.md)
+
+完整覆盖四仓职责、40 个 workflow 调用链、GitOps 与 IaC state、Vault 路径/权限及迁移验收，源码基线为 2026-10-05。
+
 ## 目录结构
 
 ```
