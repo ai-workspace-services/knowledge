@@ -141,10 +141,12 @@ OpenCode 桌面版在 Providers/Add account 中建立自定义 Provider；CLI �
 ```bash
 export REF=<reviewed-commit-or-tag>
 curl -fsSL "https://raw.githubusercontent.com/ai-workspace-services/ai-aggregato-Gateway/${REF}/scripts/home-lab/one-shell.sh" \
-  | bash -s -- --ref "$REF"
+  | bash
 ```
 
-默认动作只有本地安装和预检，不会 SSH、不读取 Token，也不会修改 Home-Lab。对 `PersonalAIAggregator` GitOps 清单，先执行可审计的 `plan`：
+无参数时默认使用当前 Home-Lab：`ai-internal.onwalk.net`、`10.79.0.7`、`xconnect`，并执行 `activate`。它不会输出或接收任何凭据。公网 VPS、私网 NAT 或其他域名通过高级参数覆盖；只生成目标文件时使用 `bash -s -- --operation plan`。
+
+对 `PersonalAIAggregator` GitOps 清单，仍建议先执行可审计的 `plan`：
 
 ```bash
 curl -fsSL "https://raw.githubusercontent.com/ai-workspace-services/ai-aggregato-Gateway/${REF}/scripts/home-lab/one-shell.sh" \
