@@ -822,7 +822,7 @@ Accounts [#193](https://github.com/ai-workspace-services/accounts/pull/193)（me
 
 [GitOps #391](https://github.com/ai-workspace-infra/gitops/pull/391) 已合并为 `f95197ef8e8078748f0b8471f9fe9aabd47cc0b7`：canonical 声明 `resources/svc.plus/prod/gcp/web-saas.yaml`，项目 `open-platform-prod`、主机 `web-saas-prod`、STANDARD e2-medium、50 GB 独立数据盘、删除保护与 OS Login。state 使用 `terraform/prod/svc.plus/gcp-cloud/xworktech/web-saas/terraform.tfstate`。渲染与 Terraform 配置校验通过，声明不等于资源已创建。
 
-首个 PROD 资源计划 [run 37458022020](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37458022020) 使用 Toolkit `v2026.10.06-r5` / `14560c07dd6e57131ce5c34ac9996ee3c73ab86b`，在 GitHub `production` environment 的 GCP OIDC 交换阶段被 `attribute condition` 拒绝。随后将审批环境对齐既有 WIF 合同中的 `prod`，保持 required reviewer 审批；[plan 37460508241](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37460508241) 已成功，结果为 **8 新增、0 修改、0 删除**。该次使用固定 GitOps `f95197ef8e8078748f0b8471f9fe9aabd47cc0b7` 与 IaC `50ae2e67811cf54acedd47450f96dd02991be6b3`，未使用个人 GCP 登录，也未重新 bootstrap IAM。对应 [apply 37461248828](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37461248828) 已按用户授权触发；本次整理时尚待最终资源回执，不能记为应用 deploy/init 成功。
+首个 PROD 资源计划 [run 37458022020](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37458022020) 使用 Toolkit `v2026.10.06-r5` / `14560c07dd6e57131ce5c34ac9996ee3c73ab86b`，在 GitHub `production` environment 的 GCP OIDC 交换阶段被 `attribute condition` 拒绝。随后将审批环境对齐既有 WIF 合同中的 `prod`，保持 required reviewer 审批；[plan 37460508241](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37460508241) 已成功，结果为 **8 新增、0 修改、0 删除**。该次使用固定 GitOps `f95197ef8e8078748f0b8471f9fe9aabd47cc0b7` 与 IaC `50ae2e67811cf54acedd47450f96dd02991be6b3`，未使用个人 GCP 登录，也未重新 bootstrap IAM。对应 [apply 37461248828](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37461248828) 已通过 OIDC 并创建网络、子网和独立数据盘，但因缺少 `compute.firewalls.create`、Organization Policy API 未启用及 VM 外网 IP 策略阻挡而失败，主机未创建。已创建资源须保留在现有 state，修复一次性 bootstrap 合同后先检查无删除/替换的增量 plan；不能重复创建或宣称 deploy/init 成功。
 
 日常 PROD 资源执行只能使用 GitHub OIDC → Vault 短会话 → GCP WIF/Service Account。IAM bootstrap 是首次建立或显式修复信任合同的独立流程，不是每次业务发布前置；本地个人账号、长期 Service Account key 或 bootstrap access token 都不能成为日常部署依赖。资源计划已验证既有 environment `prod` 的联邦身份可用；Selfhost 控制器仍需将 PROD 审批环境统一为 `prod`。不能为了继续运行而删除审批或扩大到任意 repository/ref。
 
@@ -886,7 +886,7 @@ GitOps 保存域名/模式/上游声明，IaC 执行 DNS、Worker domain 等云�
 
 | 主线任务 | owner / 代码边界 | 当前状态与完成门槛 |
 | --- | --- | --- |
-| M01 `open-platform-prod` Selfhost 资源 | GitOps 声明；IaC 创建云资源与 CMDB；Toolkit 固定版本编排 | GitOps #391 已合并；OIDC plan 8 新增、0 修改、0 删除通过。apply 待最终回执；继续核对主机、独立盘、删除保护与 CMDB |
+| M01 `open-platform-prod` Selfhost 资源 | GitOps 声明；IaC 创建云资源与 CMDB；Toolkit 固定版本编排 | GitOps #391 已合并；OIDC plan 8 新增、0 修改、0 删除通过。apply 创建网络/子网/独立盘后因权限/组织策略失败，VM 与 CMDB 尚未完成；继续修复 bootstrap 合同并核对增量 plan |
 | M02 品牌、控制台、API 边界 | 品牌/Portal owner 保留公开页面；GitOps 保存域名；IaC 执行 DNS/domain | `xworktech.com` 为品牌审核主页；`console.svc.plus` 为控制台；`accounts.svc.plus` / `billing.svc.plus` 为稳定 API。页面内容、TLS、登录、CORS 与审核材料分别验收，不宣称已通过上架审核 |
 | M03 PROD 主机部署与空库初始化 | Toolkit `selfhost-orchestrator.yml`；Playbooks 主机/容器/DB；Accounts release schema | 待实现 PROD 精确目标支持、独立盘挂载和容器数据路径绑定；只对不存在或真实空库执行固定 release 的 Init SQL，拒绝对非空库重建 |
 | M04 PROD Supabase → Selfhost 单向复制 | Playbooks 组织数据操作；Accounts `cmd/migratectl` 实现用户/身份逻辑 | 来源使用专用只读角色；规范化 email 唯一匹配，PROD Proxy UUID 不变。`migratectl` 目前覆盖 Users/Identities/Sessions，订阅、额度、账本和其余业务表仍需补全 owner；不得以身份导入替代完整复制 |
