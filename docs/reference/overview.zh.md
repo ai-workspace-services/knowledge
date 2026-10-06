@@ -15,3 +15,11 @@ tags:
 ## 平台工程白皮书
 
 [多云平台工程技术白皮书](multi-cloud-platform-engineering-whitepaper.zh.md)完整整理四仓职责、40 个 workflow、GitOps/state/CMDB、Vault 路径与权限、升级验收和迁移路线，固定基线为 2026-10-05，并明确区分已实现、规划目标及待验收事项。
+
+## 相关引用
+
+- [多云平台工程技术白皮书——英文版](multi-cloud-platform-engineering-whitepaper.en.md)
+- [内容规范](content-schema.zh.md)
+- [覆盖矩阵](coverage-matrix.zh.md)
+- [历史文档映射](legacy-docs.zh.md)
+- [信息架构](../core-concepts/information-architecture.zh.md)
