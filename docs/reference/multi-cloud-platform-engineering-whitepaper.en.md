@@ -604,6 +604,22 @@ First deployment uses a probe; existing-data upgrades retain schema and fingerpr
 
 Empty-host recovery does not establish historical subscription preservation, backup/restore rehearsal or PROD promotion eligibility. Section 1.2 remains the historical audit baseline; case-specific live evidence is recorded separately.
 
+### 11.4 October 6, 2026 UAT closure receipt
+
+[Selfhost run 37399874543](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37399874543) succeeded on attempt 2. Only the failed public-verification jobs were rerun; successful initialization and probe receipts from attempt 1 were retained. Scope: `uat / web-saas-uat / daily-build-2026.10.06-r2`.
+
+| Boundary | Immutable version and correlated evidence | Result |
+| --- | --- | --- |
+| Toolkit caller | [PR #1313](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1313), merge `bea4820f407cdc41ba6d9a1c18411d5b6479a78b` | Explicit empty-host initialization, exact child-run correlation and host-acceptance gate before DNS |
+| Playbooks data/host owner | [PR #577](https://github.com/ai-workspace-infra/playbooks/pull/577), merge `7d660cdb4066e2a4cf3fed68bccafea939771e64` | [Baseline 37399972538](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37399972538) captured absent; [init 37400271339](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37400271339) and [probe 37400528913](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37400528913) succeeded |
+| IaC DNS owner | [PR #396](https://github.com/ai-workspace-infra/iac_modules/pull/396), merge `ed299ac0cbf0d7f3c355b36f2ecbed794ceebd7f` | Selected UAT records reconciled after host acceptance in the same parent run |
+| GitOps public ingress declaration | [PR #389](https://github.com/ai-workspace-infra/gitops/pull/389), merge `cd6f28be2fa416f86fa124150df062f4b9d9595e` | Added `public_tcp_ports: [80, 443]`; [plan 37406125053](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37406125053) and [apply 37406218452](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37406218452) each showed 1 add, 0 change, 0 destroy |
+| Public HTTPS | Successful public-verification job in the same parent run | Canonical and Selfhost Console 200; canonical Accounts root expected 404; Bridge ping expected 401 |
+
+The third gap was a missing public 80/443 cloud-network declaration: local Caddy and certificates were healthy while external connections timed out. Host readiness and public/cloud routing require separate checks. Expected Accounts root 404 and Bridge 401 establish the routing/authentication probe contract, not user-login or business-ledger acceptance.
+
+[Toolkit retirement PR #1314](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1314) removes the UAT-verified legacy DNS executor and two execution tests while retaining immutable caller-pin and gate checks; its merge/CI evidence is available in the PR. The original 15-item audit baseline remains historical. The scanner reports 14 items after deletion; other migrations retain their own deletion gates.
+
 ## 12. Gap register and implementation roadmap
 
 ### 12.1 Seven gaps from the original audit

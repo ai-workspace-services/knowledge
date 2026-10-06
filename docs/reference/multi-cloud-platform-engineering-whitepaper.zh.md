@@ -614,6 +614,22 @@ HTTP 200、systemd active、workflow success、合并和 CI green 各自有作�
 
 数据库初始化与数据迁移是不同操作。以上空库恢复不构成备份恢复演练、历史业务数据验收或 PROD 晋级资格。原第 1.2 节保留历史盘点基线；此案例的实时验收证据由关联运行单独记录。
 
+### 11.4 2026-10-06 UAT 闭环回执
+
+[Selfhost run 37399874543](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37399874543) 的第 2 次尝试整体成功；重跑仅覆盖失败的公开入口验收，沿用首次尝试已成功的初始化与探测回执。范围为 `uat / web-saas-uat / daily-build-2026.10.06-r2`。
+
+| 边界 | 固定版本与关联证据 | 结果 |
+| --- | --- | --- |
+| Toolkit caller | [PR #1313](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1313)，merge `bea4820f407cdc41ba6d9a1c18411d5b6479a78b` | 显式空库初始化入口、精确子 run 关联与 DNS 前置验收门禁 |
+| Playbooks 数据/主机 owner | [PR #577](https://github.com/ai-workspace-infra/playbooks/pull/577)，merge `7d660cdb4066e2a4cf3fed68bccafea939771e64` | [baseline 37399972538](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37399972538) 捕获 absent；[init 37400271339](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37400271339)、[probe 37400528913](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37400528913) 成功 |
+| IaC DNS owner | [PR #396](https://github.com/ai-workspace-infra/iac_modules/pull/396)，merge `ed299ac0cbf0d7f3c355b36f2ecbed794ceebd7f` | 同一父 run 在主机验收后完成所选 UAT 记录 reconcile |
+| GitOps 公开入口声明 | [PR #389](https://github.com/ai-workspace-infra/gitops/pull/389)，merge `cd6f28be2fa416f86fa124150df062f4b9d9595e` | 增加 `public_tcp_ports: [80, 443]`；[plan 37406125053](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37406125053) 和 [apply 37406218452](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37406218452) 均为 1 新增、0 修改、0 删除 |
+| 公开 HTTPS | 同一父 run 的公开入口验收成功 | Console canonical 与 Selfhost 均 200，Accounts canonical 根路径预期 404，Bridge ping 预期 401 |
+
+第三个缺口是云网络声明缺少公开 80/443：Caddy 本机和证书已正常，外网仍超时。该案例要求把主机 readiness 与云网络/公开入口分别验收。上述 Accounts canonical 根路径 404 与 Bridge 401 仅符合路由/鉴权探测合同，不能替代用户登录或业务账本验收。
+
+[Toolkit 退役 PR #1314](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1314) 删除已完成 UAT 切换的旧 DNS 执行副本及两项旧执行测试，保留 caller 固定 SHA 与门禁检查；其合并和 CI 结果见 PR。原盘点的 15 项 legacy 基线不重写，删除后 scanner 为 14 项，其他迁移仍按各自删除门槛推进。
+
 ## 12. 差异登记与实施路线
 
 ### 12.1 原盘点的七项差异
