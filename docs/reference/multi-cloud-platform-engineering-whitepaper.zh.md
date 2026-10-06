@@ -824,7 +824,7 @@ Accounts [#193](https://github.com/ai-workspace-services/accounts/pull/193)（me
 
 首个 PROD 资源计划 [run 37458022020](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37458022020) 使用 Toolkit `v2026.10.06-r5` / `14560c07dd6e57131ce5c34ac9996ee3c73ab86b`，在 GitHub `production` environment 的 GCP OIDC 交换阶段被 `attribute condition` 拒绝。随后将审批环境对齐既有 WIF 合同中的 `prod`，保持 required reviewer 审批；[plan 37460508241](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37460508241) 已成功，结果为 **8 新增、0 修改、0 删除**。该次使用固定 GitOps `f95197ef8e8078748f0b8471f9fe9aabd47cc0b7` 与 IaC `50ae2e67811cf54acedd47450f96dd02991be6b3`，未使用个人 GCP 登录，也未重新 bootstrap IAM。对应 [apply 37461248828](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37461248828) 已通过 OIDC 并创建网络、子网和独立数据盘，但因缺少 `compute.firewalls.create`、Organization Policy API 未启用及 VM 外网 IP 策略阻挡而失败，主机未创建。已创建资源须保留在现有 state，修复一次性 bootstrap 合同后先检查无删除/替换的增量 plan；不能重复创建或宣称 deploy/init 成功。
 
-日常 PROD 资源执行只能使用 GitHub OIDC → Vault 短会话 → GCP WIF/Service Account。IAM bootstrap 是首次建立或显式修复信任合同的独立流程，不是每次业务发布前置；本地个人账号、长期 Service Account key 或 bootstrap access token 都不能成为日常部署依赖。资源计划已验证既有 environment `prod` 的联邦身份可用；Selfhost 控制器仍需将 PROD 审批环境统一为 `prod`。不能为了继续运行而删除审批或扩大到任意 repository/ref。
+日常 PROD 资源执行只能使用 GitHub OIDC → Vault 短会话 → GCP WIF/Service Account。IAM bootstrap 是首次建立或显式修复信任合同的独立流程，不是每次业务发布前置；本地个人账号、长期 Service Account key 或 bootstrap access token 都不能成为日常部署依赖。资源计划已验证既有 environment `prod` 的联邦身份可用；[Toolkit #1325](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1325) 已合并，将 Selfhost 控制器的 PROD 审批环境统一为 `prod`（merge `a67c1cb48f98ef7f07c3ee35fdef62a4e2f97ff5`）。不能为了继续运行而删除审批或扩大到任意 repository/ref。
 
 `migratectl` 当前导入范围为 Users、Identities、Sessions；单独成功不证明订阅、额度、账本一致，也不能放行生产主库切换。目标须使用最新原生 schema，按规范化 email 匹配用户，保持 PROD Proxy UUID、身份及完整业务值，核对全部业务表和关联。最终追平须在单写者/隔离窗口完成，并产生绑定不可变版本、准确环境、主机/数据库与逐表摘要的回执，随后切换生产入口并验收。
 
@@ -847,9 +847,24 @@ Pages 承载静态页面/资源，通过免费 CDN 提供；Edge Gateway 保持�
 
 `edge-gateway` 提供 `workflow_dispatch` 非敏感覆盖：环境、`serverless` / `selfhost` / `hybrid`、Accounts/Billing 的独立上游、主节点超时（默认 2500 ms）及 GitOps immutable SHA。空值使用经审查的声明默认值；禁止凭据、网关自身上游、秘密 URL 和任意命令。`deploy=false` 仅形成路由计划；实际发布须完成入口、HTTP、CORS、路由模式和 commit 响应头核验。
 
-三种模式都保留 Worker 调度。Hybrid 仅对 GET/HEAD/OPTIONS 在主节点超时或 5xx 后回退，POST/PUT/PATCH/DELETE 不跨两套数据库重试。只读请求也必须考虑副本追平，不能把可达性回退当作数据一致性的证明。Selfhost 未完成完整业务一致性与最终追平前，生产维持 Serverless；任何改写入后端的覆盖变量都须经过精确上游、全业务范围、PROD Proxy UUID 与单写者回执门禁。
+三种模式都保留 Worker 调度。Hybrid 框架仅允许 GET/HEAD/OPTIONS 在主节点超时或 5xx 后回退，POST/PUT/PATCH/DELETE 不跨两套数据库重试。PROD Accounts/Billing 的读回退当前也默认禁用：单向导入不能保证旧 Supabase 跟随 Selfhost 的新写入，需先建立并验收持续副本合同；UAT 与独立 Content 的安全方法回退保留。可达性回退不构成数据一致性的证明。Selfhost 未完成完整业务一致性与最终追平前，生产维持 Serverless；任何改写入后端的覆盖变量都须经过精确上游、全业务范围、PROD Proxy UUID 与单写者回执门禁。
 
 GitOps 保存域名/模式/上游声明，IaC 执行 DNS、Worker domain 等云资源变更，Edge Gateway owner 发布 Worker 路由代码，Playbooks 执行主机与 DB 初始化/复制，Toolkit 关联审批、固定来源及验收回执。改 CNAME 或 Worker 代码不等于主库已切换。本节是当前目标合同；生产 CNAME 改造、网关新发布和 Selfhost 创建/复制尚无成功运行验收。
+
+#### 2026-10-06 代码交付与启用门槛
+
+| 代码交付 | 已有证据 | 尚未证明的运行状态 |
+| --- | --- | --- |
+| [IaC #399](https://github.com/ai-workspace-infra/iac_modules/pull/399) bootstrap 合同修正 | 声明 Org Policy API，服务 VM 等待声明的外网 IP 策略；15 项 GCP 契约及 Terraform validate 通过 | 一次性 live IAM/API/策略修复尚未应用；不授予日常 runtime identity 组织级管理员权限 |
+| [Edge #28](https://github.com/ai-workspace-services/edge-gateway/pull/28) GTM 发布入口（draft） | Accounts/Billing 共同模式、dispatch 覆盖、完整业务门禁、实际 writer 核对、绑定同 run/commit/计划的限时授权；45 项 Worker 与 15 项发布契约检查通过 | 全业务回执生产器与环境 Vault 合同待落地，不能切主库；旧 PROD caller 不能覆盖受保护发布入口 |
+| [IaC #398](https://github.com/ai-workspace-infra/iac_modules/pull/398) DNS owner（draft） | 21 项 provider/请求检查，迁移后的 legacy 与 GTM DNS 行为测试通过；稳定 API CNAME 仅由 Edge guarded caller 发起 | 没有实际修改生产 CNAME，没有以 provider 收敛代替业务验收 |
+| [Toolkit #1326](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1326) DNS caller 迁移（draft） | preflight 固定 GitOps SHA，后续 lane 消费同一 SHA；调用固定 IaC reusable workflow，PROD legacy Edge 部署跳过，品牌/Console/CORS 检查保留 | 新 owner 的 Vault job/workflow claims 与真实 UAT 调用待核验；冻结旧 executor 在 UAT 证据齐备后再删除 |
+| [GitOps #392](https://github.com/ai-workspace-infra/gitops/pull/392) API CNAME 声明（draft） | Accounts/Billing 分别声明模式限定域名 | owner/caller/Edge 合并并验证前不激活；启用前停止或等待旧来源 run 结束 |
+
+
+最新受控 [Edge 路由 plan 37467724076](https://github.com/ai-workspace-services/edge-gateway/actions/runs/37467724076) 已成功：Edge commit `1904da51f43c947d1a32d0a6170f8305c43e078c`，GitOps draft 固定 SHA `66f77850e3b94d469933c16006740a37980df099`，`prod/serverless`、`deploy=false`。CI、构件大小及计划通过，Deploy job skipped；没有读取 Vault 或改动 Worker/DNS，也没有放行业务切换。
+
+合并与启用顺序：**IaC owner → Toolkit caller 与 Edge guarded 发布入口 → GitOps API 声明**。代码 PR 与无凭据路由 plan 可先审查；实际切换仍必须经过新目标完整业务一致性、最终追平、单写者和生产入口验收，不能用“文档/PR/plan 成功”跳过数据门禁。
 
 ## 12. 差异登记与实施路线
 
@@ -891,7 +906,7 @@ GitOps 保存域名/模式/上游声明，IaC 执行 DNS、Worker domain 等云�
 | M03 PROD 主机部署与空库初始化 | Toolkit `selfhost-orchestrator.yml`；Playbooks 主机/容器/DB；Accounts release schema | 待实现 PROD 精确目标支持、独立盘挂载和容器数据路径绑定；只对不存在或真实空库执行固定 release 的 Init SQL，拒绝对非空库重建 |
 | M04 PROD Supabase → Selfhost 单向复制 | Playbooks 组织数据操作；Accounts `cmd/migratectl` 实现用户/身份逻辑 | 来源使用专用只读角色；规范化 email 唯一匹配，PROD Proxy UUID 不变。`migratectl` 目前覆盖 Users/Identities/Sessions，订阅、额度、账本和其余业务表仍需补全 owner；不得以身份导入替代完整复制 |
 | M05 切换资格与单写者 | 数据 owner 生成摘要/回执；Toolkit 校验来源与范围；Edge Gateway 消费门禁 | 已有 PROD 来源只读基线；目标尚未完成全业务一致性。逐表行数、email 关联摘要、Proxy UUID、身份、订阅、额度、账本均一致，最终追平与单写者条件成立后才允许改写入后端 |
-| M06 Worker 轻量 GTM 与 API CNAME | Edge Gateway 发布路由；IaC 执行 CNAME/domain；GitOps 提供固定声明 | Edge 本地实现 Accounts/Billing 共同模式、dispatch 覆盖与安全读回退；CI/发布、DNS owner/caller 迁移和生产验证待完成。稳定 API CNAME 指向模式限定域名，三种模式保留 Worker；不能直接固定到 Cloud Run |
+| M06 Worker 轻量 GTM 与 API CNAME | Edge Gateway 发布路由；IaC 执行 CNAME/domain；GitOps 提供固定声明 | Edge #28、IaC #398、Toolkit #1326 与 GitOps #392 已形成可审查代码；Worker/发布/provider 契约及无凭据 plan 已验证，实际发布、Vault/owner/caller UAT 与生产验收待完成。PROD Accounts/Billing 读回退默认禁用。稳定 API CNAME 指向模式限定域名，三种模式保留 Worker；不能直接固定到 Cloud Run |
 | M07 OIDC 与免费额度 | Toolkit/Vault/WIF 身份合同；各 owner 记录容量预算 | 既有 `prod` OIDC 已验证，无日常个人登录依赖。Pages 静态 CDN、Workers 账户共享日预算、Cloud Run billing account 月额度及 Supabase 组织/项目额度按 7.2.2 分别预算 |
 | M08 生产闭环与回退 | Toolkit 关联精确 run；Edge/服务 owner 验证公开入口；数据 owner 处理写入恢复 | 发布证据绑定 GitOps/owner/caller SHA、tag/digest、环境、资源、DB 摘要与入口结果。验证品牌/控制台不受影响、Accounts 登录/身份/权限、Billing/额度/账本。切换后若出现新写入，禁止仅改 CNAME 回到旧库；回退须先完成数据追平与单写者验收 |
 
