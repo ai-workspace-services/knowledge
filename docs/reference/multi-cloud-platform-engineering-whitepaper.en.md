@@ -4,7 +4,7 @@ description: Architecture, delivery governance, and migration contracts grounded
 slug: multi-cloud-platform-engineering-whitepaper
 lang: en
 date: 2026-10-05
-version: "1.1"
+version: "1.2"
 status: review-draft
 tags:
   - platform-engineering
@@ -18,7 +18,7 @@ category: reference
 
 # Multi-Cloud Platform Engineering Technical White Paper
 
-**Version 1.1 · Source audit baseline: October 5, 2026 · Status: architecture and contract review draft**
+**Version 1.2 · Source audit baseline: October 5, 2026 · Status: architecture and contract review draft**
 
 [中文版](multi-cloud-platform-engineering-whitepaper.zh.md) · [Reference overview](overview.en.md)
 
@@ -593,6 +593,16 @@ HTTP 200, systemd active, workflow success, a merge, and green CI each provide e
 Trace `request/input → declaration parsing → identity/permissions → backend/state → cloud facts → CMDB → host/service → public routing → business data → evidence correlation`. For 403, inspect role claims and paths without expanding wildcards. Wrong accounts stop before Terraform. Successful dispatch requires exact child-run inspection. Failed apply retains diagnostics and checks actual resources. A healthy service with failing business behavior requires schema, entitlement, and ledger investigation.
 
 Logs and artifacts retain only sanitized identity, summaries, checksums, status, and correlation identifiers. Do not include Vault responses, tokens, private keys, invitations, or complete database credentials. [S2], [S9], [S15]
+
+### 11.3 Empty-host initialization, pull CD, and acceptance closure
+
+UAT run `37397087620` (parent `37396670526`, release `daily-build-2026.10.06-r2`) exposed two independent gaps. Its pre-deploy receipt recorded an absent `account` database, and the post-deploy read-only probe failed. DNS reconciliation also treated top-level CMDB string metadata as host objects. Host inspection confirmed that PostgreSQL was running but the business database and role had not been created. Doco-CD health and a committed GitOps tag did not establish Accounts readiness.
+
+The closure sequence is: validate the trusted caller's CMDB and capture the baseline; explicitly request UAT-only empty-host `selfhost_init` through Selfhost `operation=deploy+init`; let Playbooks create only `account/account_user`, pause application writers, initialize from the immutable Accounts ref matching the images, and resume services; then perform bounded checks of running image tags, Accounts `/readyz` and `/api/ping`, and Console `/`. Ordinary deploy/probe/verify remains independent of initialization and legacy import.
+
+First deployment uses a probe; existing-data upgrades retain schema and fingerprint verification. Toolkit gates UAT DNS publication on host acceptance. IaC Modules selects host objects from the mixed CMDB and reconciles the declared environment's records. Public endpoints require separate live verification. Record exact owner/caller SHAs, tag, environment, host, correlated child runs and receipts; delete the frozen legacy Toolkit executor only after the pinned owner route passes UAT. Never replace freeze checksums to permit an in-place execution patch.
+
+Empty-host recovery does not establish historical subscription preservation, backup/restore rehearsal or PROD promotion eligibility. Section 1.2 remains the historical audit baseline; case-specific live evidence is recorded separately.
 
 ## 12. Gap register and implementation roadmap
 
