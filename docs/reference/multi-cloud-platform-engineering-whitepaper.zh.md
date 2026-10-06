@@ -4,7 +4,7 @@ description: 基于四仓职责边界、40 个工作流与 Vault 路径契约的
 slug: multi-cloud-platform-engineering-whitepaper
 lang: zh
 date: 2026-10-05
-version: "1.1"
+version: "1.2"
 status: review-draft
 tags:
   - platform-engineering
@@ -18,7 +18,7 @@ category: reference
 
 # 多云平台工程技术白皮书
 
-**版本：1.1 · 源码盘点基线：2026-10-05 · 状态：架构与契约评审稿**
+**版本：1.2 · 源码盘点基线：2026-10-05 · 状态：架构与契约评审稿**
 
 [English version](multi-cloud-platform-engineering-whitepaper.en.md) · [参考资料总览](overview.zh.md)
 
@@ -572,6 +572,12 @@ checkpoint 与隔离恢复绑定同环境、release、run；migration 绑定精�
 
 `adapters.json` 为 `{"schema":2,"uat":{},"prod":{}}`。控制面、离线测试和 disposable PostgreSQL 加密备份/隔离恢复证据不能替代真实 UAT 备份恢复、升级、回滚和业务验证；当前不能宣称完整真实升级演练或 PROD Hybrid 已可用。[S15]
 
+### 10.4 2026-10-06 Daily UAT 重验证记录
+
+本次从 `platform-ops-toolkit` 的 `main`（`c28e38c6`）触发 [Daily Main Snapshot run 37338490260](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37338490260)，目标为 UAT，`enable_migration=false`。不可变快照解析及各组织构建阶段已启动；PostgreSQL 子流程在 Vault JWT 登录阶段失败，错误为 `repository` claim 与角色绑定值不匹配，尚未进入 PostgreSQL 构建或部署验收。随后 Hybrid 子 run [37339183907](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37339183907) 在 Web SaaS 的 `selfhost_probe` 数据阶段再次因 `job_workflow_ref` 旧 SHA 被 Vault 拒绝，未完成 UAT 编排。该证据只能标记为“发布阻断”，不能标记为 UAT 成功。
+
+修复已提交 [platform-ops-toolkit PR #1308](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1308)：将 PostgreSQL 的 Vault role、快照 tag helper 和等待脚本统一到当前仓库 `ai-workspace-services/postgresql`，并将 Toolkit UAT/PROD role 的 Playbooks workflow pin 更新为本次实际调用的 `5a1f68c6…`，同时补充跨仓库契约检查。合并后还必须按既有 Vault role apply 流程同步 `github-actions-postgresql-uat` 与 `github-actions-platform-ops-toolkit-uat`，再重新触发同一 Daily 入口；只有 Hybrid 子 run 成功、部署证据和业务入口验证均完成，才可推进本节发布证明链。
+
 ## 11. 验收与可观测性
 
 ### 11.1 分层验证矩阵
@@ -593,6 +599,36 @@ HTTP 200、systemd active、workflow success、合并和 CI green 各自有作�
 按 `请求/输入 → 声明解析 → 身份/权限 → backend/state → 云资源事实 → CMDB → 主机/服务 → 公开路由 → 业务数据 → 证据关联` 追查。403 先核对 role claims 和路径，不扩大 wildcard；错误账号先止步于 Terraform；dispatch 成功先查精确子 run；apply 失败保留诊断并核实际资源；服务健康但业务失败继续查 schema、权益和 ledger。
 
 日志和 artifact 只保留脱敏的身份、摘要、校验和、状态及关联标识，不保存 Vault response、token、私钥、邀请或完整数据库凭据。[S2], [S9], [S15]
+
+### 11.3 空主机初始化、Pull CD 与验收闭环
+
+2026-10-06 的 UAT 运行 `37397087620`（父运行 `37396670526`、版本 `daily-build-2026.10.06-r2`）揭示了两个相互独立的缺口：部署前回执明确记录 `account` 数据库不存在，部署后只读探测仍失败；DNS reconciler 把 CMDB 顶层的字符串元数据当成主机对象读取。主机检查确认 PostgreSQL 已运行，但业务库和角色尚未创建。Doco-CD healthy 和 GitOps 标签已写入均不能证明 Accounts 可用。
+
+闭环须按下列顺序建立：
+
+1. 从已成功或正在执行的受信任 caller 下载 CMDB，核对环境、唯一主机及 SSH 身份；记录空库或既有数据基线。
+2. **仅对显式请求且真实空库的 UAT 执行 `selfhost_init`（Selfhost 入口选择 `operation=deploy+init`）**：由 Playbooks 限定创建 `account/account_user`，暂停应用写入进程，使用与镜像相同的不可变 Accounts ref 初始化 schema，随后恢复服务。普通 deploy、probe、verify 不建库、不重置 schema，也不隐式导入旧环境数据。
+3. Pull CD 由 Doco-CD 按 GitOps 声明收敛；Playbooks 在有界等待内检查实际运行标签、Accounts `/readyz` 与 `/api/ping`、Console `/`。空库首部署用 probe；既有数据升级继续用 schema 与数据指纹 verify。前者不证明历史订阅保留。
+4. Toolkit 将成功的主机验收作为 UAT DNS 发布前置门禁；IaC Modules 从 CMDB 的主机对象读取资源事实，忽略顶层元数据，执行所选环境的 DNS reconcile。公开入口还需独立复验。
+5. 记录精确 owner SHA、caller SHA、发布 tag、环境、目标、子运行和 live 回执。新的 owner 路由通过 UAT 后，删除 Toolkit 冻结的旧执行副本及旧执行测试；不得改写冻结校验和来绕过职责门禁。
+
+数据库初始化与数据迁移是不同操作。以上空库恢复不构成备份恢复演练、历史业务数据验收或 PROD 晋级资格。原第 1.2 节保留历史盘点基线；此案例的实时验收证据由关联运行单独记录。
+
+### 11.4 2026-10-06 UAT 闭环回执
+
+[Selfhost run 37399874543](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37399874543) 的第 2 次尝试整体成功；重跑仅覆盖失败的公开入口验收，沿用首次尝试已成功的初始化与探测回执。范围为 `uat / web-saas-uat / daily-build-2026.10.06-r2`。
+
+| 边界 | 固定版本与关联证据 | 结果 |
+| --- | --- | --- |
+| Toolkit caller | [PR #1313](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1313)，merge `bea4820f407cdc41ba6d9a1c18411d5b6479a78b` | 显式空库初始化入口、精确子 run 关联与 DNS 前置验收门禁 |
+| Playbooks 数据/主机 owner | [PR #577](https://github.com/ai-workspace-infra/playbooks/pull/577)，merge `7d660cdb4066e2a4cf3fed68bccafea939771e64` | [baseline 37399972538](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37399972538) 捕获 absent；[init 37400271339](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37400271339)、[probe 37400528913](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37400528913) 成功 |
+| IaC DNS owner | [PR #396](https://github.com/ai-workspace-infra/iac_modules/pull/396)，merge `ed299ac0cbf0d7f3c355b36f2ecbed794ceebd7f` | 同一父 run 在主机验收后完成所选 UAT 记录 reconcile |
+| GitOps 公开入口声明 | [PR #389](https://github.com/ai-workspace-infra/gitops/pull/389)，merge `cd6f28be2fa416f86fa124150df062f4b9d9595e` | 增加 `public_tcp_ports: [80, 443]`；[plan 37406125053](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37406125053) 和 [apply 37406218452](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37406218452) 均为 1 新增、0 修改、0 删除 |
+| 公开 HTTPS | 同一父 run 的公开入口验收成功 | Console canonical 与 Selfhost 均 200，Accounts canonical 根路径预期 404，Bridge ping 预期 401 |
+
+第三个缺口是云网络声明缺少公开 80/443：Caddy 本机和证书已正常，外网仍超时。该案例要求把主机 readiness 与云网络/公开入口分别验收。上述 Accounts canonical 根路径 404 与 Bridge 401 仅符合路由/鉴权探测合同，不能替代用户登录或业务账本验收。
+
+[Toolkit 退役 PR #1314](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1314) 删除已完成 UAT 切换的旧 DNS 执行副本及两项旧执行测试，保留 caller 固定 SHA 与门禁检查；其合并和 CI 结果见 PR。原盘点的 15 项 legacy 基线不重写，删除后 scanner 为 14 项，其他迁移仍按各自删除门槛推进。
 
 ## 12. 差异登记与实施路线
 

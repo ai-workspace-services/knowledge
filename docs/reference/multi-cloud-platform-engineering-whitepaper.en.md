@@ -4,7 +4,7 @@ description: Architecture, delivery governance, and migration contracts grounded
 slug: multi-cloud-platform-engineering-whitepaper
 lang: en
 date: 2026-10-05
-version: "1.1"
+version: "1.2"
 status: review-draft
 tags:
   - platform-engineering
@@ -18,7 +18,7 @@ category: reference
 
 # Multi-Cloud Platform Engineering Technical White Paper
 
-**Version 1.1 · Source audit baseline: October 5, 2026 · Status: architecture and contract review draft**
+**Version 1.2 · Source audit baseline: October 5, 2026 · Status: architecture and contract review draft**
 
 [中文版](multi-cloud-platform-engineering-whitepaper.zh.md) · [Reference overview](overview.en.md)
 
@@ -593,6 +593,32 @@ HTTP 200, systemd active, workflow success, a merge, and green CI each provide e
 Trace `request/input → declaration parsing → identity/permissions → backend/state → cloud facts → CMDB → host/service → public routing → business data → evidence correlation`. For 403, inspect role claims and paths without expanding wildcards. Wrong accounts stop before Terraform. Successful dispatch requires exact child-run inspection. Failed apply retains diagnostics and checks actual resources. A healthy service with failing business behavior requires schema, entitlement, and ledger investigation.
 
 Logs and artifacts retain only sanitized identity, summaries, checksums, status, and correlation identifiers. Do not include Vault responses, tokens, private keys, invitations, or complete database credentials. [S2], [S9], [S15]
+
+### 11.3 Empty-host initialization, pull CD, and acceptance closure
+
+UAT run `37397087620` (parent `37396670526`, release `daily-build-2026.10.06-r2`) exposed two independent gaps. Its pre-deploy receipt recorded an absent `account` database, and the post-deploy read-only probe failed. DNS reconciliation also treated top-level CMDB string metadata as host objects. Host inspection confirmed that PostgreSQL was running but the business database and role had not been created. Doco-CD health and a committed GitOps tag did not establish Accounts readiness.
+
+The closure sequence is: validate the trusted caller's CMDB and capture the baseline; explicitly request UAT-only empty-host `selfhost_init` through Selfhost `operation=deploy+init`; let Playbooks create only `account/account_user`, pause application writers, initialize from the immutable Accounts ref matching the images, and resume services; then perform bounded checks of running image tags, Accounts `/readyz` and `/api/ping`, and Console `/`. Ordinary deploy/probe/verify remains independent of initialization and legacy import.
+
+First deployment uses a probe; existing-data upgrades retain schema and fingerprint verification. Toolkit gates UAT DNS publication on host acceptance. IaC Modules selects host objects from the mixed CMDB and reconciles the declared environment's records. Public endpoints require separate live verification. Record exact owner/caller SHAs, tag, environment, host, correlated child runs and receipts; delete the frozen legacy Toolkit executor only after the pinned owner route passes UAT. Never replace freeze checksums to permit an in-place execution patch.
+
+Empty-host recovery does not establish historical subscription preservation, backup/restore rehearsal or PROD promotion eligibility. Section 1.2 remains the historical audit baseline; case-specific live evidence is recorded separately.
+
+### 11.4 October 6, 2026 UAT closure receipt
+
+[Selfhost run 37399874543](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37399874543) succeeded on attempt 2. Only the failed public-verification jobs were rerun; successful initialization and probe receipts from attempt 1 were retained. Scope: `uat / web-saas-uat / daily-build-2026.10.06-r2`.
+
+| Boundary | Immutable version and correlated evidence | Result |
+| --- | --- | --- |
+| Toolkit caller | [PR #1313](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1313), merge `bea4820f407cdc41ba6d9a1c18411d5b6479a78b` | Explicit empty-host initialization, exact child-run correlation and host-acceptance gate before DNS |
+| Playbooks data/host owner | [PR #577](https://github.com/ai-workspace-infra/playbooks/pull/577), merge `7d660cdb4066e2a4cf3fed68bccafea939771e64` | [Baseline 37399972538](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37399972538) captured absent; [init 37400271339](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37400271339) and [probe 37400528913](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37400528913) succeeded |
+| IaC DNS owner | [PR #396](https://github.com/ai-workspace-infra/iac_modules/pull/396), merge `ed299ac0cbf0d7f3c355b36f2ecbed794ceebd7f` | Selected UAT records reconciled after host acceptance in the same parent run |
+| GitOps public ingress declaration | [PR #389](https://github.com/ai-workspace-infra/gitops/pull/389), merge `cd6f28be2fa416f86fa124150df062f4b9d9595e` | Added `public_tcp_ports: [80, 443]`; [plan 37406125053](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37406125053) and [apply 37406218452](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37406218452) each showed 1 add, 0 change, 0 destroy |
+| Public HTTPS | Successful public-verification job in the same parent run | Canonical and Selfhost Console 200; canonical Accounts root expected 404; Bridge ping expected 401 |
+
+The third gap was a missing public 80/443 cloud-network declaration: local Caddy and certificates were healthy while external connections timed out. Host readiness and public/cloud routing require separate checks. Expected Accounts root 404 and Bridge 401 establish the routing/authentication probe contract, not user-login or business-ledger acceptance.
+
+[Toolkit retirement PR #1314](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1314) removes the UAT-verified legacy DNS executor and two execution tests while retaining immutable caller-pin and gate checks; its merge/CI evidence is available in the PR. The original 15-item audit baseline remains historical. The scanner reports 14 items after deletion; other migrations retain their own deletion gates.
 
 ## 12. Gap register and implementation roadmap
 
