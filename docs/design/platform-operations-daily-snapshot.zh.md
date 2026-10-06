@@ -16,13 +16,13 @@ tags:
 
 # 平台操作中心与 Daily Snapshot 发布验收架构
 
-> 状态：目标设计；首期页面、只读目录与计划 API/MCP 正在本地实现，执行服务、生产发布及 UAT 验收尚未完成。源码核对日期：2026-10-06。本文记录页面与后端合同，不构成部署、数据迁移或运行验收证明。
+> 状态：目标设计与首期交付记录；首期页面、目录和计划 API/MCP 已实现，Console UAT 已发布。完整执行服务、生产发布及登录后 UAT 验收尚未完成。核对日期：2026-10-06。部署成功不构成数据迁移或业务运行验收证明。
 
 ## 1. 目标与当前实现
 
 将 `/panel/operations/` 设计为执行中心，将 `/panel/operations/releases` 设计为发布记录与验收中心。两页共享操作记录，从提交请求开始展示，持续同步父工作流、子工作流、构件及实际验收结果。
 
-侧栏入口独立归入“平台运维”，显示“操作中心”“发布记录”等条目，不再混在“账户与权限”中使用含糊的 Overview 标签。普通账号不展示运维条目；菜单可见性仍受原有权限规则控制，隐藏菜单不能替代服务端授权。未进行真实账号登录核验时，不推断用户当前角色或租户权限。
+侧栏入口独立归入“平台运维”，显示“操作中心”“发布记录”等条目，不再混在“账户与权限”中使用含糊的 Overview 标签。`admin` 角色及 `admin / administrator / root` 管理员组按现有规则可见，普通账号和访客不可见；保留原有权限和租户检查，不修改账号权限，不解除 PROD 执行保护。导航、权限和计划接口等 63 项本地回归测试通过；未进行真实账号登录核验时，不推断实际会话中的角色或租户信息。
 
 工作流入口为 [Daily Main Snapshot](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/workflows/daily-main-snapshot.yaml)。已核对的 Toolkit 提交为 `452265c3596de0d68cda9ae020ec8295f7db3c78`；后续实现须重新核对工作流版本，不能将该快照视为永久合同。
 
@@ -33,11 +33,21 @@ Portal 源码定位：
 - `src/app/api/operations/releases/route.ts`：鉴权后读取 Toolkit `release-status` 分支的 `releases.json`；目录中的工作流状态不自动等同于实际登录或业务验收。
 - `src/app/globals.css`：现有主题变量与排版约定。
 
-线上参考入口为 [UAT Releases](https://console-serverless-uat.onwalk.net/panel/operations/releases)。本次访问超时，未取得页面截图；上述现状只由本地源码支持，不代表已核实线上页面版本。
+线上参考入口为 [UAT Releases](https://console-serverless-uat.onwalk.net/panel/operations/releases)。设计阶段访问超时，未取得参考截图；后续发布检查已验证匿名登录门禁和线上静态资源，未取得登录后的页面截图。
 
 首期实现范围：参数表单覆盖 19 个输入、SIT/UAT/受保护 PROD、单选数据模式、执行计划、真实发布目录，以及受现有账号权限保护的 catalog/plans/MCP 接口。MCP 仅提供目录、计划和发布查询；计划返回 `executable=false`，没有工作流派发、操作记录持久化、Webhook/SSE 或生产执行工具。完整执行服务必须由后端所有者承接，不能在 Portal 中偷渡执行器。
 
-UAT 发布范围仅为 Console Worker；现有 Toolkit Serverless 入口会联动多个 Worker、Pages、路由和检查点，不能把它当作 Console-only 发布。Console-only 的 Vault 凭据权限、发布入口和不可变 tag 证据链仍需确认；不隐式扩大 Vault policy 或触发数据操作。
+用户已授权补齐 Console-only UAT 入口，以及 frontend-router 的 catalog/plans/MCP 三个精确路由并发布 UAT Router。独立 Vault 角色只绑定 Portal Console UAT 的 main 工作流与 `uat` 环境，只读 `kv/data/uat/serverless/cloudflare`，未修改通用 Console 角色，未授予 PROD 或数据库权限。未执行数据操作，用户选择暂不做登录后验收。
+
+### 1.1 首期发布证据
+
+- Portal [PR #403](https://github.com/ai-workspace-services/portal/pull/403)、[PR #404](https://github.com/ai-workspace-services/portal/pull/404)、[PR #405](https://github.com/ai-workspace-services/portal/pull/405) 已合并；共享导航清单 [.github #16](https://github.com/ai-workspace-services/.github/pull/16) 与双语文案 [knowledge #102](https://github.com/ai-workspace-services/knowledge/pull/102) 已合并。
+- Console UAT [运行 37434573081](https://github.com/ai-workspace-services/portal/actions/runs/37434573081) 成功；不可变 tag `uat-daily-build-2026.10.06-r2`，源码 `c931752b82894b239198000e8443a9ecc55a9982`，知识内容 `4eadd2bb31c2168861b021ae47ac846b388bcc90`，GitOps `b1a96c7cdd5cd3aa44506ce5355d006e5d766849`。
+- Worker `frontend-ssr-console-uat`，deployment `5c55399f-05a7-4429-8f00-409f0b1449af`，version `0fb3f368-b54f-4902-b11e-80841bc18565`；51 个线上 JS/CSS 文件校验通过，绑定与配置保留验证通过。两页匿名访问返回同源登录跳转。
+- Router [PR #32](https://github.com/ai-workspace-services/frontend-router/pull/32) 已合并并发布 UAT；deployment `3a379bff-f007-4e78-81a3-38da68b12996`，version `8efa65d6-7aa6-438f-8ba9-f7a7f6246414`。三个精确路由已命中 `ssr-console`，未改动域名和其他路由。
+- `r2` 发布后匿名检测发现 MCP 正确公网 Origin 被误拒为 403。[Portal #406](https://github.com/ai-workspace-services/portal/pull/406) 已合并，使用可信构建域名而非内部 Worker URL，保留鉴权、POST Origin 和跨站保护；针对性测试和全量 CI 通过。
+- 最新 Console UAT [运行 37436294009](https://github.com/ai-workspace-services/portal/actions/runs/37436294009) 成功；不可变 tag `uat-daily-build-2026.10.06-r3`，源码 `c042a156d5024b2f23f2729c1da21f31f704db22`，内容与 GitOps SHA 同上。deployment `4b4756c1-a9db-416a-9420-d7aae73f49c4`，version `12d07656-47e5-457d-afa6-dc5a772089fa`，51 个线上资源及绑定校验通过。两个页面返回 307 同源登录跳转，catalog/plans/MCP/releases 均返回 401，跨站 MCP 请求仍返回 403 `invalid_origin`。真实登录后的表单、计划、查询与侧栏显示未验收。
+- 交付范围为表单、计划与已有发布目录查询；`executable=false`。真实工作流派发、操作记录持久化及执行结果同步尚未交付，不以 Console 发布回执冒充完整运行验收。仅保存脱敏证据，未上传原始日志、业务快照或凭据。
 
 ## 2. 所有权与系统边界
 
