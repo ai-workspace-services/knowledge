@@ -8,6 +8,8 @@ spec:
     - zh
     - en
   entrypoints:
+    discovery:
+      - discovery.json
     operations:
       - operations/zh/hero.md
       - operations/en/hero.md

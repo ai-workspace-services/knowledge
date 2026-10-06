@@ -4,8 +4,8 @@ hero:
   title: 'XWorkmate'
   subtitle: '连接大语言模型、智能助手、工程工具与业务数据，让 AI 真正参与实际工作并持续交付产物。'
   cta:
-    label: '免费试用工作空间'
-    href: '/ai-workspace?entry=trial'
+    label: '开始使用工作空间'
+    href: '/ai-workspace'
 overview:
   what_it_is: 'XWorkmate 是由 XWork Technologies LLC 打造的统一 AI 工作空间平台。它跨越单一模型的限制，将 LLM（LiteLLM 动态路由）、自主智能体（OpenClaw 多会话集群）、技能工具箱（Core Skills）与本地/远程运行环境无缝连接，使个人与团队在同一工作流内完成从想法到最终产物的全过程。'
   problem:
