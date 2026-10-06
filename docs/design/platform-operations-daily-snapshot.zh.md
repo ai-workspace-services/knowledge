@@ -16,7 +16,7 @@ tags:
 
 # 平台操作中心与 Daily Snapshot 发布验收架构
 
-> 状态：目标设计，尚未实现。源码核对日期：2026-10-06。本文记录页面与后端合同，不构成部署、数据迁移或运行验收证明。
+> 状态：目标设计；首期页面、只读目录与计划 API/MCP 正在本地实现，执行服务、生产发布及 UAT 验收尚未完成。源码核对日期：2026-10-06。本文记录页面与后端合同，不构成部署、数据迁移或运行验收证明。
 
 ## 1. 目标与当前实现
 
@@ -27,10 +27,15 @@ tags:
 Portal 源码定位：
 
 - `src/modules/extensions/builtin/platform-operations/index.ts`：已注册 Overview、Releases、Environments、Audit、Vault & Access 路由。
-- `src/modules/extensions/builtin/platform-operations/components/PlatformOperationsPage.tsx`：本地 Releases 使用固定示例 Release ID、GitOps SHA 和 Verified 标签；创建计划仅修改前端状态。
+- `src/modules/extensions/builtin/platform-operations/components/ReleaseStatusPage.tsx`：在最新 `origin/main`（`31969c69b9964cb0d2b6e9b949f00581d9496807`）已通过 `/api/operations/releases` 读取真实发布目录；保留该实现，不覆盖为示例数据。
+- `src/app/api/operations/releases/route.ts`：鉴权后读取 Toolkit `release-status` 分支的 `releases.json`；目录中的工作流状态不自动等同于实际登录或业务验收。
 - `src/app/globals.css`：现有主题变量与排版约定。
 
 线上参考入口为 [UAT Releases](https://console-serverless-uat.onwalk.net/panel/operations/releases)。本次访问超时，未取得页面截图；上述现状只由本地源码支持，不代表已核实线上页面版本。
+
+首期实现范围：参数表单覆盖 19 个输入、SIT/UAT/受保护 PROD、单选数据模式、执行计划、真实发布目录，以及受现有账号权限保护的 catalog/plans/MCP 接口。MCP 仅提供目录、计划和发布查询；计划返回 `executable=false`，没有工作流派发、操作记录持久化、Webhook/SSE 或生产执行工具。完整执行服务必须由后端所有者承接，不能在 Portal 中偷渡执行器。
+
+UAT 发布范围仅为 Console Worker；现有 Toolkit Serverless 入口会联动多个 Worker、Pages、路由和检查点，不能把它当作 Console-only 发布。Console-only 的 Vault 凭据权限、发布入口和不可变 tag 证据链仍需确认；不隐式扩大 Vault policy 或触发数据操作。
 
 ## 2. 所有权与系统边界
 
