@@ -4,8 +4,8 @@ hero:
   title: 'XWorkmate'
   subtitle: 'Connect AI models, autonomous agents, engineering tools, and business data to deliver real-world work.'
   cta:
-    label: 'Start Free Trial'
-    href: '/ai-workspace?entry=trial'
+    label: 'Get Started'
+    href: '/ai-workspace'
 overview:
   what_it_is: 'XWorkmate is a unified AI workspace built by XWork Technologies LLC. It moves beyond isolated chat windows by uniting dynamic LLM routing (LiteLLM), multi-session autonomous agents (OpenClaw), specialized skills (Core Skills), and secure execution runtimes into one coherent workflow from idea to deliverable.'
   problem:

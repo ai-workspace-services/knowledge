@@ -20,3 +20,17 @@ This is the file-based CMS source for Portal's build-time marketing content.
 
 The backend is portable: Portal consumes a standard Git URL, not a GitHub API
 or browser-based editor.
+# Public discovery / GEO
+
+`discovery.json` owns bilingual product facts, public resource links and the
+small AI resources footer label. Keep platform availability tied to actual
+release assets, not source presence or planned app-store support. Free access
+is not a separate trial plan and does not imply free upstream infrastructure.
+
+Portal validates this contract and generates product Markdown, `llms.txt`,
+`llms-full.txt` and typed UI data during its existing content generation step.
+Product overview cards and expandable source-card facts consume the same data.
+Do not edit the generated files separately. Documentation and blog archives
+remain in content-service; the sitemap reads its catalogs, including pagination.
+The brand-domain frontend-router must forward sitemap and discovery documents
+to the public Portal build, not replace them with a fixed edge list.

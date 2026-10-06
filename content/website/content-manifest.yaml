@@ -8,6 +8,8 @@ spec:
     - zh
     - en
   entrypoints:
+    discovery:
+      - discovery.json
     homepageMarketing:
       - homepage/zh/marketing.md
       - homepage/en/marketing.md

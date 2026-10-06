@@ -5,8 +5,8 @@ hero:
   subtitle: 'AI Connectivity · 为 AI Workspace 提供高速、稳定、安全的全球连接能力与私有环境穿透。'
   cta:
     label: '立即下载客户端'
-    href: 'https://console.svc.plus/download'
-  downloadUrl: 'https://console.svc.plus/download'
+    href: '/download'
+  downloadUrl: '/download'
   supportedPlatforms: 'macOS · Windows · Linux · iOS · Android（明确不支持鸿蒙OS）'
 wizard:
   title: '3 步开启安全加速连接'
@@ -15,7 +15,7 @@ wizard:
     - step: 1
       title: '获取客户端'
       description: '访问下载中心获取最新安装包。'
-      link: 'https://console.svc.plus/download'
+      link: '/download'
       platforms: 'macOS · Windows · Linux · iOS · Android（明确不支持鸿蒙OS）'
     - step: 2
       title: '同步凭证配置'
