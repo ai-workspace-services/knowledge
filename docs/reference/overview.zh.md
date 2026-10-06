@@ -18,6 +18,7 @@ tags:
 
 ## 相关引用
 
+- [参考资料总索引与 PDF 合订编排](index.md)
 - [多云平台工程技术白皮书——英文版](multi-cloud-platform-engineering-whitepaper.en.md)
 - [内容规范](content-schema.zh.md)
 - [覆盖矩阵](coverage-matrix.zh.md)

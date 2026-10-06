@@ -721,6 +721,8 @@ Facts link to fixed source SHAs. Preserve discrepancies between sources rather t
 
 ### Related repository references
 
+- [Reference index and PDF compilation plan](index.md)
+
 - [Multi-cloud orchestrator architecture](../../content/02-iac-devops/cloud-infrastructure-devsecops-baseline/10-multi-cloud-orchestrator-architecture.zh.md)
 - [Cloud OIDC bootstrap and state contract](../../content/02-iac-devops/cloud-infrastructure-devsecops-baseline/11-cloud-oidc-bootstrap-contract.zh.md)
 - [Platform operations daily snapshot](../design/platform-operations-daily-snapshot.zh.md)

@@ -18,6 +18,7 @@ The [Multi-Cloud Platform Engineering Technical White Paper](multi-cloud-platfor
 
 ## Related references
 
+- [Reference index and PDF compilation plan](index.md)
 - [Multi-Cloud Platform Engineering Technical White Paper — Chinese edition](multi-cloud-platform-engineering-whitepaper.zh.md)
 - [Content schema](content-schema.en.md)
 - [Coverage matrix](coverage-matrix.en.md)
