@@ -863,7 +863,7 @@ Billing [#44](https://github.com/ai-workspace-services/billing-service/pull/44) 
 
 整批完成后重新核对 53 表行数及全字段摘要，精确整数/数值不经过 float64、时间规范化至 UTC；后续表的插入触发器改写前面已复制事实也须被发现。目标序列仅推进至已复制最大值以上，不回拨，也不调用来源 nextval。回执只含来源连接/快照/catalog 摘要、schema/version、时间、scope、行数和摘要；一次复制或时点一致性不放行 cutover，最终来源 API/后台冻结、追平、新鲜回执与单写者仍为前置条件。
 
-Accounts #196 已通过全部 PR 检查并合并为 `7b3112eb09ec1e7fbb9d35f25029818d8500980f`；[PostgreSQL 17 / 镜像构建资格 run 37536932754](https://github.com/ai-workspace-services/accounts/actions/runs/37536932754) 全部成功，真实验证了 44 表旧来源和 53 表原生来源，包含 1,003 行分页、复合财务外键、大整数金额、序列、email/Proxy 保留、RLS 拒绝、事务回滚、不同 UUID 比对以及后续触发器改写的拒绝。首次资格检查发现生成列 catalog 的 nullable 描述错误，第二次发现测试并未启用 users RLS，均在隔离 CI 修正并重跑；没有生产执行。合并后的预构建镜像发布与生产 pull 仍须取得实际证据；本轮未初始化 schema、复制生产行或切换主库。
+Accounts #196 已通过全部 PR 检查并合并为 `7b3112eb09ec1e7fbb9d35f25029818d8500980f`；[PostgreSQL 17 / 镜像构建资格 run 37536932754](https://github.com/ai-workspace-services/accounts/actions/runs/37536932754) 全部成功，真实验证了 44 表旧来源和 53 表原生来源，包含 1,003 行分页、复合财务外键、大整数金额、序列、email/Proxy 保留、RLS 拒绝、事务回滚、不同 UUID 比对以及后续触发器改写的拒绝。首次资格检查发现生成列 catalog 的 nullable 描述错误，第二次发现测试并未启用 users RLS，均在隔离 CI 修正并重跑；没有生产执行。合并后的 [main CI 37537286016](https://github.com/ai-workspace-services/accounts/actions/runs/37537286016) 已全部成功，发布 full-SHA 预构建镜像 `ghcr.io/ai-workspace-services/accounts:sha-7b3112eb09ec1e7fbb9d35f25029818d8500980f`，manifest digest `sha256:339e7e840a5de627833e67f6dce74145a8db8c22f6ebe11a6dca9cc9cd3e35cd`；Accounts 原生 SQL 摘要不变。该摘要来自真实发布日志，生产 pull/compiled manifest/来源合同与全业务执行 owner 仍需后续验证；本轮未初始化 schema、复制生产行或切换主库。
 
 复制期间暂停目标 Accounts/Billing 和 Doco-CD。首次启动前还须保护现有 root/sandbox/review 初始化、sandbox Proxy UUID rotator、默认 Billing catalog、overlay/profile 等启动写入及 Billing 后台写者，确保不会改写已复制的 PROD email/Proxy UUID/身份/订阅/额度/账本或创建额外用户。没有入口流量不等于没有后台写入；空库本地验证不等于生产数据一致性。
 
