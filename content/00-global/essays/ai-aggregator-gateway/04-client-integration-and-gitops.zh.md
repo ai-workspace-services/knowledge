@@ -20,6 +20,8 @@ category: essays
 
 本文的脚本是通用部署入口，不绑定某个云厂商或某台主机。它可以部署到已有的 VPS、云主机或内网服务器；目标主机只需要满足 SSH、sudo、运行时依赖和网络可达条件。Home-Lab 仅用于展示一套已运行的实例。
 
+本方案面向个人和工作站使用。XConnect-One 不只是传输通道，也是私有网络和工作站之间的安全边界：优先让可信设备通过 VPN 访问网关，减少公网暴露面。它不是为了搭建面向陌生用户的公开 Token 中转站；客户端 Key、用户额度和上游 OAuth 仍由 New API、Vault 与 CPA 本地目录分别管理。
+
 标准链路如下：
 
 ```text
@@ -46,7 +48,7 @@ Home-Lab 的实际参数是 `ai-internal.onwalk.net` 和 `10.79.0.7`，网络通
 
 脚本负责应用配置和部署，不负责创建云资源、修改 DNS 或生成凭据。CPA OAuth bundle 只留在对应实例的本地认证目录，不复制到客户端、Git、Vault、Terraform state 或 CI artifact。
 
-如果目标是 Home-Lab，先恢复 XConnect-One，再检查 VPN 数据面和路由：
+如果目标通过 XConnect 访问，先恢复 XConnect-One，再检查 VPN 数据面和路由：
 
 ```bash
 ifconfig utun5
