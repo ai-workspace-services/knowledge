@@ -5,8 +5,8 @@ hero:
   subtitle: 'AI Connectivity · Delivering fast, secure, and resilient global connectivity and private environment tunneling for AI Workspace.'
   cta:
     label: 'Download Client'
-    href: 'https://console.svc.plus/download'
-  downloadUrl: 'https://console.svc.plus/download'
+    href: '/download'
+  downloadUrl: '/download'
   supportedPlatforms: 'macOS · Windows · Linux · iOS · Android (HarmonyOS explicitly not supported)'
 wizard:
   title: 'Get Connected in 3 Simple Steps'
@@ -15,7 +15,7 @@ wizard:
     - step: 1
       title: 'Download Client'
       description: 'Visit the download center to get the installer for your platform.'
-      link: 'https://console.svc.plus/download'
+      link: '/download'
       platforms: 'macOS · Windows · Linux · iOS · Android (HarmonyOS explicitly not supported)'
     - step: 2
       title: 'Sync Credentials'
