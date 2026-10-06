@@ -855,11 +855,21 @@ Playbooks [#597](https://github.com/ai-workspace-infra/playbooks/pull/597) 已�
 
 Billing [#44](https://github.com/ai-workspace-services/billing-service/pull/44) 已合并独立 `cloud_vendor_costs` 增量 SQL 与固定摘要 manifest；合并后的 [PostgreSQL 17 资格检查 37522495984](https://github.com/ai-workspace-services/billing-service/actions/runs/37522495984) 成功。迁移版本由 `2026100601` 升至 `2026100701`，没有业务 seed 或破坏性 down；完整目标 scope 为 Accounts 52 表加 Billing 1 表。该资格检查不等于生产已执行：Playbooks [#600](https://github.com/ai-workspace-infra/playbooks/pull/600) 已合并固定 SQL/hash、精确前后版本、零业务行和停止写者守卫的受限执行器；本地 95 项 owner 检查与最终 [PostgreSQL 17 资格检查 37529510281](https://github.com/ai-workspace-infra/playbooks/actions/runs/37529510281) 全部成功，真实执行固定 Accounts 原生初始化加 Billing 第 53 表升级、重复升级和错误摘要拒绝。第一次检查 37527995099 发现旧 migratectl 要求已应用版本的历史 SQL 文件；[Accounts #195](https://github.com/ai-workspace-services/accounts/pull/195) 已合并为 `ac3239a6ddb89fd49c2b15416bf5f6ea588c6797`，bounded runner 将已应用版本作为无 SQL 的元数据 checkpoint，只暴露下一份已核验 SQL，不重放历史或提供 down 路径。合并后的 [Accounts main CI 37529455394](https://github.com/ai-workspace-services/accounts/actions/runs/37529455394) 已发布 full-SHA 镜像 `ghcr.io/ai-workspace-services/accounts:sha-ac3239a6ddb89fd49c2b15416bf5f6ea588c6797`，digest `sha256:8a8d92fc2d7cc8a8855400970bb971436fc117bd39366595f55f7e1283a1e961`，native SQL hash/52 表/初始版本不变；Toolkit [#1336](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1336) 固定该镜像与已资格确认的 owner。生产仍需 registry pull/compiled manifest/实际初始化回执及独立审核，资格检查不代替生产执行。
 
+**Billing 生产调用方补充（2026-10-07）**：Toolkit [#1337](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1337) 已通过全部 CI 并合并为 `d48c86727aebdfd644798a0a28a2e3e1f2db07d9`，提供 `native-billing-plan` / `native-billing`。读取凭据前核对本轮独立数据审核、真实原生初始化成功 run/attempt/tag/SHA、原始 artifact/回执摘要、原资源与待机证据；预演或外来回执不能代替实际初始化。初始化 acceptance 仍为 false，真实初始化回执字段为空；这次合并没有执行生产 Billing SQL 或切换主库。
+
+**全业务复制工具补充（2026-10-07）**：Accounts [#196](https://github.com/ai-workspace-services/accounts/pull/196) 新增 `copy-full-business` 与 `compare-full-business`，完整 scope 为 Accounts 52 表加 Billing 1 表。专用 `readonly_release` 的角色、成员关系、表/序列写权限与逐表完整 RLS 可见性必须通过；来源 RLS 保持开启，不使用 `row_security=off`。同一 repeatable-read 只读快照通过服务端游标按主键顺序每批 1,000 行读取，目标在一个事务和写者暂停窗口内按 FK 顺序导入；只保留当前批次及逐行 key/row hash，避免把既有基线约 38 万业务行构造成完整内存/YAML 快照，也不预先重复下载已超出 Free egress 的来源数据。
+
+原始 PROD email、Proxy UUID、身份、订阅、额度和账本字段按来源保留；比对时可按 lower/trim email 映射不同用户 UUID，并显式重写已审核的用户引用后比较全部字段。原生新增 lifecycle 字段采用已审核的常量 `active` / NULL 元数据，不创建向下兼容列；未知来源列/类型、缺失必需表、部分 RLS、缺少真实验证时间等不支持的投影拒绝。新建空目标才允许 baseline copy，已有 UAT 数据的对齐须另行审核专用 reconciliation 操作；这个命令不会删除、清空、重置或覆盖已有业务集。
+
+整批完成后重新核对 53 表行数及全字段摘要，精确整数/数值不经过 float64、时间规范化至 UTC；后续表的插入触发器改写前面已复制事实也须被发现。目标序列仅推进至已复制最大值以上，不回拨，也不调用来源 nextval。回执只含来源连接/快照/catalog 摘要、schema/version、时间、scope、行数和摘要；一次复制或时点一致性不放行 cutover，最终来源 API/后台冻结、追平、新鲜回执与单写者仍为前置条件。
+
+Accounts #196 已通过全部 PR 检查并合并为 `7b3112eb09ec1e7fbb9d35f25029818d8500980f`；[PostgreSQL 17 / 镜像构建资格 run 37536932754](https://github.com/ai-workspace-services/accounts/actions/runs/37536932754) 全部成功，真实验证了 44 表旧来源和 53 表原生来源，包含 1,003 行分页、复合财务外键、大整数金额、序列、email/Proxy 保留、RLS 拒绝、事务回滚、不同 UUID 比对以及后续触发器改写的拒绝。首次资格检查发现生成列 catalog 的 nullable 描述错误，第二次发现测试并未启用 users RLS，均在隔离 CI 修正并重跑；没有生产执行。合并后的预构建镜像发布与生产 pull 仍须取得实际证据；本轮未初始化 schema、复制生产行或切换主库。
+
 复制期间暂停目标 Accounts/Billing 和 Doco-CD。首次启动前还须保护现有 root/sandbox/review 初始化、sandbox Proxy UUID rotator、默认 Billing catalog、overlay/profile 等启动写入及 Billing 后台写者，确保不会改写已复制的 PROD email/Proxy UUID/身份/订阅/额度/账本或创建额外用户。没有入口流量不等于没有后台写入；空库本地验证不等于生产数据一致性。
 
 IAM/API 与外网策略两个阶段各自 plan → 审查摘要 → apply → 再次 plan 验证 no-op。前者仅补齐现有 deployer 的项目内防火墙管理、策略读取和 API；后者仅在原 Web SaaS state 管理固定实例外网许可。不授予日常 deployer 组织策略管理权限，不创建 VM/network/disk。已合并的 [GitOps #394](https://github.com/ai-workspace-infra/gitops/pull/394) 将 backend 声明对齐现有 Vault 合同，两个 state key 不变，不执行 state 迁移。用户可显式选择已授权本地账号用于一次性短期 token 获取，或使用已批准的环境/Vault 凭据；凭据仅走运行时，日常发布仍为 GitHub OIDC。已有 auth/identity/state/shared-policy Shell 脚本保持各自职责，不自动串联写凭据或绕过 PROD Terraform state。当前两份 live 回执已取得，后续仍须检查完整资源计划无删除/替换及真实 VM/CMDB。
 
-`migratectl` 当前导入范围为 Users、Identities、Sessions；单独成功不证明订阅、额度、账本一致，也不能放行生产主库切换。目标须使用最新原生 schema，按规范化 email 匹配用户，保持 PROD Proxy UUID、身份及完整业务值，核对全部业务表和关联。最终追平须在单写者/隔离窗口完成，并产生绑定不可变版本、准确环境、主机/数据库与逐表摘要的回执，随后切换生产入口并验收。
+旧 `migratectl export/import` 导入范围为 Users、Identities、Sessions；新增全业务复制工具与其分开。旧导入单独成功不证明订阅、额度、账本一致，也不能放行生产主库切换。目标须使用最新原生 schema，按规范化 email 匹配用户，保持 PROD Proxy UUID、身份及完整业务值，核对全部业务表和关联。最终追平须在单写者/隔离窗口完成，并产生绑定不可变版本、准确环境、主机/数据库与逐表摘要的回执，随后切换生产入口并验收。
 
 当前完整升级执行 registry 仍未开放，UAT 两跳全量同步与升级/回退/再次升级资格尚未完成。新 PROD 空库初始化与复制授权不代替 PROD Full 升级资格，也不代替业务一致性门禁。
 
