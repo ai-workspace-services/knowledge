@@ -8,6 +8,9 @@ spec:
     - zh
     - en
   entrypoints:
+    operations:
+      - operations/zh/hero.md
+      - operations/en/hero.md
     homepageMarketing:
       - homepage/zh/marketing.md
       - homepage/en/marketing.md
