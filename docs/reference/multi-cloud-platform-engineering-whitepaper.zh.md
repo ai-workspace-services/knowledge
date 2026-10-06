@@ -3,8 +3,8 @@ title: 多云平台工程技术白皮书
 description: 基于四仓职责边界、40 个工作流与 Vault 路径契约的多云平台架构、交付治理和迁移白皮书。
 slug: multi-cloud-platform-engineering-whitepaper
 lang: zh
-date: 2026-10-05
-version: "1.2"
+date: 2026-10-06
+version: "1.3"
 status: review-draft
 tags:
   - platform-engineering
@@ -18,7 +18,7 @@ category: reference
 
 # 多云平台工程技术白皮书
 
-**版本：1.2 · 源码盘点基线：2026-10-05 · 状态：架构与契约评审稿**
+**版本：1.3 · 源码盘点基线：2026-10-05 · 运行与额度补充：2026-10-06 · 状态：架构与契约评审稿**
 
 [English version](multi-cloud-platform-engineering-whitepaper.en.md) · [参考资料总览](overview.zh.md)
 
@@ -68,7 +68,7 @@ category: reference
 | 精确环境运行完成 | 指定 run 的部署/操作结果 | 业务权益、数据一致性或完整晋级资格 |
 | 业务验收/晋级资格 | 固定构件、环境、目标和回执满足门槛 | 可复用于另一版本、环境或目标 |
 
-本次写作使用源码和现有合同；没有读取真实 Vault 值，没有执行云、主机、DNS、数据库变更或 workflow dispatch。[S1], [S2]
+初始盘点使用源码和现有合同，未执行云、主机、DNS 或数据库变更；第 11 章另按日期记录后续经授权运行的实际证据，不能反向把这些结果扩展为原盘点已验收。[S1], [S2]
 
 ## 2. 平台架构与工程原则
 
@@ -262,6 +262,66 @@ Daily 创建跨仓不可变 tag、触发构建、验证构件，执行 Shared �
 Selfhost 编排 IaC/CMDB、主机基线、domain CD、数据与 DNS 阶段；通用执行归 IaC 或 Playbooks。Serverless 编排 Cloud Run、Cloudflare Pages/Workers、服务部署、数据 owner 和构件证明。GitOps 的对应 mode 文件限定域名、origin 和后端策略，不能以一个 mode 的声明替代另一个。
 
 Hybrid 的基础规划采用 Selfhost 优先和 Serverless fallback，但实际路由、数据单写者与复制策略必须消费固定 GitOps 声明。两条部署链存在不证明切换或数据同步已经验收。[S3], [S5]
+
+### 7.2.1 多云、混合云数据面与轻量 GTM 调度边界
+
+以下为用户确认的目标数据面；详细输入与当前运行证据见第 11.11–11.12 节。品牌、控制台、API 和数据库是独立边界，部署某个后端不能连带更换公开主页入口。
+
+```mermaid
+flowchart TD
+  BRAND["xworktech.com：品牌与上架审核主页"] --> CDN["Cloudflare Pages / 静态 CDN"]
+  CONSOLE["console.svc.plus：控制台主页"] --> UI["控制台前端；静态 CDN / 现有动态渲染边界"]
+  UI --> A["accounts.svc.plus：账户 API"]
+  UI --> B["billing.svc.plus：账单 API"]
+  A --> DNS["模式限定 CNAME + 原始 Host 的 Worker Routes"]
+  B --> DNS
+  DNS --> EDGE["Edge Gateway：Cloudflare Worker 轻量 GTM"]
+  CONTROL["workflow_dispatch：环境 / 模式 / 上游 / 超时 / 固定 SHA"] --> EDGE
+  EDGE -->|serverless| SL["accounts-serverless / billing-serverless-prod：GCP Cloud Run"]
+  EDGE -->|selfhost| SH["accounts-selfhost / billing-selfhost-prod：PROD web-saas all-in-one"]
+  SL --> SUPA[(PROD Supabase)]
+  SH --> PG[(Selfhost PostgreSQL / 独立持久卷)]
+  SUPA -.->|只读来源；单向逻辑复制；完整核对后切换| PG
+```
+
+- **品牌主页**：`xworktech.com` 保持独立品牌、公司、产品和法律/支持信息的公开访问，支撑 Google Play、Apple、Microsoft/Azure 等审核；资料齐备与平台审核结论分别记录。
+- **控制台**：`console.svc.plus` 保持用户入口。静态内容使用 Pages CDN；当前动态渲染、登录和会话继续按前端边界管理，不能把“静态 CDN 免费”泛化为所有 SSR 请求不计量。
+- **账户与账单 API**：稳定域名分别通过 `accounts-{serverless,selfhost}-prod.svc.plus`、`billing-{serverless,selfhost}-prod.svc.plus` 的 CNAME 与独立 Worker Routes 接入。CNAME 选择环境限定目标；Worker 根据模式与固定配置选择真实 origin，两者在同一发布回执内核对。原始 Host 的路由必须保留，避免继承目标绑定的错误假设。
+- **轻量 GTM**：三种模式均保留 Edge Gateway；运行在原生 Fetch/Web Crypto 上，默认 2500 ms 主节点预算。Hybrid 的超时/5xx 回退只用于 GET/HEAD/OPTIONS，不承担数据库复制、写入重放或多主协调。发布输入可覆盖非敏感变量，秘密仍由环境隔离的 OIDC→Vault 读取。
+- **容量边界**：Workers Free 为账户共享 100,000 次/日（UTC 零点重置），包括 Pages Functions 和其他 Workers；不调用 Functions 的 Pages 静态请求免费且不限量。Pages/CDN 静态资源应直接服务，避免每个静态请求经过 API Worker。（[Cloudflare 官方计费说明](https://developers.cloudflare.com/pages/functions/pricing/)）
+- **数据切换**：Serverless 为 Cloud Run + PROD Supabase，Selfhost 为 PROD all-in-one + PostgreSQL。复制按 email 唯一键匹配、保留 PROD Proxy UUID；身份域复制不足以放行，必须覆盖身份、订阅、额度、账本及全部业务表，最终追平后保证单写者，再验证生产入口。
+- **资源身份**：日常创建/更新资源复用一次 bootstrap 建立的 GitHub OIDC/WIF 和专用 Service Account；首次 bootstrap、信任合同修复与日常部署分开审批和记录，不把个人 GCP 登录作为发布前置。
+
+这套数据面调度与 Hybrid 的 IaC/部署子流水线编排分别验收：子 run 成功不证明稳定域名已切换；入口返回 200 也不证明两库业务一致。
+
+### 7.2.2 免费额度、计量范围与混合云容量预算
+
+以下额度于 **2026-10-06** 按官方页面核对，用于架构预算。实际消耗仍以各平台 dashboard 与 billing account / organization 的当前周期为准；多个环境不能各自重复享有共享额度。
+
+| 服务 / 计量模式 | 主要免费额度 | 范围、周期与边界 |
+| --- | --- | --- |
+| Cloudflare Pages 静态资源 | 免费且不限请求量 | 请求不调用 Pages Functions；静态 CDN 与动态渲染分开计量 |
+| Cloudflare Workers Free / Pages Functions | 100,000 请求/日；CPU 10 ms/调用 | 账户内 Workers/Functions 共享，UTC 零点重置；API 网关与现有 SSR 消耗同一账户预算 |
+| Cloud Run 请求计费 | 2,000,000 请求/月；180,000 vCPU-seconds/月；360,000 GiB-seconds/月 | 按 GCP billing account 汇总多个项目；免费层按 Tier 1 价格折扣抵扣，实际额度价值随 region / billing mode 核算 |
+| Cloud Run 实例计费 / Jobs | 240,000 vCPU-seconds/月；450,000 GiB-seconds/月 | 使用另一套计费口径；不能把请求计费的 200 万请求与该计算额度重复叠加为每个服务的独立配额 |
+| Cloud Run 公网出口 | 北美范围 1 GiB/月免费传输 | 亚洲部署或其他方向不能直接套用；网络、构建、镜像仓库和日志分别预算 |
+| Supabase Free PostgreSQL | 500 MB 数据库/项目；Shared CPU、500 MB RAM | 数据库容量按项目；容量、连接、查询压力与出口流量是不同指标 |
+| Supabase Free 出口 | 5 GB 非缓存出口；另有 5 GB 缓存出口 | 按组织计量；数据库结果、Storage、Auth 等相关流量需按官方出口分类核算，不能把两类额度当作任意 DB 下载的 10 GB |
+| Supabase Free Auth / Storage | 50,000 MAU；1 GB 文件存储 | 按组织套餐/当前周期核算；MAU 不等于数据库用户表行数 |
+| Supabase Free 项目限制 | 2 个 active Free projects；低活跃项目可能在约 7 天后暂停 | 两项目限制跨本人作为 Owner/Admin 的 Free 组织累计；不能通过新建组织重复增加额度 |
+| Supabase Free API / 数据保护 | API 请求数量不限；不含自动备份与 PITR | 无限 API 请求仍受 DB/出口等额度约束；数据备份由独立发布与运维流程提供 |
+
+Cloud Run 来源：[官方价格与免费层](https://cloud.google.com/run/pricing)。Supabase 来源：[官方套餐](https://supabase.com/pricing)、[组织计费及项目额度](https://supabase.com/docs/guides/platform/billing-on-supabase)、[出口分类](https://supabase.com/docs/guides/platform/manage-your-usage/egress)。Cloudflare 来源：[Pages Functions 计费](https://developers.cloudflare.com/pages/functions/pricing/)、[Workers 限额](https://developers.cloudflare.com/workers/platform/limits/)。
+
+容量策略与本平台边界：
+
+1. 品牌与静态资源优先 Pages/CDN 直接服务；Edge Gateway 处理 Accounts/Billing API。SSR/Functions 的实际请求仍需计入 Workers 账户预算。
+2. Accounts Serverless 与 Billing Serverless 的低流量/回退容量按 Cloud Run 当前计费模式、最小实例数和并发核算；scale-to-zero 能减少空闲计算，但不能取消网络、日志或镜像存储费用。免费层抵扣与运行限额分别记录。
+3. Supabase 查询返回结果与跨环境全量复制会消耗来源出口；数据库内生成行数/hash 摘要能减少核对流量。来源端到控制端完成之后再 gzip，仅减少后续传输/存档大小，不回退已经发生的 Supabase 出口。
+4. 用户截图显示出口 **9.49/5 GB**、日志写入 **1.31/1 GB** 已超当时额度，而 DB **152/500 MB** 仍有空间；日志 1 GB 是该截图所示周期限额，未把它推定为所有当前 Free 组织的通用套餐值。账本行数、存储容量、出口及日志用量分别优化，保持历史业务数据与 PROD Proxy UUID 不变。
+5. 切换到 Selfhost 后，GCP VM、独立持久盘、快照与网络按各自计价；只有完整业务一致性、单写者切换和入口验收通过，才能调整主库。免费额度压力不放宽数据门禁。
+
+本节未查询 Cloud Run 当期账单或 Supabase 组织实时用量；额度表是官方套餐基线，截图是用户提供的现场背景，两者不替代实际账单核对。
 
 ### 7.3 独立 Open Platform
 
@@ -608,7 +668,7 @@ HTTP 200、systemd active、workflow success、合并和 CI green 各自有作�
 
 1. 从已成功或正在执行的受信任 caller 下载 CMDB，核对环境、唯一主机及 SSH 身份；记录空库或既有数据基线。
 2. **仅对显式请求且真实空库的 UAT 执行 `selfhost_init`（Selfhost 入口选择 `operation=deploy+init`）**：由 Playbooks 限定创建 `account/account_user`，暂停应用写入进程，使用与镜像相同的不可变 Accounts ref 初始化 schema，随后恢复服务。普通 deploy、probe、verify 不建库、不重置 schema，也不隐式导入旧环境数据。
-3. Pull CD 由 Doco-CD 按 GitOps 声明收敛；Playbooks 在有界等待内检查实际运行标签、Accounts `/readyz` 与 `/api/ping`、Console `/`。空库首部署用 probe；既有数据升级继续用 schema 与数据指纹 verify。前者不证明历史订阅保留。
+3. Pull CD 由 Doco-CD 按 GitOps 声明收敛；Playbooks 在有界等待内检查实际运行标签、Accounts `/readyz` 与 `/api/ping`、Console `/`。空库首部署及“已初始化但没有订阅样本”的基线用只读 probe；存在订阅样本的升级继续用 schema 与数据指纹 verify。probe 不证明历史订阅保留。
 4. Toolkit 将成功的主机验收作为 UAT DNS 发布前置门禁；IaC Modules 从 CMDB 的主机对象读取资源事实，忽略顶层元数据，执行所选环境的 DNS reconcile。公开入口还需独立复验。
 5. 记录精确 owner SHA、caller SHA、发布 tag、环境、目标、子运行和 live 回执。新的 owner 路由通过 UAT 后，删除 Toolkit 冻结的旧执行副本及旧执行测试；不得改写冻结校验和来绕过职责门禁。
 
@@ -629,6 +689,167 @@ HTTP 200、systemd active、workflow success、合并和 CI green 各自有作�
 第三个缺口是云网络声明缺少公开 80/443：Caddy 本机和证书已正常，外网仍超时。该案例要求把主机 readiness 与云网络/公开入口分别验收。上述 Accounts canonical 根路径 404 与 Bridge 401 仅符合路由/鉴权探测合同，不能替代用户登录或业务账本验收。
 
 [Toolkit 退役 PR #1314](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1314) 删除已完成 UAT 切换的旧 DNS 执行副本及两项旧执行测试，保留 caller 固定 SHA 与门禁检查；其合并和 CI 结果见 PR。原盘点的 15 项 legacy 基线不重写，删除后 scanner 为 14 项，其他迁移仍按各自删除门槛推进。
+
+### 11.5 2026-10-06 Daily Main Snapshot 与 Hybrid 完整回执
+
+按 `uat` 重新触发 [Daily Main Snapshot run 37407684972](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37407684972)，caller SHA 为 `e6e927adcc6775352daa4c5b8d4db2fd04763ae8`，所有四个组织的 snapshot job 与汇总 job 均成功；解析出的不可变发布 tag 为 `daily-build-2026.10.06`。本次 `enable_migration=false`、`adopt_accounts_baseline=false`、`apply_accounts_schema_migration=false`、`skip_stripe_catalog=true`；既有空库初始化保留，未重复执行。
+
+本轮修复由已合并变更组成：[Toolkit PR #1310](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1310)（merge `4f1ddf0141ef8d91be4a2b7528d66a73725cd68f`）让新主机走 probe 并限定 DNS 责任范围；[Toolkit PR #1312](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1312)（merge `b2ee73a255e0c2fd6aea979ade70cab3337a7983`）先把 CMDB 投影为 host-only 输入再交给 DNS owner；[Playbooks PR #578](https://github.com/ai-workspace-infra/playbooks/pull/578)（merge `f4b87c83851aedb9fc17d30a8da8a7c350b1f5af`）保留脱敏 Caddy ingress 诊断输出；[Toolkit PR #1315](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1315)（merge `e6e927adcc6775352daa4c5b8d4db2fd04763ae8`）依据脱敏 baseline `row_counts.subscriptions` 在 probe 与 verify 间 fail-closed 分流。旧执行 owner 与冻结门禁未绕过。
+
+| 阶段/资源 | 运行与固定证据 | 结果 |
+| --- | --- | --- |
+| Hybrid 主流程 | [run 37407957344](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37407957344)，与 Daily 关联派发 | 八资源合同、顺序执行、三项 Edge handoff（admin/core/auth）及 routing summary 全部 success |
+| 声明跳过 | `open-platform` 为 `shared-infrastructure`，由 open-platform-orchestrator 管理；`ai-workspace` 声明 `deploy_on_all=false` | 两项按 GitOps 规则跳过，不作为失败 lane |
+| AP 基础设施 | [JP 37407998622](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37407998622)、[US 37408124444](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37408124444)、[SG 37408247865](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37408247865) | 三个资源基础设施 lane success |
+| Web SaaS 主机部署与入口 | [Selfhost run 37408330345](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37408330345) | baseline、Bootstrap、GitOps tag 更新、应用部署、只读 acceptance、Monitor Agent、DNS Update、最终 Web SaaS status、Deployment summary 全部 success；空库初始化与迁移均 skipped |
+| Serverless 与 Cloudflare | [Serverless run 37408965741](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37408965741) | Accounts `sha256:3429c527…c0cb4`、Billing `sha256:dc55a41b…9a36e`、Content `sha256:bb02ad22…82365`；SSR、Edge Gateway、static pages、自定义域/CORS 和 summary 全部 success；完整 digest/source SHA 在 Hybrid artifact `uat-artifact-manifest`，三个镜像均绑定 `daily-build-2026.10.06` |
+| AP 应用与监控 | [JP 37410125856](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37410125856)、[US 37410762658](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37410762658)、[SG 37411437409](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37411437409) | Bootstrap、Agent Proxy 服务、Monitor Agent 与各自汇总成功 |
+| 既有节点 inventory | [TW 37412232011](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37412232011)、[PH 37412274870](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37412274870) | 外部 inventory adapter 两条 lane success |
+| 运行路由 | Hybrid routing summary | Accounts primary 为 `accounts-selfhost-uat.onwalk.net`，Cloud Run fallback 仅允许 GET/HEAD/OPTIONS；Selfhost 为唯一写入端，frontend 复用现有声明 |
+
+完整工作流结束后的外部 GET/TLS 复测（TLS verify result 均为 0）：canonical Console `/` 200；Selfhost Console `/` 与 `/login` 200；`/panel/account` 307 重定向到登录；Accounts canonical 与 Selfhost 根路径均 404；Accounts canonical `/api/ping` 401（鉴权保护），Selfhost `/api/ping` 200；Bridge 根路径 200、`/api/ping` 401（鉴权保护）。这些结果证明路由、TLS、登录页与健康探测入口可用，不等于完成真实用户登录、订阅购买或账务交易验收。
+
+并发的 [AI Aggregator v1 run 37408925598](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37408925598) 由用户身份单独 dispatch，不在 Hybrid 八资源 matrix 中；其 GitOps manifest `enabled=false`，stage plan 与服务部署均失败。日志显示 GCP Spot provision 步骤成功而 `Destroy GCP UAT Spot resources` skipped；该独立资源的最终云端状态未在本次 Hybrid 回执中核验，需单独确认保留或清理，不能计入本次发布成功范围。
+
+### 11.6 2026-10-06 legacy import 预演凭据与私网目标修复
+
+[Daily run 37424100741](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37424100741) 在 Hybrid 派发前被 [data child 37424580190](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37424580190) 阻断：原来源为 PROD Supabase 管理员连接，原目标为私网容器地址，且 direct 校验仅接受 `svc.plus` 只读来源与 `onwalk.net` UAT 目标。失败发生于连接数据库之前，未执行导入。
+
+按明确授权，通过 Playbooks operator bootstrap 创建专用 `readonly` 身份：仅对 `users`、`identities`、`sessions` 授予 SELECT；对启用 RLS 的导出表，读取策略只作用于该身份，角色不具备管理或表写权限，并设置默认只读事务。Vault `kv/uat/accounts-migration` 保存只读来源 DSN、来自 PROD Vault 合同的项目标识及 UAT `account_user` 目标连接；凭据不进入 Git、文档或聊天。bootstrap 验证来源可读取 24 个用户，未修改应用数据。
+
+[Playbooks PR #579](https://github.com/ai-workspace-infra/playbooks/pull/579) merge `70f4ca484e5bfdf84d4fd6d322f49d93f20aee86` 提供项目绑定、脱敏预检查和目标隧道；[Toolkit PR #1317](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1317) 固定消费该 owner，并为 Vault UAT 角色添加精确 reusable workflow SHA。隧道只接受 `accounts_target_host=web-saas-uat`，从成功的 main Selfhost caller run 下载并校验 CMDB，使用其 SSH 身份连接目标数据库容器，未开放公网数据库端口。
+
+本次 [Daily 复跑 37428523713](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37428523713) 保留 `daily-build-2026.10.06-r3` 及同名不可变来源 ref，参数为 `enable_migration=true`、`dry_run=true`、`accounts_transport=direct`、`accounts_target_host=web-saas-uat`、`caller_run_id=37408330345`。预演成功后 Daily 按设计停止，不执行实际导入、Hybrid 部署或数据库升级；该轮 [data child 37428880792](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37428880792) 通过请求、Vault、CMDB 和凭据预检查，但在数据库预演阶段失败；不能标记为成功。
+
+### 11.7 2026-10-06 UAT legacy sessions 兼容修复与新版本预演
+
+后续隔离复现确认 SQLSTATE `42703`：UAT 现有 `sessions` 表以 `token` 为主键，没有 `uuid`；`r3` 的 migratectl 在读取目标 sessions 时强制选择 `uuid`。这是迁移工具与既有目标 schema 的兼容问题，修复没有修改 UAT 表结构。
+
+[Playbooks PR #580](https://github.com/ai-workspace-infra/playbooks/pull/580) merge `1f84c847bf1b7be94c2ce796ad07c6a01369eba5` 将运行错误收敛为固定 phase/category 和五位 SQLSTATE，修正来源 backend 回执、保护快照文件权限并清理 SSH 隧道；来源 Vault 连接要求 TLS 并设置连接超时。[Toolkit PR #1319](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1319) merge `44eed562f0dde58f9cdbcdf9f8ec7157c795891f` 固定消费该 owner，精确 Vault 授权已核验。
+
+[Accounts PR #191](https://github.com/ai-workspace-services/accounts/pull/191) merge `92729574802c21fbfaa6fae62d4bb168ea8a2d2a` 按实际 schema 选择 UUID 或 token session 键，保持现代 UUID 行为；旧表必须有唯一 token 索引，空/重复 token 和跨用户归属冲突在预演/写入前拒绝。目标无 UUID 时使用稳定且不含明文 token 的 snapshot UUID。相关 Go 测试和 PostgreSQL 17 CI 均成功，修复后的隔离真实 UAT 只读预演返回 `phase=target_preview, category=success`，临时快照已清理。
+
+定向 [Daily run 37431731012](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37431731012) 使用新的不可变 `daily-build-2026.10.06-r4`，定向 `repositories=ai-workspace-services/accounts`，保留同一 UAT 目标、已接受的 Selfhost CMDB 来源以及 `dry_run=true`。这轮快照 success；由于指定了仓库过滤条件，Shared readiness 与后续派发步骤 skipped，因此它只证明定向快照，不证明关联的迁移预演。Accounts [tag build run 37431780974](https://github.com/ai-workspace-services/accounts/actions/runs/37431780974) success，`daily-build-2026.10.06-r4` 已核验绑定 merge `92729574802c21fbfaa6fae62d4bb168ea8a2d2a`。
+
+随后按完整 Daily 入口触发 [run 37432489452](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37432489452)，不设置仓库过滤，以补齐正式关联子流程回执。`dry_run=true` 仍保持，不将 `r4` 记为完整 Hybrid 应用发布；完整发布证据仍以第 11.5 节的环境、tag、镜像和运行范围为准。该轮精确 [data child 37433053153](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37433053153) success，来源 tag 为 `daily-build-2026.10.06-r4`；请求门禁、导入 owner 和 executor verdict 均成功。脱敏回执已核验 `correlation_id=data-a17a993cc52e435a95e28c6320c29b9c`、`environment=uat`、`dry_run=true`、`success=true`、`mode=accounts/supabase-to-vps/data/direct`、`runtime.phase=target_preview`、`runtime.category=success`。回执 SHA-256 为 `53856b145c4712be64c48bb2e81ba9efd843706d1527c53ef96a82511ad8b5be`。父 Daily 最后上传不存在的 promotion manifest 时失败，故其整体结果仍为 failure；这是预演/发布清单的汇总门禁错误，不能把 child success 替代为父流程 success。
+
+另有单独派发的 [data run 37432237318](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37432237318)，配置为 `dry_run=false`，失败回执为 `phase=target_apply, category=execution_failed`。它不是本次 Daily 的关联 child，不计入本轮只读预演闭环；该失败回执本身不足以确认实际数据库最终状态或真实导入验收。
+
+修复后的业务入口复测：Selfhost Console `/login` 200、Selfhost Accounts `/api/ping` 200，TLS verify 均为 0。该检查只证明公开入口与健康探测可用，不等于真实用户登录或账务交易验收。
+
+### 11.8 Daily 预演与发布清单上传门禁
+
+[Toolkit PR #1322](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1322) 修复 Daily 汇总层：只有成功的 Hybrid 发布清单经下载和校验后，dispatcher 才输出 `promotion_manifest_verified=true`；上传步骤同时要求 dispatcher success 和该输出。纯数据预演成功不会生成或上传应用发布验收清单，真实部署仍要求完整清单，缺失时失败。控制面未新增主机、数据库或云资源执行。
+
+组合派发测试、预演拒绝 promotion-ready 输出检查、Daily UAT 门禁合同和执行归属扫描均通过。PR #1322 merge `3a30197748d0a2042285c88460bbe6e83ceab02d` 的 GitHub 检查通过后，使用该提交重新触发完整 [Daily run 37434267594](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37434267594)，固定 `snapshot_tag=snapshot_source_ref=daily-build-2026.10.06-r4`，不设置仓库过滤。四组快照与汇总均 success，父流程整体 success；`Upload the verified UAT promotion manifest` 按预演合同 skipped，未伪造应用发布清单。
+
+父流程日志明确关联 [data child 37434708994](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37434708994)，该 child 的请求校验、Playbooks 执行和 executor verdict 均 success。下载的脱敏回执核验：`correlation_id=data-3016e52fdf4548ccb3585995602b6746`、`environment=uat`、`dry_run=true`、`success=true`、`accounts_ref=daily-build-2026.10.06-r4`、`accounts_sha=92729574802c21fbfaa6fae62d4bb168ea8a2d2a`、`target_host=web-saas-uat`、`caller_run_id=37408330345`、`owner_sha=b82d727808696278613df248e01c29059048be35`。运行结果为 `phase=target_preview, category=success, write_state=not_attempted, convergence_verified=false`；回执 SHA-256 为 `eeb3fce965ac3f61b8a218c3578db1a87415b279fd2c5098b6c1fb7462f5f1c2`。
+
+至此，本轮失败诊断、只读 Vault 合同、私网连接、sessions 兼容修复、不可变新版本、关联预演回执和父流程汇总形成闭环。验收范围是迁移预演；未执行本轮真实导入，也不据此宣称新一轮 Hybrid 应用发布或数据收敛。完整 UAT 发布与公开入口证据仍分别见第 11.5、11.7 节。
+
+### 11.9 Selfhost 数据子任务实写、收敛与回执放行
+
+本节记录单独授权的 `dry_run=false` 数据子任务，不替代 11.7～11.8 的 Daily 只读预演。对失败 run `37432237318` 的主机只读复核确认，UAT 已写入数据：24 个用户、5 个身份、128 个会话；失败不能解释为未执行或已回滚。第二个兼容缺口是来源 `sessions.updated_at` 存在，而 UAT 旧表不能保存该列，原比较逻辑因此反复报告待更新。[Accounts PR #192](https://github.com/ai-workspace-services/accounts/pull/192) 已合并至 `b5da1dab78b053b58c4a6d06a39351d5ed541ff4`，按目标实际列能力投影会话时间戳；真实过期时间、归属变化和现代 schema 时间戳比较仍保留，不重建目标表。
+
+[Playbooks PR #581](https://github.com/ai-workspace-infra/playbooks/pull/581)、[上下文修正 #582](https://github.com/ai-workspace-infra/playbooks/pull/582) 及 [Toolkit PR #1321](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1321)、[固定 SHA 切换 #1323](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1323) 均已合入 main。执行 owner 将预检、实写、重放验证分开记录，缺少收敛证明时失败；控制面从精确 child 下载回执，核验 run/attempt、correlation、owner SHA、Accounts ref/实际 SHA、目标主机、CMDB caller 和 dry-run 状态，再放行。UAT Vault 角色只更新精确 owner workflow SHA，repository/ref、policy 和 TTL 边界已读回核验。
+
+正式 [data run 37434162279](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37434162279) 已完成，请求门禁、导入 owner 和 executor verdict 均为 success；main 控制脚本同步等待并实际通过精确回执核验，得到 `phase=target_verify`、`category=success`、`write_state=verified`、`convergence_verified=true`。同一快照按已审核 merge 合同只读重放，users/identities/sessions 的 inserted、updated 均为 0；这证明合并收敛，不代表环境特有 root、既有用户属性或目标无法保存的字段被强制改成来源值。
+
+| 绑定 | 精确值 |
+| --- | --- |
+| Toolkit caller SHA / child attempt | `bd159eaa96ec93630a8a4512f922590f35f12896` / `1` |
+| Playbooks owner SHA | `b82d727808696278613df248e01c29059048be35` |
+| Accounts ref / 实际构建 SHA | `b5da1dab78b053b58c4a6d06a39351d5ed541ff4` / 同 SHA |
+| UAT 主机 / CMDB 来源 run | `web-saas-uat` / `37408330345` |
+| Correlation | `data-d97981cfb51a4b31bbedc262987557dd` |
+
+最终主机只读复核仍为 24 个用户、5 个身份、128 个会话，44 张 public 业务表；`sessions` 仍只有 `token,user_uuid,expires_at,created_at`，schema 未重建。Selfhost Accounts `/readyz` 和 Console `/login` 均为 HTTP 200、TLS verify 0。旧 tag 未移动，也未在目标主机构建或替换服务镜像；本次 `release_tag=daily-build-2026.10.06-r3` 仅为历史关联，不能据此宣称 r3/r4 服务构件已包含后续导入器修复。本轮没有触发 Hybrid/PROD 发布，也不证明订阅、额度、账本、完整业务迁移或生产晋级资格。
+
+
+### 11.9 2026-10-06 实际导入的触发器依赖修复
+
+用户授权执行实际导入及新一轮 UAT Hybrid 验证后，[Daily run 37436337861](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37436337861) 保持不可变 `r4` tag/ref，并明确 `dry_run=false`。精确 [data child 37436789656](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37436789656) 在 `target_apply` 失败，SQLSTATE `42703`、`write_state=unverified`、`convergence_verified=false`，因此没有放行 Hybrid。失败回执不能当作迁移或部署完成证据。
+
+只读结构检查发现 UAT `users` 与 `sessions` 有 `bump_version` 触发器却缺少 `version` 字段，`sessions` 还保留 `set_updated_at` 触发器但缺少 `updated_at`；回滚事务探测复现缺失 `version` 错误。此问题位于目标库的规范触发器依赖，不能靠禁用触发器或绕过收敛验收解决。
+
+[Playbooks PR #583](https://github.com/ai-workspace-infra/playbooks/pull/583) merge `b0d9627c121e7042c82151ef8b2cf9ffa7357443` 提供明确授权的 operator 修复。执行前重新校验成功 Selfhost caller `37408330345` 的 CMDB 与 `web-saas-uat` SSH 身份；完整 pre-repair dump 留在 UAT 主机 `/var/backups/platform-ops`，权限限定 root，不上传。修复在事务中锁定两表、核对规范触发器并补齐 `users.version`、`sessions.version`、`sessions.updated_at`，校验类型/非空约束后，回滚行更新探测并核对行数不变。未替换数据表、禁用触发器或写来源库；没有为此次修复宣称备份恢复演练成功。
+
+该合并提交的本地 owner 执行返回 `schema=uat-identity-trigger-repair/v1`、`environment=uat`、`target_host=web-saas-uat`、`caller_run_id=37408330345`、`success=true`、`application_row_counts_unchanged=true`、`trigger_probe_rolled_back=true`。三项合同测试以及 GitHub PostgreSQL 17、守卫、gitleaks 均通过。随后重新触发 [Daily run 37438046388](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37438046388)，继续同一 `r4` 实际导入。关联 [data child 37438554647](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37438554647) success，回执核验 `correlation_id=data-172bbfac1333447fa0c6ff88222d6334`、`accounts_sha=92729574802c21fbfaa6fae62d4bb168ea8a2d2a`、`dry_run=false`、`target_host=web-saas-uat`、`runtime.phase=target_verify`、`write_state=verified`、`convergence_verified=true`。它证明 PROD Supabase 到 Selfhost UAT 的身份域合并及同快照重放收敛，不证明全业务数据库复制。
+
+其后已自动派发 [Hybrid run 37439022605](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37439022605)。用户将目标明确为 PROD Supabase → Serverless UAT Supabase → Selfhost UAT PostgreSQL 的完整业务数据与增量 schema 升级闭环，因此通过 GitHub 取消 Daily 与 Hybrid，已读回二者 `completed/cancelled`；不将该轮标为 Hybrid 发布成功。
+
+
+### 11.10 完整业务数据两跳初始化与可晋级的增量升级目标
+
+2026-10-06 用户明确授权初始化复制完整 PROD 业务数据到 UAT。目标是 **PROD Supabase → UAT Supabase（Serverless 数据库）→ Selfhost UAT PostgreSQL**，然后在两个 UAT 数据平面完成同一不可变候选的增量 schema 升级、原数据保留、应用回滚/同构件再升级及业务验收，形成可晋级 PROD Full 升级的资格。初始化复制只做独立、显式的准备动作；日常 schema 升级不自动重做 PROD→UAT 同步。
+
+现场检查确认 PROD/UAT Supabase 项目不同；Serverless UAT 版本 `2026092703/clean`、用户 23、订阅 0；PROD 用户 24、订阅 0。Selfhost UAT 缺少 schema 版本记录且订阅为空。不能以空订阅表宣称非空订阅/额度/账本保留测试通过，须另建专用 UAT 样本；源身份只读能力也必须从三张身份表的既有授权扩展为明确的完整业务表合同，不能使用管理员身份进行数据导出。
+
+实施顺序：固定业务表/schema 与环境身份 → 完整只读导出 → UAT 两平面同环境加密备份、独立恢复与差异核对 → 完整业务数据两跳同步与收敛 → 缺版本库的受控基线采纳 → 固定版本/checksum 的 additive schema 升级 → 同 digest 应用发布及登录/权限/订阅/额度/财务与用量账本验证 → UAT 应用回滚、同 digest 再升级/重验 → 资格回执与 PROD 门禁。原始数据与凭据不进入公开 artifact，公开证据只保留身份、计数、版本与校验值。
+
+2026-10-06 本轮补齐的实施证据：
+
+- 完整 Accounts 业务来源已核对为 44 张业务表，增量合同包含后续生命周期、恢复验证与 finance 表；迁移 ledger 与发布 checkpoint 保持环境独立。
+- [GitOps #390](https://github.com/ai-workspace-infra/gitops/pull/390)（merge `1194c66fdb45aea793bf95be85e2d68a039ac544`）声明 50 GiB 独立持久盘；[IaC #397](https://github.com/ai-workspace-infra/iac_modules/pull/397)（merge `50ae2e67811cf54acedd47450f96dd02991be6b3`）完成显式资源渲染、附加盘独立 ownership 与删除保护。渲染合同 13 项测试及 Terraform validate 通过。
+- [计划 run 37441980202](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37441980202) 与 [实际 run 37442271123](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37442271123) 均使用上述两个 owner merge；实际新增 2 项、变更 0 项、删除 0 项，未重建原主机。
+- [Playbooks #584](https://github.com/ai-workspace-infra/playbooks/pull/584) 定义可恢复重试的完整来源只读身份与 Vault CAS 合同；[Playbooks #585](https://github.com/ai-workspace-infra/playbooks/pull/585)（merge `103c008fe9bdbf8978802c5c2b06d9c247b66ee7`）消费成功 caller CMDB 校验唯一设备，仅格式化无签名新盘，完成 `/data` 的 ext4 挂载与 UUID fstab 核验。现场 `findmnt/lsblk` 确认独立 `/dev/sdb` 50G 与原系统盘 20G 分离。挂载回执 `uat-retained-volume-mount/v1` 成功；尚不代表加密备份和隔离恢复已通过。
+- 全量身份预检查：PROD 24、UAT 23 个用户；共享身份键 23 个，全部 UUID 不同，无 UAT 独有身份键。用户进一步确认以规范化 email 为唯一同步键；保持已有 UAT 用户 UUID，新增用户使用目标本地 UUID，并通过映射覆盖全部关联业务表。Proxy UUID 不能代替 email 匹配到另一用户，冲突须在写入前拒绝。只读 email 映射预检查通过：保留 23 个目标用户 UUID，新增 1 个来源用户。实际发现 2 个已有 UAT Proxy UUID 与 PROD 不同；用户已明确确认以 PROD 为准。两跳同步均原样保留 PROD Proxy UUID，这两个 UAT 差异值须在受控导入时校正，同时保留按 email 匹配的目标用户 UUID。用户再次明确 UAT 用户数量须对齐 PROD：按一致来源快照的 email 集合补齐缺失用户，若出现 UAT 独有 email 则写入前拒绝，不隐式删除用户；验收同时比对人数、email 集合及每个 email 的 Proxy UUID。共享字段类型无差异；UAT 缺少来源中的 `overlay_config_acks`、`overlay_nodes` 两张旧业务表，须以受控 additive migration 补齐。
+- 只读初始化首次因 Supabase 管理连接无 SET ROLE 权限被拦截（SQLSTATE `42501`）；#585 改为独立只读登录导入同一 exported snapshot 比对完整可见性，CI PostgreSQL 实测通过，并验证 RLS 不完整可见性会被拒绝。Vault `pending` 不等于 `ready`，完整运行成功前不放行复制。后续实际重试已成功：两个只读登录完整可见性已验证，Vault `BOOTSTRAP_STATE=ready`；PROD `billing_ledger`/`traffic_minute_buckets` 各 179783 条、额度状态 12 条，UAT 对应各 3561 条、额度状态 8 条。该回执 `full-business-credential-contract/v1` 明确 `business_rows_written=false`，不能当作导入证据。
+
+Selfhost 初始化前备份已于 #586 merge `bf1044ed1370343ff2fd4a9d54b970e5eff00e5f` 后实际执行通过：`uat-initialization-backup/v1`，来源 caller `37442271123`，独立 `/data` 上加密 archive SHA256 `904710e055af3bddb21755cb9be33fcbb6a7ef8bbb7a22be3134596ecdfeea99`；schema SHA256 `eefe2b82d559b7a725df5b3559f4ee4945f5b0317f1571993c0f2f906e7a0e9b`，全部数据/序列 SHA256 `84db80ed667856189a30681e1d7d89f83a31c8f6b0e39b86f7587077270200ca`。44 张 public 表、用户 24、订阅 0、版本 ledger 缺失如实记录；新建 OID 绑定隔离库的恢复数据与 schema 相同，源库未改变，隔离库清理。`business_acceptance=false`，不等于完整发布资格。备份 owner [Playbooks #586](https://github.com/ai-workspace-infra/playbooks/pull/586) 同时落地 email 唯一映射与 Proxy UUID 冲突拒绝合同；实际导入须依用户确认的 Proxy UUID 基准执行。
+
+Accounts [#193](https://github.com/ai-workspace-services/accounts/pull/193)（merge `6c8c4133c4c33243d6cb76311c64a1c26bf7b568`）新增受控增量 `2026100601_full_business_legacy_compat`，补齐两张旧业务表、保留用户/设备/FK/旧记录并收紧客户端访问。PostgreSQL 17 重复升级与保留验证通过；本轮尚未在 UAT 实施该 SQL，也未强行推进 schema ledger。
+
+完整来源快照 [Playbooks #587](https://github.com/ai-workspace-infra/playbooks/pull/587) 已合并（`fc7db81b17e78b51f96920a5fee860f877570b51`），CI run `37448948205` 完成 44 张表的真实 PostgreSQL 只读 JSONL 流覆盖、全字段/行数验证及限制性 RLS 拒绝。来源必须为专用只读登录，角色属性、成员关系、写权限和完整 RLS 可见性任何漂移均拒绝；同一 repeatable-read readonly 事务直接经 SSH 流入 UAT `/data` 加密 archive，源码进程内 SHA256 必须与远端解密流校验一致。首次实际采集因疑似小管道缓冲的 feed-then-read 停滞已停止，无成功回执；修复将 SQL 输入与 stdout 消费并发，并加入 4096 字节缓冲区的真实 PostgreSQL 流回归。[Playbooks #588](https://github.com/ai-workspace-infra/playbooks/pull/588) 已通过完整 CI，合并 `7353d1f217f6e271976bf2ed6aa6c911f49c4629` 后重试仍触发 600 秒超时，无成功回执。进一步传输探针成功加密及校验 1,120,000 字节非业务样本；说明连接与远端加密链可以工作，实际采集的流式阻塞仍待定位。该阶段不写入任何 UAT 业务表，不等同两跳导入。
+
+全量采集修复补充：[Playbooks #589](https://github.com/ai-workspace-infra/playbooks/pull/589) 已合并为 `83f278c1d4c95b23807ced9a04ec0256413d4ffc`，11 项单元检查、真实 PostgreSQL 17 的 44 表/大行/4 KiB 管道回归及完整 owner CI `37451997685` 通过。每批 1,000 行、SQL 文件输入、有界传输及事务空闲超时保护使只读探针取得连续业务行进度。已停止精确调试进程并按合并 SHA 启动正式加密快照采集；只有完整 footer 行数和远端解密 SHA256 一致才能成功。人数/email 集合对齐及 PROD Proxy UUID 合同已落地，但 UAT 业务表尚未同步；这不是完整发布验收。
+
+用户进一步确认：以最新 Accounts 原生 DB schema/字段为目标，不引入过渡的向下兼容字段或运行时旧结构回退。迁移适配只负责将来源数据转换到固定 schema；PROD email、Proxy UUID、身份、订阅、额度、账本业务值保持不变，允许目标用户 UUID 本地化且显式重写关联。未经支持的字段转换写入前拒绝；新增字段的默认值不能改变既有订阅、计价、余额与额度含义。日后发布仍采用校验和与版本受控的增量 schema 升级。
+
+2026-10-06 账本优化只读核对：`billing_ledger` 179,783 行、11 个账户，heap 26,763,264 字节、索引 20,742,144 字节，总计 47,546,368 字节；行 JSON 本身 67,556,541 字节。全部金额增量为 0，其中 116,647 行（64.9%）计费字节也为 0；`traffic_minute_buckets` 同为 179,783 行，116,647 行上下行/总字节为 0。账本的账户+时间段+类型+价格版本有 1 组多行候选，尚未证明重复业务，不自动删除。当前写入路径对零增量样本也建立分钟桶与账本，历史全部保留；后续减少无变化新增写入须保持 checkpoint、额度状态与重放语义。金额为零不等于无流量，亦不能作为删除依据。
+
+无损压缩抽样：2,829 行、1,209,943 字节，gzip level 6 压缩至 132,938 字节（减少 89.01%，13.44 ms），解压 SHA256 完全一致，未生成明文文件或业务写入。该比例是抽样结果。12.2 万行/52 MB 是上次流式采集的中间进度，不是账本全量或 DB 实际占用。[Playbooks #590](https://github.com/ai-workspace-infra/playbooks/pull/590) 已合并为 `2ca21b8983a84bc5b0ce3772184b9ed9f4e4df23`，实现原始 JSONL 计数/哈希后压缩、SSH 加密持久化、远端解密+解压回核原始哈希；压缩减少 SSH 与 archive 大小，本身不减少 Supabase 到控制端的流量。实际重试在约 127 秒、73,098 行/31,354,542 字节处失败（`source_sql_unknown`），未生成完整成功回执，也未写入 UAT 业务表。
+
+[Playbooks #591](https://github.com/ai-workspace-infra/playbooks/pull/591) 已合并为 `bde23b1f96668b850e1bcfaac1064bf029e6191a`：识别 ERROR/FATAL/PANIC 的有界 SQLSTATE，记录来源角色、只读状态及实际超时配置，将 statement/idle 预算设为 600 秒、事务/整体预算设为 1,800 秒。owner CI `37454493826` 与秘密扫描通过；127 秒失败的具体原因尚未由日志证实，合并不等于完整采集或发布验收。鉴于 Free 组织出口流量已超额，未再次启动全量下载。
+
+### 11.11 PROD Selfhost 主库的条件切换与只读一致性核对
+
+2026-10-06 用户补充 Free 组织额度截图：出口流量 9.49/5 GB、日志写入 1.31/1 GB、数据库容量 152/500 MB。用户明确授权：生产 Selfhost PostgreSQL 与 PROD Supabase 数据一致时，可将 Selfhost 作为 PROD 主库。核对采用数据库内行数与 SHA256 摘要，按规范化 email 处理环境本地用户 UUID，Proxy UUID 与完整身份、订阅、额度、账本业务值须以 PROD 为准；不重复下载原始业务行。
+
+19:24 CST 的 PROD Supabase repeatable-read readonly 基线已完成：44 张业务表、24 个不同 email、24 个不同且非空的 Proxy UUID、身份 5 行、额度状态 12 行、订阅 0 行、账本与流量分钟桶各 179,783 行。已保存逐表原始及 email 映射摘要、列/约束/索引元数据；专用只读角色与项目身份已核验，无适用的限制性 RLS 策略，无业务写入。该基线仅确认 Supabase 一侧，不证明两库一致。
+
+用户随后明确 `open-platform-prod` 尚无 Web SaaS 主机，要求新建 PROD Selfhost：`selfhost-orchestrator.yml` 执行 `deploy+init`，固定 Accounts release 的 Init DB schema SQL 仅用于全新空库，再以 `accounts/cmd/migratectl` 单向逻辑复制 PROD Supabase 用户/身份数据。生产 Accounts/Billing 仍由 Cloud Run + PROD Supabase 提供服务，旧主机清单不作为新目标。
+
+[GitOps #391](https://github.com/ai-workspace-infra/gitops/pull/391) 已合并为 `f95197ef8e8078748f0b8471f9fe9aabd47cc0b7`：canonical 声明 `resources/svc.plus/prod/gcp/web-saas.yaml`，项目 `open-platform-prod`、主机 `web-saas-prod`、STANDARD e2-medium、50 GB 独立数据盘、删除保护与 OS Login。state 使用 `terraform/prod/svc.plus/gcp-cloud/xworktech/web-saas/terraform.tfstate`。渲染与 Terraform 配置校验通过，声明不等于资源已创建。
+
+首个 PROD 资源计划 [run 37458022020](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37458022020) 使用 Toolkit `v2026.10.06-r5` / `14560c07dd6e57131ce5c34ac9996ee3c73ab86b`，在 GitHub `production` environment 的 GCP OIDC 交换阶段被 `attribute condition` 拒绝。随后将审批环境对齐既有 WIF 合同中的 `prod`，保持 required reviewer 审批；[plan 37460508241](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37460508241) 已成功，结果为 **8 新增、0 修改、0 删除**。该次使用固定 GitOps `f95197ef8e8078748f0b8471f9fe9aabd47cc0b7` 与 IaC `50ae2e67811cf54acedd47450f96dd02991be6b3`，未使用个人 GCP 登录，也未重新 bootstrap IAM。对应 [apply 37461248828](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37461248828) 已按用户授权触发；本次整理时尚待最终资源回执，不能记为应用 deploy/init 成功。
+
+日常 PROD 资源执行只能使用 GitHub OIDC → Vault 短会话 → GCP WIF/Service Account。IAM bootstrap 是首次建立或显式修复信任合同的独立流程，不是每次业务发布前置；本地个人账号、长期 Service Account key 或 bootstrap access token 都不能成为日常部署依赖。资源计划已验证既有 environment `prod` 的联邦身份可用；Selfhost 控制器仍需将 PROD 审批环境统一为 `prod`。不能为了继续运行而删除审批或扩大到任意 repository/ref。
+
+`migratectl` 当前导入范围为 Users、Identities、Sessions；单独成功不证明订阅、额度、账本一致，也不能放行生产主库切换。目标须使用最新原生 schema，按规范化 email 匹配用户，保持 PROD Proxy UUID、身份及完整业务值，核对全部业务表和关联。最终追平须在单写者/隔离窗口完成，并产生绑定不可变版本、准确环境、主机/数据库与逐表摘要的回执，随后切换生产入口并验收。
+
+当前完整升级执行 registry 仍未开放，UAT 两跳全量同步与升级/回退/再次升级资格尚未完成。新 PROD 空库初始化与复制授权不代替 PROD Full 升级资格，也不代替业务一致性门禁。
+
+### 11.12 品牌主页、控制台与 API 入口：Pages CDN + Edge Gateway
+
+用户确认生产入口职责：
+
+| 稳定入口 | 职责 | 发布/切换合同 |
+| --- | --- | --- |
+| `https://xworktech.com/` | 品牌与公开产品主页 | 保留品牌、公司/联系、隐私、条款、支持等审核材料，满足 Google Play、Apple、Microsoft/Azure 等上架审核所需公开可访问内容；页面存在不等于审核通过 |
+| `https://console.svc.plus/` | 控制台主页、登录及面板 | 保持控制台入口与会话边界；后端 API 切换不改变品牌主页或控制台域名 |
+| `https://accounts.svc.plus/` | Accounts API 稳定入口 | CNAME 选择 `accounts-serverless-prod.svc.plus` / `accounts-selfhost-prod.svc.plus`，Edge Gateway 选择相应服务上游 |
+| `https://billing.svc.plus/` | Billing API 稳定入口 | CNAME 选择 `billing-serverless-prod.svc.plus` / `billing-selfhost-prod.svc.plus`，与 Accounts 共同执行数据主库切换门禁 |
+
+Serverless 业务后端是 GCP Cloud Run + PROD Supabase；Selfhost 后端是 `web-saas-prod` all-in-one，包括 Accounts、Billing 与自建 PostgreSQL。稳定 API 域名通过模式限定域名和明确 Worker Routes 接入，不直接固定绑定 Cloud Run。Cloudflare 按原始 Host 调度：CNAME 不会继承目标域名的 Worker 绑定，canonical alias 必须同时声明自己的 auth/admin/core 或 Billing Route，避免递归与 522。
+
+Pages 承载静态页面/资源，通过免费 CDN 提供；Edge Gateway 保持原生 Fetch/Web Crypto，只承担 API 鉴权与轻量调度。Workers Free 为账户共享 100,000 请求/日，Pages Functions 与其他 Workers 共用；不调用 Functions 的静态 Pages 请求免费且不限量，SSR/动态 Worker 仍消耗额度。不要把 10 万次额度乘以 Worker 数量，也不要把静态请求全部送入 API 网关。（[Cloudflare Workers 限额](https://developers.cloudflare.com/workers/platform/limits/)，[Pages Functions 计费](https://developers.cloudflare.com/pages/functions/pricing/)）
+
+`edge-gateway` 提供 `workflow_dispatch` 非敏感覆盖：环境、`serverless` / `selfhost` / `hybrid`、Accounts/Billing 的独立上游、主节点超时（默认 2500 ms）及 GitOps immutable SHA。空值使用经审查的声明默认值；禁止凭据、网关自身上游、秘密 URL 和任意命令。`deploy=false` 仅形成路由计划；实际发布须完成入口、HTTP、CORS、路由模式和 commit 响应头核验。
+
+三种模式都保留 Worker 调度。Hybrid 仅对 GET/HEAD/OPTIONS 在主节点超时或 5xx 后回退，POST/PUT/PATCH/DELETE 不跨两套数据库重试。只读请求也必须考虑副本追平，不能把可达性回退当作数据一致性的证明。Selfhost 未完成完整业务一致性与最终追平前，生产维持 Serverless；任何改写入后端的覆盖变量都须经过精确上游、全业务范围、PROD Proxy UUID 与单写者回执门禁。
+
+GitOps 保存域名/模式/上游声明，IaC 执行 DNS、Worker domain 等云资源变更，Edge Gateway owner 发布 Worker 路由代码，Playbooks 执行主机与 DB 初始化/复制，Toolkit 关联审批、固定来源及验收回执。改 CNAME 或 Worker 代码不等于主库已切换。本节是当前目标合同；生产 CNAME 改造、网关新发布和 Selfhost 创建/复制尚无成功运行验收。
 
 ## 12. 差异登记与实施路线
 
@@ -658,6 +879,30 @@ HTTP 200、systemd active、workflow success、合并和 CI green 各自有作�
 | C5 文档归并 | owner 回链、修订旧运行说明 | 消除当前指引冲突，保留历史日期/基线 |
 
 每批提交行为/caller 清单、参数与失败语义、依赖顺序、验收和回退。混合 XConnect 脚本的 Terraform/lease/Provider 与主机 enrollment/观察分别交接；Accounts invite 成功不能标为主机已加入。删除副本前必须有 owner/caller 合并 SHA、真实 UAT、失败/幂等/清理和删除后的 CI。
+
+### 12.3 PROD 混合云主线任务与交付顺序
+
+以下合并用户重复提出的入口、GTM 与一致性要求。主线为 **声明与资源 → 持久存储与空库初始化 → 单向数据复制 → 全业务一致性 → Edge Gateway 与 CNAME 切换 → 生产入口验收**。文档与本地代码完成不自动推进后面的运行状态。
+
+| 主线任务 | owner / 代码边界 | 当前状态与完成门槛 |
+| --- | --- | --- |
+| M01 `open-platform-prod` Selfhost 资源 | GitOps 声明；IaC 创建云资源与 CMDB；Toolkit 固定版本编排 | GitOps #391 已合并；OIDC plan 8 新增、0 修改、0 删除通过。apply 待最终回执；继续核对主机、独立盘、删除保护与 CMDB |
+| M02 品牌、控制台、API 边界 | 品牌/Portal owner 保留公开页面；GitOps 保存域名；IaC 执行 DNS/domain | `xworktech.com` 为品牌审核主页；`console.svc.plus` 为控制台；`accounts.svc.plus` / `billing.svc.plus` 为稳定 API。页面内容、TLS、登录、CORS 与审核材料分别验收，不宣称已通过上架审核 |
+| M03 PROD 主机部署与空库初始化 | Toolkit `selfhost-orchestrator.yml`；Playbooks 主机/容器/DB；Accounts release schema | 待实现 PROD 精确目标支持、独立盘挂载和容器数据路径绑定；只对不存在或真实空库执行固定 release 的 Init SQL，拒绝对非空库重建 |
+| M04 PROD Supabase → Selfhost 单向复制 | Playbooks 组织数据操作；Accounts `cmd/migratectl` 实现用户/身份逻辑 | 来源使用专用只读角色；规范化 email 唯一匹配，PROD Proxy UUID 不变。`migratectl` 目前覆盖 Users/Identities/Sessions，订阅、额度、账本和其余业务表仍需补全 owner；不得以身份导入替代完整复制 |
+| M05 切换资格与单写者 | 数据 owner 生成摘要/回执；Toolkit 校验来源与范围；Edge Gateway 消费门禁 | 已有 PROD 来源只读基线；目标尚未完成全业务一致性。逐表行数、email 关联摘要、Proxy UUID、身份、订阅、额度、账本均一致，最终追平与单写者条件成立后才允许改写入后端 |
+| M06 Worker 轻量 GTM 与 API CNAME | Edge Gateway 发布路由；IaC 执行 CNAME/domain；GitOps 提供固定声明 | Edge 本地实现 Accounts/Billing 共同模式、dispatch 覆盖与安全读回退；CI/发布、DNS owner/caller 迁移和生产验证待完成。稳定 API CNAME 指向模式限定域名，三种模式保留 Worker；不能直接固定到 Cloud Run |
+| M07 OIDC 与免费额度 | Toolkit/Vault/WIF 身份合同；各 owner 记录容量预算 | 既有 `prod` OIDC 已验证，无日常个人登录依赖。Pages 静态 CDN、Workers 账户共享日预算、Cloud Run billing account 月额度及 Supabase 组织/项目额度按 7.2.2 分别预算 |
+| M08 生产闭环与回退 | Toolkit 关联精确 run；Edge/服务 owner 验证公开入口；数据 owner 处理写入恢复 | 发布证据绑定 GitOps/owner/caller SHA、tag/digest、环境、资源、DB 摘要与入口结果。验证品牌/控制台不受影响、Accounts 登录/身份/权限、Billing/额度/账本。切换后若出现新写入，禁止仅改 CNAME 回到旧库；回退须先完成数据追平与单写者验收 |
+
+实现顺序与停止条件：
+
+1. **先建资源并验证持久存储**：日常使用 GitHub OIDC；资源 plan 出现删除/替换、项目/state 不符或磁盘身份不符即停止。
+2. **再 deploy + init + 复制**：固定已发布 Accounts schema/镜像，暂停目标写者，在新空库初始化；来源 PROD 不执行 schema 或业务写入。完整复制采用有界批次与可追溯 checkpoint，避免因反复全量下载消耗已超额的 Supabase 出口。
+3. **并行补齐网关与 DNS owner/caller**：先形成 `deploy=false` 路由计划；旧发布链仍可能重绑稳定域名时，不单独启用新 CNAME 声明。生产在数据门禁通过前保持 Serverless。
+4. **最后放行切换和业务入口验收**：要求新鲜的完整业务回执，锁定精确四个上游；写请求不跨库重放。路由、CNAME、Worker commit/mode 与生产入口一致后，才记录主库切换完成。
+5. **UAT 升级资格单独闭环**：PROD 新空库部署/复制不替代原主线的 UAT 两跳全量同步、增量 schema、升级/回退/再次升级验收；PROD Full 升级仍须对应完整晋级资格。
+
 
 建议后续按批处理 existing-One 主机行为、Terraform/lease/state、DNS reconcile、主机健康/Caddy、SMTP Secret Manager Provider 写入；具体先后由合同依赖和可验证目标决定。15 项冻结登记只是静态检测覆盖，不是全部债务，也不是迁移完成指标。[S2]
 
@@ -728,6 +973,13 @@ HTTP 200、systemd active、workflow success、合并和 CI green 各自有作�
 ## 附录 C：来源与维护
 
 本文的事实来源按固定 SHA 链接。来源互相冲突时保留差异，不据文档直接执行迁移。后续版本同时更新两种语言、盘点基线、清单、差异状态与验收引用；不要把源码变化自动升级为 live acceptance。
+
+### 相关仓内引用
+
+- [多云编排架构](../../content/02-iac-devops/cloud-infrastructure-devsecops-baseline/10-multi-cloud-orchestrator-architecture.zh.md)
+- [多云身份 Bootstrap 与状态契约](../../content/02-iac-devops/cloud-infrastructure-devsecops-baseline/11-cloud-oidc-bootstrap-contract.zh.md)
+- [平台操作中心与 Daily Snapshot 发布验收架构](../design/platform-operations-daily-snapshot.zh.md)
+- [VPS + Serverless 混合部署落地指南](../zh/hybrid-serverless-architecture-vault-pipeline-plan/README.md)
 
 - [S1 · Toolkit 仓库与交付入口](https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/2e7b1d9387de615f882ec6cf8084781d0d006415/README.md)
 - [S2 · 执行职责迁移交接](https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/2e7b1d9387de615f882ec6cf8084781d0d006415/docs/agent/2026-10-05-ownership-migration-handoff.md)
