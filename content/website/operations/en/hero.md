@@ -1,5 +1,11 @@
 ---
 ui:
+  menuSection: Platform Operations
+  menuOverview: Operations
+  menuReleases: Releases
+  menuEnvironments: Environments
+  menuAudit: Audit
+  menuVault: Vault & Access
   title: Create release plan
   subtitle: Daily Main Snapshot
   environment: Select environment

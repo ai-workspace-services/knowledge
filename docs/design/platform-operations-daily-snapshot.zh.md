@@ -22,6 +22,8 @@ tags:
 
 将 `/panel/operations/` 设计为执行中心，将 `/panel/operations/releases` 设计为发布记录与验收中心。两页共享操作记录，从提交请求开始展示，持续同步父工作流、子工作流、构件及实际验收结果。
 
+侧栏入口独立归入“平台运维”，显示“操作中心”“发布记录”等条目，不再混在“账户与权限”中使用含糊的 Overview 标签。普通账号不展示运维条目；菜单可见性仍受原有权限规则控制，隐藏菜单不能替代服务端授权。未进行真实账号登录核验时，不推断用户当前角色或租户权限。
+
 工作流入口为 [Daily Main Snapshot](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/workflows/daily-main-snapshot.yaml)。已核对的 Toolkit 提交为 `452265c3596de0d68cda9ae020ec8295f7db3c78`；后续实现须重新核对工作流版本，不能将该快照视为永久合同。
 
 Portal 源码定位：

@@ -1,5 +1,11 @@
 ---
 ui:
+  menuSection: 平台运维
+  menuOverview: 操作中心
+  menuReleases: 发布记录
+  menuEnvironments: 环境
+  menuAudit: 审计
+  menuVault: Vault 与访问
   title: 创建发布计划
   subtitle: Daily Main Snapshot
   environment: 选择环境
