@@ -826,6 +826,10 @@ Accounts [#193](https://github.com/ai-workspace-services/accounts/pull/193)（me
 
 日常 PROD 资源执行只能使用 GitHub OIDC → Vault 短会话 → GCP WIF/Service Account。IAM bootstrap 是首次建立或显式修复信任合同的独立流程，不是每次业务发布前置；本地个人账号、长期 Service Account key 或 bootstrap access token 都不能成为日常部署依赖。资源计划已验证既有 environment `prod` 的联邦身份可用；[Toolkit #1325](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1325) 已合并，将 Selfhost 控制器的 PROD 审批环境统一为 `prod`（merge `a67c1cb48f98ef7f07c3ee35fdef62a4e2f97ff5`）。不能为了继续运行而删除审批或扩大到任意 repository/ref。
 
+补充运行证据：[增量 plan 37478158368](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37478158368) 使用固定 IaC/GitOps SHA 与既有 OIDC 成功，**5 新增、0 修改、0 删除**；[apply 37478514735](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37478514735) 仍因组织策略 API 未启用与防火墙创建权限缺失失败，没有创建 VM。plan 成功不能证明管理员 bootstrap 已生效。
+
+管理员一次性修复入口见 [Toolkit #1327](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1327) 的 `scripts/cloud/bootstrap/gcp/`。实际执行 owner 为已合并的 [IaC #401](https://github.com/ai-workspace-infra/iac_modules/pull/401)，分 IAM/API 与外网策略两个阶段，各自 plan → 审查摘要 → apply → 再次 plan 验证 no-op。前者仅补齐现有 deployer 的项目内防火墙管理、策略读取和 API；后者仅在原 Web SaaS state 管理固定实例外网许可。不授予日常 deployer 组织策略管理权限，不创建 VM/network/disk。已合并的 [GitOps #394](https://github.com/ai-workspace-infra/gitops/pull/394) 将 backend 声明对齐现有 Vault 合同，两个 state key 不变，不执行 state 迁移。管理员凭据仅走运行时；新入口实测因短期 bootstrap token 缺失而停止，尚无 live 收敛回执。
+
 `migratectl` 当前导入范围为 Users、Identities、Sessions；单独成功不证明订阅、额度、账本一致，也不能放行生产主库切换。目标须使用最新原生 schema，按规范化 email 匹配用户，保持 PROD Proxy UUID、身份及完整业务值，核对全部业务表和关联。最终追平须在单写者/隔离窗口完成，并产生绑定不可变版本、准确环境、主机/数据库与逐表摘要的回执，随后切换生产入口并验收。
 
 当前完整升级执行 registry 仍未开放，UAT 两跳全量同步与升级/回退/再次升级资格尚未完成。新 PROD 空库初始化与复制授权不代替 PROD Full 升级资格，也不代替业务一致性门禁。
@@ -856,15 +860,16 @@ GitOps 保存域名/模式/上游声明，IaC 执行 DNS、Worker domain 等云�
 | 代码交付 | 已有证据 | 尚未证明的运行状态 |
 | --- | --- | --- |
 | [IaC #399](https://github.com/ai-workspace-infra/iac_modules/pull/399) bootstrap 合同修正（已合并） | merge `f12911fa6d0e6fb51dbff4363a0ed27b4760c694`；声明 Org Policy API，服务 VM 等待声明的外网 IP 策略；15 项 GCP 契约、远端 CI 及 Terraform validate 通过 | 一次性 live IAM/API/策略修复尚未应用；不授予日常 runtime identity 组织级管理员权限 |
-| [Edge #28](https://github.com/ai-workspace-services/edge-gateway/pull/28) 初版已合并；[#29](https://github.com/ai-workspace-services/edge-gateway/pull/29) 发布保护（draft） | Accounts/Billing 共同模式、dispatch 覆盖、完整业务门禁、实际 writer 核对、绑定同 run/commit/计划的限时授权；45 项 Worker 与 15 项发布契约检查通过 | 全业务回执生产器与环境 Vault 合同待落地，不能切主库；旧 PROD caller 不能覆盖受保护发布入口 |
-| [IaC #398](https://github.com/ai-workspace-infra/iac_modules/pull/398) 初版已合并；[#400](https://github.com/ai-workspace-infra/iac_modules/pull/400) provider workflow（draft） | 21 项 provider/请求检查，迁移后的 legacy 与 GTM DNS 行为测试通过；稳定 API CNAME 仅由 Edge guarded caller 发起 | 没有实际修改生产 CNAME，没有以 provider 收敛代替业务验收 |
-| [Toolkit #1326](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1326) DNS caller 迁移（draft） | preflight 固定 GitOps SHA，后续 lane 消费同一 SHA；调用固定 IaC reusable workflow，SIT/UAT/PROD role 源码增加唯一 owner SHA 而不扩大 ref/policy；PROD legacy Edge 部署跳过，品牌/Console/CORS 检查保留 | 新 owner 的 Vault job/workflow claims 与真实 UAT 调用待核验；冻结旧 executor 在 UAT 证据齐备后再删除 |
+| [Edge #28](https://github.com/ai-workspace-services/edge-gateway/pull/28)、[#29](https://github.com/ai-workspace-services/edge-gateway/pull/29) 已合并 | Accounts/Billing 共同模式、dispatch 覆盖、完整业务门禁、实际 writer 核对、绑定同 run/commit/计划的限时授权；45 项 Worker 与 15 项发布契约检查通过 | 全业务回执生产器与环境 Vault 合同待落地，不能切主库；旧 PROD caller 不能覆盖受保护发布入口 |
+| [IaC #398](https://github.com/ai-workspace-infra/iac_modules/pull/398)、[#400](https://github.com/ai-workspace-infra/iac_modules/pull/400) 已合并 | 21 项 provider/请求检查，迁移后的 legacy 与 GTM DNS 行为测试通过；稳定 API CNAME 仅由 Edge guarded caller 发起 | 没有实际修改生产 CNAME，没有以 provider 收敛代替业务验收 |
+| [Toolkit #1326](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1326) DNS caller 迁移已合并 | preflight 固定 GitOps SHA，后续 lane 消费同一 SHA；调用固定 IaC reusable workflow，SIT/UAT/PROD role 源码增加唯一 owner SHA 而不扩大 ref/policy；PROD legacy Edge 部署跳过，品牌/Console/CORS 检查保留 | 新 owner 的 Vault job/workflow claims 与真实 UAT 调用待核验；冻结旧 executor 在 UAT 证据齐备后再删除 |
+| [GitOps #393](https://github.com/ai-workspace-infra/gitops/pull/393)、[Playbooks #592](https://github.com/ai-workspace-infra/playbooks/pull/592) 持久盘/空库保护已合并 | PROD Doco-CD target、明确 `/data/postgresql` bind、精确 CMDB/独立盘校验、空库守卫；Linux CI 验证格式化、挂载、幂等恢复及错误目标拒绝 | PROD VM 尚未创建，caller 集成及最新原生 Init SQL 待完成；UAT-only 数据操作限制仍在，不能据 CI 宣称 PROD 初始化完成 |
 | [GitOps #392](https://github.com/ai-workspace-infra/gitops/pull/392) API CNAME 声明（draft） | Accounts/Billing 分别声明模式限定域名 | owner/caller/Edge 合并并验证前不激活；启用前停止或等待旧来源 run 结束 |
 
 
 最新受控 [Edge 路由 plan 37468819907](https://github.com/ai-workspace-services/edge-gateway/actions/runs/37468819907) 已成功：Edge commit `3b649ddab5c42f3bd212a804a5ec6b3f4efa1374`，GitOps draft 固定 SHA `66f77850e3b94d469933c16006740a37980df099`，`prod/serverless`、`deploy=false`。CI、构件大小及计划通过，Deploy job skipped；没有读取 Vault 或改动 Worker/DNS，也没有放行业务切换。
 
-已核对初版实际 merge：Edge #28 为 `5f643ccc43f3bcd3df01ac935d6b44b1efe32b1e`，IaC #398 为 `c734d087af981b5bc8d28f3fb68ee983354afe88`。新增保护从这两个 main 基线另开 PR，原 PR 合并不代表后续提交已合并。
+已核对初版实际 merge：Edge #28 为 `5f643ccc43f3bcd3df01ac935d6b44b1efe32b1e`，IaC #398 为 `c734d087af981b5bc8d28f3fb68ee983354afe88`。从这些 main 基线新增的 Edge #29、IaC #400 与 Toolkit #1326 也已合并；源码合并不替代 Vault、owner/caller 和实际发布验收。
 
 合并与启用顺序：**IaC owner → Toolkit caller 与 Edge guarded 发布入口 → GitOps API 声明**。代码 PR 与无凭据路由 plan 可先审查；实际切换仍必须经过新目标完整业务一致性、最终追平、单写者和生产入口验收，不能用“文档/PR/plan 成功”跳过数据门禁。
 
@@ -903,12 +908,12 @@ GitOps 保存域名/模式/上游声明，IaC 执行 DNS、Worker domain 等云�
 
 | 主线任务 | owner / 代码边界 | 当前状态与完成门槛 |
 | --- | --- | --- |
-| M01 `open-platform-prod` Selfhost 资源 | GitOps 声明；IaC 创建云资源与 CMDB；Toolkit 固定版本编排 | GitOps #391 已合并；OIDC plan 8 新增、0 修改、0 删除通过。apply 创建网络/子网/独立盘后因权限/组织策略失败，VM 与 CMDB 尚未完成；IaC #399 合同修正已合并，继续同步 live bootstrap 并核对增量 plan |
+| M01 `open-platform-prod` Selfhost 资源 | GitOps 声明；IaC 创建云资源与 CMDB；Toolkit 固定版本编排 | GitOps #391/#394、IaC #399/#401 已合并；最新 OIDC plan 5 新增、0 修改、0 删除通过。apply 仍因 IAM/API 失败，VM 与 CMDB 尚未完成；管理员一次性 repair 入口已补齐，仍需两份 live 收敛回执 |
 | M02 品牌、控制台、API 边界 | 品牌/Portal owner 保留公开页面；GitOps 保存域名；IaC 执行 DNS/domain | `xworktech.com` 为品牌审核主页；`console.svc.plus` 为控制台；`accounts.svc.plus` / `billing.svc.plus` 为稳定 API。页面内容、TLS、登录、CORS 与审核材料分别验收，不宣称已通过上架审核 |
-| M03 PROD 主机部署与空库初始化 | Toolkit `selfhost-orchestrator.yml`；Playbooks 主机/容器/DB；Accounts release schema | 待实现 PROD 精确目标支持、独立盘挂载和容器数据路径绑定；只对不存在或真实空库执行固定 release 的 Init SQL，拒绝对非空库重建 |
+| M03 PROD 主机部署与空库初始化 | Toolkit `selfhost-orchestrator.yml`；Playbooks 主机/容器/DB；Accounts release schema | GitOps #393 与 Playbooks #592 的 PROD 持久盘、bind 与空库保护已合并并通过 Linux CI；真实 VM、PROD caller 与最新原生 Init SQL 仍待完成，只对不存在或真实空库初始化，拒绝非空库重建 |
 | M04 PROD Supabase → Selfhost 单向复制 | Playbooks 组织数据操作；Accounts `cmd/migratectl` 实现用户/身份逻辑 | 来源使用专用只读角色；规范化 email 唯一匹配，PROD Proxy UUID 不变。`migratectl` 目前覆盖 Users/Identities/Sessions，订阅、额度、账本和其余业务表仍需补全 owner；不得以身份导入替代完整复制 |
 | M05 切换资格与单写者 | 数据 owner 生成摘要/回执；Toolkit 校验来源与范围；Edge Gateway 消费门禁 | 已有 PROD 来源只读基线；目标尚未完成全业务一致性。逐表行数、email 关联摘要、Proxy UUID、身份、订阅、额度、账本均一致，最终追平与单写者条件成立后才允许改写入后端 |
-| M06 Worker 轻量 GTM 与 API CNAME | Edge Gateway 发布路由；IaC 执行 CNAME/domain；GitOps 提供固定声明 | Edge #28 与 IaC #398 初版已合并；Edge #29、IaC #400、Toolkit #1326 与 GitOps #392 后续代码可审查；Worker/发布/provider 契约及无凭据 plan 已验证，实际发布、Vault/owner/caller UAT 与生产验收待完成。PROD Accounts/Billing 读回退默认禁用。稳定 API CNAME 指向模式限定域名，三种模式保留 Worker；不能直接固定到 Cloud Run |
+| M06 Worker 轻量 GTM 与 API CNAME | Edge Gateway 发布路由；IaC 执行 CNAME/domain；GitOps 提供固定声明 | Edge #28/#29、IaC #398/#400、Toolkit #1326 已合并；GitOps #392 声明尚未激活。Worker/发布/provider 契约及无凭据 plan 已验证，实际发布、Vault/owner/caller UAT 与生产验收待完成。PROD Accounts/Billing 读回退默认禁用。稳定 API CNAME 指向模式限定域名，三种模式保留 Worker；不能直接固定到 Cloud Run |
 | M07 OIDC 与免费额度 | Toolkit/Vault/WIF 身份合同；各 owner 记录容量预算 | 既有 `prod` OIDC 已验证，无日常个人登录依赖。Pages 静态 CDN、Workers 账户共享日预算、Cloud Run billing account 月额度及 Supabase 组织/项目额度按 7.2.2 分别预算 |
 | M08 生产闭环与回退 | Toolkit 关联精确 run；Edge/服务 owner 验证公开入口；数据 owner 处理写入恢复 | 发布证据绑定 GitOps/owner/caller SHA、tag/digest、环境、资源、DB 摘要与入口结果。验证品牌/控制台不受影响、Accounts 登录/身份/权限、Billing/额度/账本。切换后若出现新写入，禁止仅改 CNAME 回到旧库；回退须先完成数据追平与单写者验收 |
 
