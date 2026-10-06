@@ -61,17 +61,11 @@ ssh -t root@10.79.0.7
 
 ## 默认安装：无参数启动 Quick Start
 
-先固定一个已经审核的提交或标签。不要直接使用不受控的 `main`：
-
-```bash
-export REF=<reviewed-commit-or-tag>
-```
-
-然后执行默认安装命令。管道后的 `bash` 不需要任何参数：
+默认使用仓库维护的稳定通道 `main`，不需要先设置 `REF`。然后执行默认安装命令，管道后的 `bash` 不需要任何参数：
 
 ```bash
 curl -fsSL \
-  "https://raw.githubusercontent.com/ai-workspace-services/ai-aggregato-Gateway/${REF}/scripts/home-lab/one-shell.sh" \
+  "https://raw.githubusercontent.com/ai-workspace-services/ai-aggregato-Gateway/main/scripts/home-lab/one-shell.sh" \
   | bash
 ```
 
@@ -92,8 +86,16 @@ export AI_AGGREGATOR_TARGET_IP=198.51.100.20
 export AI_AGGREGATOR_NETWORK_MODE=public
 
 curl -fsSL \
-  "https://raw.githubusercontent.com/ai-workspace-services/ai-aggregato-Gateway/${REF}/scripts/home-lab/one-shell.sh" \
+  "https://raw.githubusercontent.com/ai-workspace-services/ai-aggregato-Gateway/main/scripts/home-lab/one-shell.sh" \
   | bash
+```
+
+需要升级、回滚或复现具体版本时，才指定 tag 或 commit：
+
+```bash
+curl -fsSL \
+  "https://raw.githubusercontent.com/ai-workspace-services/ai-aggregato-Gateway/<TAG_OR_COMMIT>/scripts/home-lab/one-shell.sh" \
+  | bash -s -- --ref <TAG_OR_COMMIT>
 ```
 
 私网 NAT 还设置 `AI_AGGREGATOR_DNS_IP`；XConnect 环境设置对应的 `AI_AGGREGATOR_TARGET_IP` 和 `AI_AGGREGATOR_DOMAIN`。脚本不会打印或接收 New API 用户 Key、Vault 密钥、CPA OAuth token 或 Provider API Key。凭据由 Vault、New API 控制台和本地安全凭据存储提供。
@@ -196,7 +198,7 @@ OpenCode 桌面版在 Providers/Add account 中建立自定义 Provider；CLI �
 
 ```bash
 curl -fsSL \
-  "https://raw.githubusercontent.com/ai-workspace-services/ai-aggregato-Gateway/${REF}/scripts/home-lab/one-shell.sh" \
+  "https://raw.githubusercontent.com/ai-workspace-services/ai-aggregato-Gateway/main/scripts/home-lab/one-shell.sh" \
   | bash -s -- --help
 ```
 
@@ -204,7 +206,7 @@ curl -fsSL \
 
 ```bash
 curl -fsSL \
-  "https://raw.githubusercontent.com/ai-workspace-services/ai-aggregato-Gateway/${REF}/scripts/home-lab/one-shell.sh" \
+  "https://raw.githubusercontent.com/ai-workspace-services/ai-aggregato-Gateway/main/scripts/home-lab/one-shell.sh" \
   | bash -s -- --operation plan
 ```
 
@@ -220,8 +222,8 @@ xconnect    ：SSH/服务 XConnect IP → split-horizon DNS → Caddy XConnect �
 
 ```bash
 curl -fsSL \
-  "https://raw.githubusercontent.com/ai-workspace-services/ai-aggregato-Gateway/${REF}/scripts/home-lab/one-shell.sh" \
-  | bash -s -- --ref "$REF" --operation activate \
+  "https://raw.githubusercontent.com/ai-workspace-services/ai-aggregato-Gateway/main/scripts/home-lab/one-shell.sh" \
+  | bash -s -- --operation activate \
     --domain ai.example.com \
     --target-ip 198.51.100.20 \
     --network-mode public
@@ -231,8 +233,8 @@ curl -fsSL \
 
 ```bash
 curl -fsSL \
-  "https://raw.githubusercontent.com/ai-workspace-services/ai-aggregato-Gateway/${REF}/scripts/home-lab/one-shell.sh" \
-  | bash -s -- --ref "$REF" --operation activate \
+  "https://raw.githubusercontent.com/ai-workspace-services/ai-aggregato-Gateway/main/scripts/home-lab/one-shell.sh" \
+  | bash -s -- --operation activate \
     --domain ai.example.com \
     --target-ip 10.0.0.10 \
     --dns-ip 198.51.100.20 \
@@ -243,8 +245,8 @@ XConnect Home-Lab 可以显式写出默认值：
 
 ```bash
 curl -fsSL \
-  "https://raw.githubusercontent.com/ai-workspace-services/ai-aggregato-Gateway/${REF}/scripts/home-lab/one-shell.sh" \
-  | bash -s -- --ref "$REF" --operation activate \
+  "https://raw.githubusercontent.com/ai-workspace-services/ai-aggregato-Gateway/main/scripts/home-lab/one-shell.sh" \
+  | bash -s -- --operation activate \
     --domain ai-internal.onwalk.net \
     --target-ip 10.79.0.7 \
     --network-mode xconnect
