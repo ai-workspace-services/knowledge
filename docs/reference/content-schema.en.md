@@ -17,3 +17,10 @@ Use that file as the implementation-level reference for:
 - frontmatter keys
 - localization metadata
 - navigation manifest structure
+
+## Related references
+
+- [Content Schema](../CONTENT_SCHEMA.md)
+- [Documentation Coverage Matrix](../DOC_COVERAGE.md)
+- [Information architecture](../core-concepts/information-architecture.en.md)
+- [内容规范](content-schema.zh.md)

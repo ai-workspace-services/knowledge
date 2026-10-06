@@ -719,6 +719,13 @@ The inventory covers business/platform orchestration, generic IaC, Providers/ext
 
 Facts link to fixed source SHAs. Preserve discrepancies between sources rather than executing migrations from prose. Future revisions update both languages, baselines, inventory, gap status, and acceptance references together. Source changes alone do not establish live acceptance.
 
+### Related repository references
+
+- [Multi-cloud orchestrator architecture](../../content/02-iac-devops/cloud-infrastructure-devsecops-baseline/10-multi-cloud-orchestrator-architecture.zh.md)
+- [Cloud OIDC bootstrap and state contract](../../content/02-iac-devops/cloud-infrastructure-devsecops-baseline/11-cloud-oidc-bootstrap-contract.zh.md)
+- [Platform operations daily snapshot](../design/platform-operations-daily-snapshot.zh.md)
+- [VPS + Serverless hybrid deployment guide](../zh/hybrid-serverless-architecture-vault-pipeline-plan/README.md)
+
 - [S1 · Toolkit repository and delivery entries](https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/2e7b1d9387de615f882ec6cf8084781d0d006415/README.md)
 - [S2 · Execution ownership migration handoff](https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/2e7b1d9387de615f882ec6cf8084781d0d006415/docs/agent/2026-10-05-ownership-migration-handoff.md)
 - [S3 · GitOps scope and layout](https://github.com/ai-workspace-infra/gitops/blob/d6a734b12e91241557803895ad454c538ea5d6ae/README.md)
