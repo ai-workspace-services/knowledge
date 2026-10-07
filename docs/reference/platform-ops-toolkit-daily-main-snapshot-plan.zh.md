@@ -148,7 +148,7 @@ Edge Gateway/CNAME 切换
 4. 每层都要保存可审计的原始回执和脱敏摘要，并记录固定 SHA、镜像 digest、目标环境、时间窗和回退点。失败重试必须复用同一版本和输入，避免“换版本重试”掩盖真实原因。
 5. EDO 的 `core_users` 模式按用户已授权的不可变 release tag 规则发布，不额外要求 PROD 独立 reviewer/prevent-self-review。它调用固定 Selfhost owner，接受四项真实相等回执并确认临时访问清理。人工登录、订阅、额度、账单、单写者测试及 Cloudflare 切换是后续操作，未开始不使已完成的部署/同步流水线失败。最终切换回执须记录实际确认与追平情况。
 
-截至 2026-10-07，Selfhost 已有 53 表和干净 `2026100701:false` checkpoint；目标表名结构 hash 与固定合同一致。r24（run `37601794395`）在 Playbooks 的旧“核心 users 必须为空”规则失败，未执行用户同步。Playbooks #615 已删除该规则，Toolkit #1367 固定 owner `008fcfc430f4c023bd092fb047c65a217e3b113e`。r25（EDO `37603009277` / Selfhost `37603047958`）正在执行；结果须以原始回执为准。暂不重建数据库。
+截至 2026-10-07，Selfhost 已有 53 表和干净 `2026100701:false` checkpoint；目标表名结构 hash 与固定合同一致。r24（run `37601794395`）在 Playbooks 的旧“核心 users 必须为空”规则失败，未执行用户同步。Playbooks #615 已删除该规则，Toolkit #1367 固定 owner `008fcfc430f4c023bd092fb047c65a217e3b113e`。r25（EDO `37603009277` / Selfhost `37603047958`）通过空表检查后，在 `migration` 阶段失败：Playbooks 传给 `copy-core-users` 的 `--dry-run=false` 不受该 CLI 支持。此失败不能判为用户字段不一致。Playbooks #616 修正参数，并使用固定 Accounts `eec7905d6f92f0403187a9be538f4cc504fd3f01` 的真实二进制检查 copy/compare 参数；本地检查在缺少 DSN 的保护处停止，没有访问数据库。修复后的实际同步仍待同一份真实回执确认。暂不重建数据库。
 
 ### 4.2 历史主机实测与来源投影检查点
 
@@ -171,7 +171,7 @@ Edge Gateway/CNAME 切换
 
 部署与数据入口的能力边界也已实测：`selfhost-orchestrator.yml` 的 release-tag 路由可解析为 PROD `web-saas`、Terraform apply 和应用部署，`dns_mode=none` 保持域名路由不变；工作流包含主机 bootstrap、`roles/vhosts` 配置、GitOps tag 更新及 Doco-CD 部署/验收步骤。定向 dispatch 合同测试通过，但这是路由与合同验证，尚未真实执行 PROD 部署，也未证明指定 tag 的所有应用镜像均可拉取。
 
-`environment-data-operations.yml` 当前没有 PROD 全业务复制/同步模式：`legacy_import`、`migrate` 和 `selfhost_init` 被限制在 UAT，PROD Selfhost 支持的是 probe/verify 等既有操作；`selfhost_verify` 验证发布后运行状态和既存基线，不会从 Supabase 复制数据。Toolkit PROD 环境当前 `prevent_self_review=false`，而请求校验器要求其为 `true`，所以 PROD data-operations dispatch 会在取 Vault 凭据前被拒绝。现有全业务 copy/compare 仍在 `selfhost-orchestrator.yml` 的独立操作中。若后续统一从 data-operations 派发数据同步，需先在 Playbooks owner 建立并隔离资格验证对应的全业务操作，再以固定 owner SHA 接入 caller；不能把当前 selfhost_verify 当作同步证明。
+早期 EDO 检查点（不代表当前 `core_users` 路径）：`environment-data-operations.yml` 当时没有 PROD 全业务复制/同步模式：`legacy_import`、`migrate` 和 `selfhost_init` 被限制在 UAT，PROD Selfhost 支持的是 probe/verify 等既有操作；`selfhost_verify` 验证发布后运行状态和既存基线，不会从 Supabase 复制数据。Toolkit PROD 环境当前 `prevent_self_review=false`，而请求校验器要求其为 `true`，所以 PROD data-operations dispatch 会在取 Vault 凭据前被拒绝。现有全业务 copy/compare 仍在 `selfhost-orchestrator.yml` 的独立操作中。该限制后来已由固定 owner 的 `core_users` dispatch 接入解除；它验证最新用户数量与三个核心字段，不要求其他 52 表业务数据相等。既有 `selfhost_verify` 仍不能当作同步证明。
 
 切换前完成用户人工确认、最终核心追平和单写者测试；当前自动比对只验收用户数量、email、密码 hash 和 Proxy UUID。Selfhost 尚未产生新写入时可以按已验证路由恢复 Serverless；一旦产生新写入，禁止直接返回旧 Supabase。此时保留维护态或使用同一 Selfhost 主库的应用版本回退；需要返回旧源时，必须另有获批的追平与重新比对合同。当前单向复制授权不包含反向写回源库。
 
