@@ -4,6 +4,10 @@
 
 本页作为系统边界、核心组件与仓库职责的双语总览入口。
 
+## 架构设计篇
+
+- [平台操作中心与 Daily Snapshot 发布验收架构](../design/platform-operations-daily-snapshot.zh.md)：Operations 全量参数、发布计划、父子工作流同步与 Releases 验收证据；目标设计，尚未实现。
+
 ## 与当前代码对齐的说明
 
 - 文档目标仓库: `knowledge`

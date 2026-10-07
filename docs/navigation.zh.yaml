@@ -39,6 +39,8 @@ sections:
     items:
       - title: 总览
         href: /docs/reference/overview
+      - title: 多云平台工程技术白皮书
+        href: /docs/reference/multi-cloud-platform-engineering-whitepaper
       - title: 内容规范
         href: /docs/reference/content-schema
       - title: 覆盖矩阵

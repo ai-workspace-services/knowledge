@@ -39,6 +39,8 @@ sections:
     items:
       - title: Overview
         href: /docs/reference/overview
+      - title: Multi-cloud platform engineering white paper
+        href: /docs/reference/multi-cloud-platform-engineering-whitepaper
       - title: Content schema
         href: /docs/reference/content-schema
       - title: Coverage matrix

@@ -35,3 +35,7 @@ description: docs.svc.plus 的中文入口，按入门、基础、集成、参�
 
 - [Console Frontend Router 与 Edge Gateway 目标架构及实施计划](frontend-edge-routing-target-architecture.md)
 - [UAT Serverless 运行时拓扑、路由契约与全链路验证指南](serverless-uat-runtime-topology-and-verification.md)
+
+## 平台工程白皮书
+
+- [多云平台工程技术白皮书](../reference/multi-cloud-platform-engineering-whitepaper.zh.md)
