@@ -29,6 +29,8 @@ IaC 相关 actions 统一存放在 `iac_modules/.github/actions/`，包括目标
 
 本轮仅盘点源码、核对契约并编写设计文档。未修改 workflow、Terraform、Vault policy、真实 state 或资源；未提交 PR、部署或进行真实 UAT。后文的目标文件、接口和验收用例都是待实现设计。
 
+该说明保留设计 v0.6 的原始审计范围；后续编码、清理、PR 与尚未完成的运行验收另见 [2026-10-07 分批执行记录](multi-cloud-iac-cleanup-batches-20261007.zh.md)。
+
 相关资料：[平台工程白皮书](multi-cloud-platform-engineering-whitepaper.zh.md)、[多云身份 Bootstrap 与状态契约](../../content/02-iac-devops/cloud-infrastructure-devsecops-baseline/11-cloud-oidc-bootstrap-contract.zh.md)、[参考资料索引](index.md)。历史资料的适用日期及管理模式须单独判断，不能把旧文档中 UCloud/ULightHost 的合并槽位当作本设计的 provider 分类。
 
 ## 1. 范围与源码证据
