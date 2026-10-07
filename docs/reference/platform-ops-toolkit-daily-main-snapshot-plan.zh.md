@@ -134,7 +134,7 @@ Edge Gateway/CNAME 切换
 | L4 来源合同 | Vault `kv/data/prod/database-upgrade/PROD_SUPABASE_READONLY_DSN`；session pooler/TLS；连接级与事务级只读 | Playbooks `serverless_supabase` owner | 脱敏连接指纹、角色、TLS、只读反例（写入被拒） | 只读合同有效，且不把管理员凭据写入文件或 artifact |
 | L5 复制/比对 | `migratectl` 全业务 53 表复制；按 email 映射用户，保持 PROD email、Proxy UUID、身份、订阅、额度、账本；再做全字段/行数/摘要/FK 比对 | Accounts migratectl + Playbooks Role | copy/compare receipt、表级摘要、映射统计、失败表清单 | 复制成功且一致性报告无未解释差异；源仍为只读 |
 | L6 切换前门槛 | 来源全写者冻结、最终追平窗口、目标单写者和回退点 | 迁移 owner + Edge Gateway owner | 冻结时间、最终追平水位、单写者租约、回退演练 | 新鲜度在约定窗口内，且切换批准明确记录 |
-| L7 入口/验收 | Accounts 与 Billing 同步切换；`accounts.svc.plus`、`billing.svc.plus` 由 Worker/CNAME 指向模式别名；主页和 console 保持原职责 | Edge Gateway/CNAME owner + 业务验收 | DNS/Worker 版本、请求探针、账单/账户关键流程、回退记录 | 生产入口验收通过；否则恢复 Serverless 并保留证据 |
+| L7 入口/验收 | Accounts 与 Billing 同步切换；`accounts.svc.plus`、`billing.svc.plus` 由 Worker/CNAME 指向模式别名；主页和 console 保持原职责 | Edge Gateway/CNAME owner + 业务验收 | DNS/Worker 版本、请求探针、账单/账户关键流程、回退记录 | 生产入口验收通过；失败时按目标是否产生新写入选择有证据的回退 |
 
 实施约束：
 
@@ -143,7 +143,30 @@ Edge Gateway/CNAME 切换
 3. L5 的时点比对不是 L6 的最终一致性证明。只有完成停写、最终追平和单写者证据，才允许进入 L7；在此之前任何 `edge-gateway`、CNAME 或生产主库标记都不得切换。
 4. 每层都要保存可审计的原始回执和脱敏摘要，并记录固定 SHA、镜像 digest、目标环境、时间窗和回退点。失败重试必须复用同一版本和输入，避免“换版本重试”掩盖真实原因。
 
-截至 2026-10-07，资源、运行时资格和 schema/Billing owner 检查已有固定版本；全业务复制、最终追平、单写者、网关切换和生产验收尚未完成。最近一次完整业务 preview（run `37578640206`）已通过输入、OIDC、Vault 和 IaC 访问门槛，但在 Playbooks owner 执行阶段失败；由于 owner 的私密输出被清理，不能把这次失败解释成数据库差异，也没有目标写入或主库切换证据。后续执行从 L2/L3 的 Selfhost owner 受控验证开始，再逐层向上推进。
+截至 2026-10-07，资源、运行时资格和 schema/Billing owner 检查已有固定版本；基线复制已完成，但最终追平、单写者、网关切换和生产验收尚未完成。最近一次完整业务 preview（run `37578640206`）已通过输入、OIDC、Vault 和 IaC 访问门槛，但在 Playbooks owner 执行阶段失败；私密输出已清理，因此不能把这次失败解释成数据差异。
+
+### 4.2 主机 owner 实测与来源投影检查点
+
+2026-10-07 已通过 IaC 固定 owner 的临时 `/32` 访问，直接 SSH 执行 Playbooks 只读诊断：目标 PostgreSQL 为 `170010`，业务表数为 53，checkpoint 为 `2026100701:false`，运行中的受管应用写者为 0。访问结束后已撤销临时防火墙和 OS Login 密钥。此结果证明目标运行时和 schema 元数据就绪。
+
+[Playbooks #606](https://github.com/ai-workspace-infra/playbooks/pull/606) 修正来源指纹参数并提供脱敏失败阶段；[#607](https://github.com/ai-workspace-infra/playbooks/pull/607) 请求迁移来源连接 `default_transaction_read_only=on`，并拒绝覆盖该请求的启动选项。两项已合并、隔离 PG17 资格通过。实际 Supabase pooler 未应用此启动参数，因此不能单凭连接串证明默认只读。[Accounts #201](https://github.com/ai-workspace-services/accounts/pull/201) 已合并并通过隔离 PG17 资格，在显式只读事务内设置并核验两个只读状态；实际来源探针证明只读状态生效，rollback 后恢复原连接默认值。正式 Accounts 镜像为 `ghcr.io/ai-workspace-services/accounts:sha-072703033a4038c4025e30043d37c89d4ee3d8c0`，digest `sha256:065615850056aee3fd492f52b6cd383dd29fa0b94ac8cde11cf0e871712909db`，main 发布 run `37582769808` 成功。
+
+来源目录的只读比对定位出两类投影差异，其余现有业务表未发现字段增减或类型差异：
+
+| 来源旧结构 | 最新目标结构与处理 | 证据与状态 |
+| --- | --- | --- |
+| `users` 缺少 `subscription_valid_from`、`subscription_valid_until`、`last_active_at`、`archived_at` | 只对不存在的四个可空字段使用 `2026091301` 的原生 NULL 默认值；保留已有字段值、订阅表及额度/账本 | [Accounts #199](https://github.com/ai-workspace-services/accounts/pull/199) 已合并；正式 main 镜像 run `37580615861` 成功；用户/Proxy UUID 映射规则保持原样 |
+| `email_blacklist` 以 email 为主键，没有 UUID | 校验来源主键确为 email；按原始 email 精确字节推导稳定 UUIDv5，复制/比对使用同一投影；保留 email、创建时间和已有 UUID | [Accounts #200](https://github.com/ai-workspace-services/accounts/pull/200) 已合并，main 发布 run `37582062962` 成功；固定新镜像的真实全业务基线复制已完成 |
+
+目标始终使用完整最新 schema。来源投影须明确列举并经过 owner 资格验证，不通过修改 PROD schema、丢弃业务字段或放宽所有缺失字段来解除失败。
+
+2026-10-07 06:54–06:56 UTC 的基线复制回执证明将来源 44 张表投影到 Selfhost 最新 53 表 schema，24 个用户和 382,312 条业务记录完成一次单向复制，其中 `billing_ledger` 为 179,783 行。该快照中的 `full_business_equal=true`，但 `source_writers_paused=false`、`final_catchup_complete=false`、`database_cutover_approved=false`。它是运行期间快照，不是最终追平证明。随后通过来源只读事务和目标只读事务，按 email 排序，对 24 个用户的 email、password hash、Proxy UUID 计算长度前缀 SHA-256 摘要；双方用户数为 24，摘要相同（`7b10ac27bd520f2876d65b76b3c0161e30a7039f83f9b13c0be3cd919db503fc`），临时 SSH 访问已撤销。该检查证明这三个核心字段在该时点一致，不证明其他业务表一致、来源已停写或具备切库条件。之后单独全业务 compare 未生成有效回执，失败时没有输出表级差异，不能据此判定是数据不一致。
+
+部署与数据入口的能力边界也已实测：`selfhost-orchestrator.yml` 的 release-tag 路由可解析为 PROD `web-saas`、Terraform apply 和应用部署，`dns_mode=none` 保持域名路由不变；工作流包含主机 bootstrap、`roles/vhosts` 配置、GitOps tag 更新及 Doco-CD 部署/验收步骤。定向 dispatch 合同测试通过，但这是路由与合同验证，尚未真实执行 PROD 部署，也未证明指定 tag 的所有应用镜像均可拉取。
+
+`environment-data-operations.yml` 当前没有 PROD 全业务复制/同步模式：`legacy_import`、`migrate` 和 `selfhost_init` 被限制在 UAT，PROD Selfhost 支持的是 probe/verify 等既有操作；`selfhost_verify` 验证发布后运行状态和既存基线，不会从 Supabase 复制数据。Toolkit PROD 环境当前 `prevent_self_review=false`，而请求校验器要求其为 `true`，所以 PROD data-operations dispatch 会在取 Vault 凭据前被拒绝。现有全业务 copy/compare 仍在 `selfhost-orchestrator.yml` 的独立操作中。若后续统一从 data-operations 派发数据同步，需先在 Playbooks owner 建立并隔离资格验证对应的全业务操作，再以固定 owner SHA 接入 caller；不能把当前 selfhost_verify 当作同步证明。
+
+切换前须冻结全部来源写者并完成最终追平、全业务比对和单写者证据。Selfhost 尚未产生新写入时可以按已验证路由恢复 Serverless；一旦产生新写入，禁止直接返回旧 Supabase。此时保留维护态或使用同一 Selfhost 主库的应用版本回退；需要返回旧源时，必须另有获批的追平与重新比对合同。当前单向复制授权不包含反向写回源库。
 
 ## 5. 待调用的 uses 接口
 
