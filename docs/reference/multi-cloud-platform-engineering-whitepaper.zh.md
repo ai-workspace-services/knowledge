@@ -18,7 +18,7 @@ category: reference
 
 # 多云平台工程技术白皮书
 
-**版本：1.3 · 源码盘点基线：2026-10-05 · 运行与额度补充：2026-10-06 · 状态：架构与契约评审稿**
+**版本：1.3 · 源码盘点基线：2026-10-05 · 运行与额度补充：2026-10-06 · 跨仓状态补充：2026-10-07 · 状态：架构与契约评审稿**
 
 [English version](multi-cloud-platform-engineering-whitepaper.en.md) · [参考资料总览](overview.zh.md)
 
@@ -28,9 +28,9 @@ category: reference
 
 系统的基本分工是：**GitOps 声明目标，Toolkit 编排流程，IaC Modules 管云资源，Playbooks 管主机和服务，Vault 提供运行时身份与密钥。** 应用构建继续由服务 CI 或 artifacts 体系承担。
 
-当前架构已具备多云和多运行时入口，但执行职责尚未全部收敛。Toolkit 仍登记 15 项 legacy execution；共享平台路径与旧文档有冲突；XConnect 存在跨环境读取例外和新 caller 的 role 信任不匹配；真实升级 adapter 尚为空登记。因此，本白皮书分别描述当前源码、目标规范和未完成事项，不把文档、PR 合并或 CI 通过写成运行验收。
+当前架构已具备多云和多运行时入口，但执行职责尚未全部收敛。15 项 legacy execution 是原始审计基线，不是当前完整库存；按当前 Toolkit `1c3d248` 的冻结盘点，源码包含 12 项专用 runtime checker 与 14 项混合脚本/采集入口，另有 10 个 workflow inline 与一个包含 3 个 host 的 setup action。这是冻结的 14 项迁移范围，不应解读为 26 个独立执行引擎或全盘点。Toolkit `2fc6dd7` 已合并 PROD availability 与 summary 能力，因此不能再声称没有 PROD gate。其余共享平台路径、XConnect caller 信任和真实升级 adapter 的缺口仍需逐项验证。本白皮书分别描述当前源码、目标规范和未完成事项，不把文档、PR 合并或 CI 通过写成运行验收。
 
-1.1 版新增第 8.5 节的统一 Vault 路径提案，将 CICD 明确标注为陈旧命名空间，并给出按 scope/project/用途拆分的映射与迁移门槛。提案尚未改变真实 Vault、policy 或 caller。
+1.1 版曾新增第 8.5 节的统一 Vault 路径提案，将 CICD 明确标注为陈旧命名空间，并给出按 scope/project/用途拆分的映射与迁移门槛。提案尚未改变真实 Vault、policy 或 caller。
 
 ## 阅读导航
 
@@ -232,6 +232,27 @@ UCloud UHost 属于 Terraform 标准资源，不能因为名称相近而采用 U
 
 输入校验、云端身份验证、backend readiness、apply attempted 和实际输出、SSH trust、主机状态、业务验证是分别成立的门禁。发生部分 apply 或数据写入失败时保留原始失败证据，核实现状再恢复；cleanup 不能覆盖失败结果。[S2], [S9]
 
+### 6.1 五层调用关系与闭环放行
+
+五层模型把“谁触发”与“谁执行”分开：Toolkit 是共享控制面；Pipeline/GitHub 是入口、审批、编排和派发层，不是执行 owner；GitOps 保存期望状态；IaC 负责云资源、DNS、Registry、State 与 CMDB；Playbooks Roles 负责主机、服务、数据库迁移、备份、恢复和健康检查。
+
+```mermaid
+flowchart LR
+  P[Pipeline / GitHub 入口、审批、派发] --> T[Toolkit 共享校验、调用、回执与放行]
+  T --> G[GitOps desired state]
+  T --> I[IaC：云资源、DNS、Registry、State、CMDB]
+  T --> B[Playbooks Roles：主机、服务、DB、备份/恢复、健康]
+  G --> I
+  I --> B
+  I --> R[资源事实 / CMDB]
+  B --> R
+  R --> T
+```
+
+Toolkit 只执行输入校验、owner 调用、非空且有效回执校验及发布/放行；`.github/actions` 只承载控制逻辑，不隐藏云、主机、服务或数据库执行。Owner 的健康实现必须落在 Playbooks Roles；当前仍有 bare Playbooks task/script，roleification 是待完成项。Cloud DNS 事实仍由 IaC 负责，Toolkit 只校验声明 schema、digest、provenance 和 owner receipt。
+
+所有必需阶段均 fail closed：空回执、失败回执、缺回执、来源/环境/任务/版本不匹配都停止；可选且不适用的阶段必须在合同中预先声明，不能在运行后以“跳过”补写。容器仅 running 或缺少 health 不能算健康；Doco-CD 只同步/应用 GitOps 声明，版本跟踪用于 provenance，不另造一层全量 Doco-CD reconcile gate。健康、数据库、DNS/HTTPS、业务验收仍按各 owner 的独立证据放行。
+
 ## 7. Workflow 主链与专项入口
 
 ```mermaid
@@ -253,7 +274,7 @@ flowchart TD
 
 ### 7.1 Daily → UAT Hybrid
 
-Daily 创建跨仓不可变 tag、触发构建、验证构件，执行 Shared 只读就绪门禁。`dispatch-uat-combined.sh` 当前把 UAT 组合交付统一发往 Hybrid；Hybrid 读取 GitOps `topology/uat/hybrid/resource-matrix.json`，逐行选 Provider、账号、manifest 和子入口，等待精确子 run。
+Daily 创建跨仓不可变 tag、触发构建、验证构件，执行 Shared 只读就绪门禁。Pipeline/GitHub 在这里是入口、审批、阶段编排和 dispatch caller，不是 IaC 或 Playbooks 的执行 owner。`dispatch-uat-combined.sh` 当前把 UAT 组合交付统一发往 Hybrid；Hybrid 读取 GitOps `topology/uat/hybrid/resource-matrix.json`，逐行选 Provider、账号、manifest 和子入口，等待精确子 run；Toolkit 仍负责固定输入、匹配回执和最终放行。
 
 普通业务 deploy 跳过共享平台资源；Hybrid 显式维护操作仍有共享行处理能力，不能声称任何 operation 都无法触碰 Shared。组合部署拒绝携带数据同步和 XConnect release override；经校验的 Accounts baseline/schema 请求可显式传入子链。该路径跳过 Stripe catalog，不能报告 catalog 同步完成。[S5], [S9]
 
@@ -289,7 +310,7 @@ flowchart TD
 - **账户与账单 API**：稳定域名分别通过 `accounts-{serverless,selfhost}-prod.svc.plus`、`billing-{serverless,selfhost}-prod.svc.plus` 的 CNAME 与独立 Worker Routes 接入。CNAME 选择环境限定目标；Worker 根据模式与固定配置选择真实 origin，两者在同一发布回执内核对。原始 Host 的路由必须保留，避免继承目标绑定的错误假设。
 - **轻量 GTM**：三种模式均保留 Edge Gateway；运行在原生 Fetch/Web Crypto 上，默认 2500 ms 主节点预算。Hybrid 的超时/5xx 回退只用于 GET/HEAD/OPTIONS，不承担数据库复制、写入重放或多主协调。发布输入可覆盖非敏感变量，秘密仍由环境隔离的 OIDC→Vault 读取。
 - **容量边界**：Workers Free 为账户共享 100,000 次/日（UTC 零点重置），包括 Pages Functions 和其他 Workers；不调用 Functions 的 Pages 静态请求免费且不限量。Pages/CDN 静态资源应直接服务，避免每个静态请求经过 API Worker。（[Cloudflare 官方计费说明](https://developers.cloudflare.com/pages/functions/pricing/)）
-- **数据切换**：Serverless 为 Cloud Run + PROD Supabase，Selfhost 为 PROD all-in-one + PostgreSQL。复制按 email 唯一键匹配、保留 PROD Proxy UUID；身份域复制不足以放行，必须覆盖身份、订阅、额度、账本及全部业务表，最终追平后保证单写者，再验证生产入口。
+- **数据切换**：Serverless 为 Cloud Run + PROD Supabase，Selfhost 为 PROD all-in-one + PostgreSQL。53 表 schema 是前置条件；当前自动只读 compare 的四项是来源/目标用户数量、按 email 对应的 email 集合及值、password hash 字段值、Proxy UUID 字段值。登录、订阅、额度、账单和单写者确认属于人工业务验收，不调用业务 API 伪造通过，也不另加 53 表全业务自动门禁。停写、最终追平、单写者和回退前置条件仍必须保留，再验证生产入口。
 - **资源身份**：日常创建/更新资源复用一次 bootstrap 建立的 GitHub OIDC/WIF 和专用 Service Account；首次 bootstrap、信任合同修复与日常部署分开审批和记录，不把个人 GCP 登录作为发布前置。
 
 这套数据面调度与 Hybrid 的 IaC/部署子流水线编排分别验收：子 run 成功不证明稳定域名已切换；入口返回 200 也不证明两库业务一致。
@@ -932,7 +953,7 @@ Pages 承载静态页面/资源，通过免费 CDN 提供；Edge Gateway 保持�
 
 三种模式都保留 Worker 调度。Hybrid 框架仅允许 GET/HEAD/OPTIONS 在主节点超时或 5xx 后回退，POST/PUT/PATCH/DELETE 不跨两套数据库重试。PROD Accounts/Billing 的读回退当前也默认禁用：单向导入不能保证旧 Supabase 跟随 Selfhost 的新写入，需先建立并验收持续副本合同；UAT 与独立 Content 的安全方法回退保留。可达性回退不构成数据一致性的证明。Selfhost 未完成完整业务一致性与最终追平前，生产维持 Serverless；任何改写入后端的覆盖变量都须经过精确上游、全业务范围、PROD Proxy UUID 与单写者回执门禁。
 
-GitOps 保存域名/模式/上游声明，IaC 执行 DNS、Worker domain 等云资源变更，Edge Gateway owner 发布 Worker 路由代码，Playbooks 执行主机与 DB 初始化/复制，Toolkit 关联审批、固定来源及验收回执。改 CNAME 或 Worker 代码不等于主库已切换。本节是当前目标合同；生产 CNAME 改造、网关新发布和 Selfhost 主机部署/复制尚无成功运行验收；VM/资源 CMDB 已完成，后续主机/DB 仍待验收。
+GitOps 保存域名/模式/上游声明，IaC 执行 DNS、Worker domain 等云资源变更，Edge Gateway owner 发布 Worker 路由代码，Playbooks 执行主机与 DB 初始化/复制，Toolkit 关联审批、固定来源及验收回执。Doco-CD 只同步/应用 GitOps 声明；真正的部署验收是目标容器实例的 digest、应用健康和相应 owner 回执，版本跟踪不是额外全量 Doco-CD reconcile gate。改 CNAME 或 Worker 代码不等于主库已切换。本节是当前目标合同；生产 CNAME 改造、网关新发布和 Selfhost 主机部署/复制尚无成功运行验收；VM/资源 CMDB 已完成，后续主机/DB 仍待验收。
 
 #### 2026-10-06 代码交付与启用门槛
 
@@ -943,7 +964,7 @@ GitOps 保存域名/模式/上游声明，IaC 执行 DNS、Worker domain 等云�
 | [IaC #398](https://github.com/ai-workspace-infra/iac_modules/pull/398)、[#400](https://github.com/ai-workspace-infra/iac_modules/pull/400) 已合并 | 21 项 provider/请求检查，迁移后的 legacy 与 GTM DNS 行为测试通过；稳定 API CNAME 仅由 Edge guarded caller 发起 | 没有实际修改生产 CNAME，没有以 provider 收敛代替业务验收 |
 | [Toolkit #1326](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1326) DNS caller 迁移已合并 | preflight 固定 GitOps SHA，后续 lane 消费同一 SHA；调用固定 IaC reusable workflow，SIT/UAT/PROD role 源码增加唯一 owner SHA 而不扩大 ref/policy；PROD legacy Edge 部署跳过，品牌/Console/CORS 检查保留 | 新 owner 的 Vault job/workflow claims 与真实 UAT 调用待核验；冻结旧 executor 在 UAT 证据齐备后再删除 |
 | [GitOps #393](https://github.com/ai-workspace-infra/gitops/pull/393)、[Playbooks #592](https://github.com/ai-workspace-infra/playbooks/pull/592) 持久盘/空库保护已合并 | PROD Doco-CD target、明确 `/data/postgresql` bind、精确 CMDB/独立盘校验、空库守卫；Linux CI 验证格式化、挂载、幂等恢复及错误目标拒绝 | PROD VM 与资源 CMDB 已完成，PROD caller/主机集成待完成；Accounts #194 最新原生 Init SQL 已合并并通过 CI，镜像已由 CI 发布，目标执行资格尚待确认；UAT-only 数据操作限制仍在，不能据 CI 宣称 PROD 初始化完成 |
-| [GitOps #392](https://github.com/ai-workspace-infra/gitops/pull/392) API CNAME 声明（draft） | Accounts/Billing 分别声明模式限定域名 | owner/caller/Edge 合并并验证前不激活；启用前停止或等待旧来源 run 结束 |
+| [GitOps #392](https://github.com/ai-workspace-infra/gitops/pull/392) API CNAME 声明（已合并） | Accounts/Billing 分别声明三种 PROD topology mode 的 mode-qualified `worker-routes-cname` / `api_cname_records` | 声明已进入 GitOps main，但不等于 live DNS/Worker effect；实际 owner/caller 发布、HTTPS、业务与切换验收仍独立进行 |
 
 
 最新受控 [Edge 路由 plan 37468819907](https://github.com/ai-workspace-services/edge-gateway/actions/runs/37468819907) 已成功：Edge commit `3b649ddab5c42f3bd212a804a5ec6b3f4efa1374`，GitOps draft 固定 SHA `66f77850e3b94d469933c16006740a37980df099`，`prod/serverless`、`deploy=false`。CI、构件大小及计划通过，Deploy job skipped；没有读取 Vault 或改动 Worker/DNS，也没有放行业务切换。
@@ -958,7 +979,7 @@ GitOps 保存域名/模式/上游声明，IaC 执行 DNS、Worker domain 等云�
 
 | 编号 | 差异 | 后续 owner / 门槛 |
 | --- | --- | --- |
-| D01 | 15 项 legacy execution；scanner 不等于完整行为归属 | Toolkit 建 caller graph；IaC/Playbooks 分行为承接 |
+| D01 | 原始审计为 15 项 legacy execution；当前 Toolkit `1c3d248` 冻结盘点为 12 项专用 checker、14 项混合脚本/采集入口，另有 10 个 workflow inline 与 3-host setup action；scanner 仍不等于完整行为归属 | Toolkit 建 caller graph；IaC/Playbooks 分行为承接；冻结范围不是 26 个独立引擎或全盘点 |
 | D02 | Shared 路径与旧 KV 文档冲突 | Toolkit 路径/授权合同，GitOps 文档归并 |
 | D03 | XConnect UAT 读取 PROD host，existing-One 含 wildcard | 权限/迁移用途评审与精确消费者核验 |
 | D04 | runtime-control role 只信任旧 zero-cloud workflow | caller 与 role 合同修复、受控应用和 UAT |
@@ -983,18 +1004,20 @@ GitOps 保存域名/模式/上游声明，IaC 执行 DNS、Worker domain 等云�
 
 ### 12.3 PROD 混合云主线任务与交付顺序
 
-以下合并用户重复提出的入口、GTM 与一致性要求。主线为 **声明与资源 → 持久存储与空库初始化 → 单向数据复制 → 全业务一致性 → Edge Gateway 与 CNAME 切换 → 生产入口验收**。文档与本地代码完成不自动推进后面的运行状态。
+以下合并用户重复提出的入口、GTM 与一致性要求。主线为 **声明与资源 → 持久存储与空库初始化 → 单向数据复制 → 核心用户比对与人工业务验收 → Edge Gateway 与 CNAME 切换 → 生产入口验收**。文档与本地代码完成不自动推进后面的运行状态。
+
+当前交叉仓状态也必须按证据边界读取：Toolkit PR [#1370](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1370) 已合并 PROD availability/summary；Playbooks commit [`934e1e1`](https://github.com/ai-workspace-infra/playbooks/commit/934e1e1f729d8d5ecf1adcbae05a02c6b1ff7939) 已加入 PROD availability 与核心用户只读观察，但裸 task/script 的 Role 化、receipt 绑定和健康实现仍是待办；Playbooks PR [#617](https://github.com/ai-workspace-infra/playbooks/pull/617) 仍待合并，不能写成当前 main 已具备最终 Caddy 拓扑。Caddy 继续按既有 `web-saas-caddy` 容器设计描述，不能据此推断 system Caddy 与容器同时绑定 80/443。最近 Toolkit run [37612058777](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37612058777) 失败在旧 r26 Terraform 的 Org Policy 403 与既有 network/data disk 409，plan 为 8 add/0 change/0 destroy；Doco-CD、应用、DNS 及 DB 阶段被跳过。它是 state/adoption/policy-owner 诊断，不是 Caddy 或 DB 失败，也没有删除资源或扩大 IAM 的证据；当前没有新的 PROD 成功证据。
 
 | 主线任务 | owner / 代码边界 | 当前状态与完成门槛 |
 | --- | --- | --- |
 | M01 `open-platform-prod` Selfhost 资源 | GitOps 声明；IaC 创建云资源与 CMDB；Toolkit 固定版本编排 | GitOps #395、IaC #403、Toolkit #1329 已合并；IAM/API 与外网策略两份 live 收敛回执已取得，原 state/已建资源保留。OIDC apply 37493634930 已完成 4 新增/0 修改/0 删除，VM RUNNING；首次 CMDB 因无 POSIX profile 失败；IaC #408 修复后，plan 37501153551 无变更、apply 37501354395 整条成功，资源 CMDB 已发布；SSH 收紧 apply 37510999229 成功，0 新增/1 修改/0 删除。Toolkit #1331 固定原生待机 caller 已发布；主机/DB 验收另行记录 |
 | M02 品牌、控制台、API 边界 | 品牌/Portal owner 保留公开页面；GitOps 保存域名；IaC 执行 DNS/domain | `xworktech.com` 为品牌审核主页；`console.svc.plus` 为控制台；`accounts.svc.plus` / `billing.svc.plus` 为稳定 API。页面内容、TLS、登录、CORS 与审核材料分别验收，不宣称已通过上架审核 |
 | M03 PROD 主机部署与空库初始化 | Toolkit `selfhost-orchestrator.yml`；Playbooks 主机/容器/DB；Accounts release schema | GitOps #393 与 Playbooks #592 的 PROD 持久盘、bind 与空库保护已合并并通过 Linux CI；VM/资源 CMDB 已完成，Playbooks #593–#595 和 Toolkit #1331 待机 owner/caller 已合并；前三轮待机失败均已撤销临时访问；#599 修复凭据变量覆盖后，第四轮 37526370757 已完成 PG17/独立盘/空库/暂停写者与访问撤销，待机成功回执已接受。Playbooks #597 初始化 owner 已合并，Toolkit #1333 独立审核 caller 已合并，成功 standby 已接受，实际初始化待独立审核；Billing #44 SQL 与 Playbooks #600 受限执行器真实 PG17 资格已通过，Toolkit #1337 生产增量调用方已合并，实际初始化/增量仍待独立审核；只对不存在或真实空库初始化，拒绝非空库重建 |
-| M04 PROD Supabase → Selfhost 单向复制 | Playbooks 组织数据操作；Accounts `cmd/migratectl` 实现用户/身份逻辑 | 来源使用专用只读角色；规范化 email 唯一匹配，PROD Proxy UUID 不变。Accounts #196 完整 53 表复制/比对与 Playbooks #601 执行器已通过隔离 PG17 并合并，Toolkit #1338 原 Selfhost workflow 调用方已形成；来源身份合同、真实原生初始化/Billing/复制 acceptance 仍待批准与实际执行。旧身份域导入不代替全业务复制；已有 UAT 用户不同 UUID 的非空目标对齐需专用 reconciliation |
-| M05 切换资格与单写者 | 数据 owner 生成摘要/回执；Toolkit 校验来源与范围；Edge Gateway 消费门禁 | 已有 PROD 来源只读基线；目标尚未完成全业务一致性。Accounts #197 / Billing #45 的运行角色保护已通过 PG17 并合并，实际受控部署、来源冻结与最终追平尚未执行。逐表行数、email 关联摘要、Proxy UUID、身份、订阅、额度、账本均一致，最终追平与单写者条件成立后才允许改写入后端 |
-| M06 Worker 轻量 GTM 与 API CNAME | Edge Gateway 发布路由；IaC 执行 CNAME/domain；GitOps 提供固定声明 | Edge #28/#29、IaC #398/#400、Toolkit #1326 已合并；GitOps #392 声明尚未激活。Worker/发布/provider 契约及无凭据 plan 已验证，实际发布、Vault/owner/caller UAT 与生产验收待完成。PROD Accounts/Billing 读回退默认禁用。稳定 API CNAME 指向模式限定域名，三种模式保留 Worker；不能直接固定到 Cloud Run |
+| M04 PROD Supabase → Selfhost 单向复制 | Playbooks 组织数据操作；Accounts `cmd/migratectl` 实现用户/身份逻辑 | 来源使用专用只读角色；53 表只作为目标 schema 前置条件。当前自动只读 compare 仅核对用户数量、按 email 对应的 email 集合/值、password hash 字段值和 Proxy UUID 字段值；不把 53 表业务数据全量复制/比对作为当前自动放行门禁。来源身份合同、真实原生初始化/Billing/核心用户同步 acceptance 仍待批准与实际执行；登录、订阅、额度、账单和单写者另行人工验收 |
+| M05 切换资格与单写者 | 数据 owner 生成摘要/回执；Toolkit 校验来源与范围；Edge Gateway 消费门禁 | 已有 PROD 来源只读基线；目标尚未完成切换资格。53 表 schema 是前置条件；自动只读 compare 的四项是用户数量、按 email 对应的 email 集合/值、password hash 字段值和 Proxy UUID 字段值。登录、订阅、额度、账单、单写者和切换确认由人工记录，不调用业务 API 伪造通过，也不另加 53 表全业务自动门禁。来源冻结、最终追平和回退前置条件仍未执行 |
+| M06 Worker 轻量 GTM 与 API CNAME | Edge Gateway 发布路由；IaC 执行 CNAME/domain；GitOps 提供固定声明 | Edge #28/#29、IaC #398/#400、Toolkit #1326 已合并；GitOps #392 已合并，声明三种 PROD topology mode 的 mode-qualified `worker-routes-cname` / `api_cname_records`，但声明不等于 live DNS/Worker effect。实际发布、Vault/owner/caller UAT 与生产验收待完成。PROD Accounts/Billing 读回退默认禁用。稳定 API CNAME 指向模式限定域名，三种模式保留 Worker；不能直接固定到 Cloud Run |
 | M07 OIDC 与免费额度 | Toolkit/Vault/WIF 身份合同；各 owner 记录容量预算 | 既有 `prod` OIDC 已验证，无日常个人登录依赖。Pages 静态 CDN、Workers 账户共享日预算、Cloud Run billing account 月额度及 Supabase 组织/项目额度按 7.2.2 分别预算 |
-| M08 生产闭环与回退 | Toolkit 关联精确 run；Edge/服务 owner 验证公开入口；数据 owner 处理写入恢复 | 发布证据绑定 GitOps/owner/caller SHA、tag/digest、环境、资源、DB 摘要与入口结果。验证品牌/控制台不受影响、Accounts 登录/身份/权限、Billing/额度/账本。切换后若出现新写入，禁止仅改 CNAME 回到旧库；回退须先完成数据追平与单写者验收 |
+| M08 生产闭环与回退 | Toolkit 关联精确 run；Edge/服务 owner 验证公开入口；数据 owner 处理写入恢复 | 发布证据绑定 GitOps/owner/caller SHA、tag/digest、环境、资源、DB 摘要与入口结果。HTTPS 可达性独立验收；品牌/控制台保持原入口。Accounts/Billing 的登录、身份、权限、订阅、额度、账本及单写者由人工业务验收记录，不自动伪造通过。切换后若出现新写入，禁止仅改 CNAME 回到旧库；回退须先完成数据追平与单写者验收 |
 
 实现顺序与停止条件：
 
@@ -1005,7 +1028,7 @@ GitOps 保存域名/模式/上游声明，IaC 执行 DNS、Worker domain 等云�
 5. **UAT 升级资格单独闭环**：PROD 新空库部署/复制不替代原主线的 UAT 两跳全量同步、增量 schema、升级/回退/再次升级验收；PROD Full 升级仍须对应完整晋级资格。
 
 
-建议后续按批处理 existing-One 主机行为、Terraform/lease/state、DNS reconcile、主机健康/Caddy、SMTP Secret Manager Provider 写入；具体先后由合同依赖和可验证目标决定。15 项冻结登记只是静态检测覆盖，不是全部债务，也不是迁移完成指标。[S2]
+建议后续按批处理 existing-One 主机行为、Terraform/lease/state、DNS reconcile、主机健康/Caddy、SMTP Secret Manager Provider 写入；具体先后由合同依赖和可验证目标决定。14 项冻结迁移范围只是静态检测覆盖，不是 26 个独立执行引擎、全部债务或迁移完成指标。[S2]
 
 ## 附录 A：40 个 Workflow 全量清单
 

@@ -7,6 +7,7 @@
 ## 架构设计篇
 
 - [平台操作中心与 Daily Snapshot 发布验收架构](../design/platform-operations-daily-snapshot.zh.md)：全量参数、发布计划、MCP 接口与发布验收；方向 1 已选定，含 PROD 标签修订稿。
+- [多云平台工程技术白皮书](../reference/multi-cloud-platform-engineering-whitepaper.zh.md)：五层调用关系、Toolkit/Pipeline/IaC/Playbooks owner 边界、fail-closed 回执和 PROD 入口/数据验收边界。
 
 ## 与当前代码对齐的说明
 

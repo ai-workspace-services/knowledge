@@ -18,7 +18,7 @@ category: reference
 
 # Multi-Cloud Platform Engineering Technical White Paper
 
-**Version 1.2 · Source audit baseline: October 5, 2026 · Status: architecture and contract review draft**
+**Version 1.3 · Source audit baseline: October 5, 2026 · Runtime and quota supplement: October 6, 2026 · Cross-repository status supplement: October 7, 2026 · Status: architecture and contract review draft**
 
 [中文版](multi-cloud-platform-engineering-whitepaper.zh.md) · [Reference overview](overview.en.md)
 
@@ -28,9 +28,9 @@ Multi-cloud platform engineering connects desired configuration, execution logic
 
 The operating model is straightforward: **GitOps declares the target; Toolkit orchestrates; IaC Modules manages cloud resources; Playbooks configures hosts and services; Vault supplies runtime identity and secrets.** Service CI and the artifacts system retain responsibility for application builds.
 
-The platform has multi-cloud and multi-runtime entry points, but execution ownership is still converging. Toolkit registers 15 legacy execution items. Shared namespaces conflict with older documentation. XConnect has cross-environment reads and a workflow trust mismatch for a new caller. Real upgrade adapters remain unregistered. This paper distinguishes observed source behavior, target requirements, and incomplete work; documentation, merged PRs, and passing CI are not presented as runtime acceptance.
+The platform has multi-cloud and multi-runtime entry points, but execution ownership is still converging. Fifteen legacy execution items are the historical audit baseline, not the current complete inventory. The frozen Toolkit `1c3d248` baseline counts 12 dedicated runtime checkers and 14 mixed script/collection entries, plus 10 workflow-inline paths and one setup action containing 3 hosts. This is a frozen 14-item migration scope, not 26 independent engines or a complete inventory. Toolkit `2fc6dd7` merged PROD availability and summary capability, so the paper must not claim that no PROD gate exists. Shared namespaces, XConnect caller trust, and live upgrade adapters still require item-by-item verification. This paper distinguishes observed source behavior, target requirements, and incomplete work; documentation, merged PRs, and passing CI are not presented as runtime acceptance.
 
-Version 1.1 adds the unified Vault path proposal in section 8.5, explicitly marking CICD as a legacy namespace and mapping its material by scope/project/purpose with migration gates. The proposal has not changed live Vault, policies, or callers.
+The version 1.1 change added the unified Vault path proposal in section 8.5, explicitly marking CICD as a legacy namespace and mapping its material by scope/project/purpose with migration gates. The proposal has not changed live Vault, policies, or callers.
 
 ## Reading guide
 
@@ -232,6 +232,27 @@ Each request and sanitized receipt should correlate scope/environment, logical p
 
 Input validation, authenticated cloud identity, backend readiness, apply-attempt/output evidence, SSH trust, host status, and business validation are separate gates. Preserve original failure evidence after partial apply or data writes and inspect actual state before recovery. Cleanup must not overwrite failure with success. [S2], [S9]
 
+### 6.1 Five-layer invocation model and closed-loop release
+
+The five layers separate who triggers a route from who executes it: Toolkit is the shared control plane; Pipeline/GitHub is the entry, approval, orchestration, and dispatch layer, not the execution owner; GitOps stores desired state; IaC owns cloud resources, DNS, Registry, State, and CMDB; Playbooks Roles own hosts, services, database migration, backup, recovery, and health checks.
+
+```mermaid
+flowchart LR
+  P[Pipeline / GitHub entry, approval, dispatch] --> T[Toolkit validation, calls, receipts, release]
+  T --> G[GitOps desired state]
+  T --> I[IaC: cloud, DNS, Registry, State, CMDB]
+  T --> B[Playbooks Roles: host, service, DB, backup/recovery, health]
+  G --> I
+  I --> B
+  I --> R[Resource facts / CMDB]
+  B --> R
+  R --> T
+```
+
+Toolkit only validates inputs, calls owners, validates non-empty valid receipts, and releases the next gate. Toolkit `.github/actions` are control-plane helpers; they must not hide cloud, host, service, or database execution. Health implementation belongs in Playbooks Roles; bare Playbooks tasks/scripts still require roleification. Cloud DNS facts remain IaC-owned; Toolkit validates declaration schema, digest, provenance, and owner receipts.
+
+Required stages fail closed on empty, failed, missing, or mismatched source/environment/task/version receipts. Optional non-applicable stages must be predeclared by contract, not skipped after the fact. A running container or a missing health check is not healthy. Doco-CD only syncs/applies the GitOps declaration; version tracking is provenance, not an additional full Doco-CD reconciliation gate. Health, database, DNS/HTTPS, and business acceptance remain independent owner evidence.
+
 ## 7. Main workflow routes and specialist entry points
 
 ```mermaid
@@ -253,7 +274,7 @@ The diagram shows reachable calls, not branches executed by every operation.
 
 ### 7.1 Daily → UAT Hybrid
 
-Daily creates immutable cross-repository tags, dispatches builds, verifies artifacts, and performs a read-only Shared readiness check. `dispatch-uat-combined.sh` currently sends combined UAT delivery to Hybrid. Hybrid reads GitOps `topology/uat/hybrid/resource-matrix.json`, selects Provider, account, manifest, and child entry per row, and waits for exact child runs.
+Daily creates immutable cross-repository tags, dispatches builds, verifies artifacts, and performs a read-only Shared readiness check. Pipeline/GitHub is the entry, approval, orchestration, and dispatch caller here, not the IaC or Playbooks execution owner. `dispatch-uat-combined.sh` currently sends combined UAT delivery to Hybrid. Hybrid reads GitOps `topology/uat/hybrid/resource-matrix.json`, selects Provider, account, manifest, and child entry per row, and waits for exact child runs; Toolkit still validates fixed inputs, matching receipts, and release conditions.
 
 Ordinary business deploy skips Shared resources. Explicit Hybrid maintenance operations still have Shared-row handling, so it is inaccurate to claim every operation is unable to touch Shared. Combined deployment rejects data synchronization and XConnect release overrides; validated Accounts baseline/schema requests may be explicitly forwarded. This path skips Stripe catalog synchronization and must not report it as completed. [S5], [S9]
 
@@ -634,13 +655,21 @@ The third gap was a missing public 80/443 cloud-network declaration: local Caddy
 
 [Toolkit retirement PR #1314](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1314) removes the UAT-verified legacy DNS executor and two execution tests while retaining immutable caller-pin and gate checks; its merge/CI evidence is available in the PR. The original 15-item audit baseline remains historical. The scanner reports 14 items after deletion; other migrations retain their own deletion gates.
 
+### 11.5 Current invocation and PROD boundary supplement
+
+The current cross-repository record must be read with its evidence boundaries. Toolkit [PR #1370](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1370) merged PROD availability and summary capability. Playbooks commit [`934e1e1`](https://github.com/ai-workspace-infra/playbooks/commit/934e1e1f729d8d5ecf1adcbae05a02c6b1ff7939) added PROD availability and read-only core-user observation, while roleifying bare tasks/scripts, binding receipts, and implementing health checks remain open work. Playbooks [PR #617](https://github.com/ai-workspace-infra/playbooks/pull/617) is still pending; it must not be described as the final Caddy topology on main. Keep the existing `web-saas-caddy` container design; do not infer that system Caddy and the container both bind ports 80/443.
+
+The latest Toolkit [run 37612058777](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37612058777) failed in the old r26 Terraform path on an Organization Policy 403 and existing network/data-disk 409; its plan was 8 add, 0 change, 0 destroy, and Doco-CD/application/DNS/DB jobs were skipped. This is a state/adoption/policy-owner diagnostic, not a Caddy or database failure, and provides no evidence of resource deletion or expanded IAM. There is no new PROD success evidence from that run.
+
+For PROD data movement, the 53-table schema is a prerequisite. The four automated read-only comparisons are source/target user count, the email set and corresponding values matched per email, password-hash field values, and Proxy UUID field values. Login, subscription, quota, billing, and single-writer checks are manual business acceptance; no business API or synthetic pass is used. Writer pause, final catch-up, rollback preconditions, and independent HTTPS acceptance remain separate gates. Cloudflare Pages/Workers continue to serve `xworktech.com` and `console.svc.plus`; Edge Gateway selects Accounts/Billing serverless or selfhost, while IaC owns the mode-qualified Accounts/Billing CNAME declarations. GitOps [PR #392](https://github.com/ai-workspace-infra/gitops/pull/392) is merged and declares the three PROD topology modes, but a declaration is not a live DNS/Worker effect.
+
 ## 12. Gap register and implementation roadmap
 
 ### 12.1 Seven gaps from the original audit
 
 | ID | Gap | Subsequent owner/gate |
 | --- | --- | --- |
-| D01 | Fifteen legacy execution items; scanner is not a complete ownership analysis | Toolkit caller graph; IaC/Playbooks take over individual behaviors |
+| D01 | Historical audit had fifteen legacy execution items; the current Toolkit `1c3d248` frozen inventory counts 12 dedicated checkers and 14 mixed script/collection entries, plus 10 workflow-inline paths and a 3-host setup action; scanner is not a complete ownership analysis | Toolkit caller graph; IaC/Playbooks take over individual behaviors; the frozen scope is not 26 independent engines or the full inventory |
 | D02 | Shared paths conflict with older KV documentation | Toolkit path/authorization contracts and GitOps documentation reconciliation |
 | D03 | XConnect UAT reads PROD host records; existing-One includes a wildcard | Permission/migration-purpose review and exact consumer inventory |
 | D04 | Runtime-control role trusts only the old zero-cloud workflow | Caller/role repair, controlled application, UAT |
@@ -663,7 +692,7 @@ The AI Aggregator documentation discrepancy in section 8.4 was recorded during w
 
 Each batch supplies a behavior/caller inventory, parameters and failure semantics, dependency order, acceptance, and rollback. Split mixed XConnect Terraform/lease/Provider operations from host enrollment/observation. Accounts invitation success does not prove a host joined. Old-copy deletion requires owner/caller merged SHAs, actual UAT, failure/idempotency/cleanup evidence, and post-deletion CI.
 
-Suggested subsequent batches cover existing-One host behavior, Terraform/lease/state, DNS reconciliation, host readiness/Caddy, and SMTP Secret Manager Provider writes. Contract dependencies and verifiable targets determine the exact order. Fifteen frozen items measure static detection coverage, not all technical debt or migration completion. [S2]
+Suggested subsequent batches cover existing-One host behavior, Terraform/lease/state, DNS reconciliation, host readiness/Caddy, and SMTP Secret Manager Provider writes. Contract dependencies and verifiable targets determine the exact order. The frozen 14-item migration scope measures static detection coverage, not 26 independent engines, all technical debt, or migration completion. [S2]
 
 ## Appendix A: Complete inventory of 40 workflows
 
