@@ -893,7 +893,7 @@ Toolkit [#1340](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/
 
 **正式镜像资格回执（2026-10-07）**：不可变 tag `v2026.10.07-r5`（Toolkit `161e2e27f7b2063de473032edb66c074ea44e9a3`）触发的 [PROD managed runtime qualification run 37556123772](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37556123772) 已成功。该 run 只执行 Accounts/Billing 的短暂、隔离、standby 镜像探针，原生 schema、Billing schema、全业务复制、DNS、应用部署和所有数据库相关 jobs 均为 skipped；因此这份成功回执只证明固定镜像的非数据启动边界和清理流程，不能证明生产数据库可写、schema 已初始化、业务数据已复制或主库已切换。
 
-Accounts [#189](https://github.com/ai-workspace-services/accounts/pull/189) 的冲突已在分支 `codex/controlled-migrate-accounts` 提交 `cfd51d882ca9ac9b44b81d5ce77a07267998eb2c` 解决并推送；该 PR 的原生初始化、managed runtime、全业务复制、生命周期迁移、构建和安全检查均已通过，PR 当前仍为 OPEN，尚未合入 `main`。受控迁移命令仍只允许显式的起始版本、目标版本和 SQL SHA-256，生产使用前仍须经过正式合并、不可变发布和目标环境回执。
+Accounts [#189](https://github.com/ai-workspace-services/accounts/pull/189) 的冲突已在分支 `codex/controlled-migrate-accounts` 提交 `cfd51d882ca9ac9b44b81d5ce77a07267998eb2c` 解决并推送；该 PR 的原生初始化、managed runtime、全业务复制、生命周期迁移、构建和安全检查均已通过，并已以 merge commit `96315629ccc2ef05c9bc70d031d19e904f9ab120` 合入 `main`。受控迁移命令仍只允许显式的起始版本、目标版本和 SQL SHA-256，生产使用前仍须经过不可变发布和目标环境回执。
 
 IAM/API 与外网策略两个阶段各自 plan → 审查摘要 → apply → 再次 plan 验证 no-op。前者仅补齐现有 deployer 的项目内防火墙管理、策略读取和 API；后者仅在原 Web SaaS state 管理固定实例外网许可。不授予日常 deployer 组织策略管理权限，不创建 VM/network/disk。已合并的 [GitOps #394](https://github.com/ai-workspace-infra/gitops/pull/394) 将 backend 声明对齐现有 Vault 合同，两个 state key 不变，不执行 state 迁移。用户可显式选择已授权本地账号用于一次性短期 token 获取，或使用已批准的环境/Vault 凭据；凭据仅走运行时，日常发布仍为 GitHub OIDC。已有 auth/identity/state/shared-policy Shell 脚本保持各自职责，不自动串联写凭据或绕过 PROD Terraform state。当前两份 live 回执已取得，后续仍须检查完整资源计划无删除/替换及真实 VM/CMDB。
 
