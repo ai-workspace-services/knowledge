@@ -47,3 +47,19 @@ sections:
         href: /docs/reference/coverage-matrix
       - title: 历史文档映射
         href: /docs/reference/legacy-docs
+  - title: AI 协作指南
+    items:
+      - title: 专栏总览与目录
+        href: /docs/zh/ai-collaboration-guide/
+      - title: 完整全渠道指南
+        href: /docs/zh/ai-collaboration-guide/full-guide
+      - title: 第 1 篇：认知重构篇
+        href: /docs/zh/ai-collaboration-guide/01-cognitive-shift
+      - title: 第 2 篇：执行双核篇
+        href: /docs/zh/ai-collaboration-guide/02-dual-execution-engines
+      - title: 第 3 篇：工程中枢篇
+        href: /docs/zh/ai-collaboration-guide/03-engineering-backbone-and-judge
+      - title: 第 4 篇：事实与壁垒篇
+        href: /docs/zh/ai-collaboration-guide/04-research-grounding-and-specialist
+      - title: 第 5 篇：闭环与未来篇
+        href: /docs/zh/ai-collaboration-guide/05-closed-loop-and-model-routing
