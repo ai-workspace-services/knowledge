@@ -6,6 +6,7 @@
 
 - [中文版](docs/reference/multi-cloud-platform-engineering-whitepaper.zh.md)
 - [English version](docs/reference/multi-cloud-platform-engineering-whitepaper.en.md)
+- [Toolkit Daily Main Snapshot 实施规划与表格审计](docs/reference/platform-ops-toolkit-daily-main-snapshot-plan.zh.md)
 
 完整覆盖四仓职责、40 个 workflow 调用链、GitOps 与 IaC state、Vault 路径/权限及迁移验收，源码基线为 2026-10-05。
 

@@ -20,6 +20,7 @@ tags:
 
 - [参考资料总索引与 PDF 合订编排](index.md)
 - [多云平台工程技术白皮书——英文版](multi-cloud-platform-engineering-whitepaper.en.md)
+- [Toolkit Daily Main Snapshot 实施规划与表格审计](platform-ops-toolkit-daily-main-snapshot-plan.zh.md)
 - [内容规范](content-schema.zh.md)
 - [覆盖矩阵](coverage-matrix.zh.md)
 - [历史文档映射](legacy-docs.zh.md)
