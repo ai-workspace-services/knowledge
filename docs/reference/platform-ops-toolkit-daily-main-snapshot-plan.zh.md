@@ -164,6 +164,8 @@ Edge Gateway/CNAME 切换
 
 部署与数据入口的能力边界也已实测：`selfhost-orchestrator.yml` 的 release-tag 路由可解析为 PROD `web-saas`、Terraform apply 和应用部署，`dns_mode=none` 保持域名路由不变；工作流包含主机 bootstrap、`roles/vhosts` 配置、GitOps tag 更新及 Doco-CD 部署/验收步骤。定向 dispatch 合同测试通过，但这是路由与合同验证，尚未真实执行 PROD 部署，也未证明指定 tag 的所有应用镜像均可拉取。
 
+真实部署前还需补齐应用 standby 运行合同：当前 GitOps PROD Accounts/Billing tag 为 `v2026.09.02-r7`，对应 Accounts、Billing 源码 tag 均不含 `internal/dbruntime/runtime.go`；Playbooks `web_saas_host_config` 也未写入 `DATABASE_RUNTIME_ROLE` 或 `DATABASE_BACKGROUND_WRITERS`。因此现有 `operation=deploy` 虽可把应用部署到 Selfhost PostgreSQL，却不能保证先以 standby/禁止后台写者方式启动。须先发布包含 managed runtime 的 Accounts/Billing release images，再由 Playbooks owner 明确渲染 standby 角色并做入口探针，最后才允许在单写者门槛后启用 primary。
+
 `environment-data-operations.yml` 当前没有 PROD 全业务复制/同步模式：`legacy_import`、`migrate` 和 `selfhost_init` 被限制在 UAT，PROD Selfhost 支持的是 probe/verify 等既有操作；`selfhost_verify` 验证发布后运行状态和既存基线，不会从 Supabase 复制数据。Toolkit PROD 环境当前 `prevent_self_review=false`，而请求校验器要求其为 `true`，所以 PROD data-operations dispatch 会在取 Vault 凭据前被拒绝。现有全业务 copy/compare 仍在 `selfhost-orchestrator.yml` 的独立操作中。若后续统一从 data-operations 派发数据同步，需先在 Playbooks owner 建立并隔离资格验证对应的全业务操作，再以固定 owner SHA 接入 caller；不能把当前 selfhost_verify 当作同步证明。
 
 切换前须冻结全部来源写者并完成最终追平、全业务比对和单写者证据。Selfhost 尚未产生新写入时可以按已验证路由恢复 Serverless；一旦产生新写入，禁止直接返回旧 Supabase。此时保留维护态或使用同一 Selfhost 主库的应用版本回退；需要返回旧源时，必须另有获批的追平与重新比对合同。当前单向复制授权不包含反向写回源库。
