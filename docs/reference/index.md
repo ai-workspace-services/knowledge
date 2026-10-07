@@ -1,6 +1,6 @@
 ---
 title: 参考资料总索引与 PDF 合订编排 / Reference index and PDF compilation plan
-description: 已核验的 34 项多云白皮书、总体架构、容灾、四仓契约、共用规范和专题来源索引；a verified 34-item source index for PDF compilation.
+description: 已核验的 36 项多云白皮书、总体架构、容灾、四仓契约、共用规范、数据库安全操作和专题来源索引；a verified 36-item source index for PDF compilation.
 slug: index
 lang: zh
 tags:
@@ -12,7 +12,7 @@ tags:
 
 # 参考资料总索引与 PDF 合订编排
 
-本页是 34 项公开资料的可编辑索引，服务于多云平台工程白皮书、总体架构评审和后续 PDF 合订准备。条目按主题分组，优先链接到本仓库真实文件；跨仓库条目使用固定 `origin/main` SHA 的 GitHub 链接，便于复核来源版本。
+本页是 36 项公开资料的可编辑索引，服务于多云平台工程白皮书、总体架构评审和后续 PDF 合订准备。条目按主题分组，优先链接到本仓库真实文件；跨仓库条目使用固定 `origin/main` SHA 的 GitHub 链接，便于复核来源版本。
 
 GitHub 组织入口：[ai-workspace-infra](https://github.com/ai-workspace-infra)。
 
@@ -105,6 +105,13 @@ GitHub 组织入口：[ai-workspace-infra](https://github.com/ai-workspace-infra
 | 32 | Global Mesh 产品介绍与云中立现代架构深度白皮书 | zh | knowledge working tree | [docs/zh/products-global-mesh.md](../zh/products-global-mesh.md) |
 | 33 | cloud-infrastructure-devsecops-baseline 目录 | mixed | knowledge working tree | [content/02-iac-devops/cloud-infrastructure-devsecops-baseline/](../../content/02-iac-devops/cloud-infrastructure-devsecops-baseline/) |
 | 34 | 02-iac-devops 目录 | mixed | knowledge working tree | [content/02-iac-devops/](../../content/02-iac-devops/) |
+
+## 六、数据库与安全操作
+
+| # | 标题 | 语言 | 来源版本 | 文件或入口 |
+| ---: | --- | --- | --- | --- |
+| 35 | Supabase 操作参考：专用只读角色、RLS 与受控连接 | zh | knowledge working tree | [docs/reference/supabase-operations.zh.md](supabase-operations.zh.md) |
+| 36 | Supabase Operations Reference: Dedicated Read-only Role, RLS, and Controlled Connections | en | knowledge working tree | [docs/reference/supabase-operations.en.md](supabase-operations.en.md) |
 
 ## 使用与维护约束
 

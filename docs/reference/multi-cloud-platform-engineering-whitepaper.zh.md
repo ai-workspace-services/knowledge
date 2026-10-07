@@ -628,6 +628,18 @@ UAT 完整演练要求准备、升级验收、回滚验收、同构件再次升�
 
 checkpoint 与隔离恢复绑定同环境、release、run；migration 绑定精确起止 schema、checksum、dirty 状态、锁/超时及向前兼容；rollback 回退应用并保留兼容扩展 schema，不执行破坏性 down migration；repromotion 证明同 digest、无重建、无共享服务 bootstrap、无 PROD→UAT 数据同步。任一阶段失败停止后续动作，核实现状并修复后新开 run，从准备重新走完整演练，不跳过或复用不匹配回执。[S15]
 
+### 10.2.1 Supabase 源库只读合同与使用场景
+
+Supabase 角色、逐表授权、RLS、连接模式和安全预检的操作细节见[《Supabase 操作参考》](supabase-operations.zh.md)。白皮书中的“只读源”特指 `readonly_release`：`NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOINHERIT NOBYPASSRLS`、无成员继承、无 public 业务表 DML/序列变更权限，并只对批准的 53 张目标业务表显式授予 `SELECT`。来源允许 44～53 张，其中 9 张可选；`auth`、`storage` 和其他 schema 不因迁移需要而自动纳入。
+
+这里必须区分四种语义：只读数据库用户是权限边界；`default_transaction_read_only=on` 是防误操作的默认值；单次 `READ ONLY`/repeatable-read 是快照约束；read replica 是可有延迟的读取拓扑。它们都不单独证明全量复制一致、writer 已停止或具备切主资格。RLS 保持开启；`row_security=off` 对普通角色应 fail closed，不能作为绕过策略。启用 RLS 的批准表必须有精确的 `release_initialization_readonly AS PERMISSIVE FOR SELECT TO readonly_release USING (true)`，并排除适用的 restrictive `SELECT/ALL` policy；不得关闭全库 RLS 或授予 `BYPASSRLS`。
+
+因此只读账号可用于最小权限分析/报表、审计、受控迁移源和复制一致性预检。Serverless 仍在 primary 上运行时，只限制迁移账号，不把整库置为停写。当前 PROD pipeline 只接受从 Connect 对话框取得的 Supavisor Session `role.projectref:5432` TLS URI，运行时字段为 Vault 逻辑路径 `kv/prod/database-upgrade`（KV v2 API `kv/data/prod/database-upgrade`）的 `PROD_SUPABASE_READONLY_DSN`，映射到 `NATIVE_SOURCE_DSN`；这不意味着 Direct URI 可以直接套用该 pipeline。凭据由用户通过安全流程提交，不进入仓库或日志。
+
+Accounts native 52 张表加 Billing 1 张表构成目标 53 表；`users`、MFA、sessions、bridge credentials 等仍可能含敏感数据，复制须另有数据范围和安全执行批准。来源 identity hash 不包含密码，必须先审核角色、project ref、session host/port、数据库、TLS、方向等 canonical tuple，再由受控流程登记摘要；不能用自证 hash 填 `identity_sha` 或 `ready`。UAT 的 `bootstrap_full_business_credentials.py` 是硬编码的 UAT 52 表两跳流程，不能直接套到 PROD 53 表。
+
+切换前仍要单独确认全 writer 清单、停写窗口、最终 catch-up、逐表/逐字段一致性、回退点和业务验收；point-in-time equality 不等于切主资格。独立 data approval 机制保留为可配置 policy，当前默认值为 `false`；可按 GitHub Environment approval 等层次组合，不把它改写成永久唯一门槛，也不削弱其他发布、数据和业务验收。
+
 ### 10.3 当前执行条件
 
 `adapters.json` 为 `{"schema":2,"uat":{},"prod":{}}`。控制面、离线测试和 disposable PostgreSQL 加密备份/隔离恢复证据不能替代真实 UAT 备份恢复、升级、回滚和业务验证；当前不能宣称完整真实升级演练或 PROD Hybrid 已可用。[S15]
@@ -853,7 +865,7 @@ Playbooks [#597](https://github.com/ai-workspace-infra/playbooks/pull/597) 已�
 
 **最新原生初始化候选**：[Accounts #194](https://github.com/ai-workspace-services/accounts/pull/194) 提供 52 张 Accounts 业务表的最终直接 Init SQL、manifest 与预编译 migratectl init；默认预演，实际写入要求精确 SQL hash、空库与暂停写者确认，事务锁/超时保护，建立干净增量版本 `2026100601`。本地与最终 PostgreSQL 17 CI 验证通过，已合并为 `ddee4b01778fd1d1d644a1bc936624c81ec76093`；合并后的 [CI 37500884987](https://github.com/ai-workspace-services/accounts/actions/runs/37500884987) 已成功发布 full-SHA 镜像 `ghcr.io/ai-workspace-services/accounts:sha-ddee4b01778fd1d1d644a1bc936624c81ec76093`，manifest digest `sha256:feabb7179713ff57914ad20e2afc6816414672edf7d480d6035e2d9c667b6f30`、SQL hash `842cef3beb98ef819dc854ecdf5f85683233641a0cd85a9156b30ad59f7e0206`；Playbooks #597 PROD 初始化 owner 已资格确认，实际初始化仍待独立审核。所有初始化回执 `database_cutover_approved=false`；Billing 独立 `cloud_vendor_costs` schema 不能默认为这 52 表已覆盖。
 
-Billing [#44](https://github.com/ai-workspace-services/billing-service/pull/44) 已合并独立 `cloud_vendor_costs` 增量 SQL 与固定摘要 manifest；合并后的 [PostgreSQL 17 资格检查 37522495984](https://github.com/ai-workspace-services/billing-service/actions/runs/37522495984) 成功。迁移版本由 `2026100601` 升至 `2026100701`，没有业务 seed 或破坏性 down；完整目标 scope 为 Accounts 52 表加 Billing 1 表。该资格检查不等于生产已执行：Playbooks [#600](https://github.com/ai-workspace-infra/playbooks/pull/600) 已合并固定 SQL/hash、精确前后版本、零业务行和停止写者守卫的受限执行器；本地 95 项 owner 检查与最终 [PostgreSQL 17 资格检查 37529510281](https://github.com/ai-workspace-infra/playbooks/actions/runs/37529510281) 全部成功，真实执行固定 Accounts 原生初始化加 Billing 第 53 表升级、重复升级和错误摘要拒绝。第一次检查 37527995099 发现旧 migratectl 要求已应用版本的历史 SQL 文件；[Accounts #195](https://github.com/ai-workspace-services/accounts/pull/195) 已合并为 `ac3239a6ddb89fd49c2b15416bf5f6ea588c6797`，bounded runner 将已应用版本作为无 SQL 的元数据 checkpoint，只暴露下一份已核验 SQL，不重放历史或提供 down 路径。合并后的 [Accounts main CI 37529455394](https://github.com/ai-workspace-services/accounts/actions/runs/37529455394) 已发布 full-SHA 镜像 `ghcr.io/ai-workspace-services/accounts:sha-ac3239a6ddb89fd49c2b15416bf5f6ea588c6797`，digest `sha256:8a8d92fc2d7cc8a8855400970bb971436fc117bd39366595f55f7e1283a1e961`，native SQL hash/52 表/初始版本不变；Toolkit [#1336](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1336) 固定该镜像与已资格确认的 owner。生产仍需 registry pull/compiled manifest/实际初始化回执及独立审核，资格检查不代替生产执行。
+Billing [#44](https://github.com/ai-workspace-services/billing-service/pull/44) 已合并独立 `cloud_vendor_costs` 增量 SQL 与固定摘要 manifest；合并后的 [PostgreSQL 17 资格检查 37522495984](https://github.com/ai-workspace-services/billing-service/actions/runs/37522495984) 成功。迁移版本由 `2026100601` 升至 `2026100701`，没有业务 seed 或破坏性 down；完整目标 scope 为 Accounts 52 表加 Billing 1 表。该资格检查不等于生产已执行：Playbooks [#600](https://github.com/ai-workspace-infra/playbooks/pull/600) 已合并固定 SQL/hash、精确前后版本、零业务行和停止写者守卫的受限执行器；本地 95 项 owner 检查与最终 [PostgreSQL 17 资格检查 37529510281](https://github.com/ai-workspace-infra/playbooks/actions/runs/37529510281) 全部成功，真实执行固定 Accounts 原生初始化加 Billing 第 53 表升级、重复升级和错误摘要拒绝。第一次检查 37527995099 发现旧 migratectl 要求已应用版本的历史 SQL 文件；此前 [Accounts #195](https://github.com/ai-workspace-services/accounts/pull/195) 的 `ac3239a6ddb89fd49c2b15416bf5f6ea588c6797` 与 Toolkit [#1336](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1336) 固定的旧镜像仅保留为历史资格记录，已被当前初始化 pin 取代，不是当前建议。当前三处初始化引用已由 Toolkit [#1341](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1341) 合并提交 `ae946ec1` 对齐到 Accounts `fabe68a85b4d90826dccdfe6a2116ef025f475d4` 与 digest `sha256:43542e4e6e95f1ee6a37f0f88cd4ce14cc46825867375b7f92df12924e563f02`。资格检查不代替 registry pull/compiled manifest/实际初始化回执及独立审核；source/init/Billing/copy acceptance 仍为 false/null。
 
 **Billing 生产调用方补充（2026-10-07）**：Toolkit [#1337](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1337) 已通过全部 CI 并合并为 `d48c86727aebdfd644798a0a28a2e3e1f2db07d9`，提供 `native-billing-plan` / `native-billing`。读取凭据前核对本轮独立数据审核、真实原生初始化成功 run/attempt/tag/SHA、原始 artifact/回执摘要、原资源与待机证据；预演或外来回执不能代替实际初始化。初始化 acceptance 仍为 false，真实初始化回执字段为空；这次合并没有执行生产 Billing SQL 或切换主库。
 
@@ -893,7 +905,7 @@ Toolkit [#1340](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/
 
 **正式镜像资格回执（2026-10-07）**：不可变 tag `v2026.10.07-r5`（Toolkit `161e2e27f7b2063de473032edb66c074ea44e9a3`）触发的 [PROD managed runtime qualification run 37556123772](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37556123772) 已成功。该 run 只执行 Accounts/Billing 的短暂、隔离、standby 镜像探针，原生 schema、Billing schema、全业务复制、DNS、应用部署和所有数据库相关 jobs 均为 skipped；因此这份成功回执只证明固定镜像的非数据启动边界和清理流程，不能证明生产数据库可写、schema 已初始化、业务数据已复制或主库已切换。
 
-Accounts [#189](https://github.com/ai-workspace-services/accounts/pull/189) 的冲突已在分支 `codex/controlled-migrate-accounts` 提交 `cfd51d882ca9ac9b44b81d5ce77a07267998eb2c` 解决并推送；该 PR 的原生初始化、managed runtime、全业务复制、生命周期迁移、构建和安全检查均已通过，并已以 merge commit `96315629ccc2ef05c9bc70d031d19e904f9ab120` 合入 `main`。受控迁移命令仍只允许显式的起始版本、目标版本和 SQL SHA-256，生产使用前仍须经过不可变发布和目标环境回执。
+Accounts [#189](https://github.com/ai-workspace-services/accounts/pull/189) 已合并提交 `96315629`；对应 [CI run 37557225304](https://github.com/ai-workspace-services/accounts/actions/runs/37557225304) 与 PostgreSQL 17 job `11258613435901` 已通过。该结果证明代码/CI 资格，不等于实际环境迁移验收；source/init/Billing/copy acceptance 仍为 false/null，受控迁移命令仍只允许显式的起始版本、目标版本和 SQL SHA-256，生产使用前仍须取得不可变发布和目标环境回执。
 
 IAM/API 与外网策略两个阶段各自 plan → 审查摘要 → apply → 再次 plan 验证 no-op。前者仅补齐现有 deployer 的项目内防火墙管理、策略读取和 API；后者仅在原 Web SaaS state 管理固定实例外网许可。不授予日常 deployer 组织策略管理权限，不创建 VM/network/disk。已合并的 [GitOps #394](https://github.com/ai-workspace-infra/gitops/pull/394) 将 backend 声明对齐现有 Vault 合同，两个 state key 不变，不执行 state 迁移。用户可显式选择已授权本地账号用于一次性短期 token 获取，或使用已批准的环境/Vault 凭据；凭据仅走运行时，日常发布仍为 GitHub OIDC。已有 auth/identity/state/shared-policy Shell 脚本保持各自职责，不自动串联写凭据或绕过 PROD Terraform state。当前两份 live 回执已取得，后续仍须检查完整资源计划无删除/替换及真实 VM/CMDB。
 
@@ -1065,12 +1077,15 @@ GitOps 保存域名/模式/上游声明，IaC 执行 DNS、Worker domain 等云�
 
 ### 相关仓内引用
 
-- [参考资料总索引与 PDF 合订编排](index.md)
-
+- [ai-workspace-infra GitHub 组织](https://github.com/ai-workspace-infra)
 - [多云编排架构](../../content/02-iac-devops/cloud-infrastructure-devsecops-baseline/10-multi-cloud-orchestrator-architecture.zh.md)
 - [多云身份 Bootstrap 与状态契约](../../content/02-iac-devops/cloud-infrastructure-devsecops-baseline/11-cloud-oidc-bootstrap-contract.zh.md)
 - [平台操作中心与 Daily Snapshot 发布验收架构](../design/platform-operations-daily-snapshot.zh.md)
 - [VPS + Serverless 混合部署落地指南](../zh/hybrid-serverless-architecture-vault-pipeline-plan/README.md)
+- [Supabase 操作参考：专用只读角色、RLS 与受控连接](supabase-operations.zh.md)
+- [Supabase：Postgres Roles](https://supabase.com/docs/guides/database/postgres/roles)
+- [Supabase：数据库连接方式](https://supabase.com/docs/guides/database/connecting-to-postgres)
+- [PostgreSQL：`row_security` 与只读事务默认值](https://www.postgresql.org/docs/current/runtime-config-client.html#GUC-ROW-SECURITY)
 
 - [S1 · Toolkit 仓库与交付入口](https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/2e7b1d9387de615f882ec6cf8084781d0d006415/README.md)
 - [S2 · 执行职责迁移交接](https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/2e7b1d9387de615f882ec6cf8084781d0d006415/docs/agent/2026-10-05-ownership-migration-handoff.md)
@@ -1104,6 +1119,7 @@ GitOps 保存域名/模式/上游声明，IaC 执行 DNS、Worker domain 等云�
 - [Shared Vault declaration](https://github.com/ai-workspace-infra/gitops/blob/d6a734b12e91241557803895ad454c538ea5d6ae/resources/svc.plus/shared/vault/server.yaml)
 - [Playbooks execution entries](https://github.com/ai-workspace-infra/playbooks/blob/94b9ca010efb1eeb62469f791a910dd361f1abae/scripts/pipeline/README.md)
 - [Terraform rendering constraints](https://github.com/ai-workspace-infra/iac_modules/blob/a0185e61fc2b41ac4dbd40c8037016aaef1b3973/terraform-hcl-standard/AGENTS.md)
+- [参考资料总索引与 PDF 合订编排](index.md)
 
 [S1]: https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/2e7b1d9387de615f882ec6cf8084781d0d006415/README.md
 [S2]: https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/2e7b1d9387de615f882ec6cf8084781d0d006415/docs/agent/2026-10-05-ownership-migration-handoff.md

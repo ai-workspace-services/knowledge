@@ -568,6 +568,20 @@ A full UAT rehearsal requires preparation, upgrade acceptance, rollback acceptan
 
 Checkpoints and isolated restores bind to the same environment/release/run. Migration binds exact start/end schema versions, checksum, dirty state, locks/timeouts, and forward compatibility. Rollback reverts the application while retaining compatible expanded schema; it does not run destructive down migrations. Repromotion proves the same digest, no rebuild, no Shared bootstrap, and no PROD→UAT data synchronization. A failed phase stops later actions. Inspect and repair actual state, then start a new run from preparation instead of skipping phases or reusing mismatched receipts. [S15]
 
+### 10.2.1 Supabase source read-only contract and use cases
+
+The [Supabase Operations Reference](supabase-operations.en.md) contains the detailed role, table-grant, RLS, connection, and safety-preflight procedure. “Read-only source” in this paper means `readonly_release` with `NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOINHERIT NOBYPASSRLS`, no inherited memberships, no DML or sequence mutation on public business tables, and explicit `SELECT` only on the approved 53-table business scope. The source may contain 44–53 tables because nine are optional; `auth`, `storage`, and other schemas are not included automatically.
+
+Four meanings must remain separate: a read-only database role is the privilege boundary; `default_transaction_read_only=on` is an accident-prevention default; a single `READ ONLY`/repeatable-read transaction constrains one snapshot; and a read replica is a potentially lagging read topology. None independently proves full-copy equality, stopped writers, or cutover qualification. RLS stays enabled; `row_security=off` must fail closed for an ordinary role and is not a bypass. Every approved RLS table must have the exact `release_initialization_readonly AS PERMISSIVE FOR SELECT TO readonly_release USING (true)` policy and no applicable restrictive `SELECT/ALL` policy. Do not disable database-wide RLS or grant `BYPASSRLS`.
+
+The role is therefore suitable for least-privilege analysis/reporting, audit, a controlled migration source, and replication-consistency preflight. When Serverless remains on the primary, restrict the migration account rather than stopping the whole database. The current PROD pipeline accepts only the TLS Supavisor Session `role.projectref:5432` URI copied from Connect; the runtime field is `PROD_SUPABASE_READONLY_DSN` at logical Vault path `kv/prod/database-upgrade` (KV v2 API `kv/data/prod/database-upgrade`), mapped to `NATIVE_SOURCE_DSN`. This does not mean a Direct URI can be substituted into that pipeline. The user supplies the credential through a secure process; it does not enter the repository or logs.
+
+The target scope is Accounts native 52 tables plus one Billing table. `users`, MFA, sessions, bridge credentials, and related tables may still contain sensitive data, so copying them requires separate data-scope and security approval. The source identity hash excludes the password: first review the canonical tuple of role, project ref, session host/port, database, TLS, direction, and environment, then let a controlled process record the digest. Do not self-attest `identity_sha` or `ready`. The UAT `bootstrap_full_business_credentials.py` is a hard-coded UAT 52-table, two-hop flow and must not be reused for the PROD 53-table source.
+
+Before cutover, separately confirm the complete writer list, freeze window, final catch-up, table/field equality, rollback point, and business acceptance. Point-in-time equality is not cutover qualification. The independent data-approval mechanism remains a configurable policy with default `false`; it may be layered with GitHub Environment approvals and other gates. It must not be rewritten as a permanent sole gate or weaken the remaining release, data, and business acceptance requirements.
+
+Current status (2026-10-07): Toolkit [#1341](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1341) merged as `ae946ec1` and aligns all three initialization references to Accounts `fabe68a85b4d90826dccdfe6a2116ef025f475d4` with digest `sha256:43542e4e6e95f1ee6a37f0f88cd4ce14cc46825867375b7f92df12924e563f02`; Accounts main build run [37546863434](https://github.com/ai-workspace-services/accounts/actions/runs/37546863434) was verified. The earlier `ac3239` / `8eb9` pins are superseded history, not active recommendations. Accounts [#189](https://github.com/ai-workspace-services/accounts/pull/189) merged as `96315629`; CI run [37557225304](https://github.com/ai-workspace-services/accounts/actions/runs/37557225304) and PostgreSQL 17 job `11258613435901` passed, but this is code/CI qualification rather than live-environment migration acceptance. Source, initialization, Billing, and copy acceptance remain `false`/`null`; no actual PROD execution is established.
+
 ### 10.3 Current execution prerequisites
 
 `adapters.json` is `{"schema":2,"uat":{},"prod":{}}`. The controller, offline tests, and disposable PostgreSQL encrypted-backup/isolated-restore evidence do not replace actual UAT backup restoration, upgrades, rollback, and business checks. A complete live upgrade rehearsal or executable PROD Hybrid must not be claimed at this baseline. [S15]
@@ -721,12 +735,15 @@ Facts link to fixed source SHAs. Preserve discrepancies between sources rather t
 
 ### Related repository references
 
-- [Reference index and PDF compilation plan](index.md)
-
+- [ai-workspace-infra GitHub organization](https://github.com/ai-workspace-infra)
 - [Multi-cloud orchestrator architecture](../../content/02-iac-devops/cloud-infrastructure-devsecops-baseline/10-multi-cloud-orchestrator-architecture.zh.md)
 - [Cloud OIDC bootstrap and state contract](../../content/02-iac-devops/cloud-infrastructure-devsecops-baseline/11-cloud-oidc-bootstrap-contract.zh.md)
 - [Platform operations daily snapshot](../design/platform-operations-daily-snapshot.zh.md)
 - [VPS + Serverless hybrid deployment guide](../zh/hybrid-serverless-architecture-vault-pipeline-plan/README.md)
+- [Supabase Operations Reference: Dedicated Read-only Role, RLS, and Controlled Connections](supabase-operations.en.md)
+- [Supabase: Postgres Roles](https://supabase.com/docs/guides/database/postgres/roles)
+- [Supabase: Connect to your database](https://supabase.com/docs/guides/database/connecting-to-postgres)
+- [PostgreSQL: `row_security` and read-only transaction defaults](https://www.postgresql.org/docs/current/runtime-config-client.html#GUC-ROW-SECURITY)
 
 - [S1 · Toolkit repository and delivery entries](https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/2e7b1d9387de615f882ec6cf8084781d0d006415/README.md)
 - [S2 · Execution ownership migration handoff](https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/2e7b1d9387de615f882ec6cf8084781d0d006415/docs/agent/2026-10-05-ownership-migration-handoff.md)
@@ -760,6 +777,7 @@ Additional source evidence:
 - [Shared Vault declaration](https://github.com/ai-workspace-infra/gitops/blob/d6a734b12e91241557803895ad454c538ea5d6ae/resources/svc.plus/shared/vault/server.yaml)
 - [Playbooks execution entries](https://github.com/ai-workspace-infra/playbooks/blob/94b9ca010efb1eeb62469f791a910dd361f1abae/scripts/pipeline/README.md)
 - [Terraform rendering constraints](https://github.com/ai-workspace-infra/iac_modules/blob/a0185e61fc2b41ac4dbd40c8037016aaef1b3973/terraform-hcl-standard/AGENTS.md)
+- [Reference index and PDF compilation plan](index.md)
 
 [S1]: https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/2e7b1d9387de615f882ec6cf8084781d0d006415/README.md
 [S2]: https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/2e7b1d9387de615f882ec6cf8084781d0d006415/docs/agent/2026-10-05-ownership-migration-handoff.md
