@@ -47,3 +47,19 @@ sections:
         href: /docs/reference/coverage-matrix
       - title: Legacy docs map
         href: /docs/reference/legacy-docs
+  - title: AI Collaboration Guide
+    items:
+      - title: Series Overview & Index
+        href: /docs/en/ai-collaboration-guide/
+      - title: Full Multi-Channel Guide
+        href: /docs/en/ai-collaboration-guide/full-guide
+      - title: Part 1: Cognitive Shift
+        href: /docs/en/ai-collaboration-guide/01-cognitive-shift
+      - title: Part 2: Dual Execution Engines
+        href: /docs/en/ai-collaboration-guide/02-dual-execution-engines
+      - title: Part 3: The Engineering Backbone
+        href: /docs/en/ai-collaboration-guide/03-engineering-backbone-and-judge
+      - title: Part 4: Research Grounding & Defense
+        href: /docs/en/ai-collaboration-guide/04-research-grounding-and-specialist
+      - title: Part 5: Closed-Loop Lifecycle
+        href: /docs/en/ai-collaboration-guide/05-closed-loop-and-model-routing

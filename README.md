@@ -10,6 +10,13 @@
 
 完整覆盖四仓职责、40 个 workflow 调用链、GitOps 与 IaC state、Vault 路径/权限及迁移验收，源码基线为 2026-10-05。
 
+## 与 AI 协作参考指南（2026）
+
+从 Model Selection（模型选秀）走向 Model Routing（模型路由与团队建制）：
+- [中文专栏索引与全渠道指南](docs/zh/ai-collaboration-guide/README.md)（含五部曲系列专栏、微信长文、小红书卡片、X 连推与系统路由配置）
+- [English Series Index & Full Guide](docs/en/ai-collaboration-guide/README.md) (Complete multi-channel edition and 5-part serialized column)
+
+
 ## 目录结构
 
 ```
