@@ -114,7 +114,7 @@ Selfhost PostgreSQL 与应用运行时
   ↓
 PROD Supabase 只读合同
   ↓
-migratectl 全业务复制与比对
+migratectl core_users 按 email 同步与四项实际比对
   ↓
 停写、最终追平、单写者
   ↓
@@ -123,7 +123,7 @@ Edge Gateway/CNAME 切换
 业务验收与可审计回退
 ```
 
-本轮生产切换验收收敛到来源最新的 email 集合：数量按来源实时集合计算，目标必须拥有同数量、同 email、同密码 hash 和同 Proxy UUID。当前约 24 个核心用户只是规模背景，不写入固定阈值。migratectl/Playbooks 可以继续保留动态业务表的 owner 级复制证据，但 EDO 与 Cloudflare 只消费 `core_users` 脱敏摘要（数量及三类 SHA-256），不发布用户行、密码材料或 Proxy UUID 原值。
+本轮生产切换验收收敛到来源最新的 email 集合：数量按来源实时集合计算，目标必须拥有同数量、同 email、同密码 hash 和同 Proxy UUID。当前约 24 个核心用户只是规模背景，不写入固定阈值。本轮 `core_users` 不复制、不比对动态业务表；53 表只保留 schema、版本和结构 hash 校验。EDO 与 Cloudflare 消费 `core_users` 脱敏摘要（数量及三类 SHA-256），不发布用户行、密码材料或 Proxy UUID 原值。
 
 入口边界保持稳定：`xworktech.com` 与 `console.svc.plus` 继续由 Cloudflare Pages + Worker 承载；`edge-gateway` Worker 负责 Accounts/Billing 的模式路由；`accounts.svc.plus` 和 `billing.svc.plus` 是稳定入口，通过模式别名 CNAME 在 `accounts-serverless`/`accounts-selfhost` 之间切换。切换和回退必须在同一份新鲜回执上完成，Accounts 与 Billing 不允许分开切换。
 
@@ -136,7 +136,7 @@ Edge Gateway/CNAME 切换
 | L2 主机/运行时 | Selfhost PostgreSQL 版本、磁盘、网络、应用运行角色；先做 standby/无 DB 连接探针 | Playbooks Roles | 主机身份、运行时 digest、健康和清理回执 | 目标库可访问且未发生业务写入 |
 | L3 schema | 53 表最新 schema 初始化；只允许空库初始化，不回放历史、不 reset/drop | Playbooks DB owner | SQL/版本/hash、迁移前后 schema 摘要、目标为空证明 | 表、列、约束、索引和触发器达到固定版本 |
 | L4 来源合同 | Vault `kv/data/prod/database-upgrade/PROD_SUPABASE_READONLY_DSN`；session pooler/TLS；连接级与事务级只读 | Playbooks `serverless_supabase` owner | 脱敏连接指纹、角色、TLS、只读反例（写入被拒） | 只读合同有效，且不把管理员凭据写入文件或 artifact |
-| L5 复制/比对 | `migratectl` 按来源最新 email 集合映射用户；核心放行字段为 email、密码 hash、Proxy UUID，动态业务表继续由 owner 记录复制证据 | Accounts migratectl + Playbooks Role | `core_users` source/target 脱敏摘要、复制/比对 receipt、动态表 owner 证据 | 核心数量和三类摘要完全一致；源仍为只读 |
+| L5 核心同步/比对 | `copy-core-users` 按来源最新 email 集合增量对齐；允许已存在用户、保留目标 UUID、Proxy UUID 以来源为准；目标多余 email 才停止 | Accounts migratectl + Playbooks Role | 用户数量、email、密码 hash、Proxy UUID 的实际 source/target 摘要；不发布原值 | 数量和三类摘要完全一致；源只读，目标 schema/版本/hash 一致；无需全业务 53 表数据一致 |
 | L6 切换前门槛 | 来源全写者冻结、最终追平窗口、目标单写者和回退点 | 迁移 owner + Edge Gateway owner | 冻结时间、最终追平水位、单写者租约、回退演练 | 新鲜度在约定窗口内，且切换批准明确记录 |
 | L7 入口/验收 | Accounts 与 Billing 同步切换；`accounts.svc.plus`、`billing.svc.plus` 由 Worker/CNAME 指向模式别名；主页和 console 保持原职责 | Edge Gateway/CNAME owner + 业务验收 | DNS/Worker 版本、请求探针、账单/账户关键流程、回退记录 | 生产入口验收通过；失败时按目标是否产生新写入选择有证据的回退 |
 
@@ -146,32 +146,21 @@ Edge Gateway/CNAME 切换
 2. 聚合流水线只负责校验输入、派发固定 owner、等待、关联 run/artifact 和判断门槛。它不复制业务数据、不生成 schema、不自行修复主机；owner 回执缺失时流水线必须失败而不是猜测成功。
 3. L5 的核心摘要比对不是 L6 的最终一致性证明。只有完成停写、最终追平和单写者证据，才允许进入 L7；在此之前任何 `edge-gateway`、CNAME 或生产主库标记都不得切换。Edge 只接受同一份新鲜 `core_users` 回执，并继续要求 `writers_quiesced`、`single_writer` 和最新 schema。
 4. 每层都要保存可审计的原始回执和脱敏摘要，并记录固定 SHA、镜像 digest、目标环境、时间窗和回退点。失败重试必须复用同一版本和输入，避免“换版本重试”掩盖真实原因。
-5. EDO 的 `core_users` 模式只负责以不可变 release tag 调度 Selfhost owner、等待精确子运行并发布脱敏回执；它不越过 PROD reviewer/prevent-self-review、来源只读合同或停写门槛，也不直接执行 Cloudflare 变更。
+5. EDO 的 `core_users` 模式按用户已授权的不可变 release tag 规则发布，不额外要求 PROD 独立 reviewer/prevent-self-review。它调用固定 Selfhost owner，接受四项真实相等回执并确认临时访问清理。人工登录、订阅、额度、账单、单写者测试及 Cloudflare 切换是后续操作，未开始不使已完成的部署/同步流水线失败。最终切换回执须记录实际确认与追平情况。
 
-截至 2026-10-07，资源、运行时资格和 schema/Billing owner 检查已有固定版本；基线复制已完成，但最终追平、单写者、网关切换和生产验收尚未完成。最近一次完整业务 preview（run `37578640206`）已通过输入、OIDC、Vault 和 IaC 访问门槛，但在 Playbooks owner 执行阶段失败；私密输出已清理，因此不能把这次失败解释成数据差异。
+截至 2026-10-07，Selfhost 已有 53 表和干净 `2026100701:false` checkpoint；目标表名结构 hash 与固定合同一致。r24（run `37601794395`）在 Playbooks 的旧“核心 users 必须为空”规则失败，未执行用户同步。Playbooks #615 已删除该规则，Toolkit #1367 固定 owner `008fcfc430f4c023bd092fb047c65a217e3b113e`。r25（EDO `37603009277` / Selfhost `37603047958`）正在执行；结果须以原始回执为准。暂不重建数据库。
 
-### 4.2 主机 owner 实测与来源投影检查点
+### 4.2 无状态发布：GitOps 单一源与 Doco-CD 实际版本
 
-2026-10-07 已通过 IaC 固定 owner 的临时 `/32` 访问，直接 SSH 执行 Playbooks 只读诊断：目标 PostgreSQL 为 `170010`，业务表数为 53，checkpoint 为 `2026100701:false`，运行中的受管应用写者为 0。访问结束后已撤销临时防火墙和 OS Login 密钥。此结果证明目标运行时和 schema 元数据就绪。
+发布单位是一份不可变 release manifest：应用源码 SHA、全部构件 digest、配置/compose checksum 和环境必须绑定到同一 release tag。Toolkit 控制版本 tag 与应用构件 tag 分别记录；只有 Toolkit 打 tag 不证明应用镜像存在或已部署。先检查全部构件可取得，再用一次 GitOps 提交更新整组发布声明，禁止逐个服务推进后将混合版本报告为成功。
 
-[Playbooks #606](https://github.com/ai-workspace-infra/playbooks/pull/606) 修正来源指纹参数并提供脱敏失败阶段；[#607](https://github.com/ai-workspace-infra/playbooks/pull/607) 请求迁移来源连接 `default_transaction_read_only=on`，并拒绝覆盖该请求的启动选项。两项已合并、隔离 PG17 资格通过。实际 Supabase pooler 未应用此启动参数，因此不能单凭连接串证明默认只读。[Accounts #201](https://github.com/ai-workspace-services/accounts/pull/201) 已合并并通过隔离 PG17 资格，在显式只读事务内设置并核验两个只读状态；实际来源探针证明只读状态生效，rollback 后恢复原连接默认值。正式 Accounts 镜像为 `ghcr.io/ai-workspace-services/accounts:sha-072703033a4038c4025e30043d37c89d4ee3d8c0`，digest `sha256:065615850056aee3fd492f52b6cd383dd29fa0b94ac8cde11cf0e871712909db`，main 发布 run `37582769808` 成功。
+Doco-CD 直接同步 GitOps 声明；Selfhost Web SaaS 主机只运行当前 release，不保留旧 tag 的运行实例。回滚由 GitOps 恢复上一份完整发布声明，然后 Doco-CD 重新同步整组版本。历史 manifest 保存在 Git，不靠宿主机旧容器提供回退。
 
-来源目录的只读比对定位出两类投影差异，其余现有业务表未发现字段增减或类型差异：
+流水线必须等待主机上的实际 Accounts/Billing 构件 digest 与该 manifest 完全一致，并检查应用运行状态。Doco-CD 自身 healthy、GitOps `.env` 已改 tag、空 `observe_urls` 或只验证 pull-only 声明，均不能证明实际部署。整个发布集合一致之前，不报告成功；失败后以整组 GitOps 回退的实际状态产生回执。单机 Compose 各容器依次更新，因此提交原子性必须配合运行状态验收，不能宣称容器同时切换。
 
-| 来源旧结构 | 最新目标结构与处理 | 证据与状态 |
-| --- | --- | --- |
-| `users` 缺少 `subscription_valid_from`、`subscription_valid_until`、`last_active_at`、`archived_at` | 只对不存在的四个可空字段使用 `2026091301` 的原生 NULL 默认值；保留已有字段值、订阅表及额度/账本 | [Accounts #199](https://github.com/ai-workspace-services/accounts/pull/199) 已合并；正式 main 镜像 run `37580615861` 成功；用户/Proxy UUID 映射规则保持原样 |
-| `email_blacklist` 以 email 为主键，没有 UUID | 校验来源主键确为 email；按原始 email 精确字节推导稳定 UUIDv5，复制/比对使用同一投影；保留 email、创建时间和已有 UUID | [Accounts #200](https://github.com/ai-workspace-services/accounts/pull/200) 已合并，main 发布 run `37582062962` 成功；固定新镜像的真实全业务基线复制已完成 |
+DB schema/业务数据变更不属于该无状态发布事务；EDO 单独处理 `core_users`。DB 实例和 `/data` 盘不是无状态回滚对象。`xworktech.com`、`console.svc.plus` 保持 Cloudflare Pages + Worker；Selfhost API 通过稳定 Accounts/Billing 入口接入。
 
-目标始终使用完整最新 schema。来源投影须明确列举并经过 owner 资格验证，不通过修改 PROD schema、丢弃业务字段或放宽所有缺失字段来解除失败。
-
-2026-10-07 06:54–06:56 UTC 的基线复制回执证明将来源 44 张表投影到 Selfhost 最新 53 表 schema，24 个用户和 382,312 条业务记录完成一次单向复制，其中 `billing_ledger` 为 179,783 行。该快照中的 `full_business_equal=true`，但 `source_writers_paused=false`、`final_catchup_complete=false`、`database_cutover_approved=false`。它是运行期间快照，不是最终追平证明。随后通过来源只读事务和目标只读事务，按 email 排序，对 24 个用户的 email、password hash、Proxy UUID 计算长度前缀 SHA-256 摘要；双方用户数为 24，摘要相同（`7b10ac27bd520f2876d65b76b3c0161e30a7039f83f9b13c0be3cd919db503fc`），临时 SSH 访问已撤销。该检查证明这三个核心字段在该时点一致，不证明其他业务表一致、来源已停写或具备切库条件。之后单独全业务 compare 未生成有效回执，失败时没有输出表级差异，不能据此判定是数据不一致。
-
-部署与数据入口的能力边界也已实测：`selfhost-orchestrator.yml` 的 release-tag 路由可解析为 PROD `web-saas`、Terraform apply 和应用部署，`dns_mode=none` 保持域名路由不变；工作流包含主机 bootstrap、`roles/vhosts` 配置、GitOps tag 更新及 Doco-CD 部署/验收步骤。定向 dispatch 合同测试通过，但这是路由与合同验证，尚未真实执行 PROD 部署，也未证明指定 tag 的所有应用镜像均可拉取。
-
-`environment-data-operations.yml` 当前没有 PROD 全业务复制/同步模式：`legacy_import`、`migrate` 和 `selfhost_init` 被限制在 UAT，PROD Selfhost 支持的是 probe/verify 等既有操作；`selfhost_verify` 验证发布后运行状态和既存基线，不会从 Supabase 复制数据。Toolkit PROD 环境当前 `prevent_self_review=false`，而请求校验器要求其为 `true`，所以 PROD data-operations dispatch 会在取 Vault 凭据前被拒绝。现有全业务 copy/compare 仍在 `selfhost-orchestrator.yml` 的独立操作中。若后续统一从 data-operations 派发数据同步，需先在 Playbooks owner 建立并隔离资格验证对应的全业务操作，再以固定 owner SHA 接入 caller；不能把当前 selfhost_verify 当作同步证明。
-
-切换前须冻结全部来源写者并完成最终追平、全业务比对和单写者证据。Selfhost 尚未产生新写入时可以按已验证路由恢复 Serverless；一旦产生新写入，禁止直接返回旧 Supabase。此时保留维护态或使用同一 Selfhost 主库的应用版本回退；需要返回旧源时，必须另有获批的追平与重新比对合同。当前单向复制授权不包含反向写回源库。
+当前 Doco-CD owner 仍有待完成的运行证据：`domain-cd.yaml` 只验证 GitOps tag，调用方 `observe_urls=''` 时跳过服务观察；PROD GitOps 目前仍是历史应用 tag。该状态不能标记为完整 PROD 部署或原子发布已验收。
 
 ## 5. 待调用的 uses 接口
 
