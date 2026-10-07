@@ -149,14 +149,14 @@ Edge Gateway/CNAME 切换
 
 2026-10-07 已通过 IaC 固定 owner 的临时 `/32` 访问，直接 SSH 执行 Playbooks 只读诊断：目标 PostgreSQL 为 `170010`，业务表数为 53，checkpoint 为 `2026100701:false`，运行中的受管应用写者为 0。访问结束后已撤销临时防火墙和 OS Login 密钥。此结果证明目标运行时和 schema 元数据就绪；不等于全业务数据已复制或一致。
 
-[Playbooks #606](https://github.com/ai-workspace-infra/playbooks/pull/606) 修正来源指纹参数并提供脱敏失败阶段；[#607](https://github.com/ai-workspace-infra/playbooks/pull/607) 请求迁移来源连接 `default_transaction_read_only=on`，并拒绝覆盖该请求的启动选项。两项已合并、隔离 PG17 资格通过。实际 Supabase pooler 未应用此启动参数，因此不能单凭连接串证明默认只读。[Accounts #201](https://github.com/ai-workspace-services/accounts/pull/201) 在显式只读事务内设置并核验两个只读状态；实际来源的只读元数据探针已证明设置生效，且 rollback 后恢复原默认值，发布资格仍待完成。凭据只经 Vault 和私密 stdin 传递。
+[Playbooks #606](https://github.com/ai-workspace-infra/playbooks/pull/606) 修正来源指纹参数并提供脱敏失败阶段；[#607](https://github.com/ai-workspace-infra/playbooks/pull/607) 请求迁移来源连接 `default_transaction_read_only=on`，并拒绝覆盖该请求的启动选项。两项已合并、隔离 PG17 资格通过。实际 Supabase pooler 未应用此启动参数，因此不能单凭连接串证明默认只读。[Accounts #201](https://github.com/ai-workspace-services/accounts/pull/201) 已合并并通过隔离 PG17 资格，在显式只读事务内设置并核验两个只读状态；实际来源的只读元数据探针已证明设置生效，且 rollback 后恢复原默认值。最新正式镜像发布 run `37582769808` 仍在执行，须核对其 immutable digest 后再次进行主机 preview。凭据只经 Vault 和私密 stdin 传递。
 
 来源目录的只读比对定位出两类投影差异，其余现有业务表未发现字段增减或类型差异：
 
 | 来源旧结构 | 最新目标结构与处理 | 证据与状态 |
 | --- | --- | --- |
 | `users` 缺少 `subscription_valid_from`、`subscription_valid_until`、`last_active_at`、`archived_at` | 只对不存在的四个可空字段使用 `2026091301` 的原生 NULL 默认值；保留已有字段值、订阅表及额度/账本 | [Accounts #199](https://github.com/ai-workspace-services/accounts/pull/199) 已合并；正式 main 镜像 run `37580615861` 成功；用户/Proxy UUID 映射规则保持原样 |
-| `email_blacklist` 以 email 为主键，没有 UUID | 校验来源主键确为 email；按原始 email 精确字节推导稳定 UUIDv5，复制/比对使用同一投影；保留 email、创建时间和已有 UUID | [Accounts #200](https://github.com/ai-workspace-services/accounts/pull/200) 已合并，main 发布 run `37582062962` 执行中；隔离 PG17 全业务检查已通过，尚无实际复制成功回执 |
+| `email_blacklist` 以 email 为主键，没有 UUID | 校验来源主键确为 email；按原始 email 精确字节推导稳定 UUIDv5，复制/比对使用同一投影；保留 email、创建时间和已有 UUID | [Accounts #200](https://github.com/ai-workspace-services/accounts/pull/200) 已合并，main 发布 run `37582062962` 成功；隔离 PG17 全业务检查已通过，尚无实际复制成功回执 |
 
 目标始终使用完整最新 schema。来源投影须明确列举并经过 owner 资格验证，不通过修改 PROD schema、丢弃业务字段或放宽所有缺失字段来解除失败。后续先完成固定镜像的主机 preview/copy/compare，再调整聚合 caller。
 
