@@ -237,32 +237,163 @@ ORDER BY c.relname, p.polname;
 
 ### 3.3 权限和公开面审计
 
-逐表 allowlist 之外还要审计 schema、PUBLIC、函数和 owner。单独 `REVOKE` 某个角色的权限，不能移除 `PUBLIC` 继承的权限；发现 PUBLIC 写权限、`public` schema 的 `CREATE`、不必要的 `SECURITY DEFINER` 函数或错误 owner 时，应由安全/数据库 owner 另行批准修复。
+除逐表 allowlist 外，还要审计真实 `readonly_release` 角色的 effective privilege，再审计直接授予 `PUBLIC` 的 ACL 和函数 metadata。`PUBLIC` 是 PostgreSQL 的隐式伪角色，不是 `pg_roles` 中的一行，因此绝不能把它作为 `has_*_privilege` 的用户参数。`information_schema.role_table_grants` 只是展示视图，不能替代下面的 `has_*` 检查，也不能完成 `PUBLIC` 或 effective privilege 审计。
 
 ```sql
-SELECT table_schema, table_name, privilege_type
-FROM information_schema.role_table_grants
-WHERE grantee IN ('PUBLIC', 'readonly_release')
-  AND table_schema = 'public'
-ORDER BY grantee, table_name, privilege_type;
+-- 先运行这个预检。若返回 0 行就停止；管理员审阅角色前，
+-- 不要继续运行后面的 effective-role 查询。
+SELECT oid, rolname, rolsuper, rolbypassrls, rolinherit
+FROM pg_roles
+WHERE rolname = 'readonly_release';
 
+-- 真实角色的 effective database/schema 权限。角色不存在时，
+-- CTE 让查询返回 0 行，而不是因 privilege 函数报错。
+WITH target_role AS (
+  SELECT oid, rolname
+  FROM pg_roles
+  WHERE rolname = 'readonly_release'
+)
 SELECT
-  has_schema_privilege('public', 'public', 'USAGE') AS public_schema_usage,
-  has_schema_privilege('public', 'public', 'CREATE') AS public_schema_create;
+  r.rolname,
+  current_database() AS database_name,
+  has_database_privilege(r.rolname, current_database(), 'CONNECT') AS can_connect,
+  has_database_privilege(r.rolname, current_database(), 'CREATE') AS can_create_database,
+  has_schema_privilege(r.rolname, 'public', 'USAGE') AS can_use_public,
+  has_schema_privilege(r.rolname, 'public', 'CREATE') AS can_create_in_public
+FROM target_role AS r;
 
+-- effective table privilege 会合并 PUBLIC 和 role membership。
+-- owner 单独列出，因为 owner 不是 grant。
+WITH target_role AS (
+  SELECT oid, rolname
+  FROM pg_roles
+  WHERE rolname = 'readonly_release'
+)
+SELECT
+  c.oid::regclass AS relation,
+  pg_get_userbyid(c.relowner) AS owner,
+  c.relowner = r.oid AS is_owner,
+  has_table_privilege(r.rolname, c.oid, 'SELECT') AS can_select,
+  has_table_privilege(r.rolname, c.oid, 'INSERT') AS can_insert,
+  has_table_privilege(r.rolname, c.oid, 'UPDATE') AS can_update,
+  has_table_privilege(r.rolname, c.oid, 'DELETE') AS can_delete,
+  has_table_privilege(r.rolname, c.oid, 'TRUNCATE') AS can_truncate,
+  has_table_privilege(r.rolname, c.oid, 'REFERENCES') AS can_references,
+  has_table_privilege(r.rolname, c.oid, 'TRIGGER') AS can_trigger
+FROM target_role AS r
+JOIN pg_class AS c ON c.relkind IN ('r', 'p')
+JOIN pg_namespace AS n ON n.oid = c.relnamespace
+WHERE n.nspname = 'public'
+ORDER BY c.oid::regclass::text;
+
+-- effective sequence privilege 不得提供 nextval/setval 或序列读取写入路径。
+WITH target_role AS (
+  SELECT oid, rolname
+  FROM pg_roles
+  WHERE rolname = 'readonly_release'
+)
+SELECT
+  c.oid::regclass AS sequence_name,
+  pg_get_userbyid(c.relowner) AS owner,
+  c.relowner = r.oid AS is_owner,
+  has_sequence_privilege(r.rolname, c.oid, 'USAGE') AS can_use,
+  has_sequence_privilege(r.rolname, c.oid, 'SELECT') AS can_select,
+  has_sequence_privilege(r.rolname, c.oid, 'UPDATE') AS can_update
+FROM target_role AS r
+JOIN pg_class AS c ON c.relkind = 'S'
+JOIN pg_namespace AS n ON n.oid = c.relnamespace
+WHERE n.nspname = 'public'
+ORDER BY c.oid::regclass::text;
+
+-- 函数 metadata 只读；逐项审阅 public 下的 SECURITY DEFINER 或其他
+-- 敏感/volatile 函数是否允许该角色 EXECUTE。EXECUTE 不代表函数无副作用。
+WITH target_role AS (
+  SELECT oid, rolname
+  FROM pg_roles
+  WHERE rolname = 'readonly_release'
+)
 SELECT
   n.nspname AS schema_name,
-  p.proname,
+  p.oid::regprocedure AS function_identity,
   p.prosecdef AS security_definer,
-  pg_get_userbyid(p.proowner) AS owner
-FROM pg_proc AS p
+  p.provolatile,
+  pg_get_userbyid(p.proowner) AS owner,
+  p.proowner = r.oid AS is_owner,
+  has_function_privilege(r.rolname, p.oid, 'EXECUTE') AS can_execute
+FROM target_role AS r
+JOIN pg_proc AS p ON true
 JOIN pg_namespace AS n ON n.oid = p.pronamespace
-WHERE n.nspname NOT IN ('pg_catalog', 'information_schema')
-  AND p.prosecdef
-ORDER BY n.nspname, p.proname;
+WHERE n.nspname = 'public'
+ORDER BY n.nspname, function_identity::text;
+
+-- 直接 PUBLIC ACL 要用 grantee = 0，不要把 PUBLIC 当作角色名。
+-- COALESCE 在 ACL 列为 NULL 时保留 PostgreSQL 默认 ACL。
+WITH public_acl AS (
+  SELECT 'database'::text AS object_type,
+         d.datname AS object_identity,
+         a.privilege_type,
+         a.is_grantable
+  FROM pg_database AS d
+  CROSS JOIN LATERAL aclexplode(
+    COALESCE(d.datacl, acldefault('d', d.datdba))
+  ) AS a
+  WHERE d.datname = current_database()
+    AND a.grantee = 0
+
+  UNION ALL
+
+  SELECT 'schema'::text,
+         n.nspname,
+         a.privilege_type,
+         a.is_grantable
+  FROM pg_namespace AS n
+  CROSS JOIN LATERAL aclexplode(
+    COALESCE(n.nspacl, acldefault('n', n.nspowner))
+  ) AS a
+  WHERE n.nspname = 'public'
+    AND a.grantee = 0
+
+  UNION ALL
+
+  SELECT CASE WHEN c.relkind = 'S' THEN 'sequence' ELSE 'table' END,
+         c.oid::regclass::text,
+         a.privilege_type,
+         a.is_grantable
+  FROM pg_class AS c
+  JOIN pg_namespace AS n ON n.oid = c.relnamespace
+  CROSS JOIN LATERAL aclexplode(
+    COALESCE(
+      c.relacl,
+      acldefault(
+        CASE WHEN c.relkind = 'S' THEN 'S'::"char" ELSE 'r'::"char" END,
+        c.relowner
+      )
+    )
+  ) AS a
+  WHERE n.nspname = 'public'
+    AND c.relkind IN ('r', 'p', 'S')
+    AND a.grantee = 0
+
+  UNION ALL
+
+  SELECT 'function'::text,
+         p.oid::regprocedure::text,
+         a.privilege_type,
+         a.is_grantable
+  FROM pg_proc AS p
+  JOIN pg_namespace AS n ON n.oid = p.pronamespace
+  CROSS JOIN LATERAL aclexplode(
+    COALESCE(p.proacl, acldefault('f', p.proowner))
+  ) AS a
+  WHERE n.nspname = 'public'
+    AND a.grantee = 0
+)
+SELECT object_type, object_identity, privilege_type, is_grantable
+FROM public_acl
+ORDER BY object_type, object_identity, privilege_type;
 ```
 
-对于 `readonly_release`，还应确认没有 INSERT/UPDATE/DELETE/TRUNCATE、sequence `USAGE/UPDATE`、role membership、owner、`CREATEROLE`、`BYPASSRLS` 或隐式 `PUBLIC` 写路径。审计应保存脱敏的 role、对象、策略摘要和连接身份 hash，不保存结果集、DSN、密码或 Vault response。
+若角色预检返回 0 行，应输出 `role_not_found` 并停止，不要静默创建或替换成其他角色。任何 `is_owner=true`、意外 effective table privilege、database `CREATE`、schema `CREATE`、sequence `USAGE/UPDATE`、敏感函数 `can_execute=true` 或直接 `PUBLIC` ACL 返回都需要复核。这些查询只是 metadata evidence：effective privilege 函数会合并 `PUBLIC` 和 membership，ACL 查询展示直接的 `PUBLIC` 项；二者都不能保证完整隔离、函数行为安全、RLS 正确或具备切换资格。审计只保留脱敏 role、对象、策略摘要和连接身份 hash，不保存结果集、DSN、密码或 Vault response。
 
 ## 4. 连接方式、TLS 与 Supavisor
 

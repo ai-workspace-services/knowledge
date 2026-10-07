@@ -237,32 +237,165 @@ ORDER BY c.relname, p.polname;
 
 ### 3.3 Audit public privileges and function boundaries
 
-Audit schema, `PUBLIC`, functions, and ownership in addition to the table allowlist. A `REVOKE` against one role does not remove privileges inherited from `PUBLIC`; a PUBLIC write privilege, `CREATE` on the `public` schema, an unnecessary `SECURITY DEFINER` function, or an incorrect owner requires a separately approved security/database-owner change.
+Audit the effective privileges of the real `readonly_release` role, then audit direct `PUBLIC` ACL entries and function metadata. `PUBLIC` is PostgreSQL's implicit pseudo-role: it is not a row in `pg_roles`, so it must never be passed as the user argument to `has_*_privilege`. `information_schema.role_table_grants` is a useful display view, but it is not a complete `PUBLIC` or effective-privilege audit because it does not replace the `has_*` checks below.
 
 ```sql
-SELECT table_schema, table_name, privilege_type
-FROM information_schema.role_table_grants
-WHERE grantee IN ('PUBLIC', 'readonly_release')
-  AND table_schema = 'public'
-ORDER BY grantee, table_name, privilege_type;
+-- Run this precheck first. If it returns zero rows, stop: do not run
+-- the effective-role queries until an administrator has reviewed the role.
+SELECT oid, rolname, rolsuper, rolbypassrls, rolinherit
+FROM pg_roles
+WHERE rolname = 'readonly_release';
 
+-- Effective database and schema privileges for the actual role. If the
+-- role is absent, the CTE makes this return zero rows instead of failing.
+WITH target_role AS (
+  SELECT oid, rolname
+  FROM pg_roles
+  WHERE rolname = 'readonly_release'
+)
 SELECT
-  has_schema_privilege('public', 'public', 'USAGE') AS public_schema_usage,
-  has_schema_privilege('public', 'public', 'CREATE') AS public_schema_create;
+  r.rolname,
+  current_database() AS database_name,
+  has_database_privilege(r.rolname, current_database(), 'CONNECT') AS can_connect,
+  has_database_privilege(r.rolname, current_database(), 'CREATE') AS can_create_database,
+  has_schema_privilege(r.rolname, 'public', 'USAGE') AS can_use_public,
+  has_schema_privilege(r.rolname, 'public', 'CREATE') AS can_create_in_public
+FROM target_role AS r;
 
+-- Effective table privileges include PUBLIC and role memberships. The
+-- owner column is checked separately because ownership is not a grant.
+WITH target_role AS (
+  SELECT oid, rolname
+  FROM pg_roles
+  WHERE rolname = 'readonly_release'
+)
+SELECT
+  c.oid::regclass AS relation,
+  pg_get_userbyid(c.relowner) AS owner,
+  c.relowner = r.oid AS is_owner,
+  has_table_privilege(r.rolname, c.oid, 'SELECT') AS can_select,
+  has_table_privilege(r.rolname, c.oid, 'INSERT') AS can_insert,
+  has_table_privilege(r.rolname, c.oid, 'UPDATE') AS can_update,
+  has_table_privilege(r.rolname, c.oid, 'DELETE') AS can_delete,
+  has_table_privilege(r.rolname, c.oid, 'TRUNCATE') AS can_truncate,
+  has_table_privilege(r.rolname, c.oid, 'REFERENCES') AS can_references,
+  has_table_privilege(r.rolname, c.oid, 'TRIGGER') AS can_trigger
+FROM target_role AS r
+JOIN pg_class AS c ON c.relkind IN ('r', 'p')
+JOIN pg_namespace AS n ON n.oid = c.relnamespace
+WHERE n.nspname = 'public'
+ORDER BY c.oid::regclass::text;
+
+-- Effective sequence privileges must not provide a write path through
+-- nextval/setval or sequence inspection.
+WITH target_role AS (
+  SELECT oid, rolname
+  FROM pg_roles
+  WHERE rolname = 'readonly_release'
+)
+SELECT
+  c.oid::regclass AS sequence_name,
+  pg_get_userbyid(c.relowner) AS owner,
+  c.relowner = r.oid AS is_owner,
+  has_sequence_privilege(r.rolname, c.oid, 'USAGE') AS can_use,
+  has_sequence_privilege(r.rolname, c.oid, 'SELECT') AS can_select,
+  has_sequence_privilege(r.rolname, c.oid, 'UPDATE') AS can_update
+FROM target_role AS r
+JOIN pg_class AS c ON c.relkind = 'S'
+JOIN pg_namespace AS n ON n.oid = c.relnamespace
+WHERE n.nspname = 'public'
+ORDER BY c.oid::regclass::text;
+
+-- Function metadata is intentionally read-only. Review every public
+-- SECURITY DEFINER or otherwise sensitive/volatile function that the role
+-- can execute; EXECUTE alone does not prove that the function is harmless.
+WITH target_role AS (
+  SELECT oid, rolname
+  FROM pg_roles
+  WHERE rolname = 'readonly_release'
+)
 SELECT
   n.nspname AS schema_name,
-  p.proname,
+  p.oid::regprocedure AS function_identity,
   p.prosecdef AS security_definer,
-  pg_get_userbyid(p.proowner) AS owner
-FROM pg_proc AS p
+  p.provolatile,
+  pg_get_userbyid(p.proowner) AS owner,
+  p.proowner = r.oid AS is_owner,
+  has_function_privilege(r.rolname, p.oid, 'EXECUTE') AS can_execute
+FROM target_role AS r
+JOIN pg_proc AS p ON true
 JOIN pg_namespace AS n ON n.oid = p.pronamespace
-WHERE n.nspname NOT IN ('pg_catalog', 'information_schema')
-  AND p.prosecdef
-ORDER BY n.nspname, p.proname;
+WHERE n.nspname = 'public'
+ORDER BY n.nspname, function_identity::text;
+
+-- Direct PUBLIC ACLs use grantee = 0, not a role name. The COALESCE
+-- preserves PostgreSQL defaults when an object's ACL column is NULL.
+WITH public_acl AS (
+  SELECT 'database'::text AS object_type,
+         d.datname AS object_identity,
+         a.privilege_type,
+         a.is_grantable
+  FROM pg_database AS d
+  CROSS JOIN LATERAL aclexplode(
+    COALESCE(d.datacl, acldefault('d', d.datdba))
+  ) AS a
+  WHERE d.datname = current_database()
+    AND a.grantee = 0
+
+  UNION ALL
+
+  SELECT 'schema'::text,
+         n.nspname,
+         a.privilege_type,
+         a.is_grantable
+  FROM pg_namespace AS n
+  CROSS JOIN LATERAL aclexplode(
+    COALESCE(n.nspacl, acldefault('n', n.nspowner))
+  ) AS a
+  WHERE n.nspname = 'public'
+    AND a.grantee = 0
+
+  UNION ALL
+
+  SELECT CASE WHEN c.relkind = 'S' THEN 'sequence' ELSE 'table' END,
+         c.oid::regclass::text,
+         a.privilege_type,
+         a.is_grantable
+  FROM pg_class AS c
+  JOIN pg_namespace AS n ON n.oid = c.relnamespace
+  CROSS JOIN LATERAL aclexplode(
+    COALESCE(
+      c.relacl,
+      acldefault(
+        CASE WHEN c.relkind = 'S' THEN 'S'::"char" ELSE 'r'::"char" END,
+        c.relowner
+      )
+    )
+  ) AS a
+  WHERE n.nspname = 'public'
+    AND c.relkind IN ('r', 'p', 'S')
+    AND a.grantee = 0
+
+  UNION ALL
+
+  SELECT 'function'::text,
+         p.oid::regprocedure::text,
+         a.privilege_type,
+         a.is_grantable
+  FROM pg_proc AS p
+  JOIN pg_namespace AS n ON n.oid = p.pronamespace
+  CROSS JOIN LATERAL aclexplode(
+    COALESCE(p.proacl, acldefault('f', p.proowner))
+  ) AS a
+  WHERE n.nspname = 'public'
+    AND a.grantee = 0
+)
+SELECT object_type, object_identity, privilege_type, is_grantable
+FROM public_acl
+ORDER BY object_type, object_identity, privilege_type;
 ```
 
-For `readonly_release`, also prove the absence of INSERT/UPDATE/DELETE/TRUNCATE, sequence `USAGE/UPDATE`, role membership, ownership, `CREATEROLE`, `BYPASSRLS`, and implicit PUBLIC write paths. Retain only redacted role, object, policy, and connection-identity summaries; never retain result sets, DSNs, passwords, or Vault responses.
+If the role precheck returns no row, stop and report `role_not_found`; do not silently create or substitute another role. Any `is_owner=true`, unexpected effective table privilege, database `CREATE`, schema `CREATE`, sequence `USAGE/UPDATE`, sensitive function `can_execute=true`, or returned direct `PUBLIC` ACL requires review. These queries are metadata evidence only: effective privilege functions fold in `PUBLIC` and memberships, while the ACL query shows direct `PUBLIC` entries; neither proves complete isolation, safe function behavior, RLS correctness, or cutover readiness. Retain only redacted role, object, policy, and connection-identity summaries; never retain result sets, DSNs, passwords, or Vault responses.
 
 ## 4. Connection modes, TLS, and Supavisor
 
