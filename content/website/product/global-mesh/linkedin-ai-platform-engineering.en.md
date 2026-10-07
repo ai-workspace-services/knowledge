@@ -1,6 +1,6 @@
-# AI, Platform Engineering, and the Fallacy of the Hyperscaler Tax: Architecting a Cloud-Neutral Global Mesh Across 4 Engineering Dimensions
+# AI, Platform Engineering, and the Fallacy of the Hyperscaler Tax: Architecting a Cloud-Neutral Cloud hub Across 4 Engineering Dimensions
 
-*By Haitao Pan | Founder & Systems Architect at OnWalk Technologies*  
+*By Haitao Pan | Founder & Systems Architect at OnWalk Technologies*
 *A Direct Sequel to: [How to Leverage Free SaaS to Launch Online Services: A Full-Stack Guide](https://www.linkedin.com/pulse/how-leverage-free-saas-launch-online-services-full-stack-haitao-pan-xhzwc/?trackingId=ArsLUw0WsVElLX4OTE5GfQ%3D%3D)*
 
 ---
@@ -29,7 +29,7 @@ An autonomous AI agent or an LLM endpoint is functionally useless without the un
 
 When teams blindly migrate to a single hyperscaler (AWS, GCP, or Azure), they fall directly into the **Hyperscaler Tax Trap**: their cloud bill leaps from zero to **980 ~ 1,550+ USD every single month**—with 70% of that spend wasted on idle baseline instances, bundled resource markups, and predatory data egress fees (0.08 ~ 0.12 USD per GB).
 
-To escape this trap, we built **Global Mesh**: an autonomous, cloud-neutral, zero-trust infrastructure fabric that pools heterogeneous CPU and GPU compute across 5 specialized VPS operators. It slashes infrastructure costs by **over 95%**, guarantees **zero public ingress port exposure**, and delivers **sub-28ms global latency** across 48+ active Points of Presence (PoPs).
+To escape this trap, we built **Cloud hub**: an autonomous, cloud-neutral, zero-trust infrastructure fabric that pools heterogeneous CPU and GPU compute across 5 specialized VPS operators. It slashes infrastructure costs by **over 95%**, guarantees **zero public ingress port exposure**, and delivers **sub-28ms global latency** across 48+ active Points of Presence (PoPs).
 
 Here is how modern Platform Engineering must be re-architected across **Four Core Engineering Dimensions**.
 
@@ -54,7 +54,7 @@ Treating compute as a generic, homogeneous virtual machine within a single hyper
 Instead of paying a 300% markup on hyperscaler instances, our model maps specialized functional roles across an **inline 177-country vector topology**:
 
 ```
-[177-Country High-Precision Vector Map] 
+[177-Country High-Precision Vector Map]
              │
              ├── GPU Accelerated Tier (Vultr): H100 SXM5, L40S, A100 for LLM Inference & Embeddings
              ├── Bare-Metal Multi-Core Tier (Hetzner): AMD EPYC & Ampere 80-Core ARM64 for Raw Compute
@@ -73,7 +73,7 @@ Instead of paying a 300% markup on hyperscaler instances, our model maps special
 * **Stateless Serverless BFF (GCP Cloud Run)**: Zero-maintenance container runtime that scales to exact zero when idle and warms in milliseconds when triggered.
 
 ### 2. The Live Sync Engine & 50-PoP Cross Matrix
-Static network routing cannot survive real-world internet disruptions. Global Mesh incorporates an automated **Live Sync Engine**. Every node continuously probes latency, jitter, packet loss, and egress route health against DE-CIX Frankfurt and regional internet exchanges. If a fiber cut or carrier degradation occurs, traffic seamlessly drifts across alternate backbone paths in milliseconds without dropping active TCP connections.
+Static network routing cannot survive real-world internet disruptions. Cloud hub incorporates an automated **Live Sync Engine**. Every node continuously probes latency, jitter, packet loss, and egress route health against DE-CIX Frankfurt and regional internet exchanges. If a fiber cut or carrier degradation occurs, traffic seamlessly drifts across alternate backbone paths in milliseconds without dropping active TCP connections.
 
 ---
 
@@ -110,15 +110,15 @@ No SSH port 22 exposed to the web, no public database listeners, and no open GPU
 
 ## 💰 Dimension 3: FinOps, Scale-to-Zero & Capital Efficiency (The Capital Dimension)
 
-![Global Mesh 50-PoP Capability Matrix & Live Sync FinOps Reconciliation Engine](/Users/shenlan/.gemini/antigravity/brain/1ea21b79-a35e-4892-9694-6a16915a7c27/vps-matrix-finops.png)
+![Cloud hub 50-PoP Capability Matrix & Live Sync FinOps Reconciliation Engine](/Users/shenlan/.gemini/antigravity/brain/1ea21b79-a35e-4892-9694-6a16915a7c27/vps-matrix-finops.png)
 
 The transition from a free launchpad to production scale often triggers violent "cloud bill shock." A standard multi-region Kubernetes cluster (EKS/GKE) on a major hyperscaler immediately demands between 980 USD and 1,550+ USD per month in baseline fixed overhead—even before processing meaningful customer traffic.
 
-Furthermore, hyperscalers bundle GPU compute with inflated CPU, RAM, and egress markups. By decoupling compute tiers and engineering zero-egress data paths, Global Mesh delivers a **95%+ net cost reduction**:
+Furthermore, hyperscalers bundle GPU compute with inflated CPU, RAM, and egress markups. By decoupling compute tiers and engineering zero-egress data paths, Cloud hub delivers a **95%+ net cost reduction**:
 
 ### The Architectural FinOps Reconciliation Matrix
 
-| Infrastructure Layer | Standard Hyperscaler Architecture (AWS / GCP) | Global Mesh Hybrid Architecture | Engineering & Financial Impact |
+| Infrastructure Layer | Standard Hyperscaler Architecture (AWS / GCP) | Cloud hub Hybrid Architecture | Engineering & Financial Impact |
 | :--- | :--- | :--- | :--- |
 | **Edge CDN & Ingress** | CloudFront / GCP Cloud CDN (0.08 ~ 0.12 USD / GB egress) | **Cloudflare Anycast + R2 Object Storage** | **0 USD Egress Tax** (100% free bandwidth for static assets, models, and traces) |
 | **Control Plane (BFF)** | 24/7 Managed K8s (EKS/GKE) + ALB/NLBs (~280 USD/mo baseline) | **GCP Cloud Run (Scale-to-Zero)** | **0 USD Idle Spend** (Billed down to the millisecond only during active invocation) |
@@ -134,31 +134,31 @@ Why pay for server capacity while your users sleep or when background agentic wo
 
 ## 🔄 Dimension 4: Continuous Delivery, Telemetry & The 360° Closed Loop (The Lifecycle Dimension)
 
-Platform engineering fails if it creates friction for software developers. Absorbing industry-standard practices from `engineering-standards` and `operations-management`, Global Mesh enforces a strict, immutable **7-Dimensional Delivery Pipeline**:
+Platform engineering fails if it creates friction for software developers. Absorbing industry-standard practices from `engineering-standards` and `operations-management`, Cloud hub enforces a strict, immutable **7-Dimensional Delivery Pipeline**:
 
 ```
-[Issue: Single Source of Truth] 
+[Issue: Single Source of Truth]
        │
        ▼
-[Git Worktree: Isolated Branch Workspace] 
+[Git Worktree: Isolated Branch Workspace]
        │
        ▼
-[PR Gate: Automated SIT / Integration Tests] 
+[PR Gate: Automated SIT / Integration Tests]
        │
        ▼
-[Trunk: main (Squash Merge Only)] 
+[Trunk: main (Squash Merge Only)]
        │
        ▼
-[UAT: Immutable Daily Snapshot (uat-daily-build-*-rN)] 
+[UAT: Immutable Daily Snapshot (uat-daily-build-*-rN)]
        │
        ▼
-[Release Branch: release/vX.Y] 
+[Release Branch: release/vX.Y]
        │
        ▼
-[PROD Release: Strict SemVer (vMAJOR.MINOR.PATCH)] 
+[PROD Release: Strict SemVer (vMAJOR.MINOR.PATCH)]
        │
        ▼
-[5-Node VPS Mesh Runtime + VictoriaMetrics Sentinels] 
+[5-Node VPS Mesh Runtime + VictoriaMetrics Sentinels]
        │
        ▼
 [360° Closed-Loop Feedback: Telemetry Anomalies Auto-Linked to Issue]
@@ -176,7 +176,7 @@ Platform engineering fails if it creates friction for software developers. Absor
 
 The lesson of modern infrastructure is clear: the economics of generative AI and distributed systems will not tolerate the bloated, single-cloud monoliths of the past decade.
 
-In [Part 1](https://www.linkedin.com/pulse/how-leverage-free-saas-launch-online-services-full-stack-haitao-pan-xhzwc/?trackingId=ArsLUw0WsVElLX4OTE5GfQ%3D%3D), we learned how to bootstrap fast and spend zero.  
+In [Part 1](https://www.linkedin.com/pulse/how-leverage-free-saas-launch-online-services-full-stack-haitao-pan-xhzwc/?trackingId=ArsLUw0WsVElLX4OTE5GfQ%3D%3D), we learned how to bootstrap fast and spend zero.
 In Part 2, we learned that **AI and GPUs are simply one tier of a broader heterogeneous compute spectrum**—and how to scale that entire spectrum autonomously.
 
 By grounding your platform engineering in these **Four Core Dimensions**:
@@ -193,6 +193,6 @@ engineering teams can build resilient, high-performance systems that are **over 
 * What percentage of your current cloud bill is consumed by data egress, idle instances, and bundled GPU markups?
 * How is your platform team bridging the gap between traditional CPU services and dedicated GPU inference clusters?
 
-*Share your thoughts below, or explore the live Global Mesh architecture at [console.onwalk.net/products/cloud-hub](https://console.onwalk.net/products/cloud-hub).*
+*Share your thoughts below, or explore the live Cloud hub architecture at [console.onwalk.net/products/cloud-hub](https://console.onwalk.net/products/cloud-hub).*
 
 `#PlatformEngineering #CloudArchitecture #DevOps #ZeroTrust #FinOps #SoftwareEngineering #CloudComputing #Serverless #AIInfrastructure #GPUCompute #CTO #FullStack`

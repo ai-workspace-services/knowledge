@@ -6,7 +6,7 @@
 
 ## 架构设计篇
 
-- [平台操作中心与 Daily Snapshot 发布验收架构](../design/platform-operations-daily-snapshot.zh.md)：Operations 全量参数、发布计划、父子工作流同步与 Releases 验收证据；目标设计，尚未实现。
+- [平台操作中心与 Daily Snapshot 发布验收架构](../design/platform-operations-daily-snapshot.zh.md)：全量参数、发布计划、MCP 接口与发布验收；方向 1 已选定，含 PROD 标签修订稿。
 
 ## 与当前代码对齐的说明
 

@@ -1,7 +1,7 @@
 ---
 hero:
   badge: 'Cloud-Neutral Global Infrastructure Nerve Center'
-  title: 'Global Mesh'
+  title: 'Cloud hub'
   subtitle: 'Cloud-Neutral Global Service Mesh · Heterogeneous Compute Across 5 Core VPS Providers · 48+ Global PoPs · 0 Ingress Ports Exposed · 90%+ Cost Reduction'
   cta:
     label: 'Open Console'
@@ -9,7 +9,7 @@ hero:
   downloadUrl: 'https://console.onwalk.net/products/cloud-hub'
   supportedPlatforms: 'macOS · Windows · Linux · iOS · Android · Web WASM'
 wizard:
-  title: 'Connect to Global Mesh in 3 Steps'
+  title: 'Connect to Cloud hub in 3 Steps'
   description: 'Seamlessly blend heterogeneous compute nodes, Serverless BFFs, and edge storage into an autonomous zero-trust mesh.'
   steps:
     - step: 1
@@ -37,4 +37,18 @@ showcases:
     description: 'Client-to-Data 5-layer flow paired with Trunk-Based stateful branches and immutable release tags that automatically feed alerts back into Issues.'
     icon: 'workflow'
     image: '/assets/images/global-mesh/05-lifecycle.png'
+ui:
+  name: "Cloud hub"
+  productTitle: "Cloud hub — A Virtual Cloud That Isn't Just a Cloud"
+  navTopology: "Cloud hub"
+  navProduct: "Cloud hub Showcase"
+  computeTopology: "Cloud hub Compute Topology"
+  dualTopology: "Cloud hub Dual-Mesh Topology"
+  finopsTitle: "FinOps multi-cloud comparison: AWS/GCP vs Cloud hub"
+  mixedMonthly: "Cloud hub hybrid monthly cost"
+  aggregationAdvantage: "Cloud hub aggregation advantages"
+  aggregationValue: "Cloud hub aggregation value"
+  mapTitle: "Cloud hub Vector Map"
+  llmsHeading: "Open Platform & Cloud hub"
+
 ---

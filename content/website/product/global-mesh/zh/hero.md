@@ -1,7 +1,7 @@
 ---
 hero:
   badge: '全球云中立基础设施架构中枢'
-  title: 'Global Mesh'
+  title: 'Cloud hub'
   subtitle: 'Cloud-Neutral Global Service Mesh · 5 大核心 VPS 异构算力 · 48+ 全球 PoP · 0 端口公网入站暴露 · 成本节约 90%+'
   cta:
     label: '进入产品控制台'
@@ -9,7 +9,7 @@ hero:
   downloadUrl: 'https://console.onwalk.net/products/cloud-hub'
   supportedPlatforms: 'macOS · Windows · Linux · iOS · Android · Web WASM'
 wizard:
-  title: '3 步接入 Global Mesh 云中立服务网格'
+  title: '3 步接入 Cloud hub 云中立服务网格'
   description: '快速将异构计算节点、Serverless BFF 与边缘存储融入零信任自治网格。'
   steps:
     - step: 1
@@ -37,4 +37,18 @@ showcases:
     description: '端-边-控-算-数五层流动模型，配合 Trunk-Based 有状态分支与发布 Tag 闭环，实现告警自动回写 Issue 证据链。'
     icon: 'workflow'
     image: '/assets/images/global-mesh/05-lifecycle.png'
+ui:
+  name: "Cloud hub"
+  productTitle: "Cloud hub — 一朵不是云的虚拟云"
+  navTopology: "Cloud hub 拓扑"
+  navProduct: "Cloud hub 产品页"
+  computeTopology: "Cloud hub 全球算力拓扑"
+  dualTopology: "Cloud hub 全球双网拓扑"
+  finopsTitle: "FinOps 多云混合对账表：AWS/GCP 纯巨头模式 vs Cloud hub 混合方案"
+  mixedMonthly: "Cloud hub 混合方案单月"
+  aggregationAdvantage: "Cloud hub 聚合协同优势"
+  aggregationValue: "Cloud hub 聚合价值"
+  mapTitle: "Cloud hub Vector Map"
+  llmsHeading: "Open Platform & Cloud hub"
+
 ---
