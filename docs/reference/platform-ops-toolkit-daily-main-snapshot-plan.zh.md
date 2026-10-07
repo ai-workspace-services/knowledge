@@ -123,6 +123,10 @@ Edge Gateway/CNAME 切换
 业务验收与可审计回退
 ```
 
+本轮生产切换验收收敛到来源最新的 email 集合：数量按来源实时集合计算，目标必须拥有同数量、同 email、同密码 hash 和同 Proxy UUID。当前约 24 个核心用户只是规模背景，不写入固定阈值。migratectl/Playbooks 可以继续保留动态业务表的 owner 级复制证据，但 EDO 与 Cloudflare 只消费 `core_users` 脱敏摘要（数量及三类 SHA-256），不发布用户行、密码材料或 Proxy UUID 原值。
+
+入口边界保持稳定：`xworktech.com` 与 `console.svc.plus` 继续由 Cloudflare Pages + Worker 承载；`edge-gateway` Worker 负责 Accounts/Billing 的模式路由；`accounts.svc.plus` 和 `billing.svc.plus` 是稳定入口，通过模式别名 CNAME 在 `accounts-serverless`/`accounts-selfhost` 之间切换。切换和回退必须在同一份新鲜回执上完成，Accounts 与 Billing 不允许分开切换。
+
 按以下门槛逐层推进；后一个门槛未通过时，主库仍保持 PROD Serverless，禁止提前切换入口：
 
 | 层级 | 先验证的最小依赖 | 执行 owner | 必须保留的证据 | 放行到下一层的条件 |
@@ -132,7 +136,7 @@ Edge Gateway/CNAME 切换
 | L2 主机/运行时 | Selfhost PostgreSQL 版本、磁盘、网络、应用运行角色；先做 standby/无 DB 连接探针 | Playbooks Roles | 主机身份、运行时 digest、健康和清理回执 | 目标库可访问且未发生业务写入 |
 | L3 schema | 53 表最新 schema 初始化；只允许空库初始化，不回放历史、不 reset/drop | Playbooks DB owner | SQL/版本/hash、迁移前后 schema 摘要、目标为空证明 | 表、列、约束、索引和触发器达到固定版本 |
 | L4 来源合同 | Vault `kv/data/prod/database-upgrade/PROD_SUPABASE_READONLY_DSN`；session pooler/TLS；连接级与事务级只读 | Playbooks `serverless_supabase` owner | 脱敏连接指纹、角色、TLS、只读反例（写入被拒） | 只读合同有效，且不把管理员凭据写入文件或 artifact |
-| L5 复制/比对 | `migratectl` 全业务 53 表复制；按 email 映射用户，保持 PROD email、Proxy UUID、身份、订阅、额度、账本；再做全字段/行数/摘要/FK 比对 | Accounts migratectl + Playbooks Role | copy/compare receipt、表级摘要、映射统计、失败表清单 | 复制成功且一致性报告无未解释差异；源仍为只读 |
+| L5 复制/比对 | `migratectl` 按来源最新 email 集合映射用户；核心放行字段为 email、密码 hash、Proxy UUID，动态业务表继续由 owner 记录复制证据 | Accounts migratectl + Playbooks Role | `core_users` source/target 脱敏摘要、复制/比对 receipt、动态表 owner 证据 | 核心数量和三类摘要完全一致；源仍为只读 |
 | L6 切换前门槛 | 来源全写者冻结、最终追平窗口、目标单写者和回退点 | 迁移 owner + Edge Gateway owner | 冻结时间、最终追平水位、单写者租约、回退演练 | 新鲜度在约定窗口内，且切换批准明确记录 |
 | L7 入口/验收 | Accounts 与 Billing 同步切换；`accounts.svc.plus`、`billing.svc.plus` 由 Worker/CNAME 指向模式别名；主页和 console 保持原职责 | Edge Gateway/CNAME owner + 业务验收 | DNS/Worker 版本、请求探针、账单/账户关键流程、回退记录 | 生产入口验收通过；否则恢复 Serverless 并保留证据 |
 
@@ -140,8 +144,9 @@ Edge Gateway/CNAME 切换
 
 1. L1—L5 直接由 IaC/Playbooks/DB owner 调试，允许受控 SSH 作为 Role 的传输通道，但不建立绕过 Role 的手工 `psql` 或本地脚本执行路径；凭据只从 Vault 运行时注入，绝不写入聊天、Git 或 artifact。
 2. 聚合流水线只负责校验输入、派发固定 owner、等待、关联 run/artifact 和判断门槛。它不复制业务数据、不生成 schema、不自行修复主机；owner 回执缺失时流水线必须失败而不是猜测成功。
-3. L5 的时点比对不是 L6 的最终一致性证明。只有完成停写、最终追平和单写者证据，才允许进入 L7；在此之前任何 `edge-gateway`、CNAME 或生产主库标记都不得切换。
+3. L5 的核心摘要比对不是 L6 的最终一致性证明。只有完成停写、最终追平和单写者证据，才允许进入 L7；在此之前任何 `edge-gateway`、CNAME 或生产主库标记都不得切换。Edge 只接受同一份新鲜 `core_users` 回执，并继续要求 `writers_quiesced`、`single_writer` 和最新 schema。
 4. 每层都要保存可审计的原始回执和脱敏摘要，并记录固定 SHA、镜像 digest、目标环境、时间窗和回退点。失败重试必须复用同一版本和输入，避免“换版本重试”掩盖真实原因。
+5. EDO 的 `core_users` 模式只负责以不可变 release tag 调度 Selfhost owner、等待精确子运行并发布脱敏回执；它不越过 PROD reviewer/prevent-self-review、来源只读合同或停写门槛，也不直接执行 Cloudflare 变更。
 
 截至 2026-10-07，资源、运行时资格和 schema/Billing owner 检查已有固定版本；全业务复制、最终追平、单写者、网关切换和生产验收尚未完成。最近一次完整业务 preview（run `37578640206`）已通过输入、OIDC、Vault 和 IaC 访问门槛，但在 Playbooks owner 执行阶段失败；由于 owner 的私密输出被清理，不能把这次失败解释成数据库差异，也没有目标写入或主库切换证据。后续执行从 L2/L3 的 Selfhost owner 受控验证开始，再逐层向上推进。
 
