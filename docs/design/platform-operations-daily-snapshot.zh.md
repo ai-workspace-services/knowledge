@@ -60,6 +60,12 @@ Portal 源码定位：
 | IaC Modules | 云资源、状态与基础设施证据 | 页面不隐式扩大资源变更范围 |
 | GitOps / Vault | 非敏感环境声明 / 运行时凭据 | 页面使用受控配置引用，不读取或显示敏感值 |
 
+### 2.1 五层调用关系约束
+
+页面和拟议 Operations API 只属于 Pipeline/入口与控制面，不成为云资源、主机、服务或数据库的执行 owner。Toolkit 负责输入校验、固定 owner 调用、有效回执关联和放行；GitOps 保存期望状态；IaC 负责云资源、DNS、Registry、State 与 CMDB；Playbooks Roles 负责主机、服务、数据库迁移、备份恢复和健康检查。`.github/actions` 只承载控制逻辑，必需阶段缺少回执、回执失败或来源/环境/任务/版本不匹配时必须 fail closed。
+
+可选阶段必须由合同预先声明，不在运行后用 skipped 补写；容器仅 running 或缺少 health 不能算健康。Doco-CD 只同步/应用 GitOps 声明，目标容器实例健康和 owner 回执才是部署验收；DNS/HTTPS、数据库核心用户比对以及登录、订阅、额度、账本、单写者等人工业务验收分别记录，不把页面显示或计划成功当成生产通过。
+
 ```mermaid
 flowchart LR
   UI[Operations 页面] --> API[Operations API]

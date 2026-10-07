@@ -1,6 +1,6 @@
 ---
 title: 参考资料总索引与 PDF 合订编排 / Reference index and PDF compilation plan
-description: 已核验的 36 项多云白皮书、总体架构、容灾、四仓契约、共用规范、数据库安全操作和专题来源索引；a verified 36-item source index for PDF compilation.
+description: 已核验的 37 项多云白皮书、总体架构、容灾、四仓契约、共用规范、数据库安全操作和专题来源索引；a verified 37-item source index for PDF compilation.
 slug: index
 lang: zh
 tags:
@@ -12,7 +12,7 @@ tags:
 
 # 参考资料总索引与 PDF 合订编排
 
-本页是 36 项公开资料的可编辑索引，服务于多云平台工程白皮书、总体架构评审和后续 PDF 合订准备。条目按主题分组，优先链接到本仓库真实文件；跨仓库条目使用固定 `origin/main` SHA 的 GitHub 链接，便于复核来源版本。
+本页是 37 项公开资料的可编辑索引，服务于多云平台工程白皮书、总体架构评审和后续 PDF 合订准备。条目按主题分组，优先链接到本仓库真实文件；跨仓库条目使用固定 `origin/main` SHA 的 GitHub 链接，便于复核来源版本。
 
 GitHub 组织入口：[ai-workspace-infra](https://github.com/ai-workspace-infra)。
 
@@ -112,6 +112,7 @@ GitHub 组织入口：[ai-workspace-infra](https://github.com/ai-workspace-infra
 | ---: | --- | --- | --- | --- |
 | 35 | Supabase 操作参考：专用只读角色、RLS 与受控连接 | zh | knowledge working tree | [docs/reference/supabase-operations.zh.md](supabase-operations.zh.md) |
 | 36 | Supabase Operations Reference: Dedicated Read-only Role, RLS, and Controlled Connections | en | knowledge working tree | [docs/reference/supabase-operations.en.md](supabase-operations.en.md) |
+| 37 | Platform Ops Toolkit Daily Main Snapshot 实施规划 | zh | knowledge working tree | [docs/reference/platform-ops-toolkit-daily-main-snapshot-plan.zh.md](platform-ops-toolkit-daily-main-snapshot-plan.zh.md) |
 
 ## 使用与维护约束
 
