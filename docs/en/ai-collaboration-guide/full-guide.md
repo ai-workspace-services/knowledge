@@ -1,20 +1,21 @@
 ---
 title: AI Collaboration Reference Guide: From Chat to Worker, Engineer, Architect, Researcher, and Specialist (Complete Edition)
-description: A comprehensive framework for 2026 AI team design and model routing, covering 6 core roles, sub-flagship economics, A/B adjudication, and system architecture.
+description: The comprehensive 2026 AI team collaboration and model routing blueprint, covering the Big Four commercial ecosystems (OpenAI, Anthropic, Google, xAI), the nine open-weight families (DeepSeek, Kimi, GLM, Qwen, MiniMax, Nemotron, Mistral, Gemma, Llama), license matrices, and hybrid intelligence routing.
 slug: ai-collaboration-full-guide
 lang: en
-date: 2026-10-07T12:00:00Z
+date: 2026-10-07T14:00:00Z
 author: shenlan
 tags:
   - ai-collaboration
   - model-routing
   - agent-architecture
-  - engineering-practices
+  - open-weight-models
+  - hybrid-intelligence
 category: ai-architecture
 ---
 
 # AI Collaboration Reference Guide: From Chat to Worker, Engineer, Architect, Researcher, Specialist
-## Multi-Channel Publishing & System Architecture Pack (Articles, Social Threads & System Policy)
+## Multi-Channel Publishing & System Architecture Pack (Commercial Flagships, Open-Weight Matrix & Hybrid Routing)
 
 > **Core Philosophy**: Stop looking for "one silver-bullet model to solve everything." Instead, build a team where specialized models assume distinct operational roles. Transition from **Model Selection** to **Model Routing**.
 
@@ -38,239 +39,204 @@ category: ai-architecture
 Historically, the interaction paradigm with LLMs was straightforward:
 $$\text{Human asks a prompt} \longrightarrow \text{AI returns an answer}$$
 
-Under this single-turn Q&A mindset, developers obsessed over two things: memorizing intricate "Prompt Engineering" formulas, and constantly arguing over leaderboards—*"Which frontier model is #1 this week?"*
+Under this single-turn Q&A mindset, developers obsessed over two things: memorizing intricate "Prompt Engineering" formulas, and constantly arguing over leaderboards—*"Which frontier model is #1 this week: GPT, Claude, Gemini, or Grok?"*
 
-With the arrival of autonomous Coding Agents, Computer Use, multi-turn pipelines, and Deep Research in 2026, this paradigm is broken.
+With the arrival of autonomous Coding Agents, Computer Use, Persistent Agents, and Deep Research in late 2026, this paradigm is broken.
 
 Real-world engineering is never solved by a single lone genius. It requires structured organization, clear delegation, and rigorous division of labor. The critical skill today is **designing a virtual AI engineering team**:
 
 $$\text{Chat} \longrightarrow \text{Worker} \longrightarrow \text{Engineer} \longrightarrow \text{Architect} \longleftrightarrow \text{Researcher} \longrightarrow \text{Specialist}$$
 
-This is not a linear hierarchy from "weakest to strongest," but a production-grade **role-based collaboration architecture**. The essential questions have shifted:
+This is not a linear hierarchy from "weakest to strongest," but a production-grade **role-based collaboration architecture**. The operative questions have shifted:
 - Which role should own this specific sub-task?
 - Does it require external tool execution or pure deep reasoning?
-- When should a second model perform a cross-review?
+- When should a secondary model conduct an adversarial cross-review?
+- Can we leverage self-hosted open-weight models to preserve data privacy and slash token bills?
 - Who holds ultimate accountability for the final merge?
 
 ---
 
 ### I. The Paradigm Shift: From "Model Selection" to "AI Team Design"
 
-As of late 2026, the three major AI ecosystems have formed distinct tiers of capability:
+As of October 2026, the artificial intelligence landscape has matured into dual tracks: four commercial giants and nine major open-weight ecosystems:
 
-* **OpenAI (GPT-6 Family)**: Features the ultra-fast **GPT-6 Luna**, the workhorse **GPT-6.1 Sol** (providing near-frontier intelligence at approximately one-fifth the token cost of Astra), and the top-tier **GPT-6 Astra**.
-* **Anthropic (Claude Family)**: Comprises **Haiku**, the engineering mainstay **Sonnet 5.5**, high-reasoning **Opus 5.5**, and the frontier **Fable 5.1 / Mythos 5.1** branches (Mythos is strictly gated for vetted cybersecurity and life sciences research).
-* **Google (Gemini Family)**: Features **Gemini 3.8 Flash** (the 1M-context workhorse tuned for coding and fast agent loops), **Gemini 4 Argon** (the flagship for complex agentic workflows and enterprise reasoning), and **Gemini Deep Think** (dedicated to mathematics, algorithms, and deep scientific inquiries).
+#### 1. The Four Commercial Ecosystems
+* **OpenAI (GPT-6 Family)**:
+  - **GPT-6 Luna**: High-speed, lightweight vanguard for high-throughput Worker tasks;
+  - **GPT-6.1 Sol**: The engineering workhorse, delivering near-Astra reasoning at ~$\frac{1}{5}$ the token cost;
+  - **GPT-6 Astra** (branded as **GPT-6 Pro** in ChatGPT): OpenAI's most intelligent frontier model, optimized for complex reasoning, autonomous agents, and strategic decision-making.
+* **Anthropic (Claude Family)**:
+  - **Haiku Series**: Low-latency execution layer;
+  - **Sonnet 5.5**: The industry's default workhorse for day-to-day agentic coding;
+  - **Opus 5.5 / Fable 5.1 / Mythos 5.1**: Opus 5.5 matches or exceeds Fable 5.1 across standard coding and knowledge benchmarks; **Mythos 5.1** remains an isolated, compliance-gated frontier model dedicated to vetted cybersecurity and life sciences research.
+* **Google (Gemini Family)**:
+  - **Gemini 3.8 Flash**: 1M-context workhorse optimized for rapid coding loops and agent telemetry;
+  - **Gemini 4 Argon**: The enterprise frontier flagship for long-horizon agentic workflows and defensive cyber;
+  - **Gemini Deep Think**: Specialized deep reasoning mode optimized for mathematics, physics, and algorithmic research.
+* **xAI (Grok Family)**:
+  - **Grok 4.7** (released 2026-09-21): A premier coding and knowledge-work powerhouse built for multi-hour autonomous tasks with self-verification; paired with **Grok Bot** (Computer / Persistent Agent) and **Grok Build** (Coding Harness).
 
-The mantra of "always invoke the most expensive frontier model" is obsolete. High-leverage teams operate with specialized virtual roles:
+#### 2. The Nine Open-Weight Ecosystems
+* **China's Open Frontier**:
+  - **DeepSeek V4-Pro** (1.6T MoE / 49B Active, 1M context, **MIT License**, the premier self-hosted infrastructure & coding agent base) and **V4.1-Flash**;
+  - **Kimi K3** (2.8T MoE / 104B Active, 1M context, native multimodal, General Frontier Agent / Architect);
+  - **GLM-5.3** (Deep RL post-training, Terminal Bench 28.3, SWE 66.9, CyberGym 84.5, exceptional coding and cybersecurity focus);
+  - **Qwen3.8 Series** (from edge-friendly Qwen3.8-27B to the 2.4T-A95B flagship);
+  - **MiniMax M3** (1M context + Native Multimodal + Computer Use specialist).
+* **Global Open Frontier**:
+  - **NVIDIA Nemotron 3 Ultra** (550B MoE / 55B Active, Hybrid Mamba-Transformer, fully open weights, data, and recipes under OpenMDW 1.1);
+  - **Mistral Large 4** (1.05T MoE / 49B Active, European sovereign frontier for cyber, finance, and law);
+  - **Google Gemma 4 12B** (12B multimodal local agent running on 16GB memory devices);
+  - **Meta Llama 4 (Scout / Maverick)** (The industry-wide foundation for serving, quantization, and fine-tuning);
+  - **IBM Granite 4.2 & OpenAI gpt-oss** (Apache 2.0 corporate governance mainstays).
 
-| AI Role | Core Responsibility | Primary Optimization Metric | Operational Mindset |
-| :--- | :--- | :--- | :--- |
-| **Chat** | Intent understanding, boundary scoping, task decomposition | Conversational grounding & context orchestration | **Control Plane (Orchestrator)** |
-| **Worker** | High-volume, deterministic, bulk tasks | High throughput, sub-second latency, low cost | **Execution Unit (Worker)** |
-| **Engineer** | Read repos, write code, run tools, execute tests | Coding robustness, tool reliability, test verification | **The Backbone (Builder)** |
-| **Architect** | System design, failure-domain analysis, final adjudication | Deep reasoning, holistic vision, boundary verification | **Decision & Adjudication (Judge)** |
-| **Researcher** | External fact discovery and ground-truth verification | Live search, primary source citation, confidence score | **Evidence Engine (Grounding)** |
-| **Specialist** | Gated, high-barrier vertical domains (cyber, math, bio) | Domain-specific tuning, compliance & safety bounds | **Vertical Specialist (Expert)** |
-
-> **Guiding Principle**: Never seek one universal model for everything. Delegate distinct responsibilities across specialized models.
+| AI Role | Core Responsibility | Optimization Metric | Commercial Reference | Open-Weight Alternative |
+| :--- | :--- | :--- | :--- | :--- |
+| **Chat** | Intent parsing, scoping constraints, task breakdown | Grounded comprehension | GPT-6.1 Sol / Sonnet 5.5 / Grok | Qwen3.8-27B / Gemma 4 |
+| **Worker** | High-volume, deterministic, bulk tasks | High throughput, sub-second latency | Luna / Haiku / Flash 3.8 / Grok Fast | Qwen 27B / V4-Flash / gpt-oss-20B |
+| **Engineer** | Read repos, write code, run tools, execute tests | Coding robustness, tool execution | Sol / Sonnet 5.5 / Grok 4.7 | DeepSeek V4-Pro / GLM-5.3 / Qwen3.8 |
+| **Architect** | System design, failure-domain review, adjudication | Deep reasoning, holistic vision | Astra / Opus 5.5 / Argon / Fable | Kimi K3 / Nemotron 3 Ultra / Mistral L4 |
+| **Researcher** | External fact discovery and ground-truth verification | Live search, primary source citation | Deep Research / Grok+X / Fable | Kimi K3 / Qwen3.8 / Nemotron Ultra |
+| **Specialist** | Gated, high-barrier vertical domains (cyber, math) | Domain-specific tuning, compliance | Mythos 5.1 / Deep Think / Argon Cyber | GLM-5.3 Cyber / MiniMax M3 (GUI) |
 
 ---
 
 ### II. Deep Dive into the Six AI Roles
 
 #### 1. Chat: The Control Plane (Not a Code Generator)
-The most common mistake is prompting: *"Here is my bug, write the code."*
-
-Chat is the **Control Plane**. Its mandate is not code generation, but upfront governance:
+Chat is the **Control Plane**. Its mandate is upfront governance:
 $$\text{Context} \to \text{Problem} \to \text{Goal} \to \text{Constraint} \to \text{Task Decomposition}$$
-
-- **Anti-pattern**: *"Latency on the Tokyo edge node is spiking, fix it."*
-- **Chat-governed Decomposition**:
-  - **Goal**: Identify why JP-XConnect latency degrades monotonically over time and immediately recovers upon restarting Caddy.
-  - **Evidence**: Collect Caddy metrics, Go runtime memory/GC stats, open file descriptors, TCP TIME_WAIT states, and Xray exporter timeseries.
-  - **Routing**: Assign an **Engineer Agent** to collect node telemetry, dispatch a **Researcher Agent** to check known Caddy/Go runtime issues, and designate an **Architect Agent** to synthesize the Root Cause Analysis tree.
+Chat formulates the task manifest, establishes boundaries, and decides who takes the field.
 
 #### 2. Worker: Cheap, Fast, and Scalable
-Worker is defined by: **Cheap + Fast + Scalable**.
-- Typical tasks: Log filtering, SQL drafting, regex tuning, config formatting (YAML/JSON), metadata extraction, and AST lint triage.
 - **The 1,000x Rule**: *"Am I willing to execute this task 1,000 times concurrently?"*
-- Flagship choices: `GPT-6 Luna`, `Claude Haiku`, `Gemini 3.8 Flash`.
-
-Worker models are no longer "dumb." With **Gemini 3.8 Flash** offering a 1M token context window, it can ingest hundreds of megabytes of logs or repository files for trivial token expenditure.
+- Log filtering, SQL drafting, regex tuning, AST lint triage, config conversions.
+- **Local Edge Advantage**: Running **Gemma 4 12B** or **Qwen 27B** locally on 16GB RAM machines ensures zero token costs and complete data privacy.
 
 #### 3. Engineer: The Production Workhorse
-The Engineer model is not a passive chatbot; it closes the operational loop:
 $$\text{Understand} \to \text{Plan} \to \text{Modify} \to \text{Execute} \to \text{Test} \to \text{Verify}$$
-
 Crucially: **Model $\neq$ Agent**.
-`GPT-6.1 Sol`, `Sonnet 5.5`, and `Gemini 3.8 Flash` are raw models. `Codex`, `Claude Code`, and `Gemini CLI / Workspace Harness` are execution harnesses.
+`Sol`, `Sonnet 5.5`, `Grok 4.7`, and `DeepSeek V4-Pro` are raw foundation models. `Codex`, `Claude Code`, `Grok Build`, and `Gemini CLI` are execution harnesses.
 $$\text{Engineering Power} = \text{Model} \times \text{Context} \times \text{Tools} \times \text{Harness} \times \text{Verification}$$
 
-#### 4. The Sub-Flagship Revolution: Why "Second-Tier" Models Dominate
-In 2026, **sub-flagship models became the true backbone of software engineering**:
-- **GPT-6.1 Sol**: Delivers near-Astra performance at ~$\frac{1}{5}$ the standard token cost, purpose-built for long-horizon agentic coding.
-- **Claude Sonnet 5.5**: The industry default for reliable refactoring, bug-fixing, and workspace tooling.
+#### 4. The Sub-Flagship Revolution
+Sub-flagships (`GPT-6.1 Sol`, `Sonnet 5.5`, `Grok 4.7`, `DeepSeek V4-Pro`) dominate daily software delivery. You don't ask your CTO to spend all day editing configuration files; similarly, reserve frontier intelligence budgets for high-leverage architectural forks.
 
-Just as an organization doesn't ask its CTO to spend all day editing YAML configs, teams should never burn frontier budgets on routine feature implementation.
-
-#### 5. Architect: The Ultimate Role is "Judge"
-The Architect's value lies not in typing speed, but in evaluating:
-* What should *never* be built;
-* Where the system's failure domains and blast radiuses lie;
-* The long-term technical debt tradeoffs between Option A and Option B.
+#### 5. Architect: The Impartial Adjudicator (Judge)
+The Architect evaluates failure domains, long-term technical debt, and blast radiuses.
 
 **The highest-leverage role for frontier models is serving as an impartial Judge:**
-
-```
-┌─────────────────────────────────┐       ┌─────────────────────────────────┐
-│     Engineer A (Sonnet 5.5)     │       │     Engineer B (GPT-6.1 Sol)    │
-│    Implements Option A (PoC)    │       │    Implements Option B (PoC)    │
-└────────────────┬────────────────┘       └────────────────┬────────────────┘
-                 │                                         │
-                 └───────────────────┬─────────────────────┘
-                                     ▼
-                   ┌───────────────────────────────────┐
-                   │    Reviewer (Gemini 3.8 Flash)    │
-                   │    Fast 1M repo dependency scan   │
-                   └─────────────────┬─────────────────┘
-                                     ▼
-                   ┌───────────────────────────────────┐
-                   │    Architect / Judge (Astra/Opus) │
-                   │  Exposes hidden risks & tradeoffs │
-                   └─────────────────┬─────────────────┘
-                                     ▼
-                   ┌───────────────────────────────────┐
-                   │      Human Owner (Final Approval) │
-                   └───────────────────────────────────┘
-```
+Two Engineer agents propose independent implementations (e.g. Sonnet vs. Sol), an expansive-context model (Flash or DeepSeek V4) maps out dependencies, and an Architect (Astra, Opus, or Nemotron) exposes hidden flaws and recommends the merge decision for final human sign-off.
 
 #### 6. Researcher & Specialist: Grounding and Domain Walls
-- **Researcher Eliminates Unknowns**: LLMs easily confuse autoregressive reasoning with real-world fact. The Researcher verifies RFCs, GitHub issues, breaking changes, and live benchmarks, outputting `Evidence → Source → Comparison → Confidence`.
-- **Specialist Overcomes Domain Walls**: For penetration testing (`Claude Mythos 5.1`, `Gemini 4 Argon Cyber`) or frontier mathematics/algorithms (`Gemini Deep Think`), specialized fine-tuning and safety gating far surpass generalist frontier models.
+- **Researcher Eliminates Unknowns**: Verifies live RFCs, GitHub issues, breaking changes, and benchmarks. Strict schema: `Evidence → Source → Comparison → Confidence`.
+- **Specialist Overcomes Domain Walls**:
+  - Cybersecurity: `Claude Mythos 5.1`, `Gemini 4 Argon Cyber`, `GLM-5.3 Cyber`, `Mistral Large 4`;
+  - Frontier Science & Math: `Gemini Deep Think`, `GPT-6 Astra Math`;
+  - Computer Use & GUI: `MiniMax M3`, `Grok Bot`, `Claude Computer Use`.
 
 ---
 
-### III. 2026 Role Mapping Matrix
+### III. Open-Weight Licensing Assessment Matrix
 
-| Tier | OpenAI | Anthropic | Google | Target Scope & Workload |
-| :--- | :--- | :--- | :--- | :--- |
-| ⚡ **Worker / Fast** | GPT-6 Luna | Claude Haiku | Gemini 3.8 Flash | Sub-second formatting, log triage, regex, bulk classification |
-| ⚙️ **Engineer / Mainstream** | GPT-6.1 Sol | Claude Sonnet 5.5 | Gemini 3.8 Flash / Pro | Daily coding, repo navigation, tool execution, test verification |
-| 🧠 **Senior Engineer** | GPT-6.1 Sol (High/Max) | Claude Opus 5.5 / Sonnet Thinking | Gemini 4 Argon / Pro Thinking | Deep root-cause debugging, multi-file architectural refactors |
-| 🏆 **Architect / Judge** | GPT-6 Astra / Pro | Claude Opus 5.5 / Fable 5.1 | Gemini 4 Argon | System architecture, A/B proposal adjudication, security audit |
-| 🔬 **Researcher** | ChatGPT Deep Research / Astra | Claude Research / Fable | Gemini Deep Research | Primary source discovery, RFC verification, benchmarking |
-| 🧪 **Specialist** | Astra (Specialized Mode) | Claude Mythos 5.1 | Argon Cyber / Deep Think | Penetration testing, vulnerability discovery, frontier math |
+When architecting a private or hybrid AI Workspace, teams must recognize:
+**Open Source $\neq$ Open Weight $\neq$ Free Commercial Use.**
+
+| Model Family | Weights Available | Data & Recipes Open | License Type | Commercial Assessment |
+| :--- | :---: | :---: | :--- | :--- |
+| **DeepSeek V4-Pro / Flash** | ✅ | ❌ | **MIT License** | 🟢 **Ultra-Friendly**: Zero commercial revenue hurdles |
+| **OpenAI gpt-oss (20B/120B)** | ✅ | ❌ | **Apache 2.0** | 🟢 **Ultra-Friendly**: Standard corporate compliance pass |
+| **IBM Granite 4.2** | ✅ | ❌ | **Apache 2.0** | 🟢 **Ultra-Friendly**: Ideal for private enterprise VPCs |
+| **NVIDIA Nemotron 3 Ultra** | ✅ | ✅ Data + Recipes | **OpenMDW 1.1** | 🟢 **Radically Open**: Most transparent frontier model |
+| **Kimi K3** | ✅ | ❌ | **Kimi Custom** | 🟡 **Revenue Threshold**: MaaS businesses >\$20M require terms |
+| **Qwen3.8 (Flagship)** | ✅ | ❌ | **Qwen Custom** | 🟡 **Scale Threshold**: Large-scale MaaS requires licensing |
+| **GLM-5.3** | ✅ | ❌ | **GLM Custom** | 🟡 **Review Required**: Subject to Zhipu commercial terms |
+| **Meta Llama 4** | ✅ | ❌ | **Llama Community**| 🟡 **MAU Threshold**: Gated for mega-scale services (>700M MAU) |
+| **MiniMax M3** | ✅ | ❌ | **Non-Commercial** | 🔴 **Restricted**: Commercial deployment requires vendor deal |
+| **Mistral Large 4** | ⏳ Late Oct 2026 | ❌ | Pending weights | 🟡 Currently API preview; self-hosting unlocks late Oct |
 
 ---
 
 ### IV. The Six-Level Escalation Ladder & Human Ownership
 
-#### 1. On-Demand Escalation (Level 0 to Level 5)
-1. **Level 0 (Chat)**: Frame the problem, scope boundaries, define acceptance criteria.
-2. **Level 1 (Worker)**: Can it be solved cheaply in bulk? If yes, execute immediately.
-3. **Level 2 (Engineer)**: Requires repository editing, tool calls, and automated tests? Dispatch Engineer Agent.
-4. **Level 3 (Architect)**: Conflicting proposals or high blast-radius changes? Escalate to Architect for adjudication.
-5. **Level 4 (Researcher)**: Unverified external documentation or shifting APIs? Execute research first.
-6. **Level 5 (Specialist)**: Penetrates cybersecurity boundaries or complex math? Dispatch vetted Specialist.
-
-#### 2. Where Does the Human Stand?
-Humanity is transitioning:
-$$\text{From Operator (Task Worker)} \longrightarrow \text{To Owner (System Stakeholder)}$$
-
-* We no longer write raw boilerplate; **we define infrastructure policy and blast-radius constraints**.
-* We no longer parse millions of raw logs; **we define SLOs, error budgets, and business guardrails**.
-* We no longer race AI on typing speed; **we govern: Goal · Constraint · Judgment · Accountability**.
-
----
-
-# Part 2: X (Twitter) High-Signal Mega-Thread
-
-```text
-🧵 [1/10] In 2026, the competitive moat is no longer prompt engineering.
-It is how you organize AI teams.
-Old: Human prompts ➔ AI answers (Single-turn Q&A)
-New: Chat ➔ Worker ➔ Engineer ➔ Architect ➔ Researcher ➔ Specialist (Team Orchestration)
-Move from Model Selection to Model Routing 🧵👇
-
-🧵 [2/10] The 6-Agent Virtual Hierarchy:
-• Chat: Control plane scoping Context, Constraints & Task Decomposition
-• Worker: Cheap, Fast, Scalable execution for 1,000x tasks
-• Engineer: Understand ➔ Modify ➔ Test closed-loop workhorse
-• Architect: System boundaries, Failure Domains & A/B Adjudication (Judge)
-• Researcher: External grounding, RFCs & primary source verification
-• Specialist: Domain-gated cyber (Mythos/Argon Cyber) & math (Deep Think)
-
-🧵 [3/10] Level 0: Chat is the Control Plane, not a code generator.
-Never start with "write code." Chat must first establish:
-Context ➔ Problem ➔ Goal ➔ Constraint ➔ Task Decomposition.
-Chat decides which agent takes the field next.
-
-🧵 [4/10] Level 1: Worker & The 1,000x Rule.
-Worker (Luna / Haiku / Flash 3.8) values throughput and near-zero cost.
-The rule: "Am I willing to run this task 1,000 times in parallel?"
-Never burn frontier token budgets on bulk log filtering or regex.
-
-🧵 [5/10] Level 2: Engineer & "Model ≠ Agent".
-Engineering Power = Model × Context × Tools × Harness × Verification.
-Models (Sol, Sonnet) require an execution harness (Codex, Claude Code) with test loops.
-
-🧵 [6/10] Why Sub-Flagships Rule Software Engineering:
-GPT-6.1 Sol and Sonnet 5.5 deliver near-frontier intelligence at a fraction of the cost.
-You don't hire a CTO to edit YAML configs. Save frontier budgets for critical forks.
-
-🧵 [7/10] Level 3: The True Mandate of Frontier Models is "Judge".
-Have Sonnet implement Option A, Sol implement Option B, Flash scan the repo dependencies, and Astra/Opus serve as the Architect Judge exposing hidden flaws before human merge.
-
-🧵 [8/10] Level 4 & 5: Grounding and Domain Walls.
-Researcher prevents hallucinations with primary citations (Evidence ➔ Source ➔ Confidence).
-Specialists (Mythos 5.1, Argon Cyber, Deep Think) dominate where generalist models fail.
-
-🧵 [9/10] On-Demand Escalation (Level 0 ~ 5):
-L0 Chat ➔ L1 Worker ➔ L2 Engineer ➔ L3 Architect ➔ L4 Researcher ➔ L5 Specialist ➔ Human Approval.
-Keep 90% of tasks at low-cost tiers.
-
-🧵 [10/10] Where does the human sit?
-Humans shift from Operator to Owner.
-AI provides raw horsepower; humans own:
-Goal · Constraint · Judgment · Accountability.
+```
+Level 0: Chat (Clarify intent, define scope, establish success criteria)
+   ↓ Can this be solved via low-cost, bulk processing?
+Level 1: Worker (Log triage, regex, config formatting: Flash / Qwen 27B / Gemma 4)
+   ↓ Requires reading repositories, modifying code, and running tests?
+Level 2: Engineer (Coding Agent: Sol / Sonnet / Grok 4.7 / DeepSeek V4)
+   ↓ Conflicting options, architectural ambiguity, or high blast-radius?
+Level 3: Architect (System design, failure-domain review, A/B Judge: Astra / Opus / Kimi K3)
+   ↕ Decision depends on live external docs, RFCs, or benchmarks?
+Level 4: Researcher (Deep Research / Grok+X grounds findings with primary citations)
+   ↓ Touches offensive/defensive cyber or deep mathematical proofs?
+Level 5: Specialist (Deploy gated models: Mythos / Argon Cyber / Deep Think / MiniMax M3)
+   ↓
+Human Approval (Human signs off on final PR merge and deployment)
 ```
 
+**Humanity is transitioning: From Operator (Mechanic) to Owner (System Stakeholder).**
+AI provides raw execution horsepower; humans govern:
+$$\text{Goal} \cdot \text{Constraint} \cdot \text{Judgment} \cdot \text{Accountability}$$
+
 ---
 
-# Part 3: System Engineering & Model Routing Policy
-
-For systems like **XWorkmate / AI Workspace**, configuration shifts from static model selectors to dynamic rule routers:
+# Part 2: Hybrid Intelligence System Router Policy (`model_router_policy.json`)
 
 ```json
 {
-  "routing_policy_version": "2026.10",
+  "routing_policy_version": "2026.10-hybrid",
   "default_orchestrator": {
     "role": "chat",
-    "model": "claude-sonnet-5.5",
-    "fallback": "gpt-6.1-sol"
+    "primary": "claude-sonnet-5.5",
+    "fallback": "gpt-6.1-sol",
+    "open_weight_fallback": "qwen-3.8-27b"
   },
   "roles": {
     "worker": {
-      "selection_criteria": { "max_latency_ms": 2000, "max_cost_per_m_tokens": 0.5 },
-      "candidate_models": ["gemini-3.8-flash", "gpt-6-luna", "claude-haiku"]
+      "selection_criteria": { "max_latency_ms": 1500, "max_cost_per_m_tokens": 0.5 },
+      "commercial_models": ["gemini-3.8-flash", "gpt-6-luna", "claude-haiku", "grok-fast"],
+      "open_weight_models": ["deepseek-v4-flash", "qwen-3.8-27b", "gemma-4-12b", "granite-4.2-8b"]
     },
     "engineer": {
-      "selection_criteria": { "requires_tools": true, "harness": ["workspace_edit", "shell_execution", "test_runner"] },
-      "candidate_models": ["claude-sonnet-5.5", "gpt-6.1-sol", "gemini-3.8-flash"]
+      "selection_criteria": { "requires_tools": true, "harness": ["code_edit", "shell", "test_runner"] },
+      "commercial_models": [
+        { "model": "claude-sonnet-5.5", "harness": "claude-code" },
+        { "model": "gpt-6.1-sol", "harness": "codex" },
+        { "model": "grok-4.7", "harness": "grok-build" },
+        { "model": "gemini-3.8-flash", "harness": "gemini-cli" }
+      ],
+      "open_weight_models": [
+        { "model": "deepseek-v4-pro", "license": "MIT", "harness": "open-agent" },
+        { "model": "glm-5.3", "harness": "open-agent" },
+        { "model": "qwen-3.8-2.4t", "harness": "open-agent" },
+        { "model": "nemotron-3-ultra", "license": "OpenMDW-1.1", "harness": "open-agent" }
+      ]
     },
     "architect": {
       "selection_criteria": { "judgment_mode": "design_review_and_adjudication" },
-      "candidate_models": ["gpt-6-astra", "claude-opus-5.5", "gemini-4-argon"]
+      "commercial_models": ["gpt-6-astra", "claude-opus-5.5", "gemini-4-argon", "grok-4.7", "claude-fable-5.1"],
+      "open_weight_models": ["kimi-k3", "nemotron-3-ultra", "deepseek-v4-pro", "glm-5.3"]
     },
     "researcher": {
       "selection_criteria": { "requires_grounding": true, "citation_required": true },
-      "candidate_models": ["openai-deep-research", "gemini-deep-research", "claude-research-mode"]
+      "commercial_models": ["openai-deep-research", "gemini-deep-research", "grok-4.7-web-x", "claude-research"],
+      "open_weight_models": ["kimi-k3-research", "qwen-3.8-search-agent", "nemotron-3-ultra"]
     },
     "specialist": {
       "domains": {
-        "cybersecurity": ["claude-mythos-5.1", "gemini-4-argon-cyber"],
-        "mathematics_and_science": ["gemini-deep-think", "gpt-6-astra-math"]
+        "cybersecurity": {
+          "commercial": ["claude-mythos-5.1", "gemini-4-argon-cyber"],
+          "open_weight": ["glm-5.3-cyber", "mistral-large-4-cyber"]
+        },
+        "science_and_math": {
+          "commercial": ["gemini-deep-think", "gpt-6-astra-math"],
+          "open_weight": ["qwen-3.8-math", "nemotron-3-ultra"]
+        },
+        "computer_use_gui": {
+          "commercial": ["claude-computer-use", "grok-bot", "chatgpt-work"],
+          "open_weight": ["minimax-m3", "gemma-4-12b-agent"]
+        }
       }
     }
   }
