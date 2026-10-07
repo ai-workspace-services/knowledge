@@ -1,0 +1,587 @@
+{
+  "schema_version": 1,
+  "audit_date": "2026-10-07",
+  "repositories": {
+    "platform-ops-toolkit": {
+      "remote": "ai-workspace-infra/platform-ops-toolkit",
+      "sha": "feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8"
+    },
+    "playbooks": {
+      "remote": "ai-workspace-infra/playbooks",
+      "sha": "2dd12e6e12ce8b0b07bdae8290f96257fde67f07"
+    },
+    "iac_modules": {
+      "remote": "ai-workspace-infra/iac_modules",
+      "sha": "c128442c35024f75bcd9f9cb771dc882d9d4d2ed"
+    },
+    "gitops": {
+      "remote": "ai-workspace-infra/gitops",
+      "sha": "437014ff401e7a0a122725945c093a71ab756dd1"
+    }
+  },
+  "entry_workflow": ".github/workflows/daily-main-snapshot.yaml",
+  "workflow_scope": {
+    ".github/workflows/daily-main-snapshot.yaml": "Daily 入口、构建、readiness、派发和汇总",
+    ".github/workflows/hybrid-orchestrator.yml": "UAT 矩阵编排；并非所有 lane 都执行",
+    ".github/workflows/selfhost-orchestrator.yml": "资源、CMDB、主机和服务交付；含 Daily 不使用的 PROD 条件分支",
+    ".github/workflows/serverless-orchestrator.yml": "SIT/UAT Serverless；含其他操作与环境分支",
+    ".github/workflows/external-inventory-state.yml": "TW/PH existing inventory / State 路径",
+    ".github/workflows/xconnect-zero-cloud.yaml": "显式迁移分支；普通 Daily 不启用",
+    ".github/workflows/environment-data-operations.yml": "数据操作薄调用与 owner workflow 接入",
+    ".github/workflows/environment-upgrade-ci.yml": "数据升级/rehearsal 调用入口"
+  },
+  "job_annotations": {
+    "resolve-snapshot-tag": {
+      "task": "确定统一快照 tag",
+      "inputs": "deploy_env、snapshot_tag、snapshot_source_ref、repositories",
+      "outputs": "snapshot_tag",
+      "steps": {
+        "Checkout repository": {
+          "verify": "工作目录和控制脚本可用"
+        },
+        "Load GitHub App private key from Vault": {
+          "verify": "运行时授权成功；不持久化或输出私钥"
+        },
+        "Create GitHub App installation token for infra": {
+          "verify": "infra 组织访问权限"
+        },
+        "Create GitHub App installation token for lab": {
+          "verify": "lab 组织访问权限"
+        },
+        "Create GitHub App installation token for services": {
+          "verify": "services 组织访问权限"
+        },
+        "Create GitHub App installation token for xstream": {
+          "verify": "xstream 组织访问权限"
+        },
+        "Resolve snapshot tag across all organizations": {
+          "verify": "输出合法统一 tag；范围/环境不符时停止"
+        }
+      }
+    },
+    "snapshot": {
+      "task": "按组织创建 tag、构建并记录状态",
+      "inputs": "统一 tag、源码 ref、构建清单、组织矩阵",
+      "outputs": "daily-snapshot-status-<organization>",
+      "steps": {
+        "Checkout repository": {
+          "verify": "工作目录和控制脚本可用"
+        },
+        "Load GitHub App private key from Vault": {
+          "verify": "运行时授权成功；不持久化或输出私钥"
+        },
+        "Create GitHub App installation token": {
+          "verify": "当前组织权限"
+        },
+        "Create cross-repository main snapshot": {
+          "verify": "tag、构建结果和制品状态可关联"
+        },
+        "Trigger XConnect multi-platform release": {
+          "verify": "仅证明 repository_dispatch 已提交；未等待发布完成",
+          "run_label": "gh api repository_dispatch（仅 xstream）"
+        },
+        "Upload snapshot status": {
+          "verify": "组织状态 artifact；失败时也尝试上传"
+        }
+      }
+    },
+    "resolve-built-snapshot-tag": {
+      "task": "确认完成的统一版本",
+      "inputs": "各组织状态 artifact",
+      "outputs": "完成的 snapshot_tag",
+      "steps": {
+        "Checkout repository": {
+          "verify": "工作目录和控制脚本可用"
+        },
+        "Download all organization snapshot status artifacts": {
+          "verify": "组织状态集合完整"
+        },
+        "Resolve immutable completed snapshot tag": {
+          "verify": "解析完成的统一 tag；指定 repositories 时跳过"
+        }
+      }
+    },
+    "shared-readiness": {
+      "task": "检查 Shared 服务",
+      "inputs": "Vault/Grafana/IAM endpoint、issuer、超时",
+      "outputs": "readiness 成功/失败",
+      "steps": {
+        "Checkout repository": {
+          "verify": "工作目录和控制脚本可用"
+        },
+        "Check Shared platform readiness (read-only)": {
+          "verify": "Vault initialized 且 unsealed；Grafana DB ok；IAM issuer 匹配",
+          "playbooks": "B11 待新增 owner 接口；当前仍执行 Toolkit 探针"
+        }
+      }
+    },
+    "dispatch-environment": {
+      "task": "读取 GitOps，派发并等待环境部署",
+      "inputs": "完成的 tag、环境、GitOps topology",
+      "outputs": "run_url、environment-dispatch-<environment>",
+      "steps": {
+        "Checkout repository": {
+          "verify": "工作目录和控制脚本可用"
+        },
+        "Load GitHub App private key from Vault": {
+          "verify": "运行时授权成功；不持久化或输出私钥"
+        },
+        "Create GitHub App installation token": {
+          "verify": "读取 GitOps 和派发权限"
+        },
+        "Checkout selected GitOps topology": {
+          "verify": "获得对应环境和模式的拓扑"
+        },
+        "Resolve target domain from GitOps": {
+          "verify": "target_domain_base；环境和模式校验"
+        },
+        "Dispatch ${{ matrix.name }}": {
+          "verify": "精确子运行 URL、终态、环境和 tag；按目标选择执行",
+          "playbooks": "B01—B10 下游条件调用",
+          "iac": "I01—I09 下游条件调用"
+        },
+        "Write dispatch receipt": {
+          "verify": "环境、操作、workflow、tag、run_url、结果",
+          "run_label": "jq 写脱敏派发回执"
+        },
+        "Upload dispatch receipt": {
+          "verify": "环境回执 artifact"
+        }
+      }
+    },
+    "snapshot-summary": {
+      "task": "汇总构建及环境派发",
+      "inputs": "组织状态、环境派发回执",
+      "outputs": "daily-snapshot-summary.json、environment-dispatch-summary.json、Actions Summary",
+      "steps": {
+        "Checkout repository": {
+          "verify": "工作目录和控制脚本可用"
+        },
+        "Download all organization snapshot status artifacts": {
+          "verify": "构建状态集合"
+        },
+        "Publish unified snapshot matrix summary": {
+          "verify": "构建汇总 JSON 和 Actions Summary"
+        },
+        "Download environment dispatch receipts": {
+          "verify": "部署未跳过时获得回执"
+        },
+        "Publish environment dispatch summary": {
+          "verify": "环境派发汇总 JSON"
+        },
+        "Upload environment snapshot summary": {
+          "verify": "daily-snapshot-summary-<environment> artifact"
+        },
+        "Fail when the selected environment dispatch failed": {
+          "verify": "失败状态；当前外层 job 条件会阻止部分失败路径进入汇总",
+          "run_label": "exit 1"
+        }
+      }
+    }
+  },
+  "execution_mappings": [
+    {
+      "id": "I01",
+      "task": "GCP Web SaaS 主机/网络/数据盘",
+      "owner": "IaC Modules",
+      "status": "模块现有；待 owner workflow 接入",
+      "inputs": "GitOps resources/onwalk.net/uat/gcp/web-saas.yaml、环境、账户、State",
+      "outputs": "资源 ID、State、CMDB；与目标声明一致",
+      "implementations": [
+        {
+          "repository": "iac_modules",
+          "path": "terraform-hcl-standard/gcp-cloud/modules/project"
+        },
+        {
+          "repository": "iac_modules",
+          "path": "terraform-hcl-standard/gcp-cloud/modules/network"
+        },
+        {
+          "repository": "iac_modules",
+          "path": "terraform-hcl-standard/gcp-cloud/modules/spot_vm"
+        },
+        {
+          "repository": "iac_modules",
+          "path": "terraform-hcl-standard/gcp-cloud/modules/persistent_data_disk"
+        }
+      ]
+    },
+    {
+      "id": "I02",
+      "task": "GCP US Agent Proxy",
+      "owner": "IaC Modules",
+      "status": "模块现有；待 owner workflow 接入",
+      "inputs": "US lane 声明、账户、State",
+      "outputs": "US 实例身份、网络、CMDB",
+      "implementations": [
+        {
+          "repository": "iac_modules",
+          "path": "terraform-hcl-standard/gcp-cloud/modules/project"
+        },
+        {
+          "repository": "iac_modules",
+          "path": "terraform-hcl-standard/gcp-cloud/modules/network"
+        },
+        {
+          "repository": "iac_modules",
+          "path": "terraform-hcl-standard/gcp-cloud/modules/spot_vm"
+        }
+      ]
+    },
+    {
+      "id": "I03",
+      "task": "AWS JP Agent Proxy",
+      "owner": "IaC Modules",
+      "status": "当前 JP on-demand 用 ec2；Spot 声明才用 spot_ec2；待 owner workflow 接入",
+      "inputs": "JP lane 声明、AWS 身份、State",
+      "outputs": "JP 实例、地址、CMDB",
+      "implementations": [
+        {
+          "repository": "iac_modules",
+          "path": "terraform-hcl-standard/aws-cloud/modules/ec2"
+        },
+        {
+          "repository": "iac_modules",
+          "path": "terraform-hcl-standard/aws-cloud/modules/spot_ec2"
+        }
+      ]
+    },
+    {
+      "id": "I04",
+      "task": "Akamai SG Agent Proxy",
+      "owner": "IaC Modules",
+      "status": "compute 现有；storage 条件使用；防火墙由模板生成；待 owner workflow 接入",
+      "inputs": "SG lane 声明",
+      "outputs": "SG 实例、防火墙、CMDB",
+      "implementations": [
+        {
+          "repository": "iac_modules",
+          "path": "terraform-hcl-standard/akamai-cloud/modules/compute"
+        },
+        {
+          "repository": "iac_modules",
+          "path": "terraform-hcl-standard/akamai-cloud/modules/storage"
+        },
+        {
+          "repository": "iac_modules",
+          "path": "terraform-hcl-standard/akamai-cloud/templates/hosts.tf.j2"
+        }
+      ]
+    },
+    {
+      "id": "I05",
+      "task": "TW/PH existing 资源事实",
+      "owner": "IaC Modules",
+      "status": "LEGACY Toolkit 执行；待迁入 IaC；不创建外部主机",
+      "inputs": "existing 声明、环境、账户、State",
+      "outputs": "existing inventory/State；不等于服务部署",
+      "implementations": [
+        {
+          "repository": "platform-ops-toolkit",
+          "path": "scripts/iac/write_external_inventory.py"
+        },
+        {
+          "repository": "platform-ops-toolkit",
+          "path": ".github/workflows/external-inventory-state.yml"
+        }
+      ]
+    },
+    {
+      "id": "I06",
+      "task": "Registry 基础资源/制品晋级",
+      "owner": "IaC Modules",
+      "status": "现有脚本由 Toolkit 调用；待 owner workflow 接入",
+      "inputs": "源 digest、目标 Registry、环境",
+      "outputs": "目标 digest 可核对",
+      "implementations": [
+        {
+          "repository": "iac_modules",
+          "path": "terraform-hcl-standard/gcp-cloud/modules/artifact_registry"
+        },
+        {
+          "repository": "iac_modules",
+          "path": "scripts/pipeline/artifact-registry-promote.sh"
+        },
+        {
+          "repository": "iac_modules",
+          "path": "scripts/pipeline/artifact-registry-wait.sh"
+        }
+      ]
+    },
+    {
+      "id": "I07",
+      "task": "Cloud Run 单服务部署",
+      "owner": "IaC Modules",
+      "status": "模块存在但当前部署仍走 Toolkit 脚本；接入需单独实施",
+      "inputs": "服务声明、镜像 digest、配置引用",
+      "outputs": "revision、实际运行 digest",
+      "implementations": [
+        {
+          "repository": "iac_modules",
+          "path": "terraform-hcl-standard/gcp-cloud/modules/cloud_run"
+        },
+        {
+          "repository": "platform-ops-toolkit",
+          "path": "scripts/serverless_uat/deploy_cloudrun_services.sh"
+        }
+      ]
+    },
+    {
+      "id": "I08",
+      "task": "Cloudflare Worker/Pages 发布",
+      "owner": "IaC Modules",
+      "status": "当前 Toolkit 执行；未确认完整替换模块；待 owner 接入",
+      "inputs": "发布包、checksum、账户、目标",
+      "outputs": "deployment ID、制品 checksum",
+      "implementations": [
+        {
+          "repository": "platform-ops-toolkit",
+          "path": ".github/scripts/serverless/run_cloudflare_target.sh"
+        }
+      ]
+    },
+    {
+      "id": "I09",
+      "task": "Cloudflare 域名/DNS",
+      "owner": "IaC Modules",
+      "status": "已有固定 SHA owner workflow 调用；实际消费 SHA 见 uses 表",
+      "inputs": "environment、gitops_ref、dns_mode",
+      "outputs": "域名归属、DNS 模式与执行结果",
+      "implementations": [
+        {
+          "repository": "iac_modules",
+          "path": ".github/workflows/cloudflare-serverless-domains.yml"
+        },
+        {
+          "repository": "iac_modules",
+          "path": ".github/actions/cloudflare-serverless-domains/action.yml"
+        }
+      ]
+    },
+    {
+      "id": "B01",
+      "task": "Web SaaS 主机配置/交付",
+      "owner": "Playbooks Roles",
+      "status": "Playbook/Role 现有；不把 pull-only CD 观察当成全部部署",
+      "inputs": "inventory、环境、版本、配置",
+      "outputs": "主机配置、实际版本、服务交付状态",
+      "implementations": [
+        {
+          "repository": "playbooks",
+          "path": "setup-web-saas-domain.yml"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/vhosts/web_saas_host_config"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/vhosts/Doco-CD"
+        }
+      ]
+    },
+    {
+      "id": "B02",
+      "task": "Caddy 证书恢复",
+      "owner": "Playbooks Roles",
+      "status": "下游已有执行；待收敛至固定 SHA owner workflow",
+      "inputs": "单一目标、证书材料引用",
+      "outputs": "目标正确、证书有效",
+      "implementations": [
+        {
+          "repository": "playbooks",
+          "path": "caddy_certificate_restore.yml"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/docker/caddy_certificate_restore"
+        }
+      ]
+    },
+    {
+      "id": "B03",
+      "task": "区域 Agent Proxy 部署",
+      "owner": "Playbooks Roles",
+      "status": "入口/Role 现有；TLS Role 条件执行",
+      "inputs": "lane inventory、精确组件版本、配置引用",
+      "outputs": "Caddy/Xray/Agent 状态及版本",
+      "implementations": [
+        {
+          "repository": "playbooks",
+          "path": "setup-agent-proxy-domain.yml"
+        },
+        {
+          "repository": "playbooks",
+          "path": "deploy_xray_proxy_server.yml"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/vhosts/caddy"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/vhosts/vault-agent-tls"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/vhosts/tky-proxy"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/vhosts/agent-proxy"
+        }
+      ]
+    },
+    {
+      "id": "B04",
+      "task": "Xray Exporter",
+      "owner": "Playbooks Roles",
+      "status": "现有入口/Role",
+      "inputs": "inventory、exporter 版本及配置",
+      "outputs": "进程及指标",
+      "implementations": [
+        {
+          "repository": "playbooks",
+          "path": "deploy_xray_exporter.yml"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/vhosts/xray-exporter"
+        }
+      ]
+    },
+    {
+      "id": "B05",
+      "task": "Observability Agent",
+      "owner": "Playbooks Roles",
+      "status": "按条件执行；下列 Role 非全部必跑",
+      "inputs": "inventory、采集目标和配置",
+      "outputs": "采集器、指标/日志链路",
+      "implementations": [
+        {
+          "repository": "playbooks",
+          "path": "deploy_observability_agent.yml"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/vhosts/node_exporter"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/vhosts/process_exporter"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/vhosts/blackbox_exporter"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/vhosts/vector-agent"
+        }
+      ]
+    },
+    {
+      "id": "B06",
+      "task": "Web SaaS 部署后检查",
+      "owner": "Playbooks Roles",
+      "status": "现有入口/Role",
+      "inputs": "精确主机、readiness 参数",
+      "outputs": "服务 readiness",
+      "implementations": [
+        {
+          "repository": "playbooks",
+          "path": "verify_web_saas_post_deploy.yml"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/vhosts/web_saas_post_deploy_readiness"
+        }
+      ]
+    },
+    {
+      "id": "B07",
+      "task": "Agent Proxy DNS 后检查",
+      "owner": "Playbooks Roles",
+      "status": "现有入口/Role",
+      "inputs": "精确目标、域名和检查参数",
+      "outputs": "DNS 后入口及服务链路",
+      "implementations": [
+        {
+          "repository": "playbooks",
+          "path": "verify_agent_proxy_post_dns.yml"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/vhosts/agent_proxy_post_dns_readiness"
+        }
+      ]
+    },
+    {
+      "id": "B08",
+      "task": "数据备份",
+      "owner": "Playbooks Roles",
+      "status": "现有；site_migration tasks_from=extract；实际链路需按数据操作选择",
+      "inputs": "源目标、备份配置、release 身份",
+      "outputs": "备份与完整性",
+      "implementations": [
+        {
+          "repository": "playbooks",
+          "path": "web-saas-backup.yml"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/site_migration"
+        }
+      ]
+    },
+    {
+      "id": "B09",
+      "task": "数据恢复",
+      "owner": "Playbooks Roles",
+      "status": "现有；site_migration tasks_from=load；独立恢复门槛",
+      "inputs": "备份材料、精确恢复目标",
+      "outputs": "恢复结果与数据检查",
+      "implementations": [
+        {
+          "repository": "playbooks",
+          "path": "web-saas-restore.yml"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/site_migration"
+        }
+      ]
+    },
+    {
+      "id": "B10",
+      "task": "Serverless 数据库操作",
+      "owner": "Playbooks Roles",
+      "status": "owner workflow 现有；并非全部封装为 Role",
+      "inputs": "数据库目标、操作、schema 版本、SQL hash",
+      "outputs": "checkpoint、schema version、迁移回执",
+      "implementations": [
+        {
+          "repository": "playbooks",
+          "path": ".github/workflows/serverless-database-operations.yml"
+        },
+        {
+          "repository": "playbooks",
+          "path": "scripts/data_operations/serverless"
+        },
+        {
+          "repository": "playbooks",
+          "path": "scripts/data_operations/database/create_release_checkpoint.sh"
+        }
+      ]
+    },
+    {
+      "id": "B11",
+      "task": "Shared readiness",
+      "owner": "Playbooks Roles",
+      "status": "待新增；当前探针仍在 Toolkit；不得自动宣称已迁移",
+      "inputs": "Vault/Grafana/IAM endpoint、issuer、timeout",
+      "outputs": "三项探针证据；Toolkit 判断放行",
+      "implementations": []
+    }
+  ]
+}

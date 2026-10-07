@@ -1,0 +1,4849 @@
+{
+  "schema_version": 1,
+  "evidence_level": "source_only",
+  "audit_date": "2026-10-07",
+  "baselines": {
+    "platform-ops-toolkit": {
+      "sha": "feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8",
+      "remote": "ai-workspace-infra/platform-ops-toolkit"
+    },
+    "playbooks": {
+      "sha": "2dd12e6e12ce8b0b07bdae8290f96257fde67f07",
+      "remote": "ai-workspace-infra/playbooks"
+    },
+    "iac_modules": {
+      "sha": "c128442c35024f75bcd9f9cb771dc882d9d4d2ed",
+      "remote": "ai-workspace-infra/iac_modules"
+    },
+    "gitops": {
+      "sha": "437014ff401e7a0a122725945c093a71ab756dd1",
+      "remote": "ai-workspace-infra/gitops"
+    }
+  },
+  "entry_workflow": ".github/workflows/daily-main-snapshot.yaml",
+  "uses": [
+    {
+      "workflow": ".github/workflows/daily-main-snapshot.yaml",
+      "job": "resolve-snapshot-tag",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/daily-main-snapshot.yaml",
+      "job": "resolve-snapshot-tag",
+      "location": "2",
+      "uses": "hashicorp/vault-action@v4"
+    },
+    {
+      "workflow": ".github/workflows/daily-main-snapshot.yaml",
+      "job": "resolve-snapshot-tag",
+      "location": "3",
+      "uses": "actions/create-github-app-token@v3"
+    },
+    {
+      "workflow": ".github/workflows/daily-main-snapshot.yaml",
+      "job": "resolve-snapshot-tag",
+      "location": "4",
+      "uses": "actions/create-github-app-token@v3"
+    },
+    {
+      "workflow": ".github/workflows/daily-main-snapshot.yaml",
+      "job": "resolve-snapshot-tag",
+      "location": "5",
+      "uses": "actions/create-github-app-token@v3"
+    },
+    {
+      "workflow": ".github/workflows/daily-main-snapshot.yaml",
+      "job": "resolve-snapshot-tag",
+      "location": "6",
+      "uses": "actions/create-github-app-token@v3"
+    },
+    {
+      "workflow": ".github/workflows/daily-main-snapshot.yaml",
+      "job": "snapshot",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/daily-main-snapshot.yaml",
+      "job": "snapshot",
+      "location": "2",
+      "uses": "hashicorp/vault-action@v4"
+    },
+    {
+      "workflow": ".github/workflows/daily-main-snapshot.yaml",
+      "job": "snapshot",
+      "location": "3",
+      "uses": "actions/create-github-app-token@v3"
+    },
+    {
+      "workflow": ".github/workflows/daily-main-snapshot.yaml",
+      "job": "snapshot",
+      "location": "6",
+      "uses": "actions/upload-artifact@v7"
+    },
+    {
+      "workflow": ".github/workflows/daily-main-snapshot.yaml",
+      "job": "resolve-built-snapshot-tag",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/daily-main-snapshot.yaml",
+      "job": "resolve-built-snapshot-tag",
+      "location": "2",
+      "uses": "actions/download-artifact@v8"
+    },
+    {
+      "workflow": ".github/workflows/daily-main-snapshot.yaml",
+      "job": "shared-readiness",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/daily-main-snapshot.yaml",
+      "job": "dispatch-environment",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/daily-main-snapshot.yaml",
+      "job": "dispatch-environment",
+      "location": "2",
+      "uses": "hashicorp/vault-action@v4"
+    },
+    {
+      "workflow": ".github/workflows/daily-main-snapshot.yaml",
+      "job": "dispatch-environment",
+      "location": "3",
+      "uses": "actions/create-github-app-token@v3"
+    },
+    {
+      "workflow": ".github/workflows/daily-main-snapshot.yaml",
+      "job": "dispatch-environment",
+      "location": "4",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/daily-main-snapshot.yaml",
+      "job": "dispatch-environment",
+      "location": "8",
+      "uses": "actions/upload-artifact@v7"
+    },
+    {
+      "workflow": ".github/workflows/daily-main-snapshot.yaml",
+      "job": "snapshot-summary",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/daily-main-snapshot.yaml",
+      "job": "snapshot-summary",
+      "location": "2",
+      "uses": "actions/download-artifact@v8"
+    },
+    {
+      "workflow": ".github/workflows/daily-main-snapshot.yaml",
+      "job": "snapshot-summary",
+      "location": "4",
+      "uses": "actions/download-artifact@v8"
+    },
+    {
+      "workflow": ".github/workflows/daily-main-snapshot.yaml",
+      "job": "snapshot-summary",
+      "location": "6",
+      "uses": "actions/upload-artifact@v7"
+    },
+    {
+      "workflow": ".github/workflows/hybrid-orchestrator.yml",
+      "job": "preflight",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/hybrid-orchestrator.yml",
+      "job": "preflight",
+      "location": "2",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/hybrid-orchestrator.yml",
+      "job": "data_operations",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/hybrid-orchestrator.yml",
+      "job": "resource_orchestration",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/hybrid-orchestrator.yml",
+      "job": "resource_orchestration",
+      "location": "2",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/hybrid-orchestrator.yml",
+      "job": "resource_orchestration",
+      "location": "4",
+      "uses": "actions/upload-artifact@v7"
+    },
+    {
+      "workflow": ".github/workflows/hybrid-orchestrator.yml",
+      "job": "verify",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/hybrid-orchestrator.yml",
+      "job": "verify",
+      "location": "2",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "native_prod_standby",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "native_prod_standby",
+      "location": "3",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "native_prod_standby",
+      "location": "4",
+      "uses": "./.github/actions/configure-gcp-oidc"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "native_prod_standby",
+      "location": "5",
+      "uses": "google-github-actions/setup-gcloud@v2"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "native_prod_standby",
+      "location": "6",
+      "uses": "hashicorp/vault-action@v4"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "native_prod_standby",
+      "location": "7",
+      "uses": "ai-workspace-infra/iac_modules/.github/actions/prod-selfhost-access@254dd6321449ab12b862220c8876b482d7032fcd"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "native_prod_standby",
+      "location": "8",
+      "uses": "ai-workspace-infra/playbooks/.github/actions/prod-native-standby@c6a4cb6c54c7e6dd2d63c43767f44a228385312a"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "native_prod_standby",
+      "location": "9",
+      "uses": "ai-workspace-infra/iac_modules/.github/actions/prod-selfhost-access@254dd6321449ab12b862220c8876b482d7032fcd"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "native_prod_standby",
+      "location": "10",
+      "uses": "actions/upload-artifact@v4"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "native_prod_standby",
+      "location": "11",
+      "uses": "actions/upload-artifact@v4"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "native_prod_init",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "native_prod_init",
+      "location": "3",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "native_prod_init",
+      "location": "4",
+      "uses": "./.github/actions/configure-gcp-oidc"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "native_prod_init",
+      "location": "5",
+      "uses": "google-github-actions/setup-gcloud@v2"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "native_prod_init",
+      "location": "6",
+      "uses": "hashicorp/vault-action@v4"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "native_prod_init",
+      "location": "7",
+      "uses": "ai-workspace-infra/iac_modules/.github/actions/prod-selfhost-access@254dd6321449ab12b862220c8876b482d7032fcd"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "native_prod_init",
+      "location": "8",
+      "uses": "ai-workspace-infra/playbooks/.github/actions/prod-native-init@ff7b09e135f52301e7605dcdf6f3b303c9c2dd32"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "native_prod_init",
+      "location": "9",
+      "uses": "ai-workspace-infra/iac_modules/.github/actions/prod-selfhost-access@254dd6321449ab12b862220c8876b482d7032fcd"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "native_prod_init",
+      "location": "10",
+      "uses": "actions/upload-artifact@v4"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "native_prod_init",
+      "location": "11",
+      "uses": "actions/upload-artifact@v4"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "native_prod_billing",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "native_prod_billing",
+      "location": "3",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "native_prod_billing",
+      "location": "4",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "native_prod_billing",
+      "location": "5",
+      "uses": "./.github/actions/configure-gcp-oidc"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "native_prod_billing",
+      "location": "6",
+      "uses": "google-github-actions/setup-gcloud@v2"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "native_prod_billing",
+      "location": "7",
+      "uses": "hashicorp/vault-action@v4"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "native_prod_billing",
+      "location": "8",
+      "uses": "ai-workspace-infra/iac_modules/.github/actions/prod-selfhost-access@254dd6321449ab12b862220c8876b482d7032fcd"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "native_prod_billing",
+      "location": "9",
+      "uses": "ai-workspace-infra/playbooks/.github/actions/prod-native-billing-upgrade@ff7b09e135f52301e7605dcdf6f3b303c9c2dd32"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "native_prod_billing",
+      "location": "10",
+      "uses": "ai-workspace-infra/iac_modules/.github/actions/prod-selfhost-access@254dd6321449ab12b862220c8876b482d7032fcd"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "native_prod_billing",
+      "location": "11",
+      "uses": "actions/upload-artifact@v4"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "native_prod_billing",
+      "location": "12",
+      "uses": "actions/upload-artifact@v4"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "native_prod_business",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "native_prod_business",
+      "location": "3",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "native_prod_business",
+      "location": "4",
+      "uses": "./.github/actions/configure-gcp-oidc"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "native_prod_business",
+      "location": "5",
+      "uses": "google-github-actions/setup-gcloud@v2"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "native_prod_business",
+      "location": "6",
+      "uses": "hashicorp/vault-action@v4"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "native_prod_business",
+      "location": "7",
+      "uses": "ai-workspace-infra/iac_modules/.github/actions/prod-selfhost-access@254dd6321449ab12b862220c8876b482d7032fcd"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "native_prod_business",
+      "location": "8",
+      "uses": "ai-workspace-infra/playbooks/.github/actions/prod-full-business@7e9b16fa6c83a2dd8bafc22dca5870e06154253f"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "native_prod_business",
+      "location": "9",
+      "uses": "ai-workspace-infra/iac_modules/.github/actions/prod-selfhost-access@254dd6321449ab12b862220c8876b482d7032fcd"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "native_prod_business",
+      "location": "10",
+      "uses": "actions/upload-artifact@v4"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "native_prod_business",
+      "location": "11",
+      "uses": "actions/upload-artifact@v4"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "provision",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "provision",
+      "location": "4",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "provision",
+      "location": "9",
+      "uses": "hashicorp/vault-action@v4"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "provision",
+      "location": "10",
+      "uses": "hashicorp/vault-action@v4"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "provision",
+      "location": "11",
+      "uses": "hashicorp/vault-action@v4"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "provision",
+      "location": "13",
+      "uses": "aws-actions/configure-aws-credentials@v4"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "provision",
+      "location": "14",
+      "uses": "./.github/actions/configure-gcp-oidc"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "provision",
+      "location": "15",
+      "uses": "azure/login@v2"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "provision",
+      "location": "18",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "provision",
+      "location": "19",
+      "uses": "hashicorp/setup-terraform@v4"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "provision",
+      "location": "20",
+      "uses": "actions/setup-python@v6"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "provision",
+      "location": "43",
+      "uses": "actions/upload-artifact@v7"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "deploy_xconnect_zero_uat",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "deploy_base",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "deploy_base",
+      "location": "2",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "deploy_base",
+      "location": "3",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "deploy_base",
+      "location": "4",
+      "uses": "hashicorp/vault-action@v4"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "deploy_base",
+      "location": "5",
+      "uses": "actions/create-github-app-token@v3"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "deploy_base",
+      "location": "6",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "deploy_base",
+      "location": "7",
+      "uses": "actions/download-artifact@v8"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "deploy_base",
+      "location": "9",
+      "uses": "hashicorp/vault-action@v4"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "deploy_base",
+      "location": "11",
+      "uses": "actions/cache@v6"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "deploy_base",
+      "location": "12",
+      "uses": "./.github/actions/setup-deployment-runner"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "deploy_base",
+      "location": "14",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "capture_web_saas_baseline",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "capture_web_saas_baseline",
+      "location": "3",
+      "uses": "actions/download-artifact@v8"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "update_gitops_tags",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "update_gitops_tags",
+      "location": "2",
+      "uses": "hashicorp/vault-action@v4"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "update_gitops_tags",
+      "location": "3",
+      "uses": "actions/create-github-app-token@v3"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "update_gitops_tags",
+      "location": "4",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "initialize_empty_web_saas",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "deploy_web_saas",
+      "location": "job",
+      "uses": "ai-workspace-infra/playbooks/.github/workflows/web-saas-domain-cd.yaml@main"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "accept_web_saas_upgrade",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "switch_dns",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "switch_dns",
+      "location": "2",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "switch_dns",
+      "location": "3",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "switch_dns",
+      "location": "5",
+      "uses": "actions/download-artifact@v8"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "switch_dns",
+      "location": "6",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "switch_dns",
+      "location": "7",
+      "uses": "hashicorp/vault-action@v4"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "switch_dns",
+      "location": "8",
+      "uses": "./.github/actions/setup-deployment-runner"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "switch_dns",
+      "location": "11",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "bootstrap_stripe_catalog",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "bootstrap_stripe_catalog",
+      "location": "2",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "bootstrap_stripe_catalog",
+      "location": "5",
+      "uses": "hashicorp/vault-action@v4"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "observe_web_saas_after_dns",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "observe_web_saas_after_dns",
+      "location": "2",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "observe_web_saas_after_dns",
+      "location": "3",
+      "uses": "actions/download-artifact@v8"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "observe_web_saas_after_dns",
+      "location": "4",
+      "uses": "hashicorp/vault-action@v4"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "observe_web_saas_after_dns",
+      "location": "5",
+      "uses": "./.github/actions/setup-deployment-runner"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "observe_agent_proxy_after_dns",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "observe_agent_proxy_after_dns",
+      "location": "2",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "observe_agent_proxy_after_dns",
+      "location": "3",
+      "uses": "actions/download-artifact@v8"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "observe_agent_proxy_after_dns",
+      "location": "4",
+      "uses": "hashicorp/vault-action@v4"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "observe_agent_proxy_after_dns",
+      "location": "5",
+      "uses": "./.github/actions/setup-deployment-runner"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "deployment_summary",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "deploy_infra_platform",
+      "location": "job",
+      "uses": "ai-workspace-infra/playbooks/.github/workflows/open-platform-domain-cd.yaml@main"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "deploy_agent_proxy",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "deploy_agent_proxy",
+      "location": "2",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "deploy_agent_proxy",
+      "location": "3",
+      "uses": "actions/download-artifact@v8"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "deploy_agent_proxy",
+      "location": "5",
+      "uses": "hashicorp/vault-action@v4"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "deploy_agent_proxy",
+      "location": "6",
+      "uses": "actions/cache@v6"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "deploy_agent_proxy",
+      "location": "7",
+      "uses": "./.github/actions/setup-deployment-runner"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "deploy_agent_proxy_non_iac",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "deploy_agent_proxy_non_iac",
+      "location": "2",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "deploy_agent_proxy_non_iac",
+      "location": "3",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "deploy_agent_proxy_non_iac",
+      "location": "4",
+      "uses": "actions/download-artifact@v8"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "deploy_agent_proxy_non_iac",
+      "location": "6",
+      "uses": "hashicorp/vault-action@v4"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "deploy_agent_proxy_non_iac",
+      "location": "8",
+      "uses": "./.github/actions/setup-deployment-runner"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "deploy_agent_proxy_non_iac",
+      "location": "16",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "deploy_ai_workspace",
+      "location": "job",
+      "uses": "ai-workspace-infra/playbooks/.github/workflows/ai-workspace-domain-cd.yaml@main"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "deploy_monitor_agent",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "deploy_monitor_agent",
+      "location": "2",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "deploy_monitor_agent",
+      "location": "3",
+      "uses": "actions/download-artifact@v8"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "deploy_monitor_agent",
+      "location": "4",
+      "uses": "hashicorp/vault-action@v4"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "deploy_monitor_agent",
+      "location": "5",
+      "uses": "actions/cache@v6"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "deploy_monitor_agent",
+      "location": "6",
+      "uses": "./.github/actions/setup-deployment-runner"
+    },
+    {
+      "workflow": ".github/workflows/selfhost-orchestrator.yml",
+      "job": "trigger_data_migration",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "preflight",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "preflight",
+      "location": "2",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "preflight",
+      "location": "3",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "supabase",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "uat_accounts_schema_probe",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "uat_accounts_baseline",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "uat_accounts_schema_migration",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "cloud_run",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "cloud_run",
+      "location": "2",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "cloud_run",
+      "location": "5",
+      "uses": "hashicorp/vault-action@v4"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "cloud_run",
+      "location": "6",
+      "uses": "actions/create-github-app-token@v3"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "cloud_run",
+      "location": "7",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "cloud_run",
+      "location": "8",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "cloud_run",
+      "location": "10",
+      "uses": "google-github-actions/auth@v2"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "cloud_run",
+      "location": "11",
+      "uses": "google-github-actions/setup-gcloud@v2"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "cloud_run",
+      "location": "12",
+      "uses": "docker/setup-qemu-action@v3"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "cloud_run",
+      "location": "13",
+      "uses": "docker/setup-buildx-action@v3"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "cloud_run",
+      "location": "16",
+      "uses": "docker/build-push-action@v6"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "cloud_run",
+      "location": "23",
+      "uses": "actions/upload-artifact@v7"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "artifact_manifest",
+      "location": "1",
+      "uses": "actions/download-artifact@v8"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "artifact_manifest",
+      "location": "3",
+      "uses": "actions/upload-artifact@v7"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "cloudflare_ssr",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "cloudflare_ssr",
+      "location": "2",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "cloudflare_ssr",
+      "location": "5",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "cloudflare_ssr",
+      "location": "6",
+      "uses": "actions/setup-node@v7"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "cloudflare_ssr",
+      "location": "7",
+      "uses": "hashicorp/vault-action@v4"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "cloudflare_ssr",
+      "location": "9",
+      "uses": "actions/upload-artifact@v7"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "frontend_router",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "frontend_router",
+      "location": "2",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "frontend_router",
+      "location": "5",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "frontend_router",
+      "location": "6",
+      "uses": "actions/setup-node@v7"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "frontend_router",
+      "location": "7",
+      "uses": "hashicorp/vault-action@v4"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "edge_gateway",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "edge_gateway",
+      "location": "2",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "edge_gateway",
+      "location": "5",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "edge_gateway",
+      "location": "6",
+      "uses": "actions/setup-node@v7"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "edge_gateway",
+      "location": "7",
+      "uses": "hashicorp/vault-action@v4"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "static_pages",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "static_pages",
+      "location": "2",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "static_pages",
+      "location": "5",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "static_pages",
+      "location": "6",
+      "uses": "actions/setup-node@v7"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "static_pages",
+      "location": "7",
+      "uses": "hashicorp/vault-action@v4"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "static_pages",
+      "location": "8",
+      "uses": "actions/download-artifact@v8"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "serverless_domains_provider",
+      "location": "job",
+      "uses": "ai-workspace-infra/iac_modules/.github/workflows/cloudflare-serverless-domains.yml@a7ac40fb0c3e620bdec89edd72b172afefc1f2ee"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "serverless_domains",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "serverless_domains",
+      "location": "2",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "trigger_data_migration",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "stripe_catalog",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "stripe_catalog",
+      "location": "2",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "stripe_catalog",
+      "location": "3",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "stripe_catalog",
+      "location": "7",
+      "uses": "hashicorp/vault-action@v4"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "destroy",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "destroy",
+      "location": "2",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "destroy",
+      "location": "4",
+      "uses": "hashicorp/vault-action@v4"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "destroy",
+      "location": "6",
+      "uses": "google-github-actions/auth@v2"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "destroy",
+      "location": "7",
+      "uses": "google-github-actions/setup-gcloud@v2"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "verify",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "verify",
+      "location": "2",
+      "uses": "hashicorp/vault-action@v4"
+    },
+    {
+      "workflow": ".github/workflows/serverless-orchestrator.yml",
+      "job": "console_release_metadata",
+      "location": "2",
+      "uses": "actions/upload-artifact@v7"
+    },
+    {
+      "workflow": ".github/workflows/external-inventory-state.yml",
+      "job": "sync",
+      "location": "1",
+      "uses": "actions/checkout@v4"
+    },
+    {
+      "workflow": ".github/workflows/external-inventory-state.yml",
+      "job": "sync",
+      "location": "4",
+      "uses": "actions/checkout@v4"
+    },
+    {
+      "workflow": ".github/workflows/external-inventory-state.yml",
+      "job": "sync",
+      "location": "5",
+      "uses": "hashicorp/vault-action@v4"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "preflight",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "declared_network",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "declared_network",
+      "location": "2",
+      "uses": "actions/setup-python@v5"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "declared_network",
+      "location": "4",
+      "uses": "hashicorp/vault-action@v4"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "declared_network",
+      "location": "5",
+      "uses": "actions/create-github-app-token@v3"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "declared_network",
+      "location": "6",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "resolve_ai_aggregator_matrix",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "resolve_ai_aggregator_matrix",
+      "location": "2",
+      "uses": "actions/setup-python@v5"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "apply",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "apply",
+      "location": "3",
+      "uses": "hashicorp/vault-action@v4"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "apply",
+      "location": "4",
+      "uses": "actions/create-github-app-token@v3"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "apply",
+      "location": "5",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "apply",
+      "location": "6",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "apply",
+      "location": "7",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "apply",
+      "location": "10",
+      "uses": "actions/create-github-app-token@v3"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "apply",
+      "location": "12",
+      "uses": "hashicorp/setup-terraform@v3"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "apply",
+      "location": "14",
+      "uses": "hashicorp/vault-action@v4"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "apply",
+      "location": "15",
+      "uses": "hashicorp/vault-action@v4"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "apply",
+      "location": "16",
+      "uses": "hashicorp/vault-action@v4"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "apply",
+      "location": "18",
+      "uses": "aws-actions/configure-aws-credentials@v4"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "apply",
+      "location": "28",
+      "uses": "actions/upload-artifact@v4"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "existing_one",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "existing_one",
+      "location": "3",
+      "uses": "hashicorp/vault-action@v4"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "existing_one",
+      "location": "4",
+      "uses": "actions/create-github-app-token@v3"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "existing_one",
+      "location": "5",
+      "uses": "actions/create-github-app-token@v3"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "existing_one",
+      "location": "6",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "existing_one",
+      "location": "7",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "existing_one",
+      "location": "9",
+      "uses": "hashicorp/vault-action@v4"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "enroll_node_matrix",
+      "location": "2",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "enroll_node_matrix",
+      "location": "3",
+      "uses": "hashicorp/vault-action@v4"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "enroll_node_matrix",
+      "location": "4",
+      "uses": "actions/create-github-app-token@v3"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "enroll_node_matrix",
+      "location": "5",
+      "uses": "actions/create-github-app-token@v3"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "enroll_node_matrix",
+      "location": "6",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "enroll_node_matrix",
+      "location": "7",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "enroll_node_matrix",
+      "location": "8",
+      "uses": "hashicorp/vault-action@v4"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "enroll_node_matrix",
+      "location": "9",
+      "uses": "aws-actions/configure-aws-credentials@v4"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "reconcile_mesh",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "reconcile_mesh",
+      "location": "2",
+      "uses": "hashicorp/vault-action@v4"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "cleanup",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "cleanup",
+      "location": "3",
+      "uses": "hashicorp/vault-action@v4"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "cleanup",
+      "location": "4",
+      "uses": "actions/create-github-app-token@v3"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "cleanup",
+      "location": "5",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "cleanup",
+      "location": "6",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "cleanup",
+      "location": "7",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "cleanup",
+      "location": "9",
+      "uses": "hashicorp/setup-terraform@v3"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "cleanup",
+      "location": "10",
+      "uses": "hashicorp/vault-action@v4"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "cleanup",
+      "location": "11",
+      "uses": "aws-actions/configure-aws-credentials@v4"
+    },
+    {
+      "workflow": ".github/workflows/xconnect-zero-cloud.yaml",
+      "job": "cleanup",
+      "location": "13",
+      "uses": "aws-actions/configure-aws-credentials@v4"
+    },
+    {
+      "workflow": ".github/workflows/environment-data-operations.yml",
+      "job": "request_gate",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/environment-data-operations.yml",
+      "job": "legacy_import",
+      "location": "job",
+      "uses": "ai-workspace-infra/playbooks/.github/workflows/uat-data-import.yaml@b82d727808696278613df248e01c29059048be35"
+    },
+    {
+      "workflow": ".github/workflows/environment-data-operations.yml",
+      "job": "akamai_preflight",
+      "location": "job",
+      "uses": "ai-workspace-infra/iac_modules/.github/workflows/akamai-state-preflight.yml@f8b3d52e4f2b6528fcf4fa762ea7bf83f8145d06"
+    },
+    {
+      "workflow": ".github/workflows/environment-data-operations.yml",
+      "job": "serverless_database",
+      "location": "job",
+      "uses": "ai-workspace-infra/playbooks/.github/workflows/serverless-database-operations.yml@5a1f68c6de22010b20771ea7583f892c2c899da3"
+    },
+    {
+      "workflow": ".github/workflows/environment-data-operations.yml",
+      "job": "selfhost_database",
+      "location": "job",
+      "uses": "ai-workspace-infra/playbooks/.github/workflows/selfhost-database-operations.yml@7d660cdb4066e2a4cf3fed68bccafea939771e64"
+    },
+    {
+      "workflow": ".github/workflows/environment-data-operations.yml",
+      "job": "selfhost_components",
+      "location": "job",
+      "uses": "ai-workspace-infra/playbooks/.github/workflows/selfhost-data-lifecycle.yml@5a1f68c6de22010b20771ea7583f892c2c899da3"
+    },
+    {
+      "workflow": ".github/workflows/environment-data-operations.yml",
+      "job": "release_controller",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/workflows/environment-data-operations.yml",
+      "job": "release_controller",
+      "location": "5",
+      "uses": "actions/upload-artifact@v7"
+    },
+    {
+      "workflow": ".github/workflows/environment-upgrade-ci.yml",
+      "job": "offline-rehearsal",
+      "location": "1",
+      "uses": "actions/checkout@v7"
+    },
+    {
+      "workflow": ".github/actions/configure-gcp-oidc/action.yml",
+      "job": "__composite_action__",
+      "location": "1",
+      "uses": "hashicorp/vault-action@v4"
+    },
+    {
+      "workflow": ".github/actions/configure-gcp-oidc/action.yml",
+      "job": "__composite_action__",
+      "location": "2",
+      "uses": "hashicorp/vault-action@v4"
+    },
+    {
+      "workflow": ".github/actions/configure-gcp-oidc/action.yml",
+      "job": "__composite_action__",
+      "location": "3",
+      "uses": "google-github-actions/auth@v2"
+    }
+  ],
+  "edges": [
+    {
+      "caller": ".github/actions/setup-deployment-runner/action.yml",
+      "callee": "scripts/setup.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/scripts/environment-upgrade/pipeline.py",
+      "callee": ".github/scripts/environment-upgrade/delegate.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/scripts/environment-upgrade/pipeline.py",
+      "callee": ".github/scripts/snapshots/verify-promotion-manifest.py",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/scripts/serverless/verify_summary.sh",
+      "callee": "scripts/serverless_uat/deploy_orchestrator.py",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/scripts/tests/environment_data_operations_test.py",
+      "callee": ".github/scripts/environment-upgrade/validate_operation.py",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/scripts/tests/environment_upgrade_test.py",
+      "callee": ".github/scripts/environment-upgrade/delegate.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/scripts/tests/environment_upgrade_test.py",
+      "callee": ".github/scripts/environment-upgrade/pipeline.py",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/scripts/tests/hybrid_uat_matrix_contract_test.sh",
+      "callee": ".github/scripts/platform-ops/dns/platform-ops_uat_dns_reconcile.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/scripts/tests/hybrid_uat_matrix_contract_test.sh",
+      "callee": ".github/scripts/platform-ops/provision/platform-ops_dispatch-hybrid-uat-matrix.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/scripts/tests/hybrid_uat_matrix_contract_test.sh",
+      "callee": "scripts/pipeline/adopt_uat_open_platform_vm.py",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/scripts/tests/hybrid_uat_matrix_contract_test.sh",
+      "callee": "scripts/pipeline/cloudflare-uat-dns-reconcile.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/scripts/tests/hybrid_uat_matrix_contract_test.sh",
+      "callee": "scripts/pipeline/terraform-apply-destroy.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/scripts/tests/import_receipt_test.py",
+      "callee": ".github/scripts/environment-upgrade/import_receipt.py",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/scripts/tests/xconnect_ai_aggregator_matrix_contract_test.sh",
+      "callee": ".github/scripts/xconnect-lab/enroll-node.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/scripts/tests/xconnect_cloud_lab_vault_role_contract_test.sh",
+      "callee": ".github/scripts/xconnect-existing-one-uat/deploy.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/scripts/tests/xconnect_cloud_lab_vault_role_contract_test.sh",
+      "callee": ".github/scripts/xconnect-lab/gateway.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/scripts/tests/xconnect_cloud_lab_vault_role_contract_test.sh",
+      "callee": ".github/scripts/xconnect-lab/run.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/scripts/tests/xconnect_cloud_lab_vault_role_contract_test.sh",
+      "callee": "scripts/create_vault_service_repo_roles.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/scripts/tests/xconnect_declared_network_contract_test.sh",
+      "callee": ".github/scripts/xconnect-network/bootstrap.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/scripts/tests/xconnect_declared_network_contract_test.sh",
+      "callee": ".github/scripts/xconnect-network/manifest.py",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/scripts/tests/xconnect_formal_uat_lab_contract_test.sh",
+      "callee": ".github/scripts/xconnect-lab/deploy.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/scripts/tests/xconnect_formal_uat_lab_contract_test.sh",
+      "callee": ".github/scripts/xconnect-lab/lease.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/scripts/tests/xconnect_formal_uat_lab_contract_test.sh",
+      "callee": ".github/scripts/xconnect-lab/node-observation.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/scripts/tests/xconnect_formal_uat_lab_contract_test.sh",
+      "callee": ".github/scripts/xconnect-lab/prepare.py",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/scripts/tests/xconnect_formal_uat_lab_contract_test.sh",
+      "callee": ".github/scripts/xconnect-lab/remote-gateway-observation.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/scripts/tests/xconnect_formal_uat_lab_contract_test.sh",
+      "callee": ".github/scripts/xconnect-lab/run.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/scripts/tests/xconnect_gateway_dns_contract_test.sh",
+      "callee": ".github/scripts/xconnect-lab/reconcile-gateway-dns.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/scripts/tests/xconnect_gateway_dns_contract_test.sh",
+      "callee": "scripts/pipeline/cloudflare-gateway-dns-upsert.py",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/scripts/tests/xconnect_playbooks_observation_caller_contract_test.sh",
+      "callee": ".github/scripts/xconnect-lab/node-observation.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/scripts/tests/xconnect_playbooks_observation_caller_contract_test.sh",
+      "callee": ".github/scripts/xconnect-lab/remote-client-observation.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/scripts/tests/xconnect_playbooks_observation_caller_contract_test.sh",
+      "callee": ".github/scripts/xconnect-lab/remote-gateway-observation.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/scripts/tests/xconnect_xhttp_runtime_contract_test.sh",
+      "callee": ".github/scripts/xconnect-lab/verify-xhttp-runtime.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/scripts/xconnect-lab/deploy.sh",
+      "callee": ".github/scripts/xconnect-lab/gateway.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/scripts/xconnect-lab/deploy.sh",
+      "callee": ".github/scripts/xconnect-lab/prepare.py",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/scripts/xconnect-lab/deploy.sh",
+      "callee": ".github/scripts/xconnect-lab/verify-xhttp-runtime.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/scripts/xconnect-lab/desktop.sh",
+      "callee": ".github/scripts/xconnect-lab/prepare.py",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/scripts/xconnect-lab/node-observation.sh",
+      "callee": ".github/scripts/xconnect-lab/prepare.py",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/scripts/xconnect-lab/run.sh",
+      "callee": ".github/scripts/xconnect-lab/deploy.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/scripts/xconnect-lab/run.sh",
+      "callee": ".github/scripts/xconnect-lab/desktop.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/scripts/xconnect-lab/run.sh",
+      "callee": ".github/scripts/xconnect-lab/lease.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/scripts/xconnect-lab/run.sh",
+      "callee": ".github/scripts/xconnect-lab/node-observation.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/scripts/xconnect-lab/run.sh",
+      "callee": ".github/scripts/xconnect-lab/prepare.py",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/scripts/xconnect-lab/run.sh",
+      "callee": ".github/scripts/xconnect-lab/terraform-diagnostics.py",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/daily-main-snapshot.yaml",
+      "callee": ".github/scripts/snapshots/aggregate-daily-snapshot-status.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/daily-main-snapshot.yaml",
+      "callee": ".github/scripts/snapshots/aggregate-environment-dispatch-status.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/daily-main-snapshot.yaml",
+      "callee": ".github/scripts/snapshots/check-shared-readiness.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/daily-main-snapshot.yaml",
+      "callee": ".github/scripts/snapshots/dispatch-environment-combined.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/daily-main-snapshot.yaml",
+      "callee": ".github/scripts/snapshots/resolve-daily-snapshot-tag.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/daily-main-snapshot.yaml",
+      "callee": ".github/scripts/snapshots/resolve-dispatch-gitops-target.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/daily-main-snapshot.yaml",
+      "callee": ".github/scripts/snapshots/resolve-snapshot-tag.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/daily-main-snapshot.yaml",
+      "callee": ".github/scripts/snapshots/tag-daily-main-snapshot.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/environment-data-operations.yml",
+      "callee": ".github/scripts/environment-upgrade/pipeline.py",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/environment-data-operations.yml",
+      "callee": ".github/scripts/environment-upgrade/validate_operation.py",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/environment-upgrade-ci.yml",
+      "callee": ".github/scripts/tests/environment_data_operations_test.py",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/environment-upgrade-ci.yml",
+      "callee": ".github/scripts/tests/environment_upgrade_test.py",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/environment-upgrade-ci.yml",
+      "callee": ".github/scripts/tests/import_receipt_test.py",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/external-inventory-state.yml",
+      "callee": "scripts/iac/resolve_iac_contract.py",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/external-inventory-state.yml",
+      "callee": "scripts/iac/write_external_inventory.py",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/hybrid-orchestrator.yml",
+      "callee": ".github/scripts/environment-upgrade/dispatch.py",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/hybrid-orchestrator.yml",
+      "callee": ".github/scripts/gitops/prepare_gitops_routing_config.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/hybrid-orchestrator.yml",
+      "callee": ".github/scripts/platform-ops/provision/platform-ops_dispatch-hybrid-uat-matrix.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/hybrid-orchestrator.yml",
+      "callee": ".github/scripts/serverless/verify_hybrid_contract.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/hybrid-orchestrator.yml",
+      "callee": ".github/scripts/tests/hybrid_uat_matrix_contract_test.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/hybrid-orchestrator.yml",
+      "callee": "scripts/serverless_uat/validate_cloudflare_boundaries.py",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": ".github/actions/configure-gcp-oidc/action.yml",
+      "kind": "local_action"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": ".github/actions/setup-deployment-runner/action.yml",
+      "kind": "local_action"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": ".github/scripts/domain-cd-observe-endpoints.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": ".github/scripts/environment-upgrade/dispatch.py",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": ".github/scripts/environment-upgrade/read-selfhost-baseline-state.py",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": ".github/scripts/gitops-update-tags.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": ".github/scripts/gitops/prepare_gitops_routing_config.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": ".github/scripts/gitops/resolve_gitops_aws_oidc_config.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": ".github/scripts/gitops/resolve_gitops_migration_target.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": ".github/scripts/gitops/validate_selfhost_contract.py",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": ".github/scripts/platform-ops/deploy/platform-ops_deploy_agent_proxy_resolve-controller-ip.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": ".github/scripts/platform-ops/deploy/platform-ops_deploy_base_load-optional-web-saas.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": ".github/scripts/platform-ops/deploy/platform-ops_deploy_base_resolve-billing-agent-cidrs.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": ".github/scripts/platform-ops/deploy/platform-ops_deploy_render-non-iac-agent-proxy-inventory.py",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": ".github/scripts/platform-ops/deploy/platform-ops_deploy_resolve-non-iac-agent-proxy-vault-path.py",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": ".github/scripts/platform-ops/deploy/platform-ops_deploy_resolve-xray-exporter-image.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": ".github/scripts/platform-ops/deploy/prepare-domain-tls-restore.py",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": ".github/scripts/platform-ops/dns/platform-ops_sit_all_in_one_dns_reconcile.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": ".github/scripts/platform-ops/observe/platform-ops_deployment-summary.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": ".github/scripts/platform-ops/provision/platform-ops_provision_build-agent-proxy-matrices.py",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": ".github/scripts/platform-ops/provision/platform-ops_provision_build-deploy-matrix.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": ".github/scripts/platform-ops/provision/platform-ops_provision_derive-ssh-public-key.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": ".github/scripts/platform-ops/provision/platform-ops_provision_dispatch-xconnect-uat.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": ".github/scripts/platform-ops/provision/platform-ops_provision_initialize-agent-proxy-credentials.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": ".github/scripts/platform-ops/provision/platform-ops_provision_initialize-databases-credentials.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": ".github/scripts/platform-ops/provision/platform-ops_provision_render-existing-host-cmdb.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": ".github/scripts/platform-ops/provision/platform-ops_provision_resolve-agent-proxy-service-origins.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": ".github/scripts/platform-ops/provision/platform-ops_provision_route-ref-to-an-explicit-profile.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": ".github/scripts/prod-selfhost/full_business_control.py",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": ".github/scripts/prod-selfhost/native_billing_control.py",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": ".github/scripts/prod-selfhost/native_init_control.py",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": ".github/scripts/prod-selfhost/native_standby_control.py",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": ".github/scripts/serverless/install_vault_cli.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": "scripts/generate.py",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": "scripts/pipeline/adopt_uat_open_platform_vm.py",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": "scripts/pipeline/bootstrap-node.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": "scripts/pipeline/cloudflare-uat-dns-reconcile.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": "scripts/pipeline/deploy-monitor-agent.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": "scripts/pipeline/ensure-gcp-vm-running.py",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": "scripts/pipeline/install-render-deps.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": "scripts/pipeline/map-instance-plan.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": "scripts/pipeline/reconcile-backup-schedules.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": "scripts/pipeline/reconcile-terraform-state.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": "scripts/pipeline/register-gcp-oslogin-key.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": "scripts/pipeline/remove-temporary-agent-controller-host.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": "scripts/pipeline/resolve-golden-image-snapshots.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": "scripts/pipeline/switch-cloudflare-dns-records.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": "scripts/pipeline/terraform-apply-destroy.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": "scripts/pipeline/terraform-init.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": "scripts/pipeline/verify-aws-boot-health.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": "scripts/pipeline/verify-xray-billing-chain.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/selfhost-orchestrator.yml",
+      "callee": "scripts/serverless_uat/bootstrap_stripe_catalog.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/serverless-orchestrator.yml",
+      "callee": ".github/scripts/environment-upgrade/dispatch.py",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/serverless-orchestrator.yml",
+      "callee": ".github/scripts/gitops/prepare_gitops_routing_config.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/serverless-orchestrator.yml",
+      "callee": ".github/scripts/gitops/read_gcp_gitops_target.rb",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/serverless-orchestrator.yml",
+      "callee": ".github/scripts/gitops/validate_gcp_gitops_contract.rb",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/serverless-orchestrator.yml",
+      "callee": ".github/scripts/platform-ops/deploy/uat_orchestrator_runner.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/serverless-orchestrator.yml",
+      "callee": ".github/scripts/serverless/install_vault_cli.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/serverless-orchestrator.yml",
+      "callee": ".github/scripts/serverless/record_image_digest.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/serverless-orchestrator.yml",
+      "callee": ".github/scripts/serverless/run_cloudflare_target.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/serverless-orchestrator.yml",
+      "callee": ".github/scripts/serverless/select-domain-owner.py",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/serverless-orchestrator.yml",
+      "callee": ".github/scripts/serverless/sync_smtp_secrets.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/serverless-orchestrator.yml",
+      "callee": ".github/scripts/serverless/validate_dispatch_inputs.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/serverless-orchestrator.yml",
+      "callee": ".github/scripts/serverless/validate_portal_runtime_domains.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/serverless-orchestrator.yml",
+      "callee": ".github/scripts/serverless/validate_promotion_manifest.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/serverless-orchestrator.yml",
+      "callee": ".github/scripts/serverless/verify_cloud_run_image_digest.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/serverless-orchestrator.yml",
+      "callee": ".github/scripts/serverless/verify_frontend_boundary_assets.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/serverless-orchestrator.yml",
+      "callee": ".github/scripts/serverless/verify_summary.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/serverless-orchestrator.yml",
+      "callee": "scripts/pipeline/artifact-registry-promote.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/serverless-orchestrator.yml",
+      "callee": "scripts/pipeline/artifact-registry-wait.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/serverless-orchestrator.yml",
+      "callee": "scripts/serverless_uat/bootstrap_stripe_catalog.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/serverless-orchestrator.yml",
+      "callee": "scripts/serverless_uat/destroy_ephemeral_compute.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/serverless-orchestrator.yml",
+      "callee": "scripts/serverless_uat/validate_cloudflare_boundaries.py",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/serverless-orchestrator.yml",
+      "callee": "scripts/serverless_uat/verify_brand_site_review_readiness.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/serverless-orchestrator.yml",
+      "callee": "scripts/serverless_uat/verify_serverless_public_chain.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/xconnect-zero-cloud.yaml",
+      "callee": ".github/scripts/tests/workflow_dispatch_input_limit_test.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/xconnect-zero-cloud.yaml",
+      "callee": ".github/scripts/tests/xconnect_ai_aggregator_matrix_contract_test.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/xconnect-zero-cloud.yaml",
+      "callee": ".github/scripts/tests/xconnect_cloud_lab_vault_role_contract_test.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/xconnect-zero-cloud.yaml",
+      "callee": ".github/scripts/tests/xconnect_declared_network_contract_test.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/xconnect-zero-cloud.yaml",
+      "callee": ".github/scripts/tests/xconnect_formal_uat_lab_contract_test.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/xconnect-zero-cloud.yaml",
+      "callee": ".github/scripts/tests/xconnect_gateway_dns_contract_test.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/xconnect-zero-cloud.yaml",
+      "callee": ".github/scripts/tests/xconnect_playbooks_observation_caller_contract_test.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/xconnect-zero-cloud.yaml",
+      "callee": ".github/scripts/tests/xconnect_xhttp_runtime_contract_test.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/xconnect-zero-cloud.yaml",
+      "callee": ".github/scripts/xconnect-existing-one-uat/deploy.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/xconnect-zero-cloud.yaml",
+      "callee": ".github/scripts/xconnect-lab/deploy.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/xconnect-zero-cloud.yaml",
+      "callee": ".github/scripts/xconnect-lab/enroll-node.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/xconnect-zero-cloud.yaml",
+      "callee": ".github/scripts/xconnect-lab/gateway.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/xconnect-zero-cloud.yaml",
+      "callee": ".github/scripts/xconnect-lab/probe-control-plane.py",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/xconnect-zero-cloud.yaml",
+      "callee": ".github/scripts/xconnect-lab/run.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/xconnect-zero-cloud.yaml",
+      "callee": ".github/scripts/xconnect-lab/verify-xhttp-runtime.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/xconnect-zero-cloud.yaml",
+      "callee": ".github/scripts/xconnect-network/bootstrap.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/xconnect-zero-cloud.yaml",
+      "callee": ".github/scripts/xconnect-network/manifest.py",
+      "kind": "script_literal"
+    },
+    {
+      "caller": ".github/workflows/xconnect-zero-cloud.yaml",
+      "callee": "scripts/pipeline/cloudflare-gateway-dns-upsert.py",
+      "kind": "script_literal"
+    },
+    {
+      "caller": "scripts/create_vault_service_repo_roles.sh",
+      "callee": "scripts/create_vault_service_repo_roles.sh",
+      "kind": "script_literal"
+    },
+    {
+      "caller": "scripts/serverless_uat/bootstrap_stripe_catalog.sh",
+      "callee": "scripts/stripe-sync-catalog.sh",
+      "kind": "script_literal"
+    }
+  ],
+  "execution_mappings": [
+    {
+      "id": "I01",
+      "task": "GCP Web SaaS 主机/网络/数据盘",
+      "owner": "IaC Modules",
+      "status": "模块现有；待 owner workflow 接入",
+      "inputs": "GitOps resources/onwalk.net/uat/gcp/web-saas.yaml、环境、账户、State",
+      "outputs": "资源 ID、State、CMDB；与目标声明一致",
+      "implementations": [
+        {
+          "repository": "iac_modules",
+          "path": "terraform-hcl-standard/gcp-cloud/modules/project"
+        },
+        {
+          "repository": "iac_modules",
+          "path": "terraform-hcl-standard/gcp-cloud/modules/network"
+        },
+        {
+          "repository": "iac_modules",
+          "path": "terraform-hcl-standard/gcp-cloud/modules/spot_vm"
+        },
+        {
+          "repository": "iac_modules",
+          "path": "terraform-hcl-standard/gcp-cloud/modules/persistent_data_disk"
+        }
+      ],
+      "path_checks": [
+        {
+          "repository": "iac_modules",
+          "path": "terraform-hcl-standard/gcp-cloud/modules/project",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/iac_modules/blob/c128442c35024f75bcd9f9cb771dc882d9d4d2ed/terraform-hcl-standard/gcp-cloud/modules/project"
+        },
+        {
+          "repository": "iac_modules",
+          "path": "terraform-hcl-standard/gcp-cloud/modules/network",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/iac_modules/blob/c128442c35024f75bcd9f9cb771dc882d9d4d2ed/terraform-hcl-standard/gcp-cloud/modules/network"
+        },
+        {
+          "repository": "iac_modules",
+          "path": "terraform-hcl-standard/gcp-cloud/modules/spot_vm",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/iac_modules/blob/c128442c35024f75bcd9f9cb771dc882d9d4d2ed/terraform-hcl-standard/gcp-cloud/modules/spot_vm"
+        },
+        {
+          "repository": "iac_modules",
+          "path": "terraform-hcl-standard/gcp-cloud/modules/persistent_data_disk",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/iac_modules/blob/c128442c35024f75bcd9f9cb771dc882d9d4d2ed/terraform-hcl-standard/gcp-cloud/modules/persistent_data_disk"
+        }
+      ]
+    },
+    {
+      "id": "I02",
+      "task": "GCP US Agent Proxy",
+      "owner": "IaC Modules",
+      "status": "模块现有；待 owner workflow 接入",
+      "inputs": "US lane 声明、账户、State",
+      "outputs": "US 实例身份、网络、CMDB",
+      "implementations": [
+        {
+          "repository": "iac_modules",
+          "path": "terraform-hcl-standard/gcp-cloud/modules/project"
+        },
+        {
+          "repository": "iac_modules",
+          "path": "terraform-hcl-standard/gcp-cloud/modules/network"
+        },
+        {
+          "repository": "iac_modules",
+          "path": "terraform-hcl-standard/gcp-cloud/modules/spot_vm"
+        }
+      ],
+      "path_checks": [
+        {
+          "repository": "iac_modules",
+          "path": "terraform-hcl-standard/gcp-cloud/modules/project",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/iac_modules/blob/c128442c35024f75bcd9f9cb771dc882d9d4d2ed/terraform-hcl-standard/gcp-cloud/modules/project"
+        },
+        {
+          "repository": "iac_modules",
+          "path": "terraform-hcl-standard/gcp-cloud/modules/network",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/iac_modules/blob/c128442c35024f75bcd9f9cb771dc882d9d4d2ed/terraform-hcl-standard/gcp-cloud/modules/network"
+        },
+        {
+          "repository": "iac_modules",
+          "path": "terraform-hcl-standard/gcp-cloud/modules/spot_vm",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/iac_modules/blob/c128442c35024f75bcd9f9cb771dc882d9d4d2ed/terraform-hcl-standard/gcp-cloud/modules/spot_vm"
+        }
+      ]
+    },
+    {
+      "id": "I03",
+      "task": "AWS JP Agent Proxy",
+      "owner": "IaC Modules",
+      "status": "当前 JP on-demand 用 ec2；Spot 声明才用 spot_ec2；待 owner workflow 接入",
+      "inputs": "JP lane 声明、AWS 身份、State",
+      "outputs": "JP 实例、地址、CMDB",
+      "implementations": [
+        {
+          "repository": "iac_modules",
+          "path": "terraform-hcl-standard/aws-cloud/modules/ec2"
+        },
+        {
+          "repository": "iac_modules",
+          "path": "terraform-hcl-standard/aws-cloud/modules/spot_ec2"
+        }
+      ],
+      "path_checks": [
+        {
+          "repository": "iac_modules",
+          "path": "terraform-hcl-standard/aws-cloud/modules/ec2",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/iac_modules/blob/c128442c35024f75bcd9f9cb771dc882d9d4d2ed/terraform-hcl-standard/aws-cloud/modules/ec2"
+        },
+        {
+          "repository": "iac_modules",
+          "path": "terraform-hcl-standard/aws-cloud/modules/spot_ec2",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/iac_modules/blob/c128442c35024f75bcd9f9cb771dc882d9d4d2ed/terraform-hcl-standard/aws-cloud/modules/spot_ec2"
+        }
+      ]
+    },
+    {
+      "id": "I04",
+      "task": "Akamai SG Agent Proxy",
+      "owner": "IaC Modules",
+      "status": "compute 现有；storage 条件使用；防火墙由模板生成；待 owner workflow 接入",
+      "inputs": "SG lane 声明",
+      "outputs": "SG 实例、防火墙、CMDB",
+      "implementations": [
+        {
+          "repository": "iac_modules",
+          "path": "terraform-hcl-standard/akamai-cloud/modules/compute"
+        },
+        {
+          "repository": "iac_modules",
+          "path": "terraform-hcl-standard/akamai-cloud/modules/storage"
+        },
+        {
+          "repository": "iac_modules",
+          "path": "terraform-hcl-standard/akamai-cloud/templates/hosts.tf.j2"
+        }
+      ],
+      "path_checks": [
+        {
+          "repository": "iac_modules",
+          "path": "terraform-hcl-standard/akamai-cloud/modules/compute",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/iac_modules/blob/c128442c35024f75bcd9f9cb771dc882d9d4d2ed/terraform-hcl-standard/akamai-cloud/modules/compute"
+        },
+        {
+          "repository": "iac_modules",
+          "path": "terraform-hcl-standard/akamai-cloud/modules/storage",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/iac_modules/blob/c128442c35024f75bcd9f9cb771dc882d9d4d2ed/terraform-hcl-standard/akamai-cloud/modules/storage"
+        },
+        {
+          "repository": "iac_modules",
+          "path": "terraform-hcl-standard/akamai-cloud/templates/hosts.tf.j2",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/iac_modules/blob/c128442c35024f75bcd9f9cb771dc882d9d4d2ed/terraform-hcl-standard/akamai-cloud/templates/hosts.tf.j2"
+        }
+      ]
+    },
+    {
+      "id": "I05",
+      "task": "TW/PH existing 资源事实",
+      "owner": "IaC Modules",
+      "status": "LEGACY Toolkit 执行；待迁入 IaC；不创建外部主机",
+      "inputs": "existing 声明、环境、账户、State",
+      "outputs": "existing inventory/State；不等于服务部署",
+      "implementations": [
+        {
+          "repository": "platform-ops-toolkit",
+          "path": "scripts/iac/write_external_inventory.py"
+        },
+        {
+          "repository": "platform-ops-toolkit",
+          "path": ".github/workflows/external-inventory-state.yml"
+        }
+      ],
+      "path_checks": [
+        {
+          "repository": "platform-ops-toolkit",
+          "path": "scripts/iac/write_external_inventory.py",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/scripts/iac/write_external_inventory.py"
+        },
+        {
+          "repository": "platform-ops-toolkit",
+          "path": ".github/workflows/external-inventory-state.yml",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/external-inventory-state.yml"
+        }
+      ]
+    },
+    {
+      "id": "I06",
+      "task": "Registry 基础资源/制品晋级",
+      "owner": "IaC Modules",
+      "status": "现有脚本由 Toolkit 调用；待 owner workflow 接入",
+      "inputs": "源 digest、目标 Registry、环境",
+      "outputs": "目标 digest 可核对",
+      "implementations": [
+        {
+          "repository": "iac_modules",
+          "path": "terraform-hcl-standard/gcp-cloud/modules/artifact_registry"
+        },
+        {
+          "repository": "iac_modules",
+          "path": "scripts/pipeline/artifact-registry-promote.sh"
+        },
+        {
+          "repository": "iac_modules",
+          "path": "scripts/pipeline/artifact-registry-wait.sh"
+        }
+      ],
+      "path_checks": [
+        {
+          "repository": "iac_modules",
+          "path": "terraform-hcl-standard/gcp-cloud/modules/artifact_registry",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/iac_modules/blob/c128442c35024f75bcd9f9cb771dc882d9d4d2ed/terraform-hcl-standard/gcp-cloud/modules/artifact_registry"
+        },
+        {
+          "repository": "iac_modules",
+          "path": "scripts/pipeline/artifact-registry-promote.sh",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/iac_modules/blob/c128442c35024f75bcd9f9cb771dc882d9d4d2ed/scripts/pipeline/artifact-registry-promote.sh"
+        },
+        {
+          "repository": "iac_modules",
+          "path": "scripts/pipeline/artifact-registry-wait.sh",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/iac_modules/blob/c128442c35024f75bcd9f9cb771dc882d9d4d2ed/scripts/pipeline/artifact-registry-wait.sh"
+        }
+      ]
+    },
+    {
+      "id": "I07",
+      "task": "Cloud Run 单服务部署",
+      "owner": "IaC Modules",
+      "status": "模块存在但当前部署仍走 Toolkit 脚本；接入需单独实施",
+      "inputs": "服务声明、镜像 digest、配置引用",
+      "outputs": "revision、实际运行 digest",
+      "implementations": [
+        {
+          "repository": "iac_modules",
+          "path": "terraform-hcl-standard/gcp-cloud/modules/cloud_run"
+        },
+        {
+          "repository": "platform-ops-toolkit",
+          "path": "scripts/serverless_uat/deploy_cloudrun_services.sh"
+        }
+      ],
+      "path_checks": [
+        {
+          "repository": "iac_modules",
+          "path": "terraform-hcl-standard/gcp-cloud/modules/cloud_run",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/iac_modules/blob/c128442c35024f75bcd9f9cb771dc882d9d4d2ed/terraform-hcl-standard/gcp-cloud/modules/cloud_run"
+        },
+        {
+          "repository": "platform-ops-toolkit",
+          "path": "scripts/serverless_uat/deploy_cloudrun_services.sh",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/scripts/serverless_uat/deploy_cloudrun_services.sh"
+        }
+      ]
+    },
+    {
+      "id": "I08",
+      "task": "Cloudflare Worker/Pages 发布",
+      "owner": "IaC Modules",
+      "status": "当前 Toolkit 执行；未确认完整替换模块；待 owner 接入",
+      "inputs": "发布包、checksum、账户、目标",
+      "outputs": "deployment ID、制品 checksum",
+      "implementations": [
+        {
+          "repository": "platform-ops-toolkit",
+          "path": ".github/scripts/serverless/run_cloudflare_target.sh"
+        }
+      ],
+      "path_checks": [
+        {
+          "repository": "platform-ops-toolkit",
+          "path": ".github/scripts/serverless/run_cloudflare_target.sh",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/serverless/run_cloudflare_target.sh"
+        }
+      ]
+    },
+    {
+      "id": "I09",
+      "task": "Cloudflare 域名/DNS",
+      "owner": "IaC Modules",
+      "status": "已有固定 SHA owner workflow 调用；实际消费 SHA 见 uses 表",
+      "inputs": "environment、gitops_ref、dns_mode",
+      "outputs": "域名归属、DNS 模式与执行结果",
+      "implementations": [
+        {
+          "repository": "iac_modules",
+          "path": ".github/workflows/cloudflare-serverless-domains.yml"
+        },
+        {
+          "repository": "iac_modules",
+          "path": ".github/actions/cloudflare-serverless-domains/action.yml"
+        }
+      ],
+      "path_checks": [
+        {
+          "repository": "iac_modules",
+          "path": ".github/workflows/cloudflare-serverless-domains.yml",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/iac_modules/blob/c128442c35024f75bcd9f9cb771dc882d9d4d2ed/.github/workflows/cloudflare-serverless-domains.yml"
+        },
+        {
+          "repository": "iac_modules",
+          "path": ".github/actions/cloudflare-serverless-domains/action.yml",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/iac_modules/blob/c128442c35024f75bcd9f9cb771dc882d9d4d2ed/.github/actions/cloudflare-serverless-domains/action.yml"
+        }
+      ]
+    },
+    {
+      "id": "B01",
+      "task": "Web SaaS 主机配置/交付",
+      "owner": "Playbooks Roles",
+      "status": "Playbook/Role 现有；不把 pull-only CD 观察当成全部部署",
+      "inputs": "inventory、环境、版本、配置",
+      "outputs": "主机配置、实际版本、服务交付状态",
+      "implementations": [
+        {
+          "repository": "playbooks",
+          "path": "setup-web-saas-domain.yml"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/vhosts/web_saas_host_config"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/vhosts/Doco-CD"
+        }
+      ],
+      "path_checks": [
+        {
+          "repository": "playbooks",
+          "path": "setup-web-saas-domain.yml",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/playbooks/blob/2dd12e6e12ce8b0b07bdae8290f96257fde67f07/setup-web-saas-domain.yml"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/vhosts/web_saas_host_config",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/playbooks/blob/2dd12e6e12ce8b0b07bdae8290f96257fde67f07/roles/vhosts/web_saas_host_config"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/vhosts/Doco-CD",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/playbooks/blob/2dd12e6e12ce8b0b07bdae8290f96257fde67f07/roles/vhosts/Doco-CD"
+        }
+      ]
+    },
+    {
+      "id": "B02",
+      "task": "Caddy 证书恢复",
+      "owner": "Playbooks Roles",
+      "status": "下游已有执行；待收敛至固定 SHA owner workflow",
+      "inputs": "单一目标、证书材料引用",
+      "outputs": "目标正确、证书有效",
+      "implementations": [
+        {
+          "repository": "playbooks",
+          "path": "caddy_certificate_restore.yml"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/docker/caddy_certificate_restore"
+        }
+      ],
+      "path_checks": [
+        {
+          "repository": "playbooks",
+          "path": "caddy_certificate_restore.yml",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/playbooks/blob/2dd12e6e12ce8b0b07bdae8290f96257fde67f07/caddy_certificate_restore.yml"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/docker/caddy_certificate_restore",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/playbooks/blob/2dd12e6e12ce8b0b07bdae8290f96257fde67f07/roles/docker/caddy_certificate_restore"
+        }
+      ]
+    },
+    {
+      "id": "B03",
+      "task": "区域 Agent Proxy 部署",
+      "owner": "Playbooks Roles",
+      "status": "入口/Role 现有；TLS Role 条件执行",
+      "inputs": "lane inventory、精确组件版本、配置引用",
+      "outputs": "Caddy/Xray/Agent 状态及版本",
+      "implementations": [
+        {
+          "repository": "playbooks",
+          "path": "setup-agent-proxy-domain.yml"
+        },
+        {
+          "repository": "playbooks",
+          "path": "deploy_xray_proxy_server.yml"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/vhosts/caddy"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/vhosts/vault-agent-tls"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/vhosts/tky-proxy"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/vhosts/agent-proxy"
+        }
+      ],
+      "path_checks": [
+        {
+          "repository": "playbooks",
+          "path": "setup-agent-proxy-domain.yml",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/playbooks/blob/2dd12e6e12ce8b0b07bdae8290f96257fde67f07/setup-agent-proxy-domain.yml"
+        },
+        {
+          "repository": "playbooks",
+          "path": "deploy_xray_proxy_server.yml",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/playbooks/blob/2dd12e6e12ce8b0b07bdae8290f96257fde67f07/deploy_xray_proxy_server.yml"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/vhosts/caddy",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/playbooks/blob/2dd12e6e12ce8b0b07bdae8290f96257fde67f07/roles/vhosts/caddy"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/vhosts/vault-agent-tls",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/playbooks/blob/2dd12e6e12ce8b0b07bdae8290f96257fde67f07/roles/vhosts/vault-agent-tls"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/vhosts/tky-proxy",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/playbooks/blob/2dd12e6e12ce8b0b07bdae8290f96257fde67f07/roles/vhosts/tky-proxy"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/vhosts/agent-proxy",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/playbooks/blob/2dd12e6e12ce8b0b07bdae8290f96257fde67f07/roles/vhosts/agent-proxy"
+        }
+      ]
+    },
+    {
+      "id": "B04",
+      "task": "Xray Exporter",
+      "owner": "Playbooks Roles",
+      "status": "现有入口/Role",
+      "inputs": "inventory、exporter 版本及配置",
+      "outputs": "进程及指标",
+      "implementations": [
+        {
+          "repository": "playbooks",
+          "path": "deploy_xray_exporter.yml"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/vhosts/xray-exporter"
+        }
+      ],
+      "path_checks": [
+        {
+          "repository": "playbooks",
+          "path": "deploy_xray_exporter.yml",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/playbooks/blob/2dd12e6e12ce8b0b07bdae8290f96257fde67f07/deploy_xray_exporter.yml"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/vhosts/xray-exporter",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/playbooks/blob/2dd12e6e12ce8b0b07bdae8290f96257fde67f07/roles/vhosts/xray-exporter"
+        }
+      ]
+    },
+    {
+      "id": "B05",
+      "task": "Observability Agent",
+      "owner": "Playbooks Roles",
+      "status": "按条件执行；下列 Role 非全部必跑",
+      "inputs": "inventory、采集目标和配置",
+      "outputs": "采集器、指标/日志链路",
+      "implementations": [
+        {
+          "repository": "playbooks",
+          "path": "deploy_observability_agent.yml"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/vhosts/node_exporter"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/vhosts/process_exporter"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/vhosts/blackbox_exporter"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/vhosts/vector-agent"
+        }
+      ],
+      "path_checks": [
+        {
+          "repository": "playbooks",
+          "path": "deploy_observability_agent.yml",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/playbooks/blob/2dd12e6e12ce8b0b07bdae8290f96257fde67f07/deploy_observability_agent.yml"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/vhosts/node_exporter",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/playbooks/blob/2dd12e6e12ce8b0b07bdae8290f96257fde67f07/roles/vhosts/node_exporter"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/vhosts/process_exporter",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/playbooks/blob/2dd12e6e12ce8b0b07bdae8290f96257fde67f07/roles/vhosts/process_exporter"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/vhosts/blackbox_exporter",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/playbooks/blob/2dd12e6e12ce8b0b07bdae8290f96257fde67f07/roles/vhosts/blackbox_exporter"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/vhosts/vector-agent",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/playbooks/blob/2dd12e6e12ce8b0b07bdae8290f96257fde67f07/roles/vhosts/vector-agent"
+        }
+      ]
+    },
+    {
+      "id": "B06",
+      "task": "Web SaaS 部署后检查",
+      "owner": "Playbooks Roles",
+      "status": "现有入口/Role",
+      "inputs": "精确主机、readiness 参数",
+      "outputs": "服务 readiness",
+      "implementations": [
+        {
+          "repository": "playbooks",
+          "path": "verify_web_saas_post_deploy.yml"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/vhosts/web_saas_post_deploy_readiness"
+        }
+      ],
+      "path_checks": [
+        {
+          "repository": "playbooks",
+          "path": "verify_web_saas_post_deploy.yml",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/playbooks/blob/2dd12e6e12ce8b0b07bdae8290f96257fde67f07/verify_web_saas_post_deploy.yml"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/vhosts/web_saas_post_deploy_readiness",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/playbooks/blob/2dd12e6e12ce8b0b07bdae8290f96257fde67f07/roles/vhosts/web_saas_post_deploy_readiness"
+        }
+      ]
+    },
+    {
+      "id": "B07",
+      "task": "Agent Proxy DNS 后检查",
+      "owner": "Playbooks Roles",
+      "status": "现有入口/Role",
+      "inputs": "精确目标、域名和检查参数",
+      "outputs": "DNS 后入口及服务链路",
+      "implementations": [
+        {
+          "repository": "playbooks",
+          "path": "verify_agent_proxy_post_dns.yml"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/vhosts/agent_proxy_post_dns_readiness"
+        }
+      ],
+      "path_checks": [
+        {
+          "repository": "playbooks",
+          "path": "verify_agent_proxy_post_dns.yml",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/playbooks/blob/2dd12e6e12ce8b0b07bdae8290f96257fde67f07/verify_agent_proxy_post_dns.yml"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/vhosts/agent_proxy_post_dns_readiness",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/playbooks/blob/2dd12e6e12ce8b0b07bdae8290f96257fde67f07/roles/vhosts/agent_proxy_post_dns_readiness"
+        }
+      ]
+    },
+    {
+      "id": "B08",
+      "task": "数据备份",
+      "owner": "Playbooks Roles",
+      "status": "现有；site_migration tasks_from=extract；实际链路需按数据操作选择",
+      "inputs": "源目标、备份配置、release 身份",
+      "outputs": "备份与完整性",
+      "implementations": [
+        {
+          "repository": "playbooks",
+          "path": "web-saas-backup.yml"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/site_migration"
+        }
+      ],
+      "path_checks": [
+        {
+          "repository": "playbooks",
+          "path": "web-saas-backup.yml",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/playbooks/blob/2dd12e6e12ce8b0b07bdae8290f96257fde67f07/web-saas-backup.yml"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/site_migration",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/playbooks/blob/2dd12e6e12ce8b0b07bdae8290f96257fde67f07/roles/site_migration"
+        }
+      ]
+    },
+    {
+      "id": "B09",
+      "task": "数据恢复",
+      "owner": "Playbooks Roles",
+      "status": "现有；site_migration tasks_from=load；独立恢复门槛",
+      "inputs": "备份材料、精确恢复目标",
+      "outputs": "恢复结果与数据检查",
+      "implementations": [
+        {
+          "repository": "playbooks",
+          "path": "web-saas-restore.yml"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/site_migration"
+        }
+      ],
+      "path_checks": [
+        {
+          "repository": "playbooks",
+          "path": "web-saas-restore.yml",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/playbooks/blob/2dd12e6e12ce8b0b07bdae8290f96257fde67f07/web-saas-restore.yml"
+        },
+        {
+          "repository": "playbooks",
+          "path": "roles/site_migration",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/playbooks/blob/2dd12e6e12ce8b0b07bdae8290f96257fde67f07/roles/site_migration"
+        }
+      ]
+    },
+    {
+      "id": "B10",
+      "task": "Serverless 数据库操作",
+      "owner": "Playbooks Roles",
+      "status": "owner workflow 现有；并非全部封装为 Role",
+      "inputs": "数据库目标、操作、schema 版本、SQL hash",
+      "outputs": "checkpoint、schema version、迁移回执",
+      "implementations": [
+        {
+          "repository": "playbooks",
+          "path": ".github/workflows/serverless-database-operations.yml"
+        },
+        {
+          "repository": "playbooks",
+          "path": "scripts/data_operations/serverless"
+        },
+        {
+          "repository": "playbooks",
+          "path": "scripts/data_operations/database/create_release_checkpoint.sh"
+        }
+      ],
+      "path_checks": [
+        {
+          "repository": "playbooks",
+          "path": ".github/workflows/serverless-database-operations.yml",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/playbooks/blob/2dd12e6e12ce8b0b07bdae8290f96257fde67f07/.github/workflows/serverless-database-operations.yml"
+        },
+        {
+          "repository": "playbooks",
+          "path": "scripts/data_operations/serverless",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/playbooks/blob/2dd12e6e12ce8b0b07bdae8290f96257fde67f07/scripts/data_operations/serverless"
+        },
+        {
+          "repository": "playbooks",
+          "path": "scripts/data_operations/database/create_release_checkpoint.sh",
+          "exists": true,
+          "source_url": "https://github.com/ai-workspace-infra/playbooks/blob/2dd12e6e12ce8b0b07bdae8290f96257fde67f07/scripts/data_operations/database/create_release_checkpoint.sh"
+        }
+      ]
+    },
+    {
+      "id": "B11",
+      "task": "Shared readiness",
+      "owner": "Playbooks Roles",
+      "status": "待新增；当前探针仍在 Toolkit；不得自动宣称已迁移",
+      "inputs": "Vault/Grafana/IAM endpoint、issuer、timeout",
+      "outputs": "三项探针证据；Toolkit 判断放行",
+      "implementations": [],
+      "path_checks": []
+    }
+  ],
+  "findings": [
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/platform-ops/provision/platform-ops_dispatch-hybrid-uat-matrix.sh",
+      "detail": "出现 terraform 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 310,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/platform-ops/provision/platform-ops_dispatch-hybrid-uat-matrix.sh#L310"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/platform-ops/provision/platform-ops_provision_route-ref-to-an-explicit-profile.sh",
+      "detail": "出现 terraform 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 67,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/platform-ops/provision/platform-ops_provision_route-ref-to-an-explicit-profile.sh#L67"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/serverless/sync_smtp_secrets.sh",
+      "detail": "出现 gcloud 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 81,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/serverless/sync_smtp_secrets.sh#L81"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/serverless/sync_smtp_secrets.sh",
+      "detail": "出现 gcloud 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 113,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/serverless/sync_smtp_secrets.sh#L113"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/serverless/sync_smtp_secrets.sh",
+      "detail": "出现 gcloud 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 114,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/serverless/sync_smtp_secrets.sh#L114"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/serverless/sync_smtp_secrets.sh",
+      "detail": "出现 gcloud 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 118,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/serverless/sync_smtp_secrets.sh#L118"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/serverless/sync_smtp_secrets.sh",
+      "detail": "出现 gcloud 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 135,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/serverless/sync_smtp_secrets.sh#L135"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/serverless/sync_smtp_secrets.sh",
+      "detail": "出现 gcloud 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 137,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/serverless/sync_smtp_secrets.sh#L137"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/tests/xconnect_cloud_lab_vault_role_contract_test.sh",
+      "detail": "出现 ssh 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 139,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/tests/xconnect_cloud_lab_vault_role_contract_test.sh#L139"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/tests/xconnect_cloud_lab_vault_role_contract_test.sh",
+      "detail": "出现 ssh 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 143,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/tests/xconnect_cloud_lab_vault_role_contract_test.sh#L143"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/tests/xconnect_playbooks_observation_caller_contract_test.sh",
+      "detail": "出现 systemctl 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 28,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/tests/xconnect_playbooks_observation_caller_contract_test.sh#L28"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-existing-one-uat/deploy.sh",
+      "detail": "出现 ssh 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 141,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-existing-one-uat/deploy.sh#L141"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-existing-one-uat/deploy.sh",
+      "detail": "出现 scp 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 142,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-existing-one-uat/deploy.sh#L142"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-existing-one-uat/deploy.sh",
+      "detail": "出现 apt-get 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 257,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-existing-one-uat/deploy.sh#L257"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-existing-one-uat/deploy.sh",
+      "detail": "出现 apt-get 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 258,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-existing-one-uat/deploy.sh#L258"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-existing-one-uat/deploy.sh",
+      "detail": "出现 systemctl 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 309,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-existing-one-uat/deploy.sh#L309"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-existing-one-uat/deploy.sh",
+      "detail": "出现 systemctl 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 310,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-existing-one-uat/deploy.sh#L310"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-existing-one-uat/deploy.sh",
+      "detail": "出现 systemctl 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 311,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-existing-one-uat/deploy.sh#L311"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-existing-one-uat/deploy.sh",
+      "detail": "出现 systemctl 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 339,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-existing-one-uat/deploy.sh#L339"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-existing-one-uat/deploy.sh",
+      "detail": "出现 ansible-playbook 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 483,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-existing-one-uat/deploy.sh#L483"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-lab/deploy.sh",
+      "detail": "出现 ssh 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 73,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-lab/deploy.sh#L73"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-lab/deploy.sh",
+      "detail": "出现 ssh 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 77,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-lab/deploy.sh#L77"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-lab/deploy.sh",
+      "detail": "出现 ssh 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 117,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-lab/deploy.sh#L117"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-lab/deploy.sh",
+      "detail": "出现 ssh 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 139,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-lab/deploy.sh#L139"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-lab/deploy.sh",
+      "detail": "出现 ssh 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 166,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-lab/deploy.sh#L166"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-lab/deploy.sh",
+      "detail": "出现 ssh 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 254,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-lab/deploy.sh#L254"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-lab/deploy.sh",
+      "detail": "出现 ansible-playbook 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 292,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-lab/deploy.sh#L292"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-lab/deploy.sh",
+      "detail": "出现 ssh 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 301,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-lab/deploy.sh#L301"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-lab/deploy.sh",
+      "detail": "出现 ssh 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 305,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-lab/deploy.sh#L305"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-lab/deploy.sh",
+      "detail": "出现 ansible-playbook 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 325,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-lab/deploy.sh#L325"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-lab/deploy.sh",
+      "detail": "出现 ssh 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 338,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-lab/deploy.sh#L338"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-lab/deploy.sh",
+      "detail": "出现 systemctl 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 339,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-lab/deploy.sh#L339"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-lab/deploy.sh",
+      "detail": "出现 ssh 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 370,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-lab/deploy.sh#L370"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-lab/deploy.sh",
+      "detail": "出现 ssh 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 381,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-lab/deploy.sh#L381"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-lab/deploy.sh",
+      "detail": "出现 systemctl 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 388,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-lab/deploy.sh#L388"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-lab/deploy.sh",
+      "detail": "出现 systemctl 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 390,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-lab/deploy.sh#L390"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-lab/deploy.sh",
+      "detail": "出现 ssh 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 398,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-lab/deploy.sh#L398"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-lab/deploy.sh",
+      "detail": "出现 systemctl 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 400,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-lab/deploy.sh#L400"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-lab/deploy.sh",
+      "detail": "出现 systemctl 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 401,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-lab/deploy.sh#L401"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-lab/deploy.sh",
+      "detail": "出现 ssh 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 408,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-lab/deploy.sh#L408"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-lab/deploy.sh",
+      "detail": "出现 ssh 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 417,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-lab/deploy.sh#L417"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-lab/deploy.sh",
+      "detail": "出现 systemctl 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 428,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-lab/deploy.sh#L428"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-lab/deploy.sh",
+      "detail": "出现 ssh 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 469,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-lab/deploy.sh#L469"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-lab/deploy.sh",
+      "detail": "出现 systemctl 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 491,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-lab/deploy.sh#L491"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-lab/deploy.sh",
+      "detail": "出现 ssh 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 520,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-lab/deploy.sh#L520"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-lab/deploy.sh",
+      "detail": "出现 systemctl 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 524,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-lab/deploy.sh#L524"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-lab/deploy.sh",
+      "detail": "出现 ssh 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 530,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-lab/deploy.sh#L530"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-lab/deploy.sh",
+      "detail": "出现 ssh 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 550,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-lab/deploy.sh#L550"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-lab/deploy.sh",
+      "detail": "出现 ssh 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 629,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-lab/deploy.sh#L629"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-lab/deploy.sh",
+      "detail": "出现 systemctl 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 631,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-lab/deploy.sh#L631"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-lab/deploy.sh",
+      "detail": "出现 ssh 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 642,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-lab/deploy.sh#L642"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-lab/deploy.sh",
+      "detail": "出现 ssh 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 651,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-lab/deploy.sh#L651"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-lab/deploy.sh",
+      "detail": "出现 ssh 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 666,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-lab/deploy.sh#L666"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-lab/desktop.sh",
+      "detail": "出现 ssh 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 37,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-lab/desktop.sh#L37"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-lab/enroll-node.sh",
+      "detail": "出现 aws 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 94,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-lab/enroll-node.sh#L94"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-lab/enroll-node.sh",
+      "detail": "出现 ssh 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 122,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-lab/enroll-node.sh#L122"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-lab/enroll-node.sh",
+      "detail": "出现 ansible-playbook 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 153,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-lab/enroll-node.sh#L153"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-lab/enroll-node.sh",
+      "detail": "出现 ssh 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 164,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-lab/enroll-node.sh#L164"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-lab/gateway.sh",
+      "detail": "出现 systemctl 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 89,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-lab/gateway.sh#L89"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-lab/lease.sh",
+      "detail": "出现 aws 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 9,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-lab/lease.sh#L9"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-lab/node-observation.sh",
+      "detail": "出现 ansible-playbook 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 76,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-lab/node-observation.sh#L76"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-lab/node-observation.sh",
+      "detail": "出现 ansible-playbook 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 131,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-lab/node-observation.sh#L131"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-lab/run.sh",
+      "detail": "出现 terraform 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 22,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-lab/run.sh#L22"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-lab/run.sh",
+      "detail": "出现 terraform 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 38,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-lab/run.sh#L38"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-lab/run.sh",
+      "detail": "出现 terraform 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 206,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-lab/run.sh#L206"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-lab/terraform-diagnostics.py",
+      "detail": "出现 terraform 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 36,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-lab/terraform-diagnostics.py#L36"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/xconnect-lab/terraform-diagnostics.py",
+      "detail": "出现 terraform 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 38,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/xconnect-lab/terraform-diagnostics.py#L38"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/external-inventory-state.yml",
+      "detail": "出现 aws 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 135,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/external-inventory-state.yml#L135"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/external-inventory-state.yml",
+      "detail": "出现 aws 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 136,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/external-inventory-state.yml#L136"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/selfhost-orchestrator.yml",
+      "detail": "出现 gcloud 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 1060,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/selfhost-orchestrator.yml#L1060"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/selfhost-orchestrator.yml",
+      "detail": "出现 terraform 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 1074,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/selfhost-orchestrator.yml#L1074"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/selfhost-orchestrator.yml",
+      "detail": "出现 terraform 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 1086,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/selfhost-orchestrator.yml#L1086"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/selfhost-orchestrator.yml",
+      "detail": "出现 gcloud 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 1095,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/selfhost-orchestrator.yml#L1095"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/selfhost-orchestrator.yml",
+      "detail": "出现 gcloud 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 1100,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/selfhost-orchestrator.yml#L1100"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/selfhost-orchestrator.yml",
+      "detail": "出现 terraform 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 1136,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/selfhost-orchestrator.yml#L1136"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/selfhost-orchestrator.yml",
+      "detail": "出现 terraform 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 1183,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/selfhost-orchestrator.yml#L1183"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/selfhost-orchestrator.yml",
+      "detail": "出现 ansible-playbook 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 1564,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/selfhost-orchestrator.yml#L1564"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/selfhost-orchestrator.yml",
+      "detail": "出现 ansible-playbook 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 2117,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/selfhost-orchestrator.yml#L2117"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/selfhost-orchestrator.yml",
+      "detail": "出现 ansible-playbook 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 2277,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/selfhost-orchestrator.yml#L2277"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/selfhost-orchestrator.yml",
+      "detail": "出现 ansible-playbook 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 2363,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/selfhost-orchestrator.yml#L2363"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/selfhost-orchestrator.yml",
+      "detail": "出现 ansible-playbook 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 2614,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/selfhost-orchestrator.yml#L2614"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/selfhost-orchestrator.yml",
+      "detail": "出现 apt-get 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 2711,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/selfhost-orchestrator.yml#L2711"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/selfhost-orchestrator.yml",
+      "detail": "出现 apt-get 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 2712,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/selfhost-orchestrator.yml#L2712"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/selfhost-orchestrator.yml",
+      "detail": "出现 ansible-playbook 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 2797,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/selfhost-orchestrator.yml#L2797"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/selfhost-orchestrator.yml",
+      "detail": "出现 ansible-playbook 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 2837,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/selfhost-orchestrator.yml#L2837"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/selfhost-orchestrator.yml",
+      "detail": "出现 ansible-playbook 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 2883,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/selfhost-orchestrator.yml#L2883"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/selfhost-orchestrator.yml",
+      "detail": "出现 ansible 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 2896,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/selfhost-orchestrator.yml#L2896"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/selfhost-orchestrator.yml",
+      "detail": "出现 systemctl 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 2900,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/selfhost-orchestrator.yml#L2900"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/selfhost-orchestrator.yml",
+      "detail": "出现 ansible-playbook 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 2924,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/selfhost-orchestrator.yml#L2924"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/serverless-orchestrator.yml",
+      "detail": "出现 gcloud 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 474,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/serverless-orchestrator.yml#L474"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/serverless-orchestrator.yml",
+      "detail": "出现 gcloud 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 480,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/serverless-orchestrator.yml#L480"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/serverless-orchestrator.yml",
+      "detail": "出现 apt-get 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 1147,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/serverless-orchestrator.yml#L1147"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/serverless-orchestrator.yml",
+      "detail": "出现 apt-get 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 1148,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/serverless-orchestrator.yml#L1148"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/xconnect-zero-cloud.yaml",
+      "detail": "出现 apt-get 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 649,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/xconnect-zero-cloud.yaml#L649"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/xconnect-zero-cloud.yaml",
+      "detail": "出现 apt-get 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 650,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/xconnect-zero-cloud.yaml#L650"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/xconnect-zero-cloud.yaml",
+      "detail": "出现 ssh 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 849,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/xconnect-zero-cloud.yaml#L849"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": "scripts/serverless_uat/bootstrap_stripe_catalog.sh",
+      "detail": "出现 psql 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 27,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/scripts/serverless_uat/bootstrap_stripe_catalog.sh#L27"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": "scripts/serverless_uat/bootstrap_stripe_catalog.sh",
+      "detail": "出现 psql 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 79,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/scripts/serverless_uat/bootstrap_stripe_catalog.sh#L79"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": "scripts/serverless_uat/destroy_ephemeral_compute.sh",
+      "detail": "出现 gcloud 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 29,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/scripts/serverless_uat/destroy_ephemeral_compute.sh#L29"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": "scripts/serverless_uat/destroy_ephemeral_compute.sh",
+      "detail": "出现 gcloud 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 38,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/scripts/serverless_uat/destroy_ephemeral_compute.sh#L38"
+    },
+    {
+      "code": "EXECUTION_CANDIDATE",
+      "severity": "review",
+      "repository": "platform-ops-toolkit",
+      "path": "scripts/serverless_uat/destroy_ephemeral_compute.sh",
+      "detail": "出现 gcloud 命令词；按副作用人工判定 owner，不自动认定违规",
+      "line": 41,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/scripts/serverless_uat/destroy_ephemeral_compute.sh#L41"
+    },
+    {
+      "code": "UNRESOLVED_SCRIPT_LITERAL",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/domain-cd-observe-endpoints.sh",
+      "detail": "字面脚本路径不在 Toolkit 基线；可能属于 checkout 的其他仓库，需人工判定"
+    },
+    {
+      "code": "UNRESOLVED_SCRIPT_LITERAL",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/gitops-update-tags.sh",
+      "detail": "字面脚本路径不在 Toolkit 基线；可能属于 checkout 的其他仓库，需人工判定"
+    },
+    {
+      "code": "UNRESOLVED_SCRIPT_LITERAL",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/platform-ops/dns/platform-ops_uat_dns_reconcile.sh",
+      "detail": "字面脚本路径不在 Toolkit 基线；可能属于 checkout 的其他仓库，需人工判定"
+    },
+    {
+      "code": "FLOATING_MAIN_CANDIDATE",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/snapshots/dispatch-environment-combined.sh",
+      "detail": "发现 main 引用候选；需要区分初始选择与执行期重新解析",
+      "line": 33,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/snapshots/dispatch-environment-combined.sh#L33"
+    },
+    {
+      "code": "FLOATING_MAIN_CANDIDATE",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/scripts/snapshots/dispatch-environment-combined.sh",
+      "detail": "发现 main 引用候选；需要区分初始选择与执行期重新解析",
+      "line": 46,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/scripts/snapshots/dispatch-environment-combined.sh#L46"
+    },
+    {
+      "code": "UNREFERENCED_INPUT",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/daily-main-snapshot.yaml",
+      "detail": "输入 xconnect_gateway_release_tag 未发现 inputs 引用；动态消费需人工核对",
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/daily-main-snapshot.yaml"
+    },
+    {
+      "code": "UNREFERENCED_INPUT",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/daily-main-snapshot.yaml",
+      "detail": "输入 xconnect_one_release_tag 未发现 inputs 引用；动态消费需人工核对",
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/daily-main-snapshot.yaml"
+    },
+    {
+      "code": "FLOATING_MAIN_CANDIDATE",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/daily-main-snapshot.yaml",
+      "detail": "发现 main 引用候选；需要区分初始选择与执行期重新解析",
+      "line": 358,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/daily-main-snapshot.yaml#L358"
+    },
+    {
+      "code": "UNREFERENCED_INPUT",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/hybrid-orchestrator.yml",
+      "detail": "输入 routing_mode 未发现 inputs 引用；动态消费需人工核对",
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/hybrid-orchestrator.yml"
+    },
+    {
+      "code": "FLOATING_MAIN_CANDIDATE",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/hybrid-orchestrator.yml",
+      "detail": "发现 main 引用候选；需要区分初始选择与执行期重新解析",
+      "line": 155,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/hybrid-orchestrator.yml#L155"
+    },
+    {
+      "code": "FLOATING_MAIN_CANDIDATE",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/hybrid-orchestrator.yml",
+      "detail": "发现 main 引用候选；需要区分初始选择与执行期重新解析",
+      "line": 218,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/hybrid-orchestrator.yml#L218"
+    },
+    {
+      "code": "FLOATING_MAIN_CANDIDATE",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/hybrid-orchestrator.yml",
+      "detail": "发现 main 引用候选；需要区分初始选择与执行期重新解析",
+      "line": 294,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/hybrid-orchestrator.yml#L294"
+    },
+    {
+      "code": "FLOATING_OWNER_REF",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/selfhost-orchestrator.yml",
+      "detail": "deploy_ai_workspace 的 owner uses 未固定完整 SHA：ai-workspace-infra/playbooks/.github/workflows/ai-workspace-domain-cd.yaml@main",
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/selfhost-orchestrator.yml"
+    },
+    {
+      "code": "FLOATING_OWNER_REF",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/selfhost-orchestrator.yml",
+      "detail": "deploy_infra_platform 的 owner uses 未固定完整 SHA：ai-workspace-infra/playbooks/.github/workflows/open-platform-domain-cd.yaml@main",
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/selfhost-orchestrator.yml"
+    },
+    {
+      "code": "FLOATING_OWNER_REF",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/selfhost-orchestrator.yml",
+      "detail": "deploy_web_saas 的 owner uses 未固定完整 SHA：ai-workspace-infra/playbooks/.github/workflows/web-saas-domain-cd.yaml@main",
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/selfhost-orchestrator.yml"
+    },
+    {
+      "code": "FLOATING_MAIN_CANDIDATE",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/selfhost-orchestrator.yml",
+      "detail": "发现 main 引用候选；需要区分初始选择与执行期重新解析",
+      "line": 1346,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/selfhost-orchestrator.yml#L1346"
+    },
+    {
+      "code": "FLOATING_MAIN_CANDIDATE",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/selfhost-orchestrator.yml",
+      "detail": "发现 main 引用候选；需要区分初始选择与执行期重新解析",
+      "line": 1777,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/selfhost-orchestrator.yml#L1777"
+    },
+    {
+      "code": "UNREFERENCED_INPUT",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/serverless-orchestrator.yml",
+      "detail": "输入 accounts_schema_ref 未发现 inputs 引用；动态消费需人工核对",
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/serverless-orchestrator.yml"
+    },
+    {
+      "code": "UNREFERENCED_INPUT",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/serverless-orchestrator.yml",
+      "detail": "输入 accounts_source_backend 未发现 inputs 引用；动态消费需人工核对",
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/serverless-orchestrator.yml"
+    },
+    {
+      "code": "UNREFERENCED_INPUT",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/serverless-orchestrator.yml",
+      "detail": "输入 runner_type 未发现 inputs 引用；动态消费需人工核对",
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/serverless-orchestrator.yml"
+    },
+    {
+      "code": "UNREFERENCED_INPUT",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/serverless-orchestrator.yml",
+      "detail": "输入 supabase_source_tunnel_host 未发现 inputs 引用；动态消费需人工核对",
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/serverless-orchestrator.yml"
+    },
+    {
+      "code": "UNREFERENCED_INPUT",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/serverless-orchestrator.yml",
+      "detail": "输入 supabase_target_confirm_replace 未发现 inputs 引用；动态消费需人工核对",
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/serverless-orchestrator.yml"
+    },
+    {
+      "code": "UNREFERENCED_INPUT",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/serverless-orchestrator.yml",
+      "detail": "输入 supabase_target_existing_strategy 未发现 inputs 引用；动态消费需人工核对",
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/serverless-orchestrator.yml"
+    },
+    {
+      "code": "FLOATING_MAIN_CANDIDATE",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/serverless-orchestrator.yml",
+      "detail": "发现 main 引用候选；需要区分初始选择与执行期重新解析",
+      "line": 184,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/serverless-orchestrator.yml#L184"
+    },
+    {
+      "code": "FLOATING_MAIN_CANDIDATE",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": ".github/workflows/serverless-orchestrator.yml",
+      "detail": "发现 main 引用候选；需要区分初始选择与执行期重新解析",
+      "line": 865,
+      "source_url": "https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/feb5bc18b5ae6a90784d324e5b2fb8df4251e6c8/.github/workflows/serverless-orchestrator.yml#L865"
+    },
+    {
+      "code": "UNRESOLVED_SCRIPT_LITERAL",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": "scripts/generate.py",
+      "detail": "字面脚本路径不在 Toolkit 基线；可能属于 checkout 的其他仓库，需人工判定"
+    },
+    {
+      "code": "UNRESOLVED_SCRIPT_LITERAL",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": "scripts/pipeline/adopt_uat_open_platform_vm.py",
+      "detail": "字面脚本路径不在 Toolkit 基线；可能属于 checkout 的其他仓库，需人工判定"
+    },
+    {
+      "code": "UNRESOLVED_SCRIPT_LITERAL",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": "scripts/pipeline/artifact-registry-promote.sh",
+      "detail": "字面脚本路径不在 Toolkit 基线；可能属于 checkout 的其他仓库，需人工判定"
+    },
+    {
+      "code": "UNRESOLVED_SCRIPT_LITERAL",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": "scripts/pipeline/artifact-registry-wait.sh",
+      "detail": "字面脚本路径不在 Toolkit 基线；可能属于 checkout 的其他仓库，需人工判定"
+    },
+    {
+      "code": "UNRESOLVED_SCRIPT_LITERAL",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": "scripts/pipeline/bootstrap-node.sh",
+      "detail": "字面脚本路径不在 Toolkit 基线；可能属于 checkout 的其他仓库，需人工判定"
+    },
+    {
+      "code": "UNRESOLVED_SCRIPT_LITERAL",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": "scripts/pipeline/cloudflare-gateway-dns-upsert.py",
+      "detail": "字面脚本路径不在 Toolkit 基线；可能属于 checkout 的其他仓库，需人工判定"
+    },
+    {
+      "code": "UNRESOLVED_SCRIPT_LITERAL",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": "scripts/pipeline/cloudflare-uat-dns-reconcile.sh",
+      "detail": "字面脚本路径不在 Toolkit 基线；可能属于 checkout 的其他仓库，需人工判定"
+    },
+    {
+      "code": "UNRESOLVED_SCRIPT_LITERAL",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": "scripts/pipeline/deploy-monitor-agent.sh",
+      "detail": "字面脚本路径不在 Toolkit 基线；可能属于 checkout 的其他仓库，需人工判定"
+    },
+    {
+      "code": "UNRESOLVED_SCRIPT_LITERAL",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": "scripts/pipeline/ensure-gcp-vm-running.py",
+      "detail": "字面脚本路径不在 Toolkit 基线；可能属于 checkout 的其他仓库，需人工判定"
+    },
+    {
+      "code": "UNRESOLVED_SCRIPT_LITERAL",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": "scripts/pipeline/install-render-deps.sh",
+      "detail": "字面脚本路径不在 Toolkit 基线；可能属于 checkout 的其他仓库，需人工判定"
+    },
+    {
+      "code": "UNRESOLVED_SCRIPT_LITERAL",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": "scripts/pipeline/map-instance-plan.sh",
+      "detail": "字面脚本路径不在 Toolkit 基线；可能属于 checkout 的其他仓库，需人工判定"
+    },
+    {
+      "code": "UNRESOLVED_SCRIPT_LITERAL",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": "scripts/pipeline/reconcile-backup-schedules.sh",
+      "detail": "字面脚本路径不在 Toolkit 基线；可能属于 checkout 的其他仓库，需人工判定"
+    },
+    {
+      "code": "UNRESOLVED_SCRIPT_LITERAL",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": "scripts/pipeline/reconcile-terraform-state.sh",
+      "detail": "字面脚本路径不在 Toolkit 基线；可能属于 checkout 的其他仓库，需人工判定"
+    },
+    {
+      "code": "UNRESOLVED_SCRIPT_LITERAL",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": "scripts/pipeline/register-gcp-oslogin-key.sh",
+      "detail": "字面脚本路径不在 Toolkit 基线；可能属于 checkout 的其他仓库，需人工判定"
+    },
+    {
+      "code": "UNRESOLVED_SCRIPT_LITERAL",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": "scripts/pipeline/remove-temporary-agent-controller-host.sh",
+      "detail": "字面脚本路径不在 Toolkit 基线；可能属于 checkout 的其他仓库，需人工判定"
+    },
+    {
+      "code": "UNRESOLVED_SCRIPT_LITERAL",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": "scripts/pipeline/resolve-golden-image-snapshots.sh",
+      "detail": "字面脚本路径不在 Toolkit 基线；可能属于 checkout 的其他仓库，需人工判定"
+    },
+    {
+      "code": "UNRESOLVED_SCRIPT_LITERAL",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": "scripts/pipeline/switch-cloudflare-dns-records.sh",
+      "detail": "字面脚本路径不在 Toolkit 基线；可能属于 checkout 的其他仓库，需人工判定"
+    },
+    {
+      "code": "UNRESOLVED_SCRIPT_LITERAL",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": "scripts/pipeline/terraform-apply-destroy.sh",
+      "detail": "字面脚本路径不在 Toolkit 基线；可能属于 checkout 的其他仓库，需人工判定"
+    },
+    {
+      "code": "UNRESOLVED_SCRIPT_LITERAL",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": "scripts/pipeline/terraform-init.sh",
+      "detail": "字面脚本路径不在 Toolkit 基线；可能属于 checkout 的其他仓库，需人工判定"
+    },
+    {
+      "code": "UNRESOLVED_SCRIPT_LITERAL",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": "scripts/pipeline/verify-aws-boot-health.sh",
+      "detail": "字面脚本路径不在 Toolkit 基线；可能属于 checkout 的其他仓库，需人工判定"
+    },
+    {
+      "code": "UNRESOLVED_SCRIPT_LITERAL",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": "scripts/pipeline/verify-xray-billing-chain.sh",
+      "detail": "字面脚本路径不在 Toolkit 基线；可能属于 checkout 的其他仓库，需人工判定"
+    },
+    {
+      "code": "UNRESOLVED_SCRIPT_LITERAL",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": "scripts/setup.sh",
+      "detail": "字面脚本路径不在 Toolkit 基线；可能属于 checkout 的其他仓库，需人工判定"
+    },
+    {
+      "code": "UNRESOLVED_SCRIPT_LITERAL",
+      "severity": "warning",
+      "repository": "platform-ops-toolkit",
+      "path": "scripts/stripe-sync-catalog.sh",
+      "detail": "字面脚本路径不在 Toolkit 基线；可能属于 checkout 的其他仓库，需人工判定"
+    }
+  ],
+  "source_hashes": {
+    ".github/actions/configure-gcp-oidc/action.yml": "575149deec3cff97cfd054e32403e661a414529a0e226b0a28ffac7969378a28",
+    ".github/actions/setup-deployment-runner/action.yml": "9c943fbc9f62a4dddf85e20db05467e62e3519cd981a2e5074acb3a766881822",
+    ".github/scripts/environment-upgrade/delegate.sh": "e4e0ddb2e5584f0b4a6a8c26ef30f15bfa73dea22f2da5432e9c0636303f1874",
+    ".github/scripts/environment-upgrade/dispatch.py": "73966ebd23d507fc74fe88c5c427120256861c85f6bbc5f7d33b4683ddc451b0",
+    ".github/scripts/environment-upgrade/import_receipt.py": "91fd2e61a76cb2ac5362a41b33ece70693f8a39a866a8ff31fcb86ea6cd60a78",
+    ".github/scripts/environment-upgrade/pipeline.py": "4c88cfd68ae527d4a8dad4db630cdd5d24b14957b2e27ca9ded37d0a9624acc3",
+    ".github/scripts/environment-upgrade/read-selfhost-baseline-state.py": "67d70bd663610343d648e6caf9061b562ce5155d963027fa65e714330bd76c8a",
+    ".github/scripts/environment-upgrade/validate_operation.py": "953780269a3918e4f363c1deffda708d5b0b1a221d5969d29b8209d6882ce82e",
+    ".github/scripts/gitops/prepare_gitops_routing_config.sh": "88f36001ac88882f35d5816006212ac5e3d8ba2d8b7988176ca041ded8a85643",
+    ".github/scripts/gitops/read_gcp_gitops_target.rb": "8808322a9bee2be075a36d3003c61097164d183d1413c26fad03289a18ee78ef",
+    ".github/scripts/gitops/resolve_gitops_aws_oidc_config.sh": "0544f43fa9fe62da85bd9452f9e2190c29e2fbf5862220a418cb9ec30563391a",
+    ".github/scripts/gitops/resolve_gitops_migration_target.sh": "19e94825a62962af75a232c6f95d2202692e0f4427fdc051be990d1404e7a7fb",
+    ".github/scripts/gitops/validate_gcp_gitops_contract.rb": "aeffcb7efbba42e17435ce96c571622f2f577d69482d66f90c20d5f48e384136",
+    ".github/scripts/gitops/validate_selfhost_contract.py": "c965c282e3a4a46b4a6f9c02451f26e290f3e288049b131a80512b0701c1505d",
+    ".github/scripts/platform-ops/deploy/platform-ops_deploy_agent_proxy_resolve-controller-ip.sh": "17fb6ecdc567d399be505871cef47f4c64294da7beaa26968e3fbed883483af1",
+    ".github/scripts/platform-ops/deploy/platform-ops_deploy_base_load-optional-web-saas.sh": "ea537a739d8486b5a3d978ef01402173ab361f3266b49a0ff8e7aecc62d78850",
+    ".github/scripts/platform-ops/deploy/platform-ops_deploy_base_resolve-billing-agent-cidrs.sh": "cbc2eacb5240362c4e1d28aa479bdc6a71a9bf0db37f16032a3189ff752772bc",
+    ".github/scripts/platform-ops/deploy/platform-ops_deploy_render-non-iac-agent-proxy-inventory.py": "e1af2f06b3f62112fcb474a3bfcea183861b3161545f6195e857ff61b15261e3",
+    ".github/scripts/platform-ops/deploy/platform-ops_deploy_resolve-non-iac-agent-proxy-vault-path.py": "fca1490b0d65df5a0296af742a7e42fd31923a8ceff0dc507c38a634c5f08678",
+    ".github/scripts/platform-ops/deploy/platform-ops_deploy_resolve-xray-exporter-image.sh": "8051cdb7f30daaf7cf1c6ed96a9fd708518df217843a62807ef058030e6ec542",
+    ".github/scripts/platform-ops/deploy/prepare-domain-tls-restore.py": "794f7afb46becb76218193531de33fb7ed7067c28688b4675ecbb77ca8132c0a",
+    ".github/scripts/platform-ops/deploy/uat_orchestrator_runner.sh": "740a1bfab0cc4ca402753d6f4782ace9e0622cdefc8e3150e66827893b7ffa09",
+    ".github/scripts/platform-ops/dns/platform-ops_sit_all_in_one_dns_reconcile.sh": "355609c1c4320f3930bf825a7f5db33b59fbb70127b0c0c74520efcdac82f974",
+    ".github/scripts/platform-ops/observe/platform-ops_deployment-summary.sh": "bdba2e87efc5a89fabd3b736e70a3d63ddb2ee78596e7b4e5012f3e00b46d2ad",
+    ".github/scripts/platform-ops/provision/platform-ops_dispatch-hybrid-uat-matrix.sh": "d45eb9a67559c10c18fe24e1b493fe81de1173bd861629512708e080fe0dd969",
+    ".github/scripts/platform-ops/provision/platform-ops_provision_build-agent-proxy-matrices.py": "acad1e4964f0e0f7305f11b8d3db981de3552b0e8f7da4a999294a8f6379af09",
+    ".github/scripts/platform-ops/provision/platform-ops_provision_build-deploy-matrix.sh": "6352911d402f4f0aaa6e21c641d5accd9a99f3d4393fd0668df4f4e0e453b2e7",
+    ".github/scripts/platform-ops/provision/platform-ops_provision_derive-ssh-public-key.sh": "145621c4864ab05d18c9091c51920ca8365f32ef0d8bad1eb9c8b8e11e27de95",
+    ".github/scripts/platform-ops/provision/platform-ops_provision_dispatch-xconnect-uat.sh": "4977ad9fc620cb5f7fc454e98e3ddf99ad67d5ca5105fbae42f8252259d8ae8e",
+    ".github/scripts/platform-ops/provision/platform-ops_provision_initialize-agent-proxy-credentials.sh": "9f2784b58b8302ef6e81e361a9b03492750eb1014fe9013d6c432ac18e977dfd",
+    ".github/scripts/platform-ops/provision/platform-ops_provision_initialize-databases-credentials.sh": "5e5b77d18d7ac329847385363ab946a2612330ced4f84e8384178e269046bf49",
+    ".github/scripts/platform-ops/provision/platform-ops_provision_render-existing-host-cmdb.sh": "295aeb6c9374143de07d48f6ae348672d27a9e1399b3f546a9c709ef7b113f89",
+    ".github/scripts/platform-ops/provision/platform-ops_provision_resolve-agent-proxy-service-origins.sh": "d9d9468a329e5d4ab175f4e463758f623a03e41b3e4f9a7af8b7bd5ee068b7e3",
+    ".github/scripts/platform-ops/provision/platform-ops_provision_route-ref-to-an-explicit-profile.sh": "ba706e381ea89626fbf64aa50adff87b1f10e9d6de54586d0b667e805ad25e38",
+    ".github/scripts/prod-selfhost/full_business_control.py": "940c9c48502f5b0f78d271f80825bd259943954efb64cc2fdbe1894956031d84",
+    ".github/scripts/prod-selfhost/native_billing_control.py": "581d06c2efee90a032fa86b9b2f021cb12a5da1a5786030ff56f9769f7255bce",
+    ".github/scripts/prod-selfhost/native_init_control.py": "c8303ba0aa0805d1dfdebb48ffc07a9af284f7f7583947b49f64cae537c72368",
+    ".github/scripts/prod-selfhost/native_standby_control.py": "8df14607208750184a83d23fb447e1c477d3c824ae01fede71903294b04eb4a8",
+    ".github/scripts/serverless/install_vault_cli.sh": "03d729f496c39238e7e81ccb3562a0394ca4a51a2527217a040e1fdf0d3b7435",
+    ".github/scripts/serverless/record_image_digest.sh": "a0d0db747a5616dc72536a4d9c392f42a09f8070c9ddde1b04e046d6ae09f009",
+    ".github/scripts/serverless/run_cloudflare_target.sh": "ea86466edab8684ef703f211754706309b3a7911143ad926f9c6a669ce179f11",
+    ".github/scripts/serverless/select-domain-owner.py": "36d6a599a4cc70dbbda20a78802db7115aa04317abe629232f4b1f548a962519",
+    ".github/scripts/serverless/sync_smtp_secrets.sh": "8b592f7985e17caacd47bc4dd6a106490c5de1e55b3c7d0d828d7f17b9c8b4b8",
+    ".github/scripts/serverless/validate_dispatch_inputs.sh": "9dfc0350b199bb6ee6ee74c165dbc1f993c0fc5b225bd73a1a968e0f760c250d",
+    ".github/scripts/serverless/validate_portal_runtime_domains.sh": "72b6d5a0f2917dc570b950fb8df6673b474a11ed662a56563140091d452e0ac6",
+    ".github/scripts/serverless/validate_promotion_manifest.sh": "f6a894c49db08579ac3243e6770ce463df62045216f268633b995b5094b868ac",
+    ".github/scripts/serverless/verify_cloud_run_image_digest.sh": "cb1ca509e4bc10a2b2c85ba0786a9ab1f3a9ab55c4676dbf58f1b6526ffee619",
+    ".github/scripts/serverless/verify_frontend_boundary_assets.sh": "18ef8f422302a07fe6676bbcdfa278d0302c433630980433bc48cc6bf46606e1",
+    ".github/scripts/serverless/verify_hybrid_contract.sh": "53ee6f61b858b52a82481506ae22aa439f77c3c484e255b4827177d8c46b9976",
+    ".github/scripts/serverless/verify_summary.sh": "c114bb85984c827222ea4b5e600bc622050b91000bda48282e33a09b074b143e",
+    ".github/scripts/snapshots/aggregate-daily-snapshot-status.sh": "bd2194b3fa08be8b00704512edb6327ffa483022634e68328a8ffdd8d63a01c2",
+    ".github/scripts/snapshots/aggregate-environment-dispatch-status.sh": "673266ad2cc43f8930eb59f41579eee71e93fcba5ad46eb52bd93f3b85cccbb1",
+    ".github/scripts/snapshots/check-shared-readiness.sh": "99c8c2c98737ae2c81ecd61a557a717c48096ccb54871f9d88b3ffc7d987616b",
+    ".github/scripts/snapshots/dispatch-environment-combined.sh": "c064560c1baf9d69a76a6f6d3aac643235baf253ead1ee1fd7cdb29b9fb733c6",
+    ".github/scripts/snapshots/resolve-daily-snapshot-tag.sh": "8befc7435e7fe83b060f1b749816a4ebc73dac7f73aead48ddeee238516de2e9",
+    ".github/scripts/snapshots/resolve-dispatch-gitops-target.sh": "19e3a9832e0ca853462303c2616948546095569e2e5c1b335f1bea6468211348",
+    ".github/scripts/snapshots/resolve-snapshot-tag.sh": "05847a0cc72ec34aa13f11d531ea17126513c68466c95bec6918a9eff240076a",
+    ".github/scripts/snapshots/tag-daily-main-snapshot.sh": "df189da544eaabee2ec4042d1c0bb11cb648905a18284f2fcecb8fca3e05031b",
+    ".github/scripts/snapshots/verify-promotion-manifest.py": "60d144bfe38eedf64d28a4e0d04530ff798e0f089750f924485d3e94b5c12dbd",
+    ".github/scripts/tests/environment_data_operations_test.py": "47628bf5c2b7b9247b0594e7937b5cf8056a32d3cf8ee47d8a2be6b193d668fb",
+    ".github/scripts/tests/environment_upgrade_test.py": "e3326aef85e5c13ba65c9c2ebd6a0d17127287a32a740e437375a2312baf5753",
+    ".github/scripts/tests/hybrid_uat_matrix_contract_test.sh": "a4a86d9ad4bc73b6a6556be1c115967efde97164e0c3e6cdc2ea98c3024116d2",
+    ".github/scripts/tests/import_receipt_test.py": "670837f8abd46c7a90573032176006b0d9b7b637498c051d0bc6f00812e26a54",
+    ".github/scripts/tests/workflow_dispatch_input_limit_test.sh": "a2c1a1a941b78af0b5194e5faaabf37a5825e419ad9940b9d12cf5065501023c",
+    ".github/scripts/tests/xconnect_ai_aggregator_matrix_contract_test.sh": "f245ee6d328f2193886e7139e467fa32a073ff4e569f4a18aff9885e9ad27d3a",
+    ".github/scripts/tests/xconnect_cloud_lab_vault_role_contract_test.sh": "4e8e4ad9a680b61f9695ee62dbbc9c6c87417d155b985e9528f050e3675ae9ee",
+    ".github/scripts/tests/xconnect_declared_network_contract_test.sh": "7b935a8ea4d10ce5e7043a715061d4dd067f905358811f044ae8c89267496970",
+    ".github/scripts/tests/xconnect_formal_uat_lab_contract_test.sh": "079181319ca6686360999613f6b520f356f674e4d131a2dae890cab328b7e623",
+    ".github/scripts/tests/xconnect_gateway_dns_contract_test.sh": "f65613b7269759112db522744243df2eaf972734b90527407a8592373c80d0a1",
+    ".github/scripts/tests/xconnect_playbooks_observation_caller_contract_test.sh": "18c2de35ff315f2b9e57d4327f5c13c42cdea90791cc435af13ad63c3594c331",
+    ".github/scripts/tests/xconnect_xhttp_runtime_contract_test.sh": "da18374d0cc080bf8c8f449bd69e36bada9026397893e77fbcedbc75d0108af2",
+    ".github/scripts/xconnect-existing-one-uat/deploy.sh": "0a0a870263d9021c4579a4263f2444e11002da9ebf6a146eb08cc7960973d30a",
+    ".github/scripts/xconnect-lab/deploy.sh": "b76757f12dfa4816fe541266806ecf64ee05e131239249fd15ce2c55824add72",
+    ".github/scripts/xconnect-lab/desktop.sh": "5377b7cbda3c0b292123a15c254b6243fe8a41d0455471dc1b83d0aed7ddaa0b",
+    ".github/scripts/xconnect-lab/enroll-node.sh": "d83ca0a6aee8b3fd0ce750ad7f617e3a38d64e463ff81529ab56fd127cf02f2c",
+    ".github/scripts/xconnect-lab/gateway.sh": "120324ca477ff984a221d147a7d582f82d01a52a99843264e6124d03b1fd2758",
+    ".github/scripts/xconnect-lab/lease.sh": "0200b559ed9ec7f1fb818b45df92487dcf483a1992e17d61509bc88951b21ae1",
+    ".github/scripts/xconnect-lab/node-observation.sh": "e524c0fa89cef056b783e142cb5621e0fbef16bb37d9590e80708588eb816e2d",
+    ".github/scripts/xconnect-lab/prepare.py": "e87b4acb6212dbee1ac88102fb753bb85224a9c0e096e162e7a24688e53904f6",
+    ".github/scripts/xconnect-lab/probe-control-plane.py": "0904a02979f998b455fd095362d5dfe2205e78a958294c2b61995544e5383c4b",
+    ".github/scripts/xconnect-lab/reconcile-gateway-dns.sh": "bf9608c082f548b7f5449e0ee6677dee40b759fff7af7c16d4357d97e6f44bfb",
+    ".github/scripts/xconnect-lab/remote-client-observation.sh": "96e25ea61b62faeee3bf812a960970d2ff7e5fdfc56ec3c2bb6a4e335c85f907",
+    ".github/scripts/xconnect-lab/remote-gateway-observation.sh": "43a49e3eb5c69d7cb049c629dd755269560a3f9e4d901fa95e56304912b5565d",
+    ".github/scripts/xconnect-lab/run.sh": "79166bc6d3567a5b95d78c962faf87fbe250ded13ea4b95b2c7ae0745c70e873",
+    ".github/scripts/xconnect-lab/terraform-diagnostics.py": "7966b8637410d2425efc324f79b1d9cc1bc06fa45ab00bccff8038ff8189b37d",
+    ".github/scripts/xconnect-lab/verify-xhttp-runtime.sh": "a503a053ed49d7222976a5e36408c77f7ec512400474b1027e6939838c9baa8c",
+    ".github/scripts/xconnect-network/bootstrap.sh": "af6e4839dd412870b702228147fc196e9c9de28912868e8ec9681c305436d7df",
+    ".github/scripts/xconnect-network/manifest.py": "4d6bb1bdd8fef5654af91d1d0b72de413c678415e117036e0fe2036cb952784c",
+    ".github/workflows/daily-main-snapshot.yaml": "c98ff9d19119b9f651e18ebf7ffb0a798e8245b9aa90eebacd06016bda67f803",
+    ".github/workflows/environment-data-operations.yml": "ccb62eb48047ef2dab70cb00cc218750a613232ea77aa6a50144faadce036260",
+    ".github/workflows/environment-upgrade-ci.yml": "5a5f932c9899818e60899f6cca4bd1559b2822c034d219e4dff251857b0168fe",
+    ".github/workflows/external-inventory-state.yml": "725675ad395dfa0b63b0638864439df0bf92c1da25f554303cd4dd0848c073d8",
+    ".github/workflows/hybrid-orchestrator.yml": "4b323e3d3d1a92b0f50da0c56d7cdb930bf5e84c529da0517ab2eb02ed91e52f",
+    ".github/workflows/selfhost-orchestrator.yml": "dc0e010789b5995994558f534b83696f7b5229d7675995f40c736e26aba70a22",
+    ".github/workflows/serverless-orchestrator.yml": "51ddf462a991aeeca7e5d38c32e6c212af0f1835a7739289902b374d4bf7079f",
+    ".github/workflows/xconnect-zero-cloud.yaml": "39d7fa97136395253fc6ca75483058f4cf58b887a022acb89ed97f446d11672a",
+    "scripts/create_vault_service_repo_roles.sh": "773ea5a388a259a6d5010253a99522355a54a6b431aab654ead58e483a2dbf92",
+    "scripts/iac/resolve_iac_contract.py": "fb882902bdf0d3af56a1ebcf75e91b2a709f7b2e7045503750f497b2e1fae2c6",
+    "scripts/iac/write_external_inventory.py": "4861b7ef3136258084c5c35d307efa2ed7764456c38df0855de939721b00ddb3",
+    "scripts/serverless_uat/bootstrap_stripe_catalog.sh": "168c88ef6da77dfbc911398274ed76f5d843c32934098529d06e8c1508c3a5a2",
+    "scripts/serverless_uat/deploy_orchestrator.py": "112f38f1bf4da2d31a69c30b6de80570e20637cf4d020e343b0a9ddb7d0b947b",
+    "scripts/serverless_uat/destroy_ephemeral_compute.sh": "9b39f95ed022feb0e407a26846e2807e4f72005658f8c8d363e9249decbc866f",
+    "scripts/serverless_uat/validate_cloudflare_boundaries.py": "16a2221f532b4134f32da853b7159586600c42eab464e056ff32a2331ae32f33",
+    "scripts/serverless_uat/verify_brand_site_review_readiness.sh": "a8e21ec3c4727e50288b4f551d4cf29adde623d2ca4d81223d9a5bf95ffc4d13",
+    "scripts/serverless_uat/verify_serverless_public_chain.sh": "f18695ee5152633eb2ab3681a0c376ed524cfc8b887e12d33763c032f93a668d"
+  },
+  "jobs": [
+    {
+      "id": "resolve-snapshot-tag",
+      "name": "Resolve immutable snapshot tag",
+      "needs": null,
+      "steps": [
+        {
+          "index": 1,
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v7",
+          "scripts": []
+        },
+        {
+          "index": 2,
+          "name": "Load GitHub App private key from Vault",
+          "uses": "hashicorp/vault-action@v4",
+          "scripts": []
+        },
+        {
+          "index": 3,
+          "name": "Create GitHub App installation token for infra",
+          "uses": "actions/create-github-app-token@v3",
+          "scripts": []
+        },
+        {
+          "index": 4,
+          "name": "Create GitHub App installation token for lab",
+          "uses": "actions/create-github-app-token@v3",
+          "scripts": []
+        },
+        {
+          "index": 5,
+          "name": "Create GitHub App installation token for services",
+          "uses": "actions/create-github-app-token@v3",
+          "scripts": []
+        },
+        {
+          "index": 6,
+          "name": "Create GitHub App installation token for xstream",
+          "uses": "actions/create-github-app-token@v3",
+          "scripts": []
+        },
+        {
+          "index": 7,
+          "name": "Resolve snapshot tag across all organizations",
+          "uses": null,
+          "scripts": [
+            ".github/scripts/snapshots/resolve-snapshot-tag.sh"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "snapshot",
+      "name": "Tag and build main snapshot",
+      "needs": "resolve-snapshot-tag",
+      "steps": [
+        {
+          "index": 1,
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v7",
+          "scripts": []
+        },
+        {
+          "index": 2,
+          "name": "Load GitHub App private key from Vault",
+          "uses": "hashicorp/vault-action@v4",
+          "scripts": []
+        },
+        {
+          "index": 3,
+          "name": "Create GitHub App installation token",
+          "uses": "actions/create-github-app-token@v3",
+          "scripts": []
+        },
+        {
+          "index": 4,
+          "name": "Create cross-repository main snapshot",
+          "uses": null,
+          "scripts": [
+            ".github/scripts/snapshots/tag-daily-main-snapshot.sh"
+          ]
+        },
+        {
+          "index": 5,
+          "name": "Trigger XConnect multi-platform release",
+          "uses": null,
+          "scripts": []
+        },
+        {
+          "index": 6,
+          "name": "Upload snapshot status",
+          "uses": "actions/upload-artifact@v7",
+          "scripts": []
+        }
+      ]
+    },
+    {
+      "id": "resolve-built-snapshot-tag",
+      "name": "Resolve completed snapshot tag",
+      "needs": [
+        "resolve-snapshot-tag",
+        "snapshot"
+      ],
+      "steps": [
+        {
+          "index": 1,
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v7",
+          "scripts": []
+        },
+        {
+          "index": 2,
+          "name": "Download all organization snapshot status artifacts",
+          "uses": "actions/download-artifact@v8",
+          "scripts": []
+        },
+        {
+          "index": 3,
+          "name": "Resolve immutable completed snapshot tag",
+          "uses": null,
+          "scripts": [
+            ".github/scripts/snapshots/resolve-daily-snapshot-tag.sh"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "shared-readiness",
+      "name": "Check shared platform readiness",
+      "needs": "resolve-built-snapshot-tag",
+      "steps": [
+        {
+          "index": 1,
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v7",
+          "scripts": []
+        },
+        {
+          "index": 2,
+          "name": "Check Shared platform readiness (read-only)",
+          "uses": null,
+          "scripts": [
+            ".github/scripts/snapshots/check-shared-readiness.sh"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dispatch-environment",
+      "name": "${{ matrix.environment }} ${{ matrix.name }}",
+      "needs": [
+        "resolve-built-snapshot-tag",
+        "shared-readiness"
+      ],
+      "steps": [
+        {
+          "index": 1,
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v7",
+          "scripts": []
+        },
+        {
+          "index": 2,
+          "name": "Load GitHub App private key from Vault",
+          "uses": "hashicorp/vault-action@v4",
+          "scripts": []
+        },
+        {
+          "index": 3,
+          "name": "Create GitHub App installation token",
+          "uses": "actions/create-github-app-token@v3",
+          "scripts": []
+        },
+        {
+          "index": 4,
+          "name": "Checkout selected GitOps topology",
+          "uses": "actions/checkout@v7",
+          "scripts": []
+        },
+        {
+          "index": 5,
+          "name": "Resolve target domain from GitOps",
+          "uses": null,
+          "scripts": [
+            ".github/scripts/snapshots/resolve-dispatch-gitops-target.sh"
+          ]
+        },
+        {
+          "index": 6,
+          "name": "Dispatch ${{ matrix.name }}",
+          "uses": null,
+          "scripts": [
+            ".github/scripts/snapshots/dispatch-environment-combined.sh"
+          ]
+        },
+        {
+          "index": 7,
+          "name": "Write dispatch receipt",
+          "uses": null,
+          "scripts": []
+        },
+        {
+          "index": 8,
+          "name": "Upload dispatch receipt",
+          "uses": "actions/upload-artifact@v7",
+          "scripts": []
+        }
+      ]
+    },
+    {
+      "id": "snapshot-summary",
+      "name": "Summarize daily snapshot status",
+      "needs": [
+        "resolve-snapshot-tag",
+        "snapshot",
+        "resolve-built-snapshot-tag",
+        "shared-readiness",
+        "dispatch-environment"
+      ],
+      "steps": [
+        {
+          "index": 1,
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v7",
+          "scripts": []
+        },
+        {
+          "index": 2,
+          "name": "Download all organization snapshot status artifacts",
+          "uses": "actions/download-artifact@v8",
+          "scripts": []
+        },
+        {
+          "index": 3,
+          "name": "Publish unified snapshot matrix summary",
+          "uses": null,
+          "scripts": [
+            ".github/scripts/snapshots/aggregate-daily-snapshot-status.sh"
+          ]
+        },
+        {
+          "index": 4,
+          "name": "Download environment dispatch receipts",
+          "uses": "actions/download-artifact@v8",
+          "scripts": []
+        },
+        {
+          "index": 5,
+          "name": "Publish environment dispatch summary",
+          "uses": null,
+          "scripts": [
+            ".github/scripts/snapshots/aggregate-environment-dispatch-status.sh"
+          ]
+        },
+        {
+          "index": 6,
+          "name": "Upload environment snapshot summary",
+          "uses": "actions/upload-artifact@v7",
+          "scripts": []
+        },
+        {
+          "index": 7,
+          "name": "Fail when the selected environment dispatch failed",
+          "uses": null,
+          "scripts": []
+        }
+      ]
+    }
+  ]
+}
