@@ -113,6 +113,9 @@ GitHub 组织入口：[ai-workspace-infra](https://github.com/ai-workspace-infra
 | 35 | Supabase 操作参考：专用只读角色、RLS 与受控连接 | zh | knowledge working tree | [docs/reference/supabase-operations.zh.md](supabase-operations.zh.md) |
 | 36 | Supabase Operations Reference: Dedicated Read-only Role, RLS, and Controlled Connections | en | knowledge working tree | [docs/reference/supabase-operations.en.md](supabase-operations.en.md) |
 | 37 | Platform Ops Toolkit Daily Main Snapshot 实施规划 | zh | knowledge working tree | [docs/reference/platform-ops-toolkit-daily-main-snapshot-plan.zh.md](platform-ops-toolkit-daily-main-snapshot-plan.zh.md) |
+| 38 | 多云 CMDB 独立 PostgreSQL 与 Grafana 落地规划 | zh | CMDB implementation plan | [CMDB 落地规划](multi-cloud-cmdb-postgresql-grafana-plan.zh.md) |
+| 39 | CMDB 多云采集与数据库 Vault 路径规划 | zh | proposed, not applied | [Vault 路径与字段](cmdb-vault-paths.zh.md) |
+| 40 | CMDB Shared UAT 部署与采集验收记录 | zh | 2026-10-09 fixed owner commits | [Shared UAT 证据](cmdb-shared-uat-evidence-20261009.zh.md) |
 
 ## 使用与维护约束
 
