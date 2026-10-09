@@ -2,7 +2,30 @@
 
 This page tracks release summaries for published versions of the public web console served under `www.svc.plus` and `console.svc.plus`.
 
-## Current Release
+## Verified Release — 2026-10-09
+
+### v2026.10.09-r2 — Account Recovery
+
+- Portal PR [#412](https://github.com/ai-workspace-services/portal/pull/412) is merged.
+- The release removes the hard-coded Google Analytics measurement-ID fallback. When Analytics is not configured, the console no longer loads Google Analytics or Google Tag Manager resources.
+- The immutable Portal release is [v2026.10.09-r2](https://github.com/ai-workspace-services/portal/releases/tag/v2026.10.09-r2).
+
+### v2026.10.09-r3 — Release Metadata Alignment
+
+- GitOps PR [#416](https://github.com/ai-workspace-infra/gitops/pull/416) pins `prod-console` to the console image digest `sha256:e56de11c99898f315da099caef22718a54e4bf6c25b982f51b78919da05444df`.
+- GitOps PR [#417](https://github.com/ai-workspace-infra/gitops/pull/417) maps the runtime `FRONTEND_IMAGE` to the same immutable `CONSOLE_IMAGE`, so `/api/ping` reports the deployed image accurately.
+- The immutable GitOps release is [v2026.10.09-r3](https://github.com/ai-workspace-infra/gitops/releases/tag/v2026.10.09-r3).
+- `web-saas-prod` was reconciled manually through Doco-CD `prod-console`; `prod-services` remained pinned to `v2026.10.08-r4`.
+
+### Validation
+
+- `https://console.svc.plus/account-recovery` returned HTTP 200.
+- The password-recovery send-code and valid-code reset flow were manually verified, including mailbox delivery.
+- `/api/ping` reports the `e56de11c...` immutable image digest.
+- PostgreSQL, Accounts, Billing, stunnel, Caddy, and the Doco-CD controller were unchanged.
+- No database or schema change was included; the PostgreSQL full-backup gate was therefore not invoked.
+
+## Historical Release
 
 ### v0.2
 

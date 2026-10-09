@@ -185,6 +185,27 @@
 
 ### 密码重置
 
+忘记密码的公开入口使用 `/api/auth/password/forgot[/confirm]`；它们不要求已有 session，并保持未知邮箱统一返回 `202`，避免账号枚举。`/api/auth/password/reset[/confirm]` 继续保留给已登录的修改密码场景。
+
+#### `POST /api/auth/password/forgot`
+
+| 项 | 内容 |
+| --- | --- |
+| 请求字段 | `email` |
+| 成功返回 | `202 {"message":"if the account exists a reset email will be sent"}` |
+| 认证 | 公开；不要求 session。 |
+| 失败返回 | `email_in_query`、`invalid_request`、`email_required`、`password_reset_failed`、`read_only_account`。 |
+
+#### `POST /api/auth/password/forgot/confirm`
+
+| 项 | 内容 |
+| --- | --- |
+| 请求字段 | `token`、`password` |
+| 成功返回 | `message`、`token`、`expiresAt`、`user` |
+| 认证 | 公开；使用邮件 reset token。 |
+| 前置条件 | password 长度至少 8；reset token 有效；demo/read-only account 拒绝。 |
+| 失败返回 | `credentials_in_query`、`invalid_request`、`password_too_short`、`invalid_token`、`password_reset_failed`、`read_only_account`、`session_creation_failed`。 |
+
 #### `POST /api/auth/password/reset`
 
 | 项 | 内容 |
@@ -440,6 +461,27 @@ The following flows mint a new session token:
 Alias route with the exact same behavior as `POST /api/auth/token/refresh`.
 
 ### Password Reset
+
+The public forgot-password flow uses `/api/auth/password/forgot[/confirm]`. It does not require an existing session and returns the same `202` response for unknown email addresses to prevent account enumeration. `/api/auth/password/reset[/confirm]` remains available for the authenticated change-password flow.
+
+#### `POST /api/auth/password/forgot`
+
+| Item | Details |
+| --- | --- |
+| Request fields | `email` |
+| Success | `202 {"message":"if the account exists a reset email will be sent"}` |
+| Authentication | Public; no session required. |
+| Failures | `email_in_query`, `invalid_request`, `email_required`, `password_reset_failed`, `read_only_account`. |
+
+#### `POST /api/auth/password/forgot/confirm`
+
+| Item | Details |
+| --- | --- |
+| Request fields | `token`, `password` |
+| Success | `message`, `token`, `expiresAt`, `user` |
+| Authentication | Public; uses the email reset token. |
+| Preconditions | Password length at least 8; reset token must be valid; demo/read-only users are rejected. |
+| Failures | `credentials_in_query`, `invalid_request`, `password_too_short`, `invalid_token`, `password_reset_failed`, `read_only_account`, `session_creation_failed`. |
 
 #### `POST /api/auth/password/reset`
 

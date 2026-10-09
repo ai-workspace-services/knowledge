@@ -4,7 +4,30 @@
 
 本页用于记录公开控制台在 `www.svc.plus` 与 `console.svc.plus` 下发布版本的说明与变更摘要。
 
-## 当前版本
+## 已验证发布 — 2026-10-09
+
+### v2026.10.09-r2 — 用户自助恢复密码
+
+- Portal PR [#412](https://github.com/ai-workspace-services/portal/pull/412) 已合并。
+- 移除硬编码的 Google Analytics measurement ID。未配置 Analytics 时，控制台不再加载 Google Analytics 或 Google Tag Manager 第三方资源。
+- immutable Portal release：[v2026.10.09-r2](https://github.com/ai-workspace-services/portal/releases/tag/v2026.10.09-r2)。
+
+### v2026.10.09-r3 — 发布元数据对齐
+
+- GitOps PR [#416](https://github.com/ai-workspace-infra/gitops/pull/416) 将 `prod-console` 固定到 console image digest `sha256:e56de11c99898f315da099caef22718a54e4bf6c25b982f51b78919da05444df`。
+- GitOps PR [#417](https://github.com/ai-workspace-infra/gitops/pull/417) 让运行时 `FRONTEND_IMAGE` 继承同一份 immutable `CONSOLE_IMAGE`，确保 `/api/ping` 准确报告实际镜像。
+- immutable GitOps release：[v2026.10.09-r3](https://github.com/ai-workspace-infra/gitops/releases/tag/v2026.10.09-r3)。
+- `web-saas-prod` 通过 Doco-CD `prod-console` 手动收敛；`prod-services` 继续固定在 `v2026.10.08-r4`。
+
+### 验证结果
+
+- `https://console.svc.plus/account-recovery` 返回 HTTP 200。
+- 已手动验证发码、真实邮箱收信、有效验证码和密码重置闭环。
+- `/api/ping` 已报告 `e56de11c...` immutable 镜像 digest。
+- PostgreSQL、Accounts、Billing、stunnel、Caddy 和 Doco-CD 控制器均未变更。
+- 本次没有 DB/schema 变更，因此未触发 PostgreSQL 全量备份门禁。
+
+## 历史版本
 
 ### v0.2
 
