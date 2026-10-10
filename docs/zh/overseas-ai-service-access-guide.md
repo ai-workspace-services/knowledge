@@ -1,6 +1,6 @@
 ---
 title: 海外 AI 服务注册与订阅实践攻略
-description: 使用长期可控的海外手机号、Gmail、Apple ID、Google 账号和 Visa，完成 ChatGPT、Claude、Grok 的合规注册与订阅准备。
+description: 使用长期可控的海外手机号、Gmail、Apple ID、Google 账号和 Visa，完成 ChatGPT、Claude、Grok、Gemini 与 Antigravity 的合规注册、登录与订阅准备。
 slug: overseas-ai-service-access-guide
 lang: zh
 date: 2026-10-10T00:00:00Z
@@ -11,6 +11,8 @@ tags:
   - ChatGPT
   - Claude
   - Grok
+  - Gemini
+  - Antigravity
   - Maya
   - Apple Pay
   - Google Play
@@ -19,7 +21,7 @@ category: guide
 
 # 海外 AI 服务注册与订阅实践攻略
 
-本文整理一条可长期维护的注册和订阅路径，目标是让 Gmail、ChatGPT、Claude、Grok、Apple App Store 和 Google Play 之间的账号关系清楚、可恢复、可管理。
+本文整理一条可长期维护的注册、登录和订阅路径，目标是让 Gmail、ChatGPT、Claude、Grok、Gemini、Antigravity、Apple App Store 和 Google Play 之间的账号关系清楚、可恢复、可管理。
 
 本文的前提是使用真实资料，并由本人长期控制手机号、恢复邮箱、Apple ID、Google 账号和支付卡。地区、手机号和支付方式必须符合对应平台当时的规则。X 上的个人经验只作为线索，最终以服务商、App Store 和 Google Play 的当前页面为准。
 
@@ -139,7 +141,9 @@ XConnect APP
     ↓
 海外手机号 + Gmail + 恢复邮箱
     ↓
-ChatGPT / Claude / Grok 注册
+ChatGPT / Claude / Grok / Gemini 注册或登录
+    ↓
+Antigravity 桌面端 / CLI / IDE 登录
     ↓
 Apple ID 或 Google 账号
     ↓
@@ -150,7 +154,7 @@ Visa / Maya / App Store / Google Play
 
 推荐按以下顺序准备：
 
-1. 先确认 XConnect APP 能稳定访问 Google、ChatGPT、Claude 和 X。
+1. 先确认 XConnect APP 能稳定访问 Google、Gmail、Gemini、ChatGPT、Claude、Grok 和 X。
 2. 再准备长期可控的海外手机号和恢复邮箱。
 3. 先注册 Gmail，再注册 ChatGPT、Claude 和 Grok。
 4. 最后配置 Apple ID、Google Play 和支付方式。
@@ -164,8 +168,8 @@ Visa / Maya / App Store / Google Play
 
 XConnect APP 是访问海外服务的网络入口。开始注册前，至少确认：
 
-- Google 搜索、Gmail 和 Google Account 页面可以正常打开；
-- ChatGPT、Claude 和 X 登录页面可以正常打开；
+- Google 搜索、Gmail、Google Account 和 Gemini 页面可以正常打开；
+- ChatGPT、Claude、Grok、Antigravity 登录页面或客户端可以正常使用；
 - 页面加载不会频繁出现地区、网络或安全验证错误；
 - 手机和电脑使用的出口区域保持稳定，不要在注册过程中频繁切换；
 - 能够正常接收邮件和短信。
@@ -313,9 +317,61 @@ Grok 通常通过 X 账号进入，准备重点是 X 账号和 X 的验证能力
 
 Grok 的可用功能、订阅层级和地区限制可能随 X 的产品策略变化，登录后应以账号内实际显示为准。
 
-## 九、Apple ID 和 App Store 订阅
+## 九、注册 Gemini 与使用 Antigravity
 
-### 8.1 Apple ID 准备
+### 9.1 使用 Gemini
+
+Gemini Apps 使用 Google 账号登录，不需要另建一套独立的 Gemini 账号。Google 官方说明，部分功能可以不登录使用；要保存活动记录、使用更多功能或管理付费计划，需要登录个人 Google 账号，工作或学校账号则取决于管理员和 Workspace 版本。[Google：使用 Gemini Apps](https://support.google.com/gemini/answer/13275745)
+
+建议按下面的顺序操作：
+
+1. 使用本人长期控制的 Gmail/Google 账号打开 [Gemini](https://gemini.google.com/)；
+2. 确认页面能正常加载，并检查当前账号实际显示的功能和地区可用性；
+3. 在账号设置中确认恢复邮箱、长期手机号和双因素认证仍然可用；
+4. 先用免费功能测试对话、文件和图片等实际需要的能力；
+5. 如果页面提供 Google AI 计划，再查看计划名称、适用地区、账单周期和付款账号；
+6. 订阅后在 Google 账号或 Google Play 的“付款和订阅”中核对订单与续费日期。
+
+Gemini 网页版、移动应用和 Google AI 付费计划的支持国家/地区与功能可能不同。Google 的官方列表当前包含菲律宾，但“能打开 Gemini”不等于每个模型、移动端功能或付费计划都可用，应以登录后页面实际显示为准。[Google：Gemini Apps 计划与升级](https://support.google.com/gemini/answer/16275805)
+
+不要为了显示某个国家/地区而伪造地址、付款资料或账号信息。Google Play 国家/地区变更有实际所在地、付款方式和变更频率要求，相关规则应单独核对，不能把节点位置当成资格证明。
+
+### 9.2 注册并使用 Antigravity
+
+Antigravity 是 Google 的 agent-first 开发平台，包含桌面应用、IDE/编辑器集成、CLI 和 SDK。它不是与 Gmail 并列的独立邮箱账号体系；官方入门文档显示，启动后可以使用个人 Google Account 登录，也可以选择连接 Gemini Enterprise 的 Business account。[Google Antigravity：入门](https://antigravity.google/docs/getting-started)
+
+#### Desktop/IDE 使用流程
+
+1. 打开 [Antigravity 官方下载页](https://antigravity.google/download)，按 macOS、Windows 或 Linux 下载对应版本；
+2. 安装后启动 Antigravity，使用本人 Google Account 登录；企业用户按组织要求选择 Gemini Enterprise；
+3. 登录后创建 Project，使用“添加文件夹”关联本地工作区或 Git 仓库；
+4. 首次运行任务前，检查项目范围、读写权限、终端命令和浏览器访问权限；
+5. 让 Agent 先生成计划或 Artifact，再确认是否执行写文件、测试、提交等动作；
+6. 检查变更、测试结果和 Artifact 后，再决定是否保留或提交代码。
+
+Antigravity 的 Agent 可能访问项目文件、执行终端命令或使用浏览器。不要把密码、恢复码、API Token、私钥、`.env` 文件或支付资料放入可访问的工作区；对外部仓库先使用最小权限，并在执行前确认差异和命令。官方文档将项目作为 Agent 的文件和仓库访问边界，创建项目时应明确添加的目录范围。[Google Antigravity：创建项目](https://antigravity.google/docs/getting-started)
+
+#### CLI/编辑器扩展
+
+需要在终端或现有编辑器中使用时，以官方下载页列出的 CLI 和 VS Code、JetBrains、Visual Studio、Zed、Xcode 集成为准。安装扩展或 CLI 后仍需使用本人 Google Account/组织账号登录；不要使用来源不明的安装脚本、破解版本或共享账号。
+
+#### Antigravity 计划和费用
+
+Antigravity 的个人、Google AI Pro/Ultra 和组织方案可能有不同的模型、速率、额度与账单归属。官方价格页当前列出个人免费方案、Google AI 计划和 Google Cloud/组织方案，但实际可购买方案会按账号、地区和组织资格显示。[Google Antigravity：价格](https://antigravity.google/pricing)
+
+付款前确认：
+
+- 使用的是正确的 Google 账号；
+- 计划是 Antigravity 使用额度还是 Gemini/Google AI 计划；
+- 购买入口是 Google One、Google Play、Google Cloud 还是组织管理员；
+- 是否存在自动续费、额度上限和取消入口；
+- 订单收据归属于哪个账号。
+
+Gemini 的聊天使用、Antigravity 的 Agent 额度、Google Cloud API 用量和第三方模型订阅可能属于不同计费路径，不要仅凭产品名称判断它们共享额度。
+
+## 十、Apple ID 和 App Store 订阅
+
+### 10.1 Apple ID 准备
 
 1. 使用真实资料创建或使用本人已有的 Apple ID。
 2. 选择与实际使用地区一致的国家或地区。
@@ -326,7 +382,7 @@ Grok 的可用功能、订阅层级和地区限制可能随 X 的产品策略变
 
 “海外 ID + 任意 Visa”不是绝对保证。Visa 发卡行、账单地址、Apple 账号地区、卡片风控和 3-D Secure 都可能影响付款。Apple 官方列出的菲律宾 Apple Account 支付方式包括 GCash、Smart 手机账单、银行卡和 ShopeePay；页面没有把 Apple Pay 列为菲律宾 Apple Account 的通用付款方式。[Apple：菲律宾 Apple Account 支付方式](https://support.apple.com/en-ph/111741)
 
-### 8.2 Maya 与 Apple Pay
+### 10.2 Maya 与 Apple Pay
 
 X 上有帖子声称某些卡可以绑定 Apple Pay，并用于 ChatGPT、Claude 等订阅：
 
@@ -337,9 +393,9 @@ X 上有帖子声称某些卡可以绑定 Apple Pay，并用于 ChatGPT、Claude
 
 因此，Apple 订阅应先以 Apple Account 付款页面实际显示的方式为准。不要为了绑定 Apple Pay 修改虚假的地区、地址或账单资料。
 
-## 十、Google 账号和 Google Play 订阅
+## 十一、Google 账号和 Google Play 订阅
 
-### 9.1 Google Play 准备
+### 11.1 Google Play 准备
 
 1. 使用本人 Gmail 登录 Google Play。
 2. 确认 Google Play 国家/地区和实际所在地、支付资料一致。
@@ -352,7 +408,7 @@ Google Play 菲律宾区官方支持 PayMaya 购买应用和数字内容，要�
 
 Google 规定，设置新的 Play 国家/地区时，用户应位于该地区并拥有该地区的付款方式；国家/地区变更通常至少 90 天后才能再次变更，新的支付资料也可能需要等待生效。[Google Play：更改国家或地区](https://support.google.com/googleplay/answer/7431675)
 
-### 9.2 Maya 作为 Google Play 付款方式
+### 11.2 Maya 作为 Google Play 付款方式
 
 如果使用菲律宾 Play 区和 Maya：
 
@@ -366,9 +422,9 @@ Google 规定，设置新的 Play 国家/地区时，用户应位于该地区并
 
 Google Play 不支持虚拟信用卡作为通用付款方式。Maya 账户、手机号、Google 账号和支付资料应由同一使用者长期控制。
 
-## 十一、Maya 与菲律宾手机号
+## 十二、Maya 与菲律宾手机号
 
-### 10.1 准备 DITO eSIM
+### 12.1 准备 DITO eSIM
 
 如果选择菲律宾 DITO eSIM，购买前确认：
 
@@ -381,7 +437,7 @@ Google Play 不支持虚拟信用卡作为通用付款方式。Maya 账户、手
 
 激活后建议立即完成一次完整测试：接收普通短信、接收 Google 验证码、接收 Gmail 安全通知，并记录号码有效期和下一次充值日期。
 
-### 10.2 Maya 开户与维护
+### 12.2 Maya 开户与维护
 
 建议顺序如下：
 
@@ -396,7 +452,7 @@ Google Play 不支持虚拟信用卡作为通用付款方式。Maya 账户、手
 
 不要使用他人的 Maya 账户、银行卡、身份证明或短信验证码。支付争议、账号恢复和身份复核最终都会回到开户人本人。
 
-## 十二、常见问题排查
+## 十三、常见问题排查
 
 ### 收不到验证码
 
@@ -439,11 +495,11 @@ Google Play 不支持虚拟信用卡作为通用付款方式。Maya 账户、手
 
 ChatGPT、Claude 等服务可能分别在网页、Apple App Store 和 Google Play 上产生独立订阅。先查看扣款收据，确认实际付款平台，再到对应平台取消。仅卸载应用或删除服务账号，不一定会停止商店订阅。
 
-## 十三、建议的验收清单
+## 十四、建议的验收清单
 
 ### 网络和手机号
 
-- [ ] XConnect APP 能稳定访问 Google、X、ChatGPT 和 Claude
+- [ ] XConnect APP 能稳定访问 Google、Gmail、Gemini、X、ChatGPT、Claude 和 Grok
 - [ ] 海外手机号可以接收普通短信
 - [ ] 海外手机号可以 Pay as you go 充值
 - [ ] 已记录运营商账号、余额和有效期
@@ -458,6 +514,9 @@ ChatGPT、Claude 等服务可能分别在网页、Apple App Store 和 Google Pla
 - [ ] ChatGPT 可以登录
 - [ ] Claude 可以登录
 - [ ] Grok 可以通过 X 账号进入
+- [ ] Gemini 可以使用本人 Google 账号登录
+- [ ] Antigravity 可以使用本人 Google 账号或组织账号登录
+- [ ] Antigravity 项目范围和 Agent 权限已检查
 - [ ] 各账号没有使用共享密码
 
 ### 订阅和支付
@@ -471,7 +530,7 @@ ChatGPT、Claude 等服务可能分别在网页、Apple App Store 和 Google Pla
 - [ ] 已记录下一次续费日期
 - [ ] 已知道 Apple 和 Google Play 的取消入口
 
-## 十四、X 资料与官方资料
+## 十五、X 资料与官方资料
 
 ### X 上的经验线索
 
@@ -488,12 +547,17 @@ X 资料的共同问题是：很多帖子包含推广链接、邀请码或返现
 - [OpenAI：取消 ChatGPT 订阅](https://help.openai.com/en/articles/7232927-canceling-your-chatgpt-subscription)
 - [Anthropic：注册 Claude Pro](https://support.anthropic.com/en/articles/8325609-how-do-i-sign-up-for-claude-pro)
 - [Anthropic：取消 Claude 订阅](https://support.anthropic.com/en/articles/8325617-how-do-i-cancel-my-paid-claude-subscription)
+- [Google：使用 Gemini Apps](https://support.google.com/gemini/answer/13275745)
+- [Google：Gemini Apps 计划与升级](https://support.google.com/gemini/answer/16275805)
+- [Google Antigravity：入门](https://antigravity.google/docs/getting-started)
+- [Google Antigravity：下载](https://antigravity.google/download)
+- [Google Antigravity：价格](https://antigravity.google/pricing)
 - [Google Play：菲律宾支付方式](https://support.google.com/googleplay/answer/2651410/google-play-%E6%8E%A5%E5%8F%97%E7%9A%84%E4%BB%98%E6%AC%BE%E6%96%B9%E5%BC%8F-%E7%BE%8E%E5%9B%BD?co=GENIE.CountryCode%3DPH)
 - [Google Play：更改国家或地区](https://support.google.com/googleplay/answer/7431675)
 - [Apple：菲律宾 Apple Account 支付方式](https://support.apple.com/en-ph/111741)
 - [Apple：菲律宾 Apple Pay 参与银行和发卡机构](https://support.apple.com/en-us/102897)
 - [Maya：Apple Pay 商户支付文档](https://developers.maya.ph/docs/apple-pay)
 
-## 结论
+## 十六、结论
 
-最稳定的链路是：XConnect APP → 本人长期控制的海外实体卡或短信 eSIM → Gmail 和恢复邮箱 → ChatGPT/Claude/Grok → 本人 Apple ID 或 Google 账号 → 本人 Visa；如果使用菲律宾 Google Play 区，Maya/PayMaya 有官方支持依据。虚拟短信平台只能作为最后备用方案，不能作为重要账号的长期恢复基础。
+最稳定的链路是：XConnect APP → 本人长期控制的海外实体卡或短信 eSIM → Gmail 和恢复邮箱 → ChatGPT/Claude/Grok/Gemini → Antigravity 桌面端或开发工具 → 本人 Apple ID 或 Google 账号 → 本人 Visa；如果使用菲律宾 Google Play 区，Maya/PayMaya 有官方支持依据。虚拟短信平台只能作为最后备用方案，不能作为重要账号的长期恢复基础。
