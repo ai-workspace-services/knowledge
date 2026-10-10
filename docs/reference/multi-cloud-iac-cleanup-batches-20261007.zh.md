@@ -4,7 +4,7 @@ description: 分批记录 Toolkit、IaC Modules 与 Playbooks 的清理、固定
 slug: multi-cloud-iac-cleanup-batches-20261007
 lang: zh
 date: 2026-10-07
-version: "0.1"
+version: "0.2"
 status: implementation-partial
 author: shenlan
 tags: [multi-cloud, iac, pipeline, gitops, execution-ownership]
@@ -28,14 +28,14 @@ category: reference
 | 批次 | 清理、移动、合并 | 发布状态 | 尚未满足的运行条件 |
 | --- | --- | --- | --- |
 | 1 无调用代码与静态触发 | 删除无 caller 的 `terraform-command`、`setup-iac-env`、旧 self-check、SSH helper；PR/push 静态校验集中到矩阵入口 | Toolkit [#1374](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1374) 已合并 main | AWS 恢复/收养脚本与兼容 wrappers 仍有独立职责，不按文件数机械删除 |
-| 2 GCP 云操作 | auth/WIF/state adapter、OS Login、实例事实、临时防火墙与撤销归 IaC；Toolkit 保留环境与 Vault identity policy | IaC [#415](https://github.com/ai-workspace-infra/iac_modules/pull/415) 已合并 main；caller 在 Toolkit Draft PR | GCP runtime access 与 cleanup 尚未真实验证；旧副本冻结 |
+| 2 GCP 云操作 | auth/WIF/state adapter、OS Login、实例事实、临时防火墙与撤销归 IaC；Toolkit 保留环境与 Vault identity policy | IaC [#415](https://github.com/ai-workspace-infra/iac_modules/pull/415) 已合并 main；caller 随 Toolkit #1375 合并 | GCP runtime access 与 cleanup 尚未真实验证；旧副本冻结 |
 | 3 主机与 Vault | deployment runner、existing-node inventory、Vault stage/SSH/Raft、自动迁移 observation、精确 controller dependency setup 归 Playbooks | Playbooks [#620](https://github.com/ai-workspace-infra/playbooks/pull/620)、[#621](https://github.com/ai-workspace-infra/playbooks/pull/621) 已合并 main | 未执行 live SSH/Vault/Raft；Toolkit 只消费推荐阶段并展开允许的 stage plan |
 | 4 云配置与事实读取 | GCP/AWS 声明读取与校验、Cloud Run revision/traffic/digest、OCI index child 查询归 IaC；Toolkit 保留 digest/traffic 最终 gate | IaC [#416](https://github.com/ai-workspace-infra/iac_modules/pull/416) 已合并 main | 无 Docker 的只读 OCI HTTP 已通过 mock；真实 Registry/Cloud Run 未验收 |
-| 5 delivery workflow 归属 | Cloudflare domains、Akamai state preflight 的 delivery job 迁回 Toolkit，调用固定 IaC actions | Toolkit [#1375](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1375) 保持 Draft | 新 Vault workflow claim 仅改源码，未应用 live；旧 IaC workflow 保持 LEGACY 回退 |
-| 6 XConnect 云与 Accounts | lab Terraform/state/lease/cleanup 归 IaC；Accounts network bootstrap 与一次邀请归 Playbooks；Vault handoff 留 Toolkit | owner 分别在 IaC #416、Playbooks #621；caller 在 Toolkit Draft PR | 不触发真实 apply/destroy/Accounts 写入；未知资源或缺 ownership tag 阻断 cleanup |
-| 7 non-IaC / TLS | 私密 runtime inventory 与节点 key 适配归 Playbooks；TLS material vars 与恢复复用 `caddy_certificate_restore` Role | Playbooks [#622](https://github.com/ai-workspace-infra/playbooks/pull/622) 已合并 main；caller 在 Toolkit Draft PR | 保留旧 renderer、TLS prepare 与 restore shell；尚未真实验证证书恢复 |
+| 5 delivery workflow 归属 | Cloudflare domains、Akamai state preflight 的 delivery job 迁回 Toolkit，调用固定 IaC actions | Toolkit [#1375](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1375) 已按用户要求合并 main | 新 Vault workflow claim 仅改源码，未应用 live；旧 IaC workflow 保持 LEGACY 回退 |
+| 6 XConnect 云与 Accounts | lab Terraform/state/lease/cleanup 归 IaC；Accounts network bootstrap 与一次邀请归 Playbooks；Vault handoff 留 Toolkit | owner 分别在 IaC #416、Playbooks #621；caller 随 Toolkit #1375 合并 | 不触发真实 apply/destroy/Accounts 写入；未知资源或缺 ownership tag 阻断 cleanup |
+| 7 non-IaC / TLS | 私密 runtime inventory 与节点 key 适配归 Playbooks；TLS material vars 与恢复复用 `caddy_certificate_restore` Role | Playbooks [#622](https://github.com/ai-workspace-infra/playbooks/pull/622) 已合并 main；caller 随 Toolkit #1375 合并 | 保留旧 renderer、TLS prepare 与 restore shell；尚未真实验证证书恢复 |
 | 8 XConnect 主机与数据面 | exact target + 预审 known_hosts 的 Role runner；One/Gateway、TLS、精确 peer handshake、私网 HTTP 证据 | Playbooks #622 为 additive owner；默认 host caller 未切换 | cloud lab 缺可信 host-key 声明与 private probe endpoint/marker；H6 existing-One/额外节点混合 caller 尚未拆完 |
-| 9 扫描治理 | 覆盖 `scripts/node_deploy` Python/Shell/import/source 执行链；Accounts 服务写不再作为 control-plane 豁免 | Toolkit Draft PR 已整合 | 21 项冻结候选是待迁移/待 UAT 债务，不表示新增了 21 个允许执行入口 |
+| 9 扫描治理 | 覆盖 `scripts/node_deploy` Python/Shell/import/source 执行链；Accounts 服务写不再作为 control-plane 豁免 | Toolkit #1375 已合并 | 21 项冻结候选是待迁移/待 UAT 债务，不表示新增了 21 个允许执行入口 |
 
 ## 3. 本轮修复的失败路径
 
@@ -67,4 +67,31 @@ Toolkit caller 固定 IaC `9570b01959396e1d0e20331205b5cb5718f5c588`、Playbooks
 | XConnect 可信 target handoff | IaC/CMDB 或审核声明提供的 host keys、目标、private probe URL/marker；缺项 fail closed |
 | caller PR 放行与 legacy 退休 | owner → caller → verification → deletion；逐个删除有替代和证据的副本 |
 
-执行归属规则来源：[execution-ownership-migration](https://github.com/ai-workspace-lab/xworkspace-core-skills/blob/main/skills/engineering-standards/execution-ownership-migration/SKILL.md)。其中明确要求：`missing UAT evidence ... stop merge and release`。因此 Toolkit caller PR 保持 Draft，不能用绿色静态 CI 代替运行放行。
+执行归属规则来源：[execution-ownership-migration](https://github.com/ai-workspace-lab/xworkspace-core-skills/blob/main/skills/engineering-standards/execution-ownership-migration/SKILL.md)。其中要求缺少 UAT 证据阻断 merge/release。用户随后明确要求提交并合并，Toolkit #1375 已合并为 `6a6043da2e61934ce534d08054a35962c6b2c2ca`；这仅更新源码发布状态，不代表 runtime 放行或旧副本可删除。
+
+## 5. 后续 48 文件批次
+
+再次使用 GPT 5.6 Sol/high subagents，按 IaC owner、Playbooks owner、Toolkit 控制面测试三组实施。完整逐文件映射见 [Toolkit owner 交接记录](https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/83cb1bae956cc0120e269db4bd9e45d2f073791f/docs/howto/owner-followup-20261007.zh.md)。
+
+| 顺序 | 实现与证据 | 当前边界 |
+| --- | --- | --- |
+| owner 实现 | IaC [#417](https://github.com/ai-workspace-infra/iac_modules/pull/417) 已合并，固定 `d7e49189a5de9c105a940f1c79abfb3b2b33bbd4`；Terraform 原始失败退出码、0600 脱敏日志、state-read 失败禁止 destroy、固定 ref lease 契约及远端 CI 通过 | 没有真实 Provider/state 变更 |
+| owner 实现 | Playbooks [#623](https://github.com/ai-workspace-infra/playbooks/pull/623) 已合并，固定 `9d585e147348800b1603c4f7b0d8a6bcf0546007`；XHTTP Gateway/One verifier、同 run marker 私网 probe、失败关闭 cleanup、owner tests 与远端 CI 通过 | 没有 SSH/Accounts/service 变更 |
+| Toolkit caller | [#1376](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1376) 远端 CI 全通过并合并 main `310ec72e39932982912f65f1cf8ab56951554045`；两个发布后的固定 owner；runtime-control 和 Gateway reconcile 调用 Role action，service probes/observation 复用现有 owner；12 个测试及 fixture 迁 `scripts/tests/control_plane`，PR/push 静态 CI 覆盖 | 非变更 rehearsal 的精确 run 证据另记 |
+| 验证与删除 | 60 个 environment/data/import 测试、迁后 shell contracts、owner route 负例、scanner、refs/gating、Ansible syntax 通过 | 所有旧执行副本仍冻结；只有纯控制面测试迁目录 |
+
+SSH host keys 按部署云资源相同的 KV 环境/目标来源选择：UAT runtime-control 从 `kv/data/CICD/uat` 成对读取 `SSH_PRIVATE_DEPLOY_KEY_B64` / `SSH_KNOWN_HOSTS_B64`；现有外部 Gateway 从自己的精确 record 同时读取 host、user、`ssh_private_key_b64` / `known_hosts_b64`。两个 known_hosts 字段仍待 live seed/匹配证据，不能以源码声明证明已存在。缺 key、target 不匹配或 key 无效时在连接前阻断，不使用 `accept-new` 或 keyscan 首次信任。
+
+Vault role 源码新增 runtime-control 的精确 main claim，并绑定 UAT environment；live apply 未证明。正式 cloud-lab 主机安装、existing-One 和额外节点混合路径仍待拆完。apply/destroy、SSH/XHTTP/WireGuard/私网 HTTP 及业务验收必须另有 exact-version receipt，之后才按文件退役旧副本。
+
+### 5.1 Main 只读 rehearsal
+
+[Run 37641969087 / attempt 1](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/37641969087) 已成功，参数为 `deployment_profile=cloud-lab`、`mode=dry-run`、`matrix_node_filter=none`。版本精确绑定：Toolkit main `310ec72e39932982912f65f1cf8ab56951554045`、IaC `d7e49189a5de9c105a940f1c79abfb3b2b33bbd4`、Playbooks `9d585e147348800b1603c4f7b0d8a6bcf0546007`、GitOps `28430b835c4275eea1921aa7fd98c96dbc2c50ef`。
+
+- 两个 preflight jobs、现有 cloud-lab Vault OIDC 登录、固定 repo checkout 和声明校验通过。
+- Playbooks control-plane probe 验证 Accounts/Portal 匿名响应边界；发布 artifact `owner-receipt-service-xconnect-control-plane`，ID `11492827205`，digest `sha256:afb692da5748c408e4f4e2a3d9501ca52ad81e88363c3cc3e894c71fdb526867`。
+- 下载后校验 receipt 的 owner SHA、run/attempt、UAT environment、operation/scope 和 accepted 状态；`receipt.json` SHA-256 为 `0135cfed3f73a5f67bafcfea0264f3fb8ef3cfe63113740c7a226fce810a6f2b`。artifact digest 与文件 checksum 是不同证据。
+- 已验证 release artifacts 和 owner Terraform preflight（fmt/init backend=false/validate）。
+- 基础设施凭证读取、DNS、AWS OIDC、prepare/apply、Accounts 邀请、主机安装、额外节点、Gateway reconcile 和 cleanup 均跳过。
+
+这份证据证明只读控制面与 owner preflight 路由可运行，不能证明新 runtime-control Vault claim 已生效、known_hosts 字段已 seed、SSH 主机信任或数据面验收，也不授权删除仍被完整部署链调用的旧执行文件。
