@@ -53,11 +53,11 @@
     {
       "slug": "xconnect",
       "name": { "zh": "XConnect", "en": "XConnect" },
-      "title": { "zh": "稳定、安全的 AI 连接能力", "en": "Reliable AI connectivity" },
-      "description": { "zh": "为 AI Workspace 提供安全连接、远程访问和实时协作基础。", "en": "Secure connectivity, remote access, and real-time collaboration for AI workspaces." },
+      "title": { "zh": "开源全球 AI 连接加速", "en": "Open-source global AI connectivity" },
+      "description": { "zh": "XConnect 是一款面向全球用户的开源 AI 连接加速工具，支持 iOS、Android、macOS、Windows 和 Linux，并提供实时诊断与修复建议。", "en": "XConnect is an open-source AI connectivity accelerator for users worldwide, supporting iOS, Android, macOS, Windows, and Linux with real-time diagnostics and repair guidance." },
       "cta": { "zh": "查看 XConnect", "en": "Explore XConnect" },
-      "problem": { "zh": "连接分散的本地、远程和私有工作环境。", "en": "Connect distributed local, remote, and private work environments." },
-      "how": { "zh": "从下载中心获取客户端，按连接文档配置端点与凭据；连接质量取决于网络及部署环境。", "en": "Get the client from the download center and configure endpoints and credentials using the connection documentation. Connectivity depends on the network and deployment environment." }
+      "problem": { "zh": "让跨设备 AI 连接更简单，让延迟、丢包与链路状态更清楚。", "en": "Simplify AI connectivity across devices and make latency, packet loss, and connection status easier to understand." },
+      "how": { "zh": "注册账号、下载客户端、登录后启动 AI 加速；按客户端提示完成连接与权限设置。连接质量取决于网络及部署环境。", "en": "Sign up, download the client, and sign in to start AI acceleration. Follow the client prompts for connection setup and permissions. Connectivity depends on the network and deployment environment." }
     },
     {
       "slug": "ai-workspace",
