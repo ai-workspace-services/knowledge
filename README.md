@@ -2,6 +2,11 @@
 
 云原生应用工坊的内容资产仓库，用于存放工程信号、技术长文、随笔与 Workshop 文档。
 
+## 性能优化
+
+- [性能优化归档](docs/performance-optimization/README.md)
+- [jp-xconnect 内存与日志优化分析报告（2026-10-10）](docs/performance-optimization/jp-xconnect-memory-log-optimization-20261010.zh.md)
+
 ## 多云平台工程技术白皮书
 
 - [中文版](docs/reference/multi-cloud-platform-engineering-whitepaper.zh.md)
