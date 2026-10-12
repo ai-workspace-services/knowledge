@@ -495,6 +495,122 @@ Google Play 不支持虚拟信用卡作为通用付款方式。Maya 账户、手
 
 ChatGPT、Claude 等服务可能分别在网页、Apple App Store 和 Google Play 上产生独立订阅。先查看扣款收据，确认实际付款平台，再到对应平台取消。仅卸载应用或删除服务账号，不一定会停止商店订阅。
 
+### 支持的平台
+
+| 平台 | 支持情况 | 说明 |
+|---|---|---|
+| Windows 10/11、macOS | 支持 | 浏览器访问，或使用 XConnect 桌面端 |
+| iOS / iPadOS | 支持 | |
+| Android（含国内品牌手机） | 支持 | 没有 Google 服务（GMS）的机型见下文 |
+| 华为/荣耀 HarmonyOS 2.x–4.x（兼容 Android 应用） | 有限支持 | 按“无 GMS 的 Android 手机”处理 |
+| HarmonyOS NEXT（不兼容 Android 应用的版本） | 不支持 | 请改用电脑、Android 或 iOS 设备 |
+
+### 网页打不开：标准排查步骤
+
+先判断问题出在哪一段，不要一上来就重装软件。
+
+#### Windows
+
+1. **重启光猫和路由器**：断电约 30 秒后再上电。
+2. **修改 DNS**：按 `Win+R` 输入 `ncpa.cpl`，右键“WLAN”或“以太网”→“属性”→“Internet 协议版本 4（TCP/IPv4）”，填入 `223.5.5.5` / `119.29.29.29`，或备选 `1.1.1.1` / `8.8.8.8`。一次只测一组。
+3. **以管理员身份打开命令提示符**，依次执行：
+
+   ```bat
+   ipconfig /flushdns
+   ipconfig /release
+   ipconfig /renew
+   nslookup 目标域名
+   curl -I https://目标域名
+   ```
+
+4. **清浏览器缓存**：按 `Ctrl+Shift+Delete`，时间范围选“所有时间”，勾选 Cookie 和缓存的文件；或在页面上按 `Ctrl+F5` 强制刷新。
+5. **检查代理**：设置 →“网络和 Internet”→“代理”，确认没有误开手动代理或自动配置脚本（PAC）；同时确认 VPN、代理客户端和安全软件的状态。
+6. **最简单的顺序**：改 DNS → 刷新 DNS → 重启浏览器 → 无痕窗口 → 换手机热点。
+
+#### macOS
+
+1. 重启路由器，方法同上。
+2. 修改 DNS：系统设置 →“网络”→ 当前网络 →“详细信息”→“DNS”；也可以在终端执行：
+
+   ```bash
+   networksetup -listallnetworkservices
+   sudo networksetup -setdnsservers Wi-Fi 223.5.5.5 119.29.29.29
+   # 恢复为自动获取：
+   sudo networksetup -setdnsservers Wi-Fi Empty
+   ```
+
+3. 刷新 DNS 缓存：
+
+   ```bash
+   sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder
+   ```
+
+4. 测试：`nslookup 目标域名`、`curl -I https://目标域名`。
+5. 系统设置 →“网络”→“代理”，关闭不需要的代理；用 Safari 或 Chrome 的无痕窗口再试。
+
+#### Linux / iOS / Android（简要）
+
+- **Linux**：`resolvectl flush-caches`（systemd-resolved）后，用 `dig 目标域名`、`curl -I https://目标域名` 测试；检查 `http_proxy` / `https_proxy` 环境变量。
+- **iOS / iPadOS**：开关一次飞行模式；在“设置 → 无线局域网 → 当前网络 → 配置 DNS”里改为手动；检查“设置 → VPN 与设备管理”。
+- **Android**：开关一次飞行模式；在“设置 → 网络 → 私人 DNS”里关闭，或填入可用的 DNS-over-TLS 服务；切换 Wi-Fi 和移动数据对比。
+
+#### 快速定位
+
+| 现象 | 大概率原因 |
+|---|---|
+| 公司网络打不开，手机热点能打开 | 公司出口、VPN 或防火墙策略 |
+| 所有网络都打不开 | 本机代理、DNS、浏览器或安全软件 |
+| 一个运营商的宽带正常，另一个改了 DNS 仍不行 | 运营商线路、IPv6、CDN 节点或解析问题 |
+| 页面能打开，登录后才报错 | 账号或组织策略问题，见“登录与账号问题” |
+| 只有某一个网站不通 | 该网站的访问策略或网站自身故障 |
+
+### 案例：公司电脑打不开 NotebookLM
+
+**现象**：Windows 公司电脑访问 `notebook.google.com`，页面提示“无法访问此页面”。
+
+这更像网络访问链路的问题，不是 NotebookLM 网页本身打不开。按优先级排查：
+
+1. 公司网络或出口策略拦截了 Google 服务（企业 VPN、防火墙、上网行为管理、代理）；
+2. 系统代理或 PAC 自动配置把请求转发到了不可用的代理；
+3. DNS 解析失败，或公司 DNS 过滤了 Google 域名；
+4. Google 账号或 Google Workspace 组织策略禁用了 NotebookLM。这种情况通常是页面能打开、登录后才报错；
+5. 浏览器环境：版本、扩展、缓存、企业浏览器策略或 TLS 检查。
+
+在 Windows 上依次执行 `nslookup notebook.google.com`、`ping notebook.google.com`、`curl -I https://notebook.google.com`，再换手机热点试一次。公司电脑应优先怀疑企业网络或安全策略，需要时联系公司 IT，而不是怀疑硬件故障。
+
+### 案例：联通宽带能打开，移动宽带打不开
+
+**现象**：同一个网站，联通宽带正常；移动宽带按上面的步骤改了 DNS 仍然打不开。
+
+可能是运营商线路或 IPv6、CDN 节点分配、运营商解析或路由故障，也可能是网站限制了该网络。改 DNS 不一定能解决这类问题。临时办法是改用联通网络或手机热点。
+
+### 登录与账号问题
+
+1. 记下准确的报错文字、截图、时间，以及访问的网址或 App 版本。
+2. 先区分是“页面打不开”（按上面的网页排查步骤）、“能打开但登录报错”，还是“收不到验证码”（见上文“收不到验证码”）。
+3. 看报错类型：提示账号或密码错误时，先用官方“忘记密码”流程；提示访问被拦截或需要人机验证时，换网络或无痕窗口重试；提示服务不可用时，多半是服务端问题，等一段时间再试，不要反复提交。
+4. 公司或学校账号登录后不可用，通常是组织管理员的策略限制，需要找管理员开通。
+
+### 案例：用海外银行卡订阅 ChatGPT 付款失败
+
+能否付款主要取决于账号和实际使用地区是否在官方支持范围内，而不只是看银行卡是哪国的。在不支持的地区使用服务或付款方式，可能导致服务受限。请对照 [OpenAI：ChatGPT 支持地区](https://help.openai.com/en/articles/7947663-chatgpt-supported-countries)，并按本文前面的手机号和付款准备步骤操作。
+
+### 没有 Google 服务（GMS）的国内品牌 Android 手机
+
+以下是通用建议，不同品牌和系统版本可能不同：
+
+- 优先从官网或可信的应用商店下载 APK 安装，不依赖 Google Play；
+- 需要 Google 账号的服务尽量改用网页版；
+- 需要 Google Play 订阅的服务，建议改在 iPhone、电脑或带 GMS 的 Android 设备上完成订阅和管理；
+- HarmonyOS NEXT 不在支持范围内，请改用电脑、Android 或 iOS 设备。
+
+### 案例：手机上 App 颜色发灰或偏色
+
+截图里的颜色正常，屏幕上看却偏色或发灰，通常是系统显示设置造成的，不是 App 的问题：
+
+- 检查“设置 → 无障碍 → 颜色校正 / 色彩反转”是否开着。这是无障碍功能，是否关闭由本人决定；
+- 检查“设置 → 显示 → 色彩模式”，比如“自然”和“自适应”的显示效果不同。
+
 ## 十四、建议的验收清单
 
 ### 网络和手机号
