@@ -105,7 +105,7 @@ Guance 当前公开材料对前两层支持明确，并已加入 Prompt Eval、S
 
 ### 4.2 Codex 接入是可直接实测的传播入口
 
-Agent 监测接入文档已列出 Codex、Claude Code、OpenClaw、Hermes、Qoder、WorkBuddy、OpenCode 等集成类型；Codex 等类型通过 `obs-agent-connector` 接入。[^8] 这让“给 Coding Agent 装行车记录仪”可以从观点文章升级为可复现实验。
+Agent 监测接入文档已列出 Codex、Claude Code、OpenClaw、Hermes、Qoder、WorkBuddy、OpenCode 等集成类型（截至 2026-10-12 的更新日志另新增 CodeBuddy、Cursor、Deepseek Harness、Kiro、Dcode、Grok Agent/Grok Build、OMP、MiMo、Pi Agent 等）；Codex 等类型通过 `obs-agent-connector` 接入。[^8] 这让“给 Coding Agent 装行车记录仪”可以从观点文章升级为可复现实验。
 
 发布时需要特别说明：安装器可接入不等于所有字段都在所有 Agent/版本上完全一致。每篇都应记录 Agent 版本、连接器版本、采集模式和字段缺失情况。
 
@@ -167,9 +167,28 @@ Agent 监测接入文档已列出 Codex、Claude Code、OpenClaw、Hermes、Qode
 
 这一“双层架构”是待验证的编辑假设，不是预设结论。第 04、05、15、24、59 篇应逐步用数据验证或修正它。
 
+### 5.4 现有栈事实与官方接入路径（2026-10-12 复核）
+
+- 现有 `ai-workspace-infra/observability`（服务角色固定在 `ai-workspace-infra/playbooks`）实际组件为：VictoriaMetrics 单机（内置 promscrape 抓取）、VictoriaLogs、VictoriaTraces（Jaeger 查询 API）、OpenTelemetry Collector（spanmetrics）、blackbox-exporter、Grafana（Unified Alerting）；主机侧由 Vector 抓取 node/process/blackbox（按需 postgres/xray）exporter，以 Prometheus Remote Write 推送指标、以 HTTP 推送日志。**没有部署 Loki，也没有独立 Prometheus**；VictoriaLogs 只是提供兼容 Loki 的写入路径。
+- 官方 DataKit 提供 `prom_remote_write` 采集器，可直接接收 Prometheus Remote Write，是 Vector 双写的最低改动路径（与 Vector sink 的编码兼容性仍需实测）。[^19]
+- DataKit `opentelemetry` 采集器支持 gRPC 与 HTTP；HTTP 路径只接受 `application/x-protobuf`，DataKit 1.85.0 起不再支持 `http/json`。[^20]
+- DataKit `logstreaming` 采集器可通过 HTTP 接收日志，并支持 `source/service/pipeline` 参数。[^21]
+- 自 2026-04-01 起可在观测云 UI 直接导入 Grafana 仪表板 JSON，官方提示部分高级特性可能无法显示或需要手动重配；Guance CLI 对 PromQL 只翻译 `label_values` 的非嵌套表达式。图表与查询工作台支持 PromQL。**这不是一键迁移**。[^22][^23]
+
 ## 6. 免费版与独立开发者进入路径
 
 截至 2026-09-09，定价页公开的免费版上限包括 10 台主机、1 万时间线/天、1,000 万日志/天、2 万 Trace/天、5,000 RUM PV/天、2,000 Session Replay Session/天、20 万次 API 拨测/天、10 个监控器和 7 天循环数据存储；页面同时说明免费版需要资格审核，且免费版数据不能迁移到商业版工作空间。[^11]
+
+2026-10-12 复核补充（[^16][^17][^18]）：
+
+- 口径不一致：`/free` 落地页写 Trace 1 万/天，`/billing` 与版本区分页写 2 万/天；版本区分页的时间线写作“10,000 条”（不带“/天”）。引用时注明页面与日期，或请观测云书面确认。
+- 注册：仅在“免费专区（北京）”站点；12 小时内审核；每个账号只能创建 1 个工作空间，最多 5 个成员；免费工作空间不支持解散，Owner 不能移交。
+- 功能限制：仪表板/笔记/自定义查看器各最多 10 个；监控器仅“阈值检测”；不支持 Profiling、异常追踪、定时报告、短信、SSO；不支持 OpenAPI/API Key、数据转发/备份、敏感数据脱敏与扫描、外部数据源、快照/图表/iframe 分享；Pipeline 仅本地 Pipeline。
+- 协议：**4.7 未经书面授权不得将免费版用于商业用途或向第三方提供服务**；观测云可修改、暂停或终止免费服务，可提前 15 天通知终止，不保证永久提供；超额可暂停或限制服务；不开票；无电话/优先工单；6.2.2 可在非商业目的下以聚合或匿名化方式使用业务数据。
+- 合作前置条件：XWorkTech 属于商业项目，使用免费版前需取得观测云书面授权，并在文章中披露。
+- 容量对照（作者环境，2026-10-12 只读观察，公开前需作者确认）：自建栈约 11 台主机、约 3.6 万条活跃时间序列、11 个 Grafana 仪表板，分别超过免费版 10 台主机、1 万时间线、10 个仪表板的上限。因此免费版只适合“瘦身”后的 UAT 单链路 POC（白名单过滤指标、丢弃线程级进程指标），生产全量切换需要商业版。
+
+逐条来源与结论见 [2026-10 事实核验记录](./03-fact-check-2026-10.md)。
 
 对内容的意义：
 
@@ -201,7 +220,7 @@ Agent 监测接入文档已列出 Codex、Claude Code、OpenClaw、Hermes、Qode
 | P0 | 自建 + 托管的混合路线 | 作者独有工程实践，避免普通软文 | #04–#06 |
 | P0 | RUM→APM→DB 证据链 | 容易用截图和故障故事解释平台价值 | #07–#08 |
 | P1 | MCP + Agent Teams RCA | 品牌差异化强，但必须做好权限与实测 | #11 |
-| P1 | 免费版独立开发者实测 | 转化路径短，时效和限制需严格复核 | #05、#17 |
+| P1 | 免费版独立开发者实测 | 转化路径短，时效和限制需严格复核；免费版商业用途需书面授权 | #01、#16 |
 | P1 | 全球拨测 | 可结合 XConnect/多云节点 | #09、#35 |
 | P2 | Copilot 自然语言分析 | 易演示，但需避免只做“AI 总结” | #49 |
 | P2 | 企业客户案例迁移 | 有品牌背书，需转译成小团队方法 | 2027 各季度 |
@@ -210,7 +229,7 @@ Agent 监测接入文档已列出 Codex、Claude Code、OpenClaw、Hermes、Qode
 
 ### 9.1 关键风险
 
-- **产品迭代快**：2026 年 8 月的更新日志仍在持续增加 Agent 类型、Eval 和 Copilot 场景，文章截图和术语可能很快过期。[^7]
+- **产品迭代快**：截至 2026-10-12，更新日志在 9 月仍持续增加 Agent 类型、AI 监控器、指标型 SLO、Status Page 和 Copilot 场景，文章截图和术语可能很快过期。[^7]
 - **厂商资料单边性**：产品优势和客户价值主要来自官方资料，效果必须用作者实测或客户授权补强。
 - **隐私风险**：Agent 输入输出、Session Replay、日志和 Trace 可能包含源代码、用户信息、密钥或业务参数。
 - **自动行动风险**：MCP 或 Agent Teams 接入生产系统后可能具备写能力，应默认只读并设置人工审批。
@@ -250,7 +269,7 @@ Guance 在这条故事线中的价值应通过三类证据逐步建立：
 4. 观测云文档，《[Agent 监测查看器](https://docs.guance.com/agent/explorer/)》，访问于 2026-09-09。
 5. 观测云文档，《[Obsy AI](https://docs.guance.com/ai/)》，访问于 2026-09-09。
 6. 观测云文档，《[Skill 与 MCP：如何选择](https://docs.guance.com/agent-teams/agent-capabilities/)》，访问于 2026-09-09。
-7. 观测云文档，《[更新日志](https://docs.guance.com/release-notes/)》，访问于 2026-09-09。
+7. 观测云文档，《[更新日志](https://docs.guance.com/release-notes/)》，访问于 2026-09-09，复核于 2026-10-12。
 8. 观测云文档，《[新建 Agent 监测应用](https://docs.guance.com/agent/agent-apps/)》，访问于 2026-09-09。
 9. 观测云文档，《[MCP 服务](https://docs.guance.com/agent-teams/mcp-services/)》，访问于 2026-09-09。
 10. 观测云，《[观测云与开源自建监控方案对比](https://www.guance.com/whitepaper/guanceVSopensource)》，访问于 2026-09-09。
@@ -259,6 +278,14 @@ Guance 在这条故事线中的价值应通过三类证据逐步建立：
 13. 观测云，《[基于 AI Agent Teams 能力的场景实践](https://www.guance.com/learn/articles/guance-ai-agent-teams-scene)》，访问于 2026-09-09。
 14. 观测云，《[与本地 Coding Agent 协作排障](https://www.guance.com/learn/articles/coding-agent)》，访问于 2026-09-09。
 15. 观测云，《[对接 OpenTelemetry 最佳实践](https://www.guance.com/learn/articles/OpenTelemetry)》，2024-08-12。
+16. 观测云文档，《[注册免费版](https://docs.guance.com/plans/free/)》，访问于 2026-10-12。
+17. 观测云文档，《[版本区分](https://docs.guance.com/plans/differences/)》，访问于 2026-10-12。
+18. 观测云文档，《[观测云免费版订阅协议](https://docs.guance.com/agreements/free-agreement/)》，修订 2026-07-29，生效 2026-08-29，访问于 2026-10-12。
+19. 观测云文档，《[Prometheus Remote Write 采集器](https://docs.guance.com/integrations/prom_remote_write/)》，访问于 2026-10-12。
+20. 观测云文档，《[OpenTelemetry 采集器](https://docs.guance.com/integrations/opentelemetry/)》，访问于 2026-10-12。
+21. 观测云文档，《[Log Streaming 采集器](https://docs.guance.com/integrations/logstreaming/)》，访问于 2026-10-12。
+22. 观测云文档，《[仪表板入门](https://docs.guance.com/getting-started/get-started-with-dashboards/)》与《[场景 FAQ](https://docs.guance.com/scene/faq/)》，访问于 2026-10-12。
+23. 观测云文档，《[PromQL 查询](https://docs.guance.com/scene/visual-chart/chart-promql-query/)》，访问于 2026-10-12。
 
 [^1]: 观测云，《[观测云：AI 时代的监控观测基础服务](https://www.guance.com/)》，访问于 2026-09-09。
 [^2]: 观测云，《[可观测性平台与全栈监控产品](https://www.guance.com/product-dashboard)》，访问于 2026-09-09。
@@ -266,9 +293,17 @@ Guance 在这条故事线中的价值应通过三类证据逐步建立：
 [^4]: 观测云文档，《[Agent 监测查看器](https://docs.guance.com/agent/explorer/)》，访问于 2026-09-09。
 [^5]: 观测云文档，《[Obsy AI](https://docs.guance.com/ai/)》，访问于 2026-09-09。
 [^6]: 观测云文档，《[Skill 与 MCP：如何选择](https://docs.guance.com/agent-teams/agent-capabilities/)》，访问于 2026-09-09。
-[^7]: 观测云文档，《[更新日志](https://docs.guance.com/release-notes/)》，访问于 2026-09-09。
+[^7]: 观测云文档，《[更新日志](https://docs.guance.com/release-notes/)》，访问于 2026-09-09，复核于 2026-10-12。
 [^8]: 观测云文档，《[新建 Agent 监测应用](https://docs.guance.com/agent/agent-apps/)》，访问于 2026-09-09。
 [^9]: 观测云文档，《[MCP 服务](https://docs.guance.com/agent-teams/mcp-services/)》，访问于 2026-09-09。
 [^10]: 观测云，《[观测云与开源自建监控方案对比](https://www.guance.com/whitepaper/guanceVSopensource)》，访问于 2026-09-09。
 [^11]: 观测云，《[价格：免费版、商业版与企业版](https://www.guance.com/billing?version=free)》，访问于 2026-09-09。
 [^12]: 观测云，《[客户案例](https://www.guance.com/customer)》，访问于 2026-09-09。
+[^16]: 观测云文档，《[注册免费版](https://docs.guance.com/plans/free/)》，访问于 2026-10-12。
+[^17]: 观测云文档，《[版本区分](https://docs.guance.com/plans/differences/)》，访问于 2026-10-12。
+[^18]: 观测云文档，《[观测云免费版订阅协议](https://docs.guance.com/agreements/free-agreement/)》，访问于 2026-10-12。
+[^19]: 观测云文档，《[Prometheus Remote Write 采集器](https://docs.guance.com/integrations/prom_remote_write/)》，访问于 2026-10-12。
+[^20]: 观测云文档，《[OpenTelemetry 采集器](https://docs.guance.com/integrations/opentelemetry/)》，访问于 2026-10-12。
+[^21]: 观测云文档，《[Log Streaming 采集器](https://docs.guance.com/integrations/logstreaming/)》，访问于 2026-10-12。
+[^22]: 观测云文档，《[仪表板入门](https://docs.guance.com/getting-started/get-started-with-dashboards/)》与《[场景 FAQ](https://docs.guance.com/scene/faq/)》，访问于 2026-10-12。
+[^23]: 观测云文档，《[PromQL 查询](https://docs.guance.com/scene/visual-chart/chart-promql-query/)》，访问于 2026-10-12。

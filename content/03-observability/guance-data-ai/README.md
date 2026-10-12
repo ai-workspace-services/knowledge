@@ -35,6 +35,7 @@ status: planning
 - [XWorkTech × Guance 接入路线图](./02-xworktech-guance-integration-roadmap.md)：结合 Cloudflare UAT、Cloud Run、Supabase、GitHub Actions 与 XWorkmate 的 UAT → PROD 分阶段实践。
 - [文章工作区](./articles/README.md)：后续逐篇稿件的命名、状态与交付清单。
 - [本季度前两篇文章大纲](./articles/README.md)：免费专区个人 SaaS 选型，以及自建 observability 到 Guance 的可回退迁移。
+- [2026-10 事实核验记录](./03-fact-check-2026-10.md)：免费版条款与额度、现有栈事实、接入路径与 #01/#02 编号统一的逐条核对。
 - [素材工作区](./assets/README.md)：截图、数据、架构图、授权与脱敏要求。
 
 ## 当前状态
