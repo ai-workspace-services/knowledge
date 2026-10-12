@@ -118,6 +118,13 @@ GitHub 组织入口：[ai-workspace-infra](https://github.com/ai-workspace-infra
 | 40 | CMDB Shared UAT 部署与采集验收记录 | zh | 2026-10-09 fixed owner commits | [Shared UAT 证据](cmdb-shared-uat-evidence-20261009.zh.md) |
 | 41 | 多云资源三档权限、IAM 与 Vault 安全集成及 Shared CMDB 技术规范白皮书 | zh | knowledge working tree · v1.2 · 云账号/OS/自建服务三层权限补充 · proposed-not-applied | [docs/reference/multi-cloud-iam-vault-cmdb-security-whitepaper.zh.md](multi-cloud-iam-vault-cmdb-security-whitepaper.zh.md) |
 
+## 七、AI Workspace、执行器与记忆
+
+| # | 标题 | 语言 | 来源版本 | 文件或入口 |
+| ---: | --- | --- | --- | --- |
+| 42 | AI Workspace、XWorkmate 多执行器与三级记忆技术白皮书规划（含独立 macOS / Home-Lab Workspace profiles） | zh | knowledge working tree · review-draft · proposed-not-applied | [docs/reference/ai-workspace-agent-memory-whitepaper-plan.zh.md](ai-workspace-agent-memory-whitepaper-plan.zh.md) |
+| 43 | AI Workspace 三套架构版本图与迁移验收索引 | zh | knowledge working tree · review-draft · A historical / B transition / C target-pending | [docs/reference/ai-workspace-agent-memory-variants.zh.md](ai-workspace-agent-memory-variants.zh.md) |
+
 ## 使用与维护约束
 
 - 本索引记录的是来源入口，不改变各仓库的架构结论、权限边界或部署授权。
