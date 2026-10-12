@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000">
+<defs>
+      <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#2563eb"/>
+      </marker>
+      <style>text { dominant-baseline: alphabetic; }</style>
+    </defs>
+<rect x="0" y="0" width="1600" height="1000" rx="0" fill="#ffffff" stroke="#ffffff" stroke-width="0"/><rect x="0" y="0" width="1600" height="112" rx="0" fill="#2563eb" stroke="#2563eb" stroke-width="0"/><text x="56" y="54" font-size="34" fill="#ffffff" font-weight="700" text-anchor="start" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">方案 A · L0–L5 路由时序</text><text x="56" y="88" font-size="18" fill="#dbeafe" font-weight="400" text-anchor="start" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">Bridge 直接选择执行器的历史多运行时流程</text><rect x="1270" y="30" width="270" height="52" rx="26" fill="#ffffff" stroke="#ffffff" stroke-width="0"/><text x="1405" y="63" font-size="20" fill="#2563eb" font-weight="700" text-anchor="middle" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">A / historical</text>
+<rect x="62" y="145" width="116" height="48" rx="24" fill="#f5f7fa" stroke="#d7dee8" stroke-width="1"/>
+<text x="120" y="177" font-size="13" fill="#152238" font-weight="700" text-anchor="middle" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">User</text>
+<line x1="120" y1="205" x2="120" y2="850" stroke="#d7dee8" stroke-width="2" stroke-dasharray="6 8"/>
+<rect x="282" y="145" width="116" height="48" rx="24" fill="#f5f7fa" stroke="#d7dee8" stroke-width="1"/>
+<text x="340" y="177" font-size="13" fill="#152238" font-weight="700" text-anchor="middle" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">App</text>
+<line x1="340" y1="205" x2="340" y2="850" stroke="#d7dee8" stroke-width="2" stroke-dasharray="6 8"/>
+<rect x="502" y="145" width="116" height="48" rx="24" fill="#f5f7fa" stroke="#d7dee8" stroke-width="1"/>
+<text x="560" y="177" font-size="13" fill="#152238" font-weight="700" text-anchor="middle" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">Bridge</text>
+<line x1="560" y1="205" x2="560" y2="850" stroke="#d7dee8" stroke-width="2" stroke-dasharray="6 8"/>
+<rect x="722" y="145" width="116" height="48" rx="24" fill="#f5f7fa" stroke="#d7dee8" stroke-width="1"/>
+<text x="780" y="177" font-size="13" fill="#152238" font-weight="700" text-anchor="middle" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">Catalog</text>
+<line x1="780" y1="205" x2="780" y2="850" stroke="#d7dee8" stroke-width="2" stroke-dasharray="6 8"/>
+<rect x="942" y="145" width="116" height="48" rx="24" fill="#f5f7fa" stroke="#d7dee8" stroke-width="1"/>
+<text x="1000" y="177" font-size="13" fill="#152238" font-weight="700" text-anchor="middle" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">Memory</text>
+<line x1="1000" y1="205" x2="1000" y2="850" stroke="#d7dee8" stroke-width="2" stroke-dasharray="6 8"/>
+<rect x="1182" y="145" width="116" height="48" rx="24" fill="#f5f7fa" stroke="#d7dee8" stroke-width="1"/>
+<text x="1240" y="177" font-size="13" fill="#152238" font-weight="700" text-anchor="middle" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">Executor</text>
+<line x1="1240" y1="205" x2="1240" y2="850" stroke="#d7dee8" stroke-width="2" stroke-dasharray="6 8"/>
+<line x1="120" y1="170" x2="340" y2="170" stroke="#2563eb" stroke-width="3" marker-end="url(#arrow)"/><text x="230" y="160" font-size="17" fill="#2563eb" font-weight="600" text-anchor="middle" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">1. task.requested</text>
+<line x1="340" y1="209" x2="560" y2="209" stroke="#2563eb" stroke-width="3" marker-end="url(#arrow)"/><text x="450" y="199" font-size="17" fill="#2563eb" font-weight="600" text-anchor="middle" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">2. policy + mode</text>
+<line x1="560" y1="248" x2="780" y2="248" stroke="#2563eb" stroke-width="3" marker-end="url(#arrow)"/><text x="670" y="238" font-size="17" fill="#2563eb" font-weight="600" text-anchor="middle" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">3. freshness / evidence</text>
+<line x1="560" y1="287" x2="1000" y2="287" stroke="#2563eb" stroke-width="3" marker-end="url(#arrow)"/><text x="780" y="277" font-size="17" fill="#2563eb" font-weight="600" text-anchor="middle" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">4. mem_context</text>
+<line x1="560" y1="326" x2="1240" y2="326" stroke="#2563eb" stroke-width="3" marker-end="url(#arrow)"/><text x="900" y="316" font-size="17" fill="#2563eb" font-weight="600" text-anchor="middle" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">5. dispatch</text>
+<line x1="1240" y1="365" x2="560" y2="365" stroke="#2563eb" stroke-width="3" marker-end="url(#arrow)"/><text x="900" y="355" font-size="17" fill="#2563eb" font-weight="600" text-anchor="middle" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">6. receipt</text>
+<line x1="560" y1="404" x2="340" y2="404" stroke="#2563eb" stroke-width="3" marker-end="url(#arrow)"/><text x="450" y="394" font-size="17" fill="#2563eb" font-weight="600" text-anchor="middle" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">7. status</text>
+<rect x="60" y="830" width="430" height="110" rx="18" fill="#fff0f0" stroke="#b91c1c" stroke-width="2"/><text x="82" y="864" font-size="22" fill="#b91c1c" font-weight="700" text-anchor="start" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">必须验收契约</text><text x="82" y="902" font-size="15" fill="#152238" font-weight="400" text-anchor="start" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">disconnect continues · reject/pause · cancel</text>
+<text x="82" y="930" font-size="15" fill="#152238" font-weight="400" text-anchor="start" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">restart recovery · idempotent no-duplicate</text>
+<rect x="535" y="830" width="430" height="110" rx="18" fill="#fff6df" stroke="#b45309" stroke-width="2"/><text x="557" y="864" font-size="22" fill="#b45309" font-weight="700" text-anchor="start" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">DSH task state</text><text x="557" y="902" font-size="15" fill="#152238" font-weight="400" text-anchor="start" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">queue · lease · heartbeat · budget</text>
+<text x="557" y="930" font-size="15" fill="#152238" font-weight="400" text-anchor="start" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">host offline visible; no false success</text>
+<rect x="1010" y="830" width="530" height="110" rx="18" fill="#eaf2ff" stroke="#2563eb" stroke-width="2"/><text x="1032" y="864" font-size="22" fill="#2563eb" font-weight="700" text-anchor="start" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">Memory / evidence</text><text x="1032" y="902" font-size="15" fill="#152238" font-weight="400" text-anchor="start" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">context + result refs only · version/checkpoint</text>
+<text x="1032" y="930" font-size="15" fill="#152238" font-weight="400" text-anchor="start" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif">receipt/hash · async replay · single-controller lease</text>
+</svg>
