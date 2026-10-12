@@ -3,73 +3,121 @@ title: 从自建 observability 到 Guance 的平滑迁移与可回退切换
 status: outline
 series: quarterly-guance-collaboration
 article_no: 02
+target_length: 1000–1500 字（公众号）+ XHS 8 页；完整矩阵与实验见附录
+fact_checked: 2026-10-12
 ---
 
 # 02｜从自建 observability 到 Guance 的平滑迁移与可回退切换
 
 ## 文章定位
 
-这不是“Grafana 面板一键迁移”的宣传稿，而是一篇迁移工程实录：保留现有 `ai-workspace-infra/observability` 的 Prometheus/VictoriaMetrics、Loki、Grafana、OpenTelemetry/Vector 与 Vault 体系，把 Guance 作为并行目标，通过对照、灰度、验收和回退逐步切换。
+这不是“Grafana 面板一键迁移”的宣传稿，而是一篇短小的迁移工程实录。
 
-## 当前系统事实
+> **核心观点**：迁移监控最怕的不是麻烦，是回不去。可回退的迁移 = **开关 + 双写 + 字段契约 + 对账门槛**；迁走的是排障入口，不是数据主权。
 
-仓库公开说明：服务端与主机探针可独立安装，使用 OTel/Vector 采集，Grafana 查询 VictoriaMetrics，日志/指标由自建入口接收；凭据通过 Vault 注入，仓库还维护安装器验证与凭据扫描。文章只引用仓库当前 README 和脚本中能复现的内容，不把规划中的 Guance 接收端写成已完成。
+正文只放结论与关键表格；完整的迁移矩阵（采集、数据源、11 个仪表板、9 条告警）和 8 个验证实验放在 [附录：迁移矩阵与验证实验](./migration-matrix.md)。
 
-## 迁移原则
+## 当前系统事实（以仓库为准）
 
-1. **数据源先不切断**：现有 Grafana 继续作为基线与回退面板。
-2. **先迁采集路径，再迁查询体验**：优先验证一台 UAT 主机、一个服务和一条 API 链路。
-3. **同一字段契约**：`env/service/host/region/version/route/trace_id/release_tag` 保持一致。
-4. **双写或可重放**：只有在 Guance 接收协议、权限和成本确认后，才启用选择性双写；不把密钥写进仓库或 CI 日志。
-5. **以业务故障验收**：不以“数据进来了”作为完成标准，要用一次用户慢请求、一次告警和一次发布回归验证。
-6. **回退可执行**：保留原 Vector/OTel 配置、Grafana 数据源、Vault secret path 和切换开关，出现丢数、成本失控或查询不可用时恢复原链路。
+`ai-workspace-infra/observability`（服务角色固定在 `ai-workspace-infra/playbooks`）：VictoriaMetrics 单机（内置 promscrape）、VictoriaLogs、VictoriaTraces（Jaeger 查询 API）、OpenTelemetry Collector（spanmetrics）、blackbox-exporter、Grafana（11 个 provisioning 仪表板、9 条 Unified Alerting 规则）；主机侧 Vector 抓取 node/process/blackbox（按需 postgres/xray）exporter，以 Prometheus Remote Write 推指标、以 HTTP 推日志；凭据由 Vault 注入。**未部署 Loki 与独立 Prometheus**（VictoriaLogs 只提供兼容 Loki 的写入路径）。
 
-## 分阶段方案
+## 公众号结构（1,000–1,500 字）
 
-| 阶段 | 动作 | 退出/回退条件 |
+| 节 | 内容 | 字数 |
+| --- | --- | ---: |
+| 1. 起点 | 一张现有架构图，“它一直在工作”；为什么引入 SaaS 而不是替换 Grafana（引文章 01） | ~150 |
+| 2. 先写回退再动手 | 资产盘点、字段契约 `env/service/host/region/version/route/trace_id/release_tag`、四个开关 | ~200 |
+| 3. 迁移矩阵 | 精简表（下方）：搬 / 重做 / 留下；完整版链接附录 | ~250 |
+| 4. 六个阶段 | 阶段表（下方），每阶段一句话 + 回退触发 | ~300 |
+| 5. 切换标准与回退 | 7 条切换标准；关开关回退，目标 15 分钟 | ~250 |
+| 6. 结论 | 免费版只够 UAT 演示；生产全量需商业版并公开算账；一个“不迁”的判断 | ~150 |
+| CTA | 下载迁移清单模板（单一） | — |
+
+## 迁移矩阵（精简版）
+
+图例：🟢 官方支持、低改动 · 🟡 支持但需实测/改写 · 🔴 免费版不可用 · ⚪ 保留在自建
+
+| 资产 | 观测云对应 | 难度 |
 | --- | --- | --- |
-| 0. 盘点 | 导出 Grafana 面板、告警、数据源、保留周期和仪表盘截图；建立字段映射 | 缺少 owner、密钥或数据口径不明则不接入 |
-| 1. UAT 影子流量 | 在 `console-cloudflare-uat.onwalk.net` 选择一台探针/一个服务，保留写入自建 Grafana，同时将非敏感样本送 Guance | 数据量、延迟、标签或权限不达标立即停止 Guance 写入，不影响 Grafana |
-| 2. 对照验证 | 对比同一时间窗的主机指标、日志、Trace、错误率、P95 和告警触发 | 关键指标无法对账、免费额度快速耗尽或查询不可用，回退到自建查询 |
-| 3. 小范围切换 | 只把一个 UAT 用户流程的排障入口切到 Guance；发布前后保留 Grafana 对照 | 业务验证失败时切回 Grafana，不改生产路由 |
-| 4. PROD 只读/低风险 | 先接入生产低敏信号或拨测，不切断原始采集；建立成本、保留和权限门槛 | 无明确回滚 owner、数据不可解释或合同边界未确认，不扩大范围 |
+| 应用 OTLP → OTel Collector | Collector 增加 exporter → DataKit `opentelemetry`（gRPC 或 HTTP protobuf） | 🟢 |
+| Vector Remote Write（主机指标） | Vector 第二个 sink → DataKit `prom_remote_write`（白名单过滤，丢弃线程级进程指标） | 🟡 |
+| Vector 日志 HTTP sink | 第二个 sink → DataKit `logstreaming`（先在本地脱敏，免费版无脱敏） | 🟡 |
+| blackbox / SSL 探测 | 可用性监测（HTTP/SSL）拨测，与 blackbox 并行 | 🟡 |
+| 3 个数据源（VM / VL / VT） | 指标（PromQL 模式）/ 日志查看器 / APM；外部数据源免费版不可用 | 🟡 / 🔴 |
+| 11 个仪表板 | 4 个用内置视图替换，≤3 个做 Grafana JSON 导入实验，其余重做或不迁（免费上限 10 个） | 🟢–🟡 |
+| 9 条告警 | 7 个阈值监控器；2 条 Vector 管道自监控留在 Grafana | 🟢–🟡 / ⚪ |
+| opencost、MCP、Vector 自监控 | 不迁 | ⚪ / 🔴 |
 
-## 验收清单
+逐项映射见 [附录 §1–§4](./migration-matrix.md)。
 
-- 同一 trace/request id 能关联边缘、应用、数据库或日志证据；
-- 现有 Grafana 和 Guance 的关键指标在同一时间窗可解释；
-- 发布、告警和故障复盘能标记 `release_tag`；
-- Guance 不接收 Vault token、Cookie、Prompt、用户隐私和原始业务密钥；
-- 关闭 Guance 写入后，Grafana 基础监控仍可工作；
-- 明确免费版额度、7 天存储、专属站点与数据不可迁移等限制；
-- 迁移记录包含负责人、时间、变更开关、验证结果和回退命令。
+## 六个阶段
 
-## 公众号结构
+| 阶段 | 动作 | 继续条件 | 立即回退触发 |
+| --- | --- | --- | --- |
+| P0 盘点 | 导出仪表板 JSON、告警、数据源；定字段契约与对账方法 | 资产表完成，凭据位置就绪 | — |
+| P1 加开关 | playbooks 增加 `otel_guance_exporter_enabled`、`vector_guance_metrics_enabled`、`vector_guance_logs_enabled`、`guance_datakit_enabled`（**提议**，默认关）；workspace token 只存 Vault | 开关为关时配置与现状逐字节一致 | 任一开关为关时出现配置差异 |
+| P2 双写 | 先开 Trace exporter（1 个 UAT 服务），再对 1–3 台 UAT 主机开 Vector 第二 sink | 两边写入稳定，无积压 | Collector 错误率上升、Vector 缓冲积压、超额停收、敏感字段命中 |
+| P3 并行运行 | 两套系统并行 ≥7 天并每日对账；补 DataKit 原生采集、RUM、拨测、7 个监控器 | 偏差在门槛内，两次故障演练完成 | 演练失败、隐私问题 |
+| P4 切换评审 | 逐条核对 7 条切换标准 | 7 条全部满足 + 作者书面确认 | 任一条不满足 |
+| P5 切换 | UAT 排障首选入口改为观测云，Grafana 保留为对照与兜底；生产只在商业版合同后另行评估 | 连续 14 天无回退事件 | 关键指标对不上、观测云不可用、成本超上限 |
 
-1. 先展示现有自建观测栈，而不是贬低它；
-2. 解释为什么要引入外部 SaaS，而不是为什么要“替换 Grafana”；
-3. 给出迁移前资产清单和字段契约；
-4. 展示 UAT 影子流量与双写/对照结果；
-5. 公开一次失败或不迁移的判断；
-6. 用回退演练证明切换不是不可逆绑定；
-7. 最后再讨论 Guance 在本次链路中解决了什么、没有解决什么。
+## 7 条切换标准
+
+1. 数据完整：连续 7 天，主机关键指标同窗偏差 <2%，日志条数与 Trace 数差 <1%。
+2. 额度：每项用量 <免费额度 70%。
+3. 告警：7 个监控器在 2 次演练中全部触发，延迟不晚于 Grafana 2 分钟，无漏报。
+4. 关联：任选 3 个 UAT 请求，能 RUM → Trace → 日志 → 主机一路跳转。
+5. 安全：抽查 7 天数据无 token、Cookie、邮箱、Prompt 原文；workspace token 不出现在仓库与 CI 日志。
+6. 回退演练：至少 1 次完整回退，15 分钟内恢复“只用 Grafana”。
+7. 授权：作者书面确认，并取得观测云对免费版商业用途的书面授权。
+
+## 回退（目标 ≤15 分钟）
+
+自建栈全程未停，所以回退只需要**翻开关**：
+
+1. 值班手册把 UAT 首选入口改回 Grafana。
+2. 四个 `*_guance_*_enabled` 开关置为 `false`，按 playbooks 现有方式重跑（或 revert 开关提交），Vector / Collector 恢复单 sink。
+3. 停用并禁用 DataKit；随下次前端发布或特性开关移除 RUM SDK。
+4. 在观测云停用监控器与拨测，避免误告警。
+5. 验证：Grafana 11 个仪表板、9 条告警正常，Vector 无积压。
+6. 完全退出时撤销并轮换 workspace token；免费空间不能解散，数据 7 天后滚动删除，需保留的证据提前导出。
+
+## 8 个验证实验（发文前必须跑，详见附录 §5）
+
+| # | 实验 |
+| --- | --- |
+| E1 | Vector Remote Write → DataKit `prom_remote_write` 兼容性与指标名转换 |
+| E2 | Vector HTTP(NDJSON) → DataKit `logstreaming` 字段保留 |
+| E3 | 现有 9 条告警 PromQL 在观测云能否执行 |
+| E4 | 3 个仪表板 Grafana JSON 导入成功率 |
+| E5 | OTel Collector → DataKit（gRPC / HTTP protobuf） |
+| E6 | 白名单前后时间线数量 |
+| E7 | 免费版拨测节点与任务数上限 |
+| E8 | 回退演练计时 |
+
+## 必须披露的限制
+
+- 免费版只够 UAT 演示：10 台主机、1 万时间线、7 天保留、仪表板 ≤10、无 OpenAPI（无法 GitOps 与自动对账，只能 UI 导出）、无脱敏、无外部数据源；免费版商业用途需书面授权。
+- Grafana 仪表板可在 UI 导入（2026-04-01 起），但官方提示部分高级特性需手动重配，不是一键迁移；PromQL 兼容需实测。
+- 双写期间存储与出网成本翻倍；不承诺 MTTR 降低比例，只报告作者环境实测。
 
 ## XHS 版本
 
 - P1：`迁移监控最怕的不是麻烦，是回不去`
-- P2：我的 Grafana、VictoriaMetrics、Loki、Vector、Vault 现状
-- P3：为什么不直接全量切换
-- P4：UAT 影子流量架构
-- P5：同一请求在两套系统中的对照
-- P6：迁移验收表：字段、延迟、告警、成本、权限
-- P7：一键回退需要保留哪些东西
-- P8：最终结论：迁移的是排障入口，不是系统主权
+- P2：我的 Grafana、VictoriaMetrics、VictoriaLogs、VictoriaTraces、Vector、Vault 现状
+- P3：为什么不直接全量切换（免费版装不下，生产要商业版）
+- P4：四个开关 + 双写架构
+- P5：迁移矩阵：搬 / 重做 / 留下
+- P6：7 条切换标准
+- P7：翻开关回退，15 分钟
+- P8：迁移的是排障入口，不是系统主权
 
 ## 证据与链接
 
 - [observability 仓库](https://github.com/ai-workspace-infra/observability)
 - [UAT Console](https://console-cloudflare-uat.onwalk.net/)
-- [自建 Grafana](https://observability.svc.plus/grafana/)
-- [观测云数据接入文档](https://docs.guance.com/)
+- [DataKit Prometheus Remote Write](https://docs.guance.com/integrations/prom_remote_write/) · [OpenTelemetry](https://docs.guance.com/integrations/opentelemetry/) · [Log Streaming](https://docs.guance.com/integrations/logstreaming/)
+- [仪表板入门（Grafana 导入）](https://docs.guance.com/getting-started/get-started-with-dashboards/) · [版本区分](https://docs.guance.com/plans/differences/)
+- [2026-10 事实核验记录](../../03-fact-check-2026-10.md)
 
-Guance 的具体接收协议、Agent/OTel 配置和免费版限制必须在实施和发布前按官方文档复核；本大纲不假设存在未经确认的一键迁移或 Prometheus Remote Write 兼容性。
+截图与配置片段只展示脱敏后的内容；不展示 token、内部地址和未鉴权的接口路径。
