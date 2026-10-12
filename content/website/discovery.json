@@ -1,36 +1,144 @@
 {
   "schemaVersion": 1,
   "companyDescription": "XWork Technologies LLC builds AI workspace software, secure connectivity, and open infrastructure for hosted and self-managed use.",
-  "footerLabel": { "zh": "AI 资源", "en": "AI resources" },
+  "footerLabel": {
+    "zh": "AI 资源",
+    "en": "AI resources"
+  },
   "labels": {
-    "officialPage": { "zh": "官方介绍", "en": "Official page" },
-    "website": { "zh": "官网", "en": "Website" },
-    "support": { "zh": "支持邮箱", "en": "Support" },
-    "products": { "zh": "产品", "en": "Products" },
-    "publicResources": { "zh": "公开资源", "en": "Public resources" },
-    "availabilityPricing": { "zh": "可用性与价格", "en": "Availability and pricing" },
-    "downloads": { "zh": "下载", "en": "Downloads" }
+    "officialPage": {
+      "zh": "官方介绍",
+      "en": "Official page"
+    },
+    "website": {
+      "zh": "官网",
+      "en": "Website"
+    },
+    "support": {
+      "zh": "支持邮箱",
+      "en": "Support"
+    },
+    "products": {
+      "zh": "产品",
+      "en": "Products"
+    },
+    "publicResources": {
+      "zh": "公开资源",
+      "en": "Public resources"
+    },
+    "availabilityPricing": {
+      "zh": "可用性与价格",
+      "en": "Availability and pricing"
+    },
+    "downloads": {
+      "zh": "下载",
+      "en": "Downloads"
+    }
   },
   "resources": [
-    { "href": "/products", "label": { "zh": "产品", "en": "Products" } },
-    { "href": "/docs", "label": { "zh": "文档", "en": "Docs" } },
-    { "href": "/blogs", "label": { "zh": "文章", "en": "Articles" } },
-    { "href": "/prices", "label": { "zh": "价格", "en": "Pricing" } },
-    { "href": "/download", "label": { "zh": "下载", "en": "Downloads" } },
-    { "href": "/about", "label": { "zh": "公司介绍", "en": "About" } },
-    { "href": "/company", "label": { "zh": "公司信息", "en": "Company" } },
-    { "href": "/contact", "label": { "zh": "联系", "en": "Contact" } },
-    { "href": "/support", "label": { "zh": "支持", "en": "Support" } },
-    { "href": "/privacy", "label": { "zh": "隐私", "en": "Privacy" } },
-    { "href": "/terms", "label": { "zh": "条款", "en": "Terms" } }
+    {
+      "href": "/products",
+      "label": {
+        "zh": "产品",
+        "en": "Products"
+      }
+    },
+    {
+      "href": "/docs",
+      "label": {
+        "zh": "文档",
+        "en": "Docs"
+      }
+    },
+    {
+      "href": "/blogs",
+      "label": {
+        "zh": "文章",
+        "en": "Articles"
+      }
+    },
+    {
+      "href": "/prices",
+      "label": {
+        "zh": "价格",
+        "en": "Pricing"
+      }
+    },
+    {
+      "href": "/download",
+      "label": {
+        "zh": "下载",
+        "en": "Downloads"
+      }
+    },
+    {
+      "href": "/about",
+      "label": {
+        "zh": "公司介绍",
+        "en": "About"
+      }
+    },
+    {
+      "href": "/company",
+      "label": {
+        "zh": "公司信息",
+        "en": "Company"
+      }
+    },
+    {
+      "href": "/contact",
+      "label": {
+        "zh": "联系",
+        "en": "Contact"
+      }
+    },
+    {
+      "href": "/support",
+      "label": {
+        "zh": "支持",
+        "en": "Support"
+      }
+    },
+    {
+      "href": "/privacy",
+      "label": {
+        "zh": "隐私",
+        "en": "Privacy"
+      }
+    },
+    {
+      "href": "/terms",
+      "label": {
+        "zh": "条款",
+        "en": "Terms"
+      }
+    }
   ],
   "sections": {
-    "what": { "zh": "产品是什么", "en": "What it is" },
-    "problem": { "zh": "解决的问题", "en": "Problem" },
-    "how": { "zh": "如何使用", "en": "How it works" },
-    "availability": { "zh": "当前可用性", "en": "Current availability" },
-    "pricing": { "zh": "计费方式", "en": "Pricing" },
-    "sources": { "zh": "源码与版本", "en": "Source and releases" }
+    "what": {
+      "zh": "产品是什么",
+      "en": "What it is"
+    },
+    "problem": {
+      "zh": "解决的问题",
+      "en": "Problem"
+    },
+    "how": {
+      "zh": "如何使用",
+      "en": "How it works"
+    },
+    "availability": {
+      "zh": "当前可用性",
+      "en": "Current availability"
+    },
+    "pricing": {
+      "zh": "计费方式",
+      "en": "Pricing"
+    },
+    "sources": {
+      "zh": "源码与版本",
+      "en": "Source and releases"
+    }
   },
   "availability": {
     "zh": "公开产品介绍、文档和源码可直接访问。客户端平台、版本及安装文件以下载中心和对应仓库的 Release 制品为准；源码或产品介绍不代表应用商店审核通过。",
@@ -43,50 +151,239 @@
   "products": [
     {
       "slug": "xworkmate",
-      "name": { "zh": "XWorkmate", "en": "XWorkmate" },
-      "title": { "zh": "统一的 AI 工作空间", "en": "One workspace for real AI work" },
-      "description": { "zh": "连接模型、智能体、工具与数据，让 AI 从对话走向持续执行和成果交付。", "en": "Connect models, agents, tools, and data so AI can execute work and deliver durable results." },
-      "cta": { "zh": "查看 XWorkmate", "en": "Explore XWorkmate" },
-      "problem": { "zh": "减少模型、工具和项目上下文分散带来的切换成本。", "en": "Reduce switching between disconnected models, tools, and project contexts." },
-      "how": { "zh": "通过客户端下载或 Web 工作空间开始，按文档配置模型和执行环境；执行能力取决于所连接的模型、工具与权限。", "en": "Start through a client download or the web workspace, then configure models and execution environments using the documentation. Execution depends on the connected models, tools, and permissions." }
+      "name": {
+        "zh": "XWorkmate",
+        "en": "XWorkmate"
+      },
+      "title": {
+        "zh": "统一的 AI 工作空间",
+        "en": "One workspace for real AI work"
+      },
+      "description": {
+        "zh": "连接模型、智能体、工具与数据，让 AI 从对话走向持续执行和成果交付。",
+        "en": "Connect models, agents, tools, and data so AI can execute work and deliver durable results."
+      },
+      "cta": {
+        "zh": "查看 XWorkmate",
+        "en": "Explore XWorkmate"
+      },
+      "problem": {
+        "zh": "减少模型、工具和项目上下文分散带来的切换成本。",
+        "en": "Reduce switching between disconnected models, tools, and project contexts."
+      },
+      "how": {
+        "zh": "通过客户端下载或 Web 工作空间开始，按文档配置模型和执行环境；执行能力取决于所连接的模型、工具与权限。",
+        "en": "Start through a client download or the web workspace, then configure models and execution environments using the documentation. Execution depends on the connected models, tools, and permissions."
+      },
+      "kind": "product"
     },
     {
       "slug": "xconnect",
-      "name": { "zh": "XConnect", "en": "XConnect" },
-      "title": { "zh": "开源全球 AI 连接加速", "en": "Open-source global AI connectivity" },
-      "description": { "zh": "XConnect 是一款面向全球用户的开源 AI 连接加速工具，支持 iOS、Android、macOS、Windows 和 Linux，并提供实时诊断与修复建议。", "en": "XConnect is an open-source AI connectivity accelerator for users worldwide, supporting iOS, Android, macOS, Windows, and Linux with real-time diagnostics and repair guidance." },
-      "cta": { "zh": "查看 XConnect", "en": "Explore XConnect" },
-      "problem": { "zh": "让跨设备 AI 连接更简单，让延迟、丢包与链路状态更清楚。", "en": "Simplify AI connectivity across devices and make latency, packet loss, and connection status easier to understand." },
-      "how": { "zh": "注册账号、下载客户端、登录后启动 AI 加速；按客户端提示完成连接与权限设置。连接质量取决于网络及部署环境。", "en": "Sign up, download the client, and sign in to start AI acceleration. Follow the client prompts for connection setup and permissions. Connectivity depends on the network and deployment environment." }
+      "name": {
+        "zh": "XConnect",
+        "en": "XConnect"
+      },
+      "title": {
+        "zh": "开源全球 AI 连接加速",
+        "en": "Open-source global AI connectivity"
+      },
+      "description": {
+        "zh": "XConnect 是一款面向全球用户的开源 AI 连接加速工具，支持 iOS、Android、macOS、Windows 和 Linux，并提供实时诊断与修复建议。",
+        "en": "XConnect is an open-source AI connectivity accelerator for users worldwide, supporting iOS, Android, macOS, Windows, and Linux with real-time diagnostics and repair guidance."
+      },
+      "cta": {
+        "zh": "查看 XConnect",
+        "en": "Explore XConnect"
+      },
+      "problem": {
+        "zh": "让跨设备 AI 连接更简单，让延迟、丢包与链路状态更清楚。",
+        "en": "Simplify AI connectivity across devices and make latency, packet loss, and connection status easier to understand."
+      },
+      "how": {
+        "zh": "注册账号、下载客户端、登录后启动 AI 加速；按客户端提示完成连接与权限设置。连接质量取决于网络及部署环境。",
+        "en": "Sign up, download the client, and sign in to start AI acceleration. Follow the client prompts for connection setup and permissions. Connectivity depends on the network and deployment environment."
+      },
+      "kind": "product"
     },
     {
       "slug": "ai-workspace",
-      "name": { "zh": "AI Workspace", "en": "AI Workspace" },
-      "title": { "zh": "立即进入你的工作空间", "en": "Start your AI workspace" },
-      "description": { "zh": "在浏览器中开始对话、任务、工具调用和成果交付，无需安装。", "en": "Start conversations, tasks, tool calls, and delivery in the browser with no installation." },
-      "cta": { "zh": "立即进入", "en": "Open workspace" },
-      "problem": { "zh": "提供无需安装的公开 Web 工作空间入口。", "en": "Provide a public web workspace entry point without a client installation." },
-      "how": { "zh": "访问公开工作空间；个人账户、持久数据及认证操作仍使用平台登录入口。", "en": "Visit the public workspace; personal accounts, persistent data, and authenticated operations still use the platform sign-in entry point." }
+      "name": {
+        "zh": "AI Workspace",
+        "en": "AI Workspace"
+      },
+      "title": {
+        "zh": "立即进入你的工作空间",
+        "en": "Start your AI workspace"
+      },
+      "description": {
+        "zh": "在浏览器中开始对话、任务、工具调用和成果交付，无需安装。",
+        "en": "Start conversations, tasks, tool calls, and delivery in the browser with no installation."
+      },
+      "cta": {
+        "zh": "立即进入",
+        "en": "Open workspace"
+      },
+      "problem": {
+        "zh": "提供无需安装的公开 Web 工作空间入口。",
+        "en": "Provide a public web workspace entry point without a client installation."
+      },
+      "how": {
+        "zh": "访问公开工作空间；个人账户、持久数据及认证操作仍使用平台登录入口。",
+        "en": "Visit the public workspace; personal accounts, persistent data, and authenticated operations still use the platform sign-in entry point."
+      },
+      "kind": "product"
     },
     {
       "slug": "open-platform",
-      "name": { "zh": "开放平台", "en": "Open Platform" },
-      "title": { "zh": "可控、可扩展的基础设施", "en": "Open and extensible infrastructure" },
-      "description": { "zh": "面向自建部署和开发者的开放平台，保留代码、数据和部署控制权。", "en": "An open platform for self-hosting and developers, keeping control of code, data, and deployment." },
-      "cta": { "zh": "查看开放平台", "en": "Explore Open Platform" },
-      "problem": { "zh": "为需要控制代码、数据和部署方式的团队提供开放基础设施入口。", "en": "Provide an open infrastructure entry point for teams that need control over code, data, and deployment." },
-      "how": { "zh": "从公开仓库与部署文档开始，按组件要求准备自建环境；部署、安全与运行成本由所选环境决定。", "en": "Start with the public repositories and deployment documentation, then prepare a self-managed environment according to component requirements. Deployment, security, and operating costs depend on that environment." }
+      "name": {
+        "zh": "Open-platform",
+        "en": "Open-platform"
+      },
+      "title": {
+        "zh": "自主部署与平台治理解决方案",
+        "en": "A solution for self-managed deployment and platform governance"
+      },
+      "description": {
+        "zh": "整合 IaC、GitOps、安全、身份与可观测性，为自主部署和多云平台建设提供架构、实施与治理路径。",
+        "en": "Combine IaC, GitOps, security, identity, and observability with architecture and implementation paths for self-managed and multi-cloud platforms."
+      },
+      "cta": {
+        "zh": "了解 Open-platform 解决方案",
+        "en": "Explore the Open-platform solution"
+      },
+      "problem": {
+        "zh": "为需要控制代码、数据和部署方式的团队提供开放基础设施入口。",
+        "en": "Provide an open infrastructure entry point for teams that need control over code, data, and deployment."
+      },
+      "how": {
+        "zh": "从公开仓库与部署文档开始，按组件要求准备自建环境；部署、安全与运行成本由所选环境决定。",
+        "en": "Start with the public repositories and deployment documentation, then prepare a self-managed environment according to component requirements. Deployment, security, and operating costs depend on that environment."
+      },
+      "kind": "solution"
     },
     {
       "slug": "cloud-hub",
       "sourceSlug": "global-mesh",
       "showInOverview": false,
-      "name": { "zh": "Cloud Hub", "en": "Cloud Hub" },
-      "title": { "zh": "多云与全球连接", "en": "Multi-cloud and global connectivity" },
-      "description": { "zh": "介绍多云资源与全球连接架构，为基础设施选型和自建部署提供入口。", "en": "Explore multi-cloud resources and global connectivity architecture for infrastructure selection and self-managed deployment." },
-      "cta": { "zh": "查看 Cloud Hub", "en": "Explore Cloud Hub" },
-      "problem": { "zh": "帮助理解不同云资源、区域与连接方式之间的关系。", "en": "Understand relationships between cloud resources, regions, and connectivity options." },
-      "how": { "zh": "阅读架构介绍与公开仓库，按实际部署记录核对节点和可用能力；页面示例、延迟和供应商能力不代表实时服务承诺。", "en": "Read the architecture and public repository, then verify nodes and capabilities against actual deployment records. Page examples, latency figures, and provider capabilities are not live service commitments." }
+      "name": {
+        "zh": "Cloud Hub",
+        "en": "Cloud Hub"
+      },
+      "title": {
+        "zh": "多云与全球连接",
+        "en": "Multi-cloud and global connectivity"
+      },
+      "description": {
+        "zh": "介绍多云资源与全球连接架构，为基础设施选型和自建部署提供入口。",
+        "en": "Explore multi-cloud resources and global connectivity architecture for infrastructure selection and self-managed deployment."
+      },
+      "cta": {
+        "zh": "查看 Cloud Hub",
+        "en": "Explore Cloud Hub"
+      },
+      "problem": {
+        "zh": "帮助理解不同云资源、区域与连接方式之间的关系。",
+        "en": "Understand relationships between cloud resources, regions, and connectivity options."
+      },
+      "how": {
+        "zh": "阅读架构介绍与公开仓库，按实际部署记录核对节点和可用能力；页面示例、延迟和供应商能力不代表实时服务承诺。",
+        "en": "Read the architecture and public repository, then verify nodes and capabilities against actual deployment records. Page examples, latency figures, and provider capabilities are not live service commitments."
+      },
+      "kind": "product"
     }
-  ]
+  ],
+  "overview": {
+    "eyebrow": {
+      "zh": "XWORK TECHNOLOGIES / 产品与解决方案",
+      "en": "XWORK TECHNOLOGIES / PRODUCTS & SOLUTIONS"
+    },
+    "title": {
+      "zh": "三个产品，一套开放解决方案",
+      "en": "Three products. One open solution."
+    },
+    "description": {
+      "zh": "用 XWorkmate 推进 AI 工作，用 XConnect 连接 AI 服务，在浏览器中打开 AI Workspace；需要自主部署与平台治理时，选择 Open-platform 解决方案。",
+      "en": "Work with XWorkmate, connect AI services with XConnect, and open AI Workspace in your browser. Choose the Open-platform solution for self-managed deployment and platform governance."
+    },
+    "productsLabel": {
+      "zh": "三个产品",
+      "en": "Three products"
+    },
+    "productsTitle": {
+      "zh": "选择你的 AI 工作方式",
+      "en": "Choose how you work with AI"
+    },
+    "solutionLabel": {
+      "zh": "一套解决方案",
+      "en": "One solution"
+    },
+    "solutionTitle": {
+      "zh": "把开放能力部署到自己的环境",
+      "en": "Deploy open capabilities in your environment"
+    },
+    "architectureLabel": {
+      "zh": "方案能力",
+      "en": "Solution capabilities"
+    },
+    "architectureTitle": {
+      "zh": "从基础设施到平台治理",
+      "en": "From infrastructure to platform governance"
+    },
+    "pathsTitle": {
+      "zh": "架构与实施资料",
+      "en": "Architecture and implementation resources"
+    },
+    "journeyLabel": {
+      "zh": "实施路径",
+      "en": "Implementation path"
+    },
+    "relatedTitle": {
+      "zh": "了解三个产品",
+      "en": "Explore the three products"
+    },
+    "relatedDescription": {
+      "zh": "按需选择产品，再结合实际环境规划部署、连接与治理。",
+      "en": "Choose the products you need, then plan deployment, connectivity, and governance for your environment."
+    },
+    "closingTitle": {
+      "zh": "从架构与部署文档开始",
+      "en": "Start with architecture and deployment docs"
+    },
+    "closingDescription": {
+      "zh": "先明确环境、组件与权限边界，再规划实施与验收。",
+      "en": "Define your environment, components, and access boundaries before implementation and acceptance."
+    },
+    "docsCta": {
+      "zh": "阅读部署文档",
+      "en": "Read deployment docs"
+    },
+    "backCta": {
+      "zh": "查看产品与解决方案",
+      "en": "View products and solutions"
+    },
+    "downloadsLabel": {
+      "zh": "开源与下载",
+      "en": "Open source and downloads"
+    },
+    "downloadsTitle": {
+      "zh": "查看源码、版本和客户端制品",
+      "en": "Find source code, releases, and client artifacts"
+    },
+    "downloadsCta": {
+      "zh": "前往下载中心",
+      "en": "Open download center"
+    },
+    "footerTagline": {
+      "zh": "AI 工作、连接与开放基础设施。三个产品，一套解决方案。",
+      "en": "AI work, connectivity, and open infrastructure. Three products, one solution."
+    },
+    "productCta": {
+      "zh": "了解产品",
+      "en": "Explore product"
+    },
+    "catalogLabel": {
+      "zh": "产品与解决方案",
+      "en": "Products and solutions"
+    }
+  }
 }
