@@ -52,6 +52,8 @@
 | `POST` | `/api/auth/mfa/disable` | `api/api.go` | session / Session | header/query token | `200 {"message":"mfa_disabled","user"}` | session store, `store.Store` |
 | `POST` | `/api/auth/password/reset` | `api/api.go` | 挂在 protected 组；handler 按邮箱运行 / mounted in protected group; handler logic is email-driven | body:`email` | `202 {"message":"if the account exists a reset email will be sent"}` | `store.Store`, password-reset cache, `EmailSender` |
 | `POST` | `/api/auth/password/reset/confirm` | `api/api.go` | 挂在 protected 组；handler 按 reset token 运行 / mounted in protected group; handler logic is reset-token-driven | body:`token,password` | `200 {"message","token","expiresAt","user"}` | password-reset cache, bcrypt, session store, `store.Store` |
+| `POST` | `/api/auth/password/forgot` | `api/api.go` | 公开；按邮箱运行 / public; email-driven | body:`email` | `202 {"message":"if the account exists a reset email will be sent"}` | `store.Store`, password-reset cache, `EmailSender` |
+| `POST` | `/api/auth/password/forgot/confirm` | `api/api.go` | 公开；按 reset token 运行 / public; reset-token-driven | body:`token,password` | `200 {"message","token","expiresAt","user"}` | password-reset cache, bcrypt, session store, `store.Store` |
 | `GET` | `/api/auth/subscriptions` | `api/api.go` | session / Session | 无 / None | `200 {"subscriptions":[...]}` | session store, `store.Store` |
 | `POST` | `/api/auth/subscriptions` | `api/api.go` | session / Session | body:`externalId,provider,paymentMethod,paymentQr,kind,planId,status,meta` | `200 {"subscription":...}` | session store, `store.Store` |
 | `POST` | `/api/auth/subscriptions/cancel` | `api/api.go` | session / Session | body:`externalId` | `200 {"subscription":...}` | session store, `store.Store`, optional Stripe cancel |

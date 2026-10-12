@@ -36,7 +36,7 @@ GitHub Actions + Vault OIDC
   ├─ serverless-orchestrator（部署、迁移、验证）
   ├─ hybrid-orchestrator（自建主链路与 Cloud Run 兜底）
   ├─ rollback-orchestrator（软/硬回滚）
-  └─ k6-performance-test（当前 Prometheus Remote Write 写入 observability.svc.plus）
+  └─ k6-performance-test（当前以 Prometheus Remote Write 协议写入 observability.svc.plus 的 VictoriaMetrics）
 ```
 
 用户可从 [xworktech.com](https://xworktech.com/) 了解产品入口；本轮验证与发布应优先使用 [UAT Console](https://console-cloudflare-uat.onwalk.net/)，生产入口和域名切换仍以 GitOps 拓扑与发布流水线为准。[XWorkmate Console](https://console.svc.plus/) 的公开定位是把 Plan → Connect → Execute → Deliver 串成可追踪工作流，这使“用户任务 → API → 数据库 → 交付结果”成为最有价值的端到端观测样本。
@@ -45,7 +45,7 @@ GitHub Actions + Vault OIDC
 
 | 平面 | 要回答的独立开发问题 | 现有 Grafana 基础 | Guance 的增量价值 |
 | --- | --- | --- | --- |
-| 用户体验 | UAT 页面为何慢、白屏或登录失败？ | 通常不在基础 Prometheus 面板内 | RUM、页面加载、JS 错误、会话回放（脱敏），并跳到具体路由和发布版本 |
+| 用户体验 | UAT 页面为何慢、白屏或登录失败？ | 通常不在基础指标面板内 | RUM、页面加载、JS 错误、会话回放（脱敏），并跳到具体路由和发布版本 |
 | Cloudflare 边缘 | 请求被哪个 Worker 接住？是否发生重试/超时/兜底？ | 可保留现有边缘/入口指标 | 看清 Pages、SSR、Gateway 的边界，而非只看总 5xx |
 | Cloud Run | 冷启动、revision、实例和接口延迟是否异常？ | 保留现有服务、资源与压测面板 | 把一次 API 慢请求定位到服务版本，并和用户请求关联 |
 | Supabase 数据 | 是应用慢还是数据库慢？ | 保留现有 DB latency、连接池、慢查询面板 | 把业务请求与数据层证据关联；日志能力以当前套餐和官方接入方式为准 |
@@ -60,8 +60,8 @@ Guance 官方资料已将基础设施、日志、APM、RUM、会话回放、告�
 
 | 系统 | 保留职责 | 不建议重复建设 |
 | --- | --- | --- |
-| `observability.svc.plus/grafana/` | Prometheus/OTel 基础指标、主机与服务健康、k6 原始趋势、故障时的自有数据兜底 | 不为同一批基础指标再维护一套完全相同的仪表盘 |
-| Guance | 跨信号 Trace、RUM/会话、发布关联、告警协同、Agent/LLM 观测与团队共享 | 不把 GitOps 配置、Vault 密钥或原始 Prompt 当作观测数据源 |
+| `observability.svc.plus/grafana/` | VictoriaMetrics/OTel 基础指标、主机与服务健康、k6 原始趋势、故障时的自有数据兜底 | 不为同一批基础指标再维护一套完全相同的仪表盘 |
+| Guance | 跨信号 Trace、RUM/会话、发布关联、告警协同、Agent/LLM 观测与团队共享（免费版最多 5 人且不支持快照/图表分享，团队共享需商业版） | 不把 GitOps 配置、Vault 密钥或原始 Prompt 当作观测数据源 |
 
 推荐先采用“选择性双写/按信号分流”：基础指标继续进入 Grafana；从 UAT 选一条用户链路把 Trace、错误、发布事件和 RUM 送入 Guance。只有当 Guance 的查询、告警或协作价值被案例验证后，才扩大采集范围。
 
@@ -92,7 +92,7 @@ Guance 官方资料已将基础设施、日志、APM、RUM、会话回放、告�
 | `serverless-orchestrator.yml` | 环境、不可变 tag、Cloud Run revision、Worker 边界、Supabase checkpoint、部署后验证结果 |
 | `hybrid-orchestrator.yml` | primary/fallback、路由策略、切换原因、恢复时间、两条链路的同指标对比 |
 | `rollback-orchestrator.yml` | 目标 tag、软/硬回滚、数据库 checkpoint、回滚前后错误率与延迟 |
-| `k6-performance-test.yaml` | 测试环境、profile、VUs、duration、target URL、release tag；当前写入自建 Prometheus Remote Write，先验证 Guance 接收路径，再决定双写或导出摘要事件 |
+| `k6-performance-test.yaml` | 测试环境、profile、VUs、duration、target URL、release tag；当前以 Prometheus Remote Write 协议写入自建 VictoriaMetrics；观测云 DataKit `prom_remote_write` 采集器可作为双写接收端，先在 UAT 实测兼容性，再决定双写或导出摘要事件 |
 | `ai-aggregator-v1.yml` / `xconnect-one-uat.yaml` | AI 任务 session、工具调用、交付结果状态，不采集 Prompt/密钥原文 |
 
 **验收**：在 Guance 中打开一条异常 Trace，可以反查对应 GitHub workflow run 和发布 tag；打开一次回滚事件，可以对比回滚前后 SLO。

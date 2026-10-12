@@ -20,3 +20,10 @@ articles/
 - 素材授权、脱敏和复用范围；
 - 公众号稿、XHS 分镜及单一 CTA；
 - 发布链接与一周复盘。
+
+## 本季度前两篇重点
+
+- [01｜个人 SaaS 为什么先试观测云免费专区](./01-free-tier-for-indie-saas/outline.md)：以免费专区为低风险 POC，核验额度、条款（含免费版非商业用途条款）、维护工时与商业版估算成本。
+- [02｜从自建 observability 到 Guance 的平滑迁移与可回退切换](./02-observability-migration-with-rollback/outline.md)：以 `ai-workspace-infra/observability` 为现状，以开关、双写、并行对账、7 条切换标准和 15 分钟回退完成可回退切换；完整矩阵与验证实验见[附录](./02-observability-migration-with-rollback/migration-matrix.md)。
+
+这两篇属于本次季度合作的重点交付；后续题库仅是候选储备，不代表已承诺继续由 Guance 赞助或实施。

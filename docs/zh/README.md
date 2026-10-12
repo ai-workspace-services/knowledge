@@ -22,6 +22,10 @@ description: docs.svc.plus 的中文入口，按入门、基础、集成、参�
 4. [集成总览](/docs/integrations/overview)
 5. [参考资料总览](/docs/reference/overview)
 
+## 实用指南
+
+- [海外 AI 服务注册与订阅实践攻略](overseas-ai-service-access-guide.md)
+
 ## 现有双语规范页
 
 - [架构](architecture.md)

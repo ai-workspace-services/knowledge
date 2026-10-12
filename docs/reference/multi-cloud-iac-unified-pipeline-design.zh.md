@@ -3,8 +3,8 @@ title: 六云统一 IaC Pipeline：Bootstrap、账号、资源与销毁设计
 description: 基于九个现有 workflow 的 jobs/steps 盘点，定义六云阶段契约、身份引导、自检、正反向 DAG、state 保护及 Selfhost/Serverless 调用边界。
 slug: multi-cloud-iac-unified-pipeline-design
 lang: zh
-date: 2026-10-07
-version: "0.6"
+date: 2026-10-10
+version: "0.7"
 status: design-draft
 author: shenlan
 tags:
@@ -19,7 +19,7 @@ category: reference
 
 # 六云统一 IaC Pipeline：Bootstrap、账号、资源与销毁设计
 
-**版本：0.6 · 盘点日期：2026-10-07 · 状态：设计评审稿，尚未实施。**
+**版本：0.7 · 盘点日期：2026-10-07 · PROD 发布规则修订：2026-10-10 · 状态：设计评审稿，尚未实施。**
 
 本文把六个 provider 的资源管理收敛为一套阶段契约：`prepare → bootstrap → account → resources → summary`；销毁采用独立的反向链路。统一 pipeline 同时支持手动运行和被 Selfhost/Serverless orchestrator 调用。八个 job 的主 DAG 保持不变，整合通过统一命名、契约和复用实现，不把全部身份、provider 和自检逻辑合成一个大 workflow。**platform-ops-toolkit 持有 orchestrator 与 pipeline；iac_modules 通过 .github/actions 提供固定版本的资源执行能力。** GitOps 负责目标声明，Vault 提供受约束的运行时身份和凭据。
 
@@ -27,7 +27,9 @@ category: reference
 
 IaC 相关 actions 统一存放在 `iac_modules/.github/actions/`，包括目标契约校验、自检、阶段执行、认证、生命周期、receipt 验证和汇总。Toolkit 通过固定版本的 uses 复用这些能力，并继续持有目标选择规则、审批、DAG 和最终放行决策；通用 orchestrator 功能不因 IaC action 归并而迁出 Toolkit。
 
-本轮仅盘点源码、核对契约并编写设计文档。未修改 workflow、Terraform、Vault policy、真实 state 或资源；未提交 PR、部署或进行真实 UAT。后文的目标文件、接口和验收用例都是待实现设计。
+v0.7 补充 GCP VM 承载的 PROD workload 发布边界：先创建 immutable `v*` release tag；不触发 Toolkit 部署流水线；授权操作员通过 GCloud SSH 手动对齐主机前置状态，再由 GitOps + Doco-CD 收敛应用。现有 tag-triggered workflow 必须先关闭或改为不执行 PROD 部署，避免创建 tag 时自动发布。
+
+本次没有执行 release tagging、GCloud SSH、Doco-CD 部署或 PROD 验收；本修订是待实施设计。六云 IaC pipeline 的 stage 契约和 DAG 不因该人工应用发布路径而改变。
 
 该说明保留设计 v0.6 的原始审计范围；后续编码、清理、PR 与尚未完成的运行验收另见 [2026-10-07 分批执行记录](multi-cloud-iac-cleanup-batches-20261007.zh.md)。
 
@@ -272,6 +274,20 @@ credential、access token、session、原始 tfstate 和未脱敏 Terraform 输�
 矩阵分支各自上传带 target/stage/run-attempt 的唯一 receipt；下游按 prepare 的 dependency 集合取证。summary 对 expected-target 集合逐项核对，不接受空报告、重复目标、损坏 JSON、上次运行的报告或“只找到成功分支”。
 
 不能把 matrix reusable workflow 的单一 output 当成全部目标的聚合；GitHub 文档说明该 output 取最后成功完成且设置值的分支。聚合由 artifact 集合完成，再由 summary 导出统一输出。[GitHub reusable workflows](https://docs.github.com/en/actions/how-tos/reuse-automations/reuse-workflows)。
+
+### 6.4 GCP PROD release tag 与 GitOps/Doco-CD 发布
+
+本节定义 GCP VM 承载的 PROD workload 发布路径，优先于通用 pipeline 对该目标的自动触发规则。生产发布必须使用不可变 `vMAJOR.MINOR.PATCH` release tag；不接受 `main`、`release/v*` 分支、daily/UAT tag 作为生产发布身份。
+
+1. 从已审核且已通过所需 UAT 验收的源码/制品选择确切 commit 和制品 digest。授权发布人创建一个新的 `v*` tag，确认该 tag 不存在或已指向同一审核 commit；不得移动、覆盖或删除已发布 tag。记录 tag 对应 commit 与制品 digest。tag 是发布身份，不隐含部署授权。
+2. 创建 tag 前确认 tag push 不会启动 Selfhost、Serverless 或 IaC 的 PROD 自动部署。现有 `v*` push trigger 若仍能执行生产变更，必须先关闭该部署 job/规则或改为纯校验；不得用 `workflow_dispatch`、复用入口或 `release/v*` 分支绕过此边界。
+3. 授权操作员在已核验的 GCP project、zone、instance 上，通过 GCloud SSH 手工对齐主机前置状态，例如 host baseline、Doco-CD 运行时和 GitOps 读取配置。记录执行身份、时间、project/zone/instance、批准的命令清单和退出结果。范围限于主机前置条件与 Doco-CD agent；不得在 SSH 会话内直接替换应用镜像、运行 Compose 发布或更改业务数据。
+4. 在 GitOps 中提交 PROD desired state，引用本次 immutable `v*` 制品和已核验 digest；核对 Doco-CD PROD target 指向预期 GitOps repository/ref、stack 与服务集合。Doco-CD 是应用的唯一收敛路径。验证目标 Doco-CD 已拉取本次 GitOps commit、运行容器 image digest 与声明一致，再按该服务的 acceptance contract 验证健康状态。
+5. 记录 release tag/source commit、制品 digest、GitOps commit、Doco-CD target、GCP instance identity、人工 SSH 变更单、收敛结果、健康证据和回滚 tag。回滚通过新的 GitOps commit 指向此前审核过的 immutable tag/digest，再由 Doco-CD 收敛；不得移动旧 tag。
+
+该流程不调用统一 IaC master、Selfhost/Serverless PROD deployment workflow 或其他部署 pipeline。若底层 cloud resource 需要创建、替换或销毁，应另行完成基础设施变更审查；本节的手工 host alignment 不授权 Terraform、state 或共享基础设施变更。Toolkit 可校验源码/manifest/tag 规则和证据格式，但不能把 SSH 或 Doco-CD 执行实现放入 Toolkit workflow。
+
+**实施门槛：**当前通用交付标准和 `v*` push workflows 仍描述 PROD pipeline 路径，尚未按本节验证或改造。必须先更新 allowlist、Vault role、tag trigger 和人工变更记录；用无变更检查证明 tag push 只执行校验。完成这些改造前，不应创建用于 PROD 发布的 tag。
 
 ## 7. State、认证和版本兼容
 

@@ -1,8 +1,8 @@
 # 用户自助:找回密码 · MFA 恢复码 · 自助注销
 
-> **Status**: 🟢 找回密码已实现(本 PR)· ⬜ MFA 恢复码 + 自助注销待实现(决策已锁,见下)
+> **Status**: 🟢 找回密码已实现并已在 PROD 验证· ⬜ MFA 恢复码 + 自助注销待实现(决策已锁,见下)
 > **Date**: 2026-07-14
-> **Related PRs**: 本 PR(accounts,分支 `feat/self-service-recovery` —— 仅含公开找回密码)
+> **Related PRs**: accounts [#26](https://github.com/ai-workspace-services/accounts/pull/26) [MERGED] · portal [#412](https://github.com/ai-workspace-services/portal/pull/412) [MERGED] · gitops [#416](https://github.com/ai-workspace-infra/gitops/pull/416) [MERGED] · gitops [#417](https://github.com/ai-workspace-infra/gitops/pull/417) [MERGED]
 > **关联**: [OAuth 邮箱验证门禁](2026-07-14-oauth-email-verify-gate.md) · [高级服务就绪度门禁](2026-07-14-advanced-service-readiness-gate.md)
 
 ## 需求(三项自助能力)
@@ -32,6 +32,16 @@
 
 **测试**:`TestPublicForgotPasswordFlow`(forgot→邮件 token→confirm→新密码生效→token 单次性)、`TestForgotPasswordUnknownEmailIsEnumerationSafe`(未知邮箱仍 202、不发信)。`go test ./... && go vet` 全过。
 
+## Console 前端与 PROD 发布（2026-10-09）
+
+- Portal PR [#412](https://github.com/ai-workspace-services/portal/pull/412) 合并后创建 immutable release `v2026.10.09-r2`。
+- 修复前端未配置 Analytics 时仍加载硬编码 Google measurement ID 的问题；未配置时不再加载 Google Analytics/GTM 第三方脚本。
+- GitOps PR [#416](https://github.com/ai-workspace-infra/gitops/pull/416) 将 `prod-console` 对齐到 console image digest `sha256:e56de11c99898f315da099caef22718a54e4bf6c25b982f51b78919da05444df`。
+- GitOps PR [#417](https://github.com/ai-workspace-infra/gitops/pull/417) 创建 immutable release `v2026.10.09-r3`，让容器内 `FRONTEND_IMAGE` 与 `CONSOLE_IMAGE` 保持一致，避免 `/api/ping` 发布元数据漂移。
+- `web-saas-prod` 通过 Doco-CD `prod-console` 手动对齐 `v2026.10.09-r3`；Accounts、Billing、PostgreSQL、stunnel、Caddy 和 Doco-CD 控制器未变更。
+- 已验证 `/account-recovery`、发码接口、真实邮箱收信、有效验证码和密码重置闭环；页面不再加载 Google Analytics/GTM 资源。
+- 本次没有 DB/schema 变更，因此未执行 PG 全量备份；涉及数据库变更的后续发布仍必须先完成全量备份和恢复验证。
+
 ## 待实现 A:MFA 恢复码(下一增量)
 
 - **持久化**:`store.User` 加 `mfa_recovery_codes`(存 **hash 后**的码;复用 postgres store 的 `encodeStringSlice`/`decodeStringSlice` + `caps.hasXxx` 列探测模式,同 `groups`);schema.sql `users` 加列;memory store 同步。
@@ -51,6 +61,7 @@
 
 ## 遗留待办
 
-- [ ] console 前端:找回密码入口(登录页「忘记密码?」→ `/password/forgot`);MFA 恢复码展示/下载/再生成;注销确认(二次确认 + MFA 校验 + 冷静期提示 + 待退金额展示)。
+- [x] console 前端:找回密码入口(登录页「忘记密码?」→ `/account-recovery`)及线上恢复闭环。
+- [ ] console 前端:MFA 恢复码展示/下载/再生成;注销确认(二次确认 + MFA 校验 + 冷静期提示 + 待退金额展示)。
 - [ ] 实现待实现 A(MFA 恢复码)、B(自助注销)—— 决策已锁,可直接开工。
 - [ ] 与 billing-service 对齐退款消费端(`billing_events` 契约或待退表)。

@@ -177,8 +177,8 @@ Guance 在本系列中是一项被持续观察、使用和核算的可观测 Saa
 
 | # | 微信公众号主标题 | XHS 封面标题 | 核心观点 | Guance 植入点 | 真实实践与证据要求 |
 | ---: | --- | --- | --- | --- | --- |
-| 01 | 从自建 Grafana + OTel 全家桶到观测云免费个人版：Cloudflare、Cloud Run、Supabase 的 UAT 监控迁移实录 | 我的 Grafana 不拆，先把 UAT 接进观测云 | 先以现有基础监控为底座，用免费个人版验证 SaaS 的增量价值 | Guance 免费个人版、开放采集、工作空间与 UAT 最小链路 | 以 `console-cloudflare-uat.onwalk.net` 为入口，记录 Cloudflare Pages/Workers、Cloud Run `uat-accounts/content/billing`、Supabase `xworktech` 的接入范围、配置改动、用量和回退方式 |
-| 02 | AI 辅助 Grafana 面板迁移：从资源、指标、流量、压测面板到观测云的重建与取舍 | AI 帮我迁移 Grafana 面板，哪些该保留？ | 面板迁移不是复制 UI，而是重新判断哪些指标能帮助用户和发布决策 | Guance Dashboard、指标/日志/Trace 关联与 AI 辅助整理；不承诺一键迁移 | 以 `observability.svc.plus/grafana/` 的资源、流量、压测、服务健康面板为样本，AI 生成迁移清单，逐项核对字段、查询、告警和截图差异 |
+| 01 | 个人 SaaS 为什么先试观测云免费专区：一个独立开发者的 7 天 POC 账本 | Grafana 已经能用，我为什么还试免费观测云？ | 免费专区是低成本、可量化、可退出的 POC，而不是“白嫖一套监控”；先看条款与额度边界，再用数据决定升级、留守或退出 | Guance 免费版（免费专区）、DataKit、OTel 接入、RUM、拨测、阈值监控器 | 以 `console-cloudflare-uat.onwalk.net` 的一条 UAT 链路为范围（1 台主机 + 1 个服务的 Trace + 前端 RUM + 少量拨测），记录审核与接入耗时、7 天用量占额度比例、一次定位路径、维护工时与退出演练；使用前取得观测云对免费版商业用途的书面授权并披露。详见 [文章 01 大纲](./articles/01-free-tier-for-indie-saas/outline.md) |
+| 02 | 从自建 observability 到观测云：双写、对账与可回退切换实录 | 迁移监控最怕的不是麻烦，是回不去 | 可回退的迁移 = 双写 + 字段契约 + 对账门槛 + 开关；迁走的是排障入口，不是数据主权 | DataKit `prom_remote_write` / `opentelemetry` / `logstreaming`、Grafana 仪表板导入（非一键）、监控器、APM、RUM | 以 `ai-workspace-infra/observability`（VictoriaMetrics / VictoriaLogs / VictoriaTraces / OTel Collector / Vector / Grafana）为现状，给出迁移矩阵、P0–P5 阶段、切换标准与 15 分钟回退演练；免费版只覆盖 UAT。详见 [文章 02 大纲](./articles/02-observability-migration-with-rollback/outline.md)。原“AI 辅助 Grafana 面板迁移”的取舍判断并入本篇迁移矩阵 |
 | 03 | Cloudflare → Worker → Cloud Run → Supabase：我如何为 UAT 建立第一条完整 Trace？ | 一次页面访问到底经过了几层？ | 没有跨层上下文，独立开发者只能在多个面板之间猜 | Trace、日志关联、服务与版本标签 | 记录 `console-cloudflare-uat.onwalk.net` 一次登录或内容读取的 trace id、route、revision、区域和数据库耗时 |
 | 04 | serverless-orchestrator 发布后，Guance 告警能否在用户反馈前发现问题？ | 发布后第一条告警，真的有用吗？ | 告警要与 release tag 和用户影响关联，才值得一个人响应 | 监控器、事件、恢复通知与发布标记 | 对一次 UAT 发布记录 workflow run、release tag、Cloud Run revision、错误率和告警处理时间 |
 | 05 | `console-cloudflare-uat.onwalk.net` 页面为何变慢：CPU 正常时如何找到真实用户体验问题 | UAT 页面卡，到底是谁的锅？ | 基础设施正常不等于浏览器体验正常 | RUM、前端错误或 Session Replay，并按需关联 Trace | 选择一次 UAT 慢会话，脱敏拆解 Cloudflare 边缘、资源加载、API 和前端错误 |
@@ -273,8 +273,8 @@ P9  收藏清单 / 互动问题（可选）
 
 | 周 | 主题 | 内容作用 | 依赖 |
 | ---: | --- | --- | --- |
-| W01 | #01 观测盲区盘点 | 建立起点 | 产品、依赖与未知区域清单 |
-| W02 | #02 最小服务接入 | 记录过程 | 接入耗时、改动和回退方案 |
+| W01 | #01 免费专区 POC（含观测盲区盘点） | 建立起点 | 观测云书面授权、免费版审核、UAT 链路与 7 天用量 |
+| W02 | #02 可回退迁移（最小服务接入 + 双写） | 记录过程 | 迁移矩阵、接入耗时、对账结果与回退演练 |
 | W03 | #03 正常基线 | 建立对照 | 连续 7 天真实数据 |
 | W04 | #04 第一次告警 | 验证发现能力 | 告警时间线与阈值调整 |
 | W05 | #05 用户说卡 | 验证用户体验 | 一次脱敏慢会话 |
@@ -504,8 +504,8 @@ P9  收藏清单 / 互动问题（可选）
 - [ ] 确认合作披露、审稿边界、修改轮次和素材版权；
 - [ ] 开通 Guance 测试空间并记录版本/站点；
 - [ ] 完成自建栈与 Guance 的数据流拓扑；
-- [ ] 完成 W01 的独立产品、服务依赖和观测盲区盘点；
-- [ ] 完成 W02 的真实故障与注意力成本复盘；
+- [ ] 完成 W01 的免费专区 POC：取得免费版商业用途书面授权，完成审核、UAT 链路接入与观测盲区盘点；
+- [ ] 完成 W02 的迁移资产盘点、字段契约、双写开关设计与回退演练；
 - [ ] 建立至少 30 天的 Guance 用量、计费与节省工时基线；
 - [ ] 完成 W07–W09 的 RUM/APM/拨测测试计划；
 - [ ] 为 W11 建立只读 MCP 和禁止生产写操作的实验边界；
@@ -517,7 +517,7 @@ P9  收藏清单 / 互动问题（可选）
 
 截至 2026-09-09，Guance 官网将产品能力归纳为统一观测、异常响应、数据治理、AI 与 Agent 四组；产品入口覆盖基础设施、日志、APM、RUM、Session Replay、API 可用性、Agent 监测、CI 可视化、告警和故障中心等。Agent 监测官方文档明确包含 Session/Trace、Token、模型/Tool/Skill 调用和风险事件等维度；Agent Teams 文档明确区分 Skill（工作方法）和 MCP（外部工具），并强调权限、审批和运行边界。以上均为产品事实，不等于本专题已经完成效果验证。[^1][^2][^3]
 
-免费版当前公开额度可作为第 05/17 篇的实测入口，但价格、额度、资格审核、数据迁移和存储周期均属于高时效信息，必须在发布前重新确认。[^4]
+免费版当前公开额度可作为第 01 篇（本季度首篇）和第 16 篇（2027 Q1 候选）的实测入口，但价格、额度、资格审核、数据迁移和存储周期均属于高时效信息，必须在发布前重新确认。免费版协议 4.7 规定未经书面授权不得用于商业用途，XWorkTech 相关实践需先取得观测云书面授权。[^4][^5] 2026-10 的逐条复核见 [事实核验记录](./03-fact-check-2026-10.md)。
 
 完整分析、案例映射与表达边界见 [Guance 深度调研与事实基线](./01-guance-research-brief.md)。
 
@@ -525,3 +525,4 @@ P9  收藏清单 / 互动问题（可选）
 [^2]: 观测云文档，《[Agent 监测](https://docs.guance.com/agent/)》，访问于 2026-09-09。
 [^3]: 观测云文档，《[Skill 与 MCP：如何选择](https://docs.guance.com/agent-teams/agent-capabilities/)》，访问于 2026-09-09。
 [^4]: 观测云，《[价格：免费版、商业版与企业版](https://www.guance.com/billing?version=free)》，访问于 2026-09-09。
+[^5]: 观测云文档，《[观测云免费版订阅协议](https://docs.guance.com/agreements/free-agreement/)》，访问于 2026-10-12。
