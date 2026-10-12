@@ -1,6 +1,6 @@
 ---
 title: 参考资料总索引与 PDF 合订编排 / Reference index and PDF compilation plan
-description: 已核验的 37 项多云白皮书、总体架构、容灾、四仓契约、共用规范、数据库安全操作和专题来源索引；a verified 37-item source index for PDF compilation.
+description: 39 项多云白皮书、总体架构、容灾、四仓契约、共用规范、数据库安全操作、三档权限和 CMDB 落地规划来源索引。
 slug: index
 lang: zh
 tags:
@@ -12,7 +12,7 @@ tags:
 
 # 参考资料总索引与 PDF 合订编排
 
-本页是 37 项公开资料的可编辑索引，服务于多云平台工程白皮书、总体架构评审和后续 PDF 合订准备。条目按主题分组，优先链接到本仓库真实文件；跨仓库条目使用固定 `origin/main` SHA 的 GitHub 链接，便于复核来源版本。
+本页是 39 项资料的可编辑索引，服务于多云平台工程白皮书、总体架构评审和后续 PDF 合订准备。条目按主题分组，优先链接到本仓库真实文件；跨仓库条目使用固定 `origin/main` SHA 的 GitHub 链接，便于复核来源版本。实施规划条目不代表功能或运行验收已完成。
 
 GitHub 组织入口：[ai-workspace-infra](https://github.com/ai-workspace-infra)。
 
@@ -116,6 +116,7 @@ GitHub 组织入口：[ai-workspace-infra](https://github.com/ai-workspace-infra
 | 38 | 多云 CMDB 独立 PostgreSQL 与 Grafana 落地规划 | zh | CMDB implementation plan | [CMDB 落地规划](multi-cloud-cmdb-postgresql-grafana-plan.zh.md) |
 | 39 | CMDB 多云采集与数据库 Vault 路径规划 | zh | proposed, not applied | [Vault 路径与字段](cmdb-vault-paths.zh.md) |
 | 40 | CMDB Shared UAT 部署与采集验收记录 | zh | 2026-10-09 fixed owner commits | [Shared UAT 证据](cmdb-shared-uat-evidence-20261009.zh.md) |
+| 41 | 多云资源三档权限、IAM 与 Vault 安全集成及 Shared CMDB 技术规范白皮书 | zh | knowledge working tree · v1.2 · 云账号/OS/自建服务三层权限补充 · proposed-not-applied | [docs/reference/multi-cloud-iam-vault-cmdb-security-whitepaper.zh.md](multi-cloud-iam-vault-cmdb-security-whitepaper.zh.md) |
 
 ## 使用与维护约束
 
