@@ -34,6 +34,7 @@ status: planning
 - [Guance 深度调研与事实基线](./01-guance-research-brief.md)：产品矩阵、独立开发价值、公开案例、表达边界和官方来源。
 - [XWorkTech × Guance 接入路线图](./02-xworktech-guance-integration-roadmap.md)：结合 Cloudflare UAT、Cloud Run、Supabase、GitHub Actions 与 XWorkmate 的 UAT → PROD 分阶段实践。
 - [文章工作区](./articles/README.md)：后续逐篇稿件的命名、状态与交付清单。
+- [本季度前两篇文章大纲](./articles/README.md)：免费专区个人 SaaS 选型，以及自建 observability 到 Guance 的可回退迁移。
 - [素材工作区](./assets/README.md)：截图、数据、架构图、授权与脱敏要求。
 
 ## 当前状态
