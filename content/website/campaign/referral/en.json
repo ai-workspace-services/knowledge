@@ -231,7 +231,7 @@
       "empty": "No eligible referral records yet. Share your personal link; qualifying first subscriptions will appear here.",
       "loading": "Loading referral history…",
       "error": "Could not load referral history. Try again shortly.",
-      "historyLimitNote": "Recent referral and settlement records are shown. Totals include all records. Contact official support for earlier records."
+      "historyLimitNote": "Recent referral, settlement, and subscription extension records are shown. Reward totals include all records. Contact official support for earlier records."
     },
     "settlements": {
       "title": "Cash settlement",
