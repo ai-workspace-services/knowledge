@@ -21,10 +21,16 @@
     "eyebrow": "XCONNECT REFERRAL PROGRAM · 2026",
     "title": "Invite friends. Stay connected.",
     "subtitle": "Earn 10% cashback on each first eligible subscription",
-    "body": "Invite new users to XConnect during the campaign. When a friend completes a first eligible subscription, you can earn 10% of the amount paid. If you already have an active subscription, an eligible annual purchase by your friend can also add 30 days to your subscription.",
-    "primaryCta": { "label": "Create an account and get your link", "href": "/register" },
-    "secondaryCta": { "label": "Sign in to the referral center", "href": "/referrals" },
-    "campaignWindow": "Campaign period: October 13 through December 31, 2026 (Beijing time)"
+    "body": "Invite new users to XConnect during the campaign. When a friend completes a first eligible subscription, you can earn 10% of the amount paid. If you have an active subscription when your friend’s first annual payment completes, 30 days can also be added to your subscription.",
+    "primaryCta": {
+      "label": "Create an account and get your link",
+      "href": "/register"
+    },
+    "secondaryCta": {
+      "label": "Sign in to the referral center",
+      "href": "/referrals"
+    },
+    "campaignWindow": "Campaign period: October 13, 2026, 12:00 a.m. through December 31, 2026, 11:59 p.m. (Beijing time)"
   },
   "rewards": {
     "title": "Two rewards, earned for each eligible referral",
@@ -32,34 +38,57 @@
       {
         "id": "cashback",
         "title": "10% cashback on the first subscription",
-        "description": "When a friend completes a first eligible paid subscription, the inviter earns 10% of the amount paid for that first subscription. Monthly and annual plans qualify; renewals do not earn additional cashback."
+        "description": "When a friend completes a first monthly or annual subscription, you earn 10% of the amount paid.",
+        "label": "Cash back"
       },
       {
         "id": "annual-extension",
         "title": "An extra 30 days for an annual referral",
-        "description": "If you have an active subscription when the reward is confirmed, each new user you refer who makes a first eligible annual purchase can add 30 days to your XConnect subscription. Your friend does not receive extra cash or subscription days from this reward."
+        "description": "If you have an active subscription when your friend’s first annual payment completes, you get 30 extra days.",
+        "label": "Subscription extension"
       }
     ],
-    "note": "Cashback is based on a verified first payment, not a list price, pre-discount amount, or calculator estimate."
+    "note": "Cashback is based on a verified first payment, not a list price, pre-discount amount, or calculator estimate.",
+    "daysUnit": "days"
   },
   "calculator": {
     "title": "Estimate your referral rewards",
-    "description": "Enter an expected number of successful referrals, the amount each friend pays for their first subscription, and the plan type. Estimates are for illustration only; final rewards depend on payment records and eligibility verified by Accounts.",
+    "description": "Enter an expected number of successful referrals, the amount each friend pays for their first subscription, and the plan type. Estimates are for illustration only; final rewards depend on payment records and eligibility verified by the service.",
     "fields": {
-      "invitees": { "label": "Expected successful referrals", "hint": "Estimate one first eligible subscription per friend." },
-      "amount": { "label": "Amount paid by each friend", "hint": "Use the amount paid at checkout." },
-      "currency": { "label": "Currency", "hint": "The estimate uses this currency and does not convert exchange rates." },
-      "planType": { "label": "Friend's first subscription plan" },
-      "activeSubscription": { "label": "I have an active subscription", "hint": "When unchecked, the estimated annual extension is zero days." }
+      "invitees": {
+        "label": "Expected successful referrals",
+        "hint": "Estimate one first eligible subscription per friend."
+      },
+      "amount": {
+        "label": "Amount paid by each friend",
+        "hint": "Use the amount paid at checkout."
+      },
+      "currency": {
+        "label": "Currency",
+        "hint": "The estimate uses this currency and does not convert exchange rates."
+      },
+      "planType": {
+        "label": "Friend's first subscription plan"
+      },
+      "activeSubscription": {
+        "label": "I have an active subscription when my friend’s payment completes",
+        "hint": "When unchecked, the estimated annual extension is zero days."
+      }
     },
     "planOptions": {
-      "monthly": { "label": "Monthly", "extensionEligible": false },
-      "annual": { "label": "Annual", "extensionEligible": true }
+      "monthly": {
+        "label": "Monthly",
+        "extensionEligible": false
+      },
+      "annual": {
+        "label": "Annual",
+        "extensionEligible": true
+      }
     },
     "result": {
       "cashback": "Estimated inviter cashback",
       "extension": "Estimated days added to inviter's subscription",
-      "extensionEligibility": "The annual extension is for inviters with an active subscription. Each eligible new annual subscriber adds 30 days.",
+      "extensionEligibility": "The inviter must have an active subscription when the friend’s first annual payment completes to receive the 30-day extension.",
       "formula": "Estimated cashback = first amount paid × 10% × successful referrals. Estimated annual days = eligible annual referrals × 30 days.",
       "disclaimer": "The calculator does not create a reward or settlement request. A payment must complete a 7-day review period with no refund, dispute, or fraud finding before a reward may become available for settlement."
     }
@@ -67,18 +96,30 @@
   "steps": {
     "title": "Three steps to get started",
     "items": [
-      { "title": "Create or sign in to your XConnect account", "description": "Sign in with your existing Accounts account, or register for one." },
-      { "title": "Download and use XConnect", "description": "Visit the download center, choose a client for your device, and sign in." },
-      { "title": "Share your personal referral link", "description": "Copy or share your link from the referral center. A friend who registers through it and completes a first eligible paid subscription during the campaign can count as a referral." }
+      {
+        "title": "Create or sign in to your XConnect account",
+        "description": "Sign in with your XConnect account, or register for one."
+      },
+      {
+        "title": "Download and use XConnect",
+        "description": "Visit the download center, choose a client for your device, and sign in."
+      },
+      {
+        "title": "Share your personal referral link",
+        "description": "Copy or share your link from the referral center. A friend who registers through it and completes a first eligible paid subscription during the campaign can count as a referral."
+      }
     ],
-    "cta": { "label": "Visit the download center", "href": "/download?product=xconnect" }
+    "cta": {
+      "label": "Visit the download center",
+      "href": "/download?product=xconnect"
+    }
   },
   "faq": {
     "title": "Frequently asked questions",
     "items": [
       {
         "question": "Who can participate?",
-        "answer": "Anyone with an XConnect Accounts account can share a referral link. First-subscription cashback applies to an eligible new user's first paid subscription. The extra 30 days for an annual plan go only to an inviter who has an active subscription. Eligibility is verified against account and order records."
+        "answer": "Anyone with an XConnect account can share a referral link. First-subscription cashback applies to an eligible new user’s first paid subscription. The extra 30 days for an annual plan go only to an inviter with an active subscription when the friend’s first annual payment completes. Eligibility is verified against account and order records."
       },
       {
         "question": "How are rewards calculated?",
@@ -86,7 +127,7 @@
       },
       {
         "question": "When can a reward be settled?",
-        "answer": "After a payment has completed a 7-day review period, the system checks that there was no refund, chargeback, dispute, or fraud finding. A reward may then become available for settlement. Available rewards still require manual review; the referral center shows the actual status for your account."
+        "answer": "After a payment has completed a 7-day review period, the service checks that there was no refund, chargeback, dispute, or fraud finding. A reward may then become available for settlement. Available rewards still require manual review; the referral center shows your current status."
       },
       {
         "question": "What happens if my friend gets a refund or files a chargeback?",
@@ -94,7 +135,7 @@
       },
       {
         "question": "Who receives the 30 annual-plan days?",
-        "answer": "The days are added to the active subscription of the inviter, not the invited friend's account. Each eligible new user's first annual purchase can add 30 days to the inviter's subscription. Qualifying referrals can accumulate."
+        "answer": "The days are added to the inviter’s subscription, not the invited friend’s account. If the inviter has an active subscription when a friend’s first annual payment completes, 30 days are added. Qualifying referrals can accumulate."
       },
       {
         "question": "Can a referral be changed or counted more than once?",
@@ -128,7 +169,7 @@
       },
       {
         "title": "3. Annual subscription extension",
-        "body": "The inviter must have an active subscription when the reward is confirmed. Each new user who makes a first eligible annual purchase through a valid referral adds 30 days to the inviter's XConnect subscription. Days are recorded in the inviter's actual subscription entitlement ledger and can accumulate. The referred user does not receive extra subscription days under this term."
+        "body": "The inviter must have an active subscription when the referred user’s first eligible annual subscription payment completes. Each new user who completes a first annual subscription through a valid referral adds 30 days to the inviter’s XConnect subscription. Days can accumulate. The referred user does not receive extra subscription days under this term."
       },
       {
         "title": "4. Payment review and settlement",
@@ -143,18 +184,18 @@
         "body": "Referrals are one level only, and each referred user may be attributed to one inviter. Attribution cannot be duplicated after confirmation. Self-referrals, fake accounts, attribution manipulation, promotion abuse, fraudulent transactions, and attempts to bypass these rules are prohibited. XWork Technologies LLC may review unusual records, delay them, or cancel rewards that do not qualify."
       },
       {
-        "title": "7. Accounts, privacy, and platform rules",
+        "title": "7. Account, privacy, and platform rules",
         "body": "Users must follow the XConnect terms of service, privacy notice, and applicable local law. Referral history uses masked account details. Purchase, refund, and external-link rules of the Apple App Store, Google Play, and other distribution platforms continue to apply; this campaign does not promise or change a payment route allowed by those platforms."
       },
       {
         "title": "8. Interpretation and support",
-        "body": "If campaign copy conflicts with account, invoice, or entitlement-ledger records, verified service-side records and applicable service terms govern. Contact official XConnect support about suspected errors or reward reviews. Changes to the rules will be announced through official channels; rewards confirmed before the campaign ends remain valid."
+        "body": "If campaign copy conflicts with account, invoice, or subscription records, verified service-side records and applicable service terms govern. Contact official XConnect support about suspected errors or reward reviews. Changes to the rules will be announced through official channels; rewards confirmed before the campaign ends remain valid."
       }
     ]
   },
   "center": {
     "title": "My referral center",
-    "description": "Only real referral, reward, and subscription-entitlement records for the signed-in account appear here.",
+    "description": "View your referral history, reward progress, and subscription extensions.",
     "summary": {
       "title": "Reward summary",
       "successfulInvites": "Successful referrals",
@@ -215,7 +256,7 @@
         "after": "Valid through after extension",
         "status": "Status"
       },
-      "empty": "No annual-referral extensions yet. Qualifying days are recorded in your subscription entitlement ledger.",
+      "empty": "No annual-referral extensions yet. Qualifying days will appear in your subscription.",
       "error": "Could not load subscription extension history. Try again shortly."
     },
     "statuses": {
