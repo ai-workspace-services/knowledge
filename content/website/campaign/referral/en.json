@@ -1,0 +1,289 @@
+{
+  "schemaVersion": 1,
+  "locale": "en",
+  "campaign": {
+    "id": "xconnect-referral-2026",
+    "startAt": "2026-10-12T16:00:00Z",
+    "endAt": "2026-12-31T15:59:59Z",
+    "timezone": "Asia/Shanghai",
+    "cashbackRatePercent": 10,
+    "annualExtensionDays": 30,
+    "settlementHoldDays": 7
+  },
+  "seo": {
+    "title": "XConnect Referral Program 2026 | Earn 10% Cashback",
+    "description": "Invite new users to their first eligible paid subscription and earn 10% of the amount paid. Existing subscribers can also add 30 days to their own XConnect subscription for each eligible annual referral. Ends December 31, 2026.",
+    "ogTitle": "Invite friends. Stay connected. | XConnect Referral Program 2026",
+    "ogDescription": "Earn 10% cashback when a friend completes a first eligible subscription. Eligible annual referrals also add 30 days to the inviter's subscription.",
+    "ogImage": "/marketing/xconnect/ai-connectivity-hero.png"
+  },
+  "hero": {
+    "eyebrow": "XCONNECT REFERRAL PROGRAM · 2026",
+    "title": "Invite friends. Stay connected.",
+    "subtitle": "Earn 10% cashback on each first eligible subscription",
+    "body": "Invite new users to XConnect during the campaign. When a friend completes a first eligible subscription, you can earn 10% of the amount paid. If you have an active subscription when your friend’s first annual payment completes, 30 days can also be added to your subscription.",
+    "primaryCta": {
+      "label": "Create an account and get your link",
+      "href": "/register"
+    },
+    "secondaryCta": {
+      "label": "Sign in to the referral center",
+      "href": "/referrals"
+    },
+    "campaignWindow": "Campaign period: October 13, 2026, 12:00 a.m. through December 31, 2026, 11:59 p.m. (Beijing time)"
+  },
+  "rewards": {
+    "title": "Two rewards, earned for each eligible referral",
+    "items": [
+      {
+        "id": "cashback",
+        "title": "10% cashback on the first subscription",
+        "description": "When a friend completes a first monthly or annual subscription, you earn 10% of the amount paid.",
+        "label": "Cash back"
+      },
+      {
+        "id": "annual-extension",
+        "title": "An extra 30 days for an annual referral",
+        "description": "If you have an active subscription when your friend’s first annual payment completes, you get 30 extra days.",
+        "label": "Subscription extension"
+      }
+    ],
+    "note": "Cashback is based on a verified first payment, not a list price, pre-discount amount, or calculator estimate.",
+    "daysUnit": "days"
+  },
+  "calculator": {
+    "title": "Estimate your referral rewards",
+    "description": "Enter an expected number of successful referrals, the amount each friend pays for their first subscription, and the plan type. Estimates are for illustration only; final rewards depend on payment records and eligibility verified by the service.",
+    "fields": {
+      "invitees": {
+        "label": "Expected successful referrals",
+        "hint": "Estimate one first eligible subscription per friend."
+      },
+      "amount": {
+        "label": "Amount paid by each friend",
+        "hint": "Use the amount paid at checkout."
+      },
+      "currency": {
+        "label": "Currency",
+        "hint": "The estimate uses this currency and does not convert exchange rates."
+      },
+      "planType": {
+        "label": "Friend's first subscription plan"
+      },
+      "activeSubscription": {
+        "label": "I have an active subscription when my friend’s payment completes",
+        "hint": "When unchecked, the estimated annual extension is zero days."
+      }
+    },
+    "planOptions": {
+      "monthly": {
+        "label": "Monthly",
+        "extensionEligible": false
+      },
+      "annual": {
+        "label": "Annual",
+        "extensionEligible": true
+      }
+    },
+    "result": {
+      "cashback": "Estimated inviter cashback",
+      "extension": "Estimated days added to inviter's subscription",
+      "extensionEligibility": "The inviter must have an active subscription when the friend’s first annual payment completes to receive the 30-day extension.",
+      "formula": "Estimated cashback = first amount paid × 10% × successful referrals. Estimated annual days = eligible annual referrals × 30 days.",
+      "disclaimer": "The calculator does not create a reward or settlement request. A payment must complete a 7-day review period with no refund, dispute, or fraud finding before a reward may become available for settlement."
+    }
+  },
+  "steps": {
+    "title": "Three steps to get started",
+    "items": [
+      {
+        "title": "Create or sign in to your XConnect account",
+        "description": "Sign in with your XConnect account, or register for one."
+      },
+      {
+        "title": "Download and use XConnect",
+        "description": "Visit the download center, choose a client for your device, and sign in."
+      },
+      {
+        "title": "Share your personal referral link",
+        "description": "Copy or share your link from the referral center. A friend who registers through it and completes a first eligible paid subscription during the campaign can count as a referral."
+      }
+    ],
+    "cta": {
+      "label": "Visit the download center",
+      "href": "/download?product=xconnect"
+    }
+  },
+  "faq": {
+    "title": "Frequently asked questions",
+    "items": [
+      {
+        "question": "Who can participate?",
+        "answer": "Anyone with an XConnect account can share a referral link. First-subscription cashback applies to an eligible new user’s first paid subscription. The extra 30 days for an annual plan go only to an inviter with an active subscription when the friend’s first annual payment completes. Eligibility is verified against account and order records."
+      },
+      {
+        "question": "How are rewards calculated?",
+        "answer": "Cashback is 10% of the amount paid for a friend's first eligible paid subscription. Both monthly and annual plans qualify. Discounts, taxes, and currency follow the verified payment invoice; list prices and calculator estimates do not determine rewards. Renewals do not earn cashback."
+      },
+      {
+        "question": "When can a reward be settled?",
+        "answer": "After a payment has completed a 7-day review period, the service checks that there was no refund, chargeback, dispute, or fraud finding. A reward may then become available for settlement. Available rewards still require manual review; the referral center shows your current status."
+      },
+      {
+        "question": "What happens if my friend gets a refund or files a chargeback?",
+        "answer": "Orders with refunds, chargebacks, payment disputes, or fraud findings do not qualify. If a related reward has already been recorded, it may be reversed or, where applicable, offset against later rewards payable."
+      },
+      {
+        "question": "Who receives the 30 annual-plan days?",
+        "answer": "The days are added to the inviter’s subscription, not the invited friend’s account. If the inviter has an active subscription when a friend’s first annual payment completes, 30 days are added. Qualifying referrals can accumulate."
+      },
+      {
+        "question": "Can a referral be changed or counted more than once?",
+        "answer": "Each new user can be attributed to one inviter only. Self-referrals and multi-level rewards are not allowed. The service confirms the referral from the valid registration attribution record; duplicate or unusual attribution may be reviewed."
+      },
+      {
+        "question": "Do confirmed rewards remain valid after the campaign ends?",
+        "answer": "Yes. Eligible orders completed during the campaign remain subject to review after it ends, and rewards confirmed under these rules continue to be processed. The campaign closes at 11:59 p.m. Beijing time on December 31, 2026."
+      },
+      {
+        "question": "What information about friends appears in my referral history?",
+        "answer": "The referral center shows only a masked account identifier, referral time, plan type, and necessary reward status. It does not show a friend's full email address, payment credentials, or other sensitive information."
+      },
+      {
+        "question": "Can iOS or Android users participate from the app?",
+        "answer": "In-app purchases and external links may vary by platform, region, and store rules. Follow the purchase and link flows currently offered by the client. This campaign does not change app-store payment rules."
+      }
+    ]
+  },
+  "terms": {
+    "title": "Campaign terms",
+    "intro": "These are the rules for the XConnect Referral Program 2026. By participating or sharing a referral link, you agree to these terms.",
+    "sections": [
+      {
+        "title": "1. Campaign period and eligible orders",
+        "body": "The campaign runs from 12:00 a.m. Beijing time on October 13, 2026 through 11:59 p.m. Beijing time on December 31, 2026. A referred new user must register through a valid referral relationship during the campaign and complete a first eligible paid subscription. A qualifying order completed before the campaign ends remains eligible for review afterward."
+      },
+      {
+        "title": "2. Cashback on the first subscription",
+        "body": "Only a referred user's first eligible paid subscription can earn cashback. The inviter receives 10% of the amount paid for that first subscription. Monthly and annual plans qualify. Renewals, duplicate orders, unpaid orders, and non-subscription purchases do not earn cashback under this campaign. There is no campaign limit on the number of referrals, but each reward must independently meet eligibility and risk checks."
+      },
+      {
+        "title": "3. Annual subscription extension",
+        "body": "The inviter must have an active subscription when the referred user’s first eligible annual subscription payment completes. Each new user who completes a first annual subscription through a valid referral adds 30 days to the inviter’s XConnect subscription. Days can accumulate. The referred user does not receive extra subscription days under this term."
+      },
+      {
+        "title": "4. Payment review and settlement",
+        "body": "Reward amounts use the amount and currency on the verified payment invoice for the first subscription. After a payment completes a 7-day review period with no refund, chargeback, dispute, or fraud finding, the reward may become available for settlement. Availability does not mean payment has been made. Cash settlements require manual review; the referral center shows the actual processing status."
+      },
+      {
+        "title": "5. Refunds, disputes, and reversals",
+        "body": "Refunded, charged-back, disputed, or fraudulent orders are ineligible. If a reward has already been issued or subscription days recorded, XWork Technologies LLC may reverse the reward or, where permitted by law and applicable rules, offset it against future rewards payable."
+      },
+      {
+        "title": "6. Attribution and prohibited conduct",
+        "body": "Referrals are one level only, and each referred user may be attributed to one inviter. Attribution cannot be duplicated after confirmation. Self-referrals, fake accounts, attribution manipulation, promotion abuse, fraudulent transactions, and attempts to bypass these rules are prohibited. XWork Technologies LLC may review unusual records, delay them, or cancel rewards that do not qualify."
+      },
+      {
+        "title": "7. Account, privacy, and platform rules",
+        "body": "Users must follow the XConnect terms of service, privacy notice, and applicable local law. Referral history uses masked account details. Purchase, refund, and external-link rules of the Apple App Store, Google Play, and other distribution platforms continue to apply; this campaign does not promise or change a payment route allowed by those platforms."
+      },
+      {
+        "title": "8. Interpretation and support",
+        "body": "If campaign copy conflicts with account, invoice, or subscription records, verified service-side records and applicable service terms govern. Contact official XConnect support about suspected errors or reward reviews. Changes to the rules will be announced through official channels; rewards confirmed before the campaign ends remain valid."
+      }
+    ]
+  },
+  "center": {
+    "title": "My referral center",
+    "description": "View your referral history, reward progress, and subscription extensions.",
+    "summary": {
+      "title": "Reward summary",
+      "successfulInvites": "Successful referrals",
+      "cashbackTotal": "Total cashback",
+      "cashbackPending": "Pending confirmation",
+      "cashbackAvailable": "Available for settlement",
+      "cashbackSettled": "Settled",
+      "extensionDaysTotal": "Subscription days added",
+      "currencyNote": "Rewards in different currencies are shown separately and are not automatically converted."
+    },
+    "link": {
+      "title": "Your personal referral link",
+      "description": "A friend's first eligible paid subscription after registering through this link can appear in your referral history.",
+      "copy": "Copy link",
+      "copied": "Copied",
+      "share": "Share link",
+      "showQr": "Show QR code",
+      "hideQr": "Hide QR code",
+      "loading": "Creating your referral link…",
+      "unavailable": "Your referral link is temporarily unavailable. Try again shortly."
+    },
+    "records": {
+      "title": "Referral history",
+      "columns": {
+        "invitedAt": "Referral date",
+        "account": "Friend's account",
+        "plan": "First subscription",
+        "cashback": "Cashback reward",
+        "extension": "Subscription extension",
+        "status": "Status"
+      },
+      "accountPrivacy": "Account details are masked",
+      "empty": "No eligible referral records yet. Share your personal link; qualifying first subscriptions will appear here.",
+      "loading": "Loading referral history…",
+      "error": "Could not load referral history. Try again shortly.",
+      "historyLimitNote": "Recent referral, settlement, and subscription extension records are shown. Reward totals include all records. Contact official support for earlier records."
+    },
+    "settlements": {
+      "title": "Cash settlement",
+      "pending": "Pending confirmation",
+      "available": "Available for settlement",
+      "settled": "Settled",
+      "review": "Under manual review",
+      "reviewNote": "After an order passes the 7-day payment review, the reward can enter settlement review. Available does not mean paid.",
+      "request": "Request settlement",
+      "requestUnavailable": "There are no rewards available to request for settlement.",
+      "history": "Settlement history",
+      "empty": "No settlement records yet.",
+      "error": "Settlement information is temporarily unavailable. Try again shortly."
+    },
+    "extensions": {
+      "title": "Subscription extension history",
+      "columns": {
+        "invite": "Related referral",
+        "days": "Days added",
+        "appliedAt": "Recorded on",
+        "before": "Valid through before extension",
+        "after": "Valid through after extension",
+        "status": "Status"
+      },
+      "empty": "No annual-referral extensions yet. Qualifying days will appear in your subscription.",
+      "error": "Could not load subscription extension history. Try again shortly."
+    },
+    "statuses": {
+      "pending": "Pending confirmation",
+      "hold": "Payment review period",
+      "available": "Available for settlement",
+      "review": "Under review",
+      "settled": "Settled",
+      "applied": "Recorded",
+      "reversed": "Reversed",
+      "rejected": "Not eligible"
+    },
+    "actions": {
+      "retry": "Retry",
+      "refresh": "Refresh records",
+      "signIn": "Sign in to view your referral center"
+    },
+    "emptyStates": {
+      "summary": "Your reward summary will appear after you have eligible referrals.",
+      "link": "Sign in to create your personal referral link."
+    },
+    "errors": {
+      "unauthorized": "Your sign-in has expired. Please sign in again.",
+      "forbidden": "You cannot view this referral center.",
+      "network": "The network is unavailable; your records could not be refreshed.",
+      "settlement": "The settlement request did not complete. Refresh the status before trying again.",
+      "copy": "Could not copy the link. Select and copy it manually."
+    }
+  }
+}
