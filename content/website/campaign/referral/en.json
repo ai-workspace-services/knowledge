@@ -229,9 +229,9 @@
       },
       "accountPrivacy": "Account details are masked",
       "empty": "No eligible referral records yet. Share your personal link; qualifying first subscriptions will appear here.",
-      "loadMore": "Load more",
       "loading": "Loading referral history…",
-      "error": "Could not load referral history. Try again shortly."
+      "error": "Could not load referral history. Try again shortly.",
+      "historyLimitNote": "Recent referral and settlement records are shown. Totals include all records. Contact official support for earlier records."
     },
     "settlements": {
       "title": "Cash settlement",
