@@ -4,6 +4,7 @@ navigation:
   links:
     - { label: "Product", href: "#xconnect-title" }
     - { label: "Guide", href: "https://github.com/ai-workspace-services/knowledge/blob/main/docs/zh/overseas-ai-service-access-guide.md" }
+    - { label: "Referral program", href: "/referral" }
     - { label: "GitHub", href: "https://github.com/ai-workspace-xstream/xconnect-app" }
   cta: { label: "Sign up", href: "/register" }
   copyright: "© 2026 XWork Technologies LLC. All rights reserved."
