@@ -4,7 +4,7 @@ description: 基于四仓职责边界、40 个工作流与 Vault 路径契约的
 slug: multi-cloud-platform-engineering-whitepaper
 lang: zh
 date: 2026-10-06
-version: "1.3"
+version: "1.4"
 status: review-draft
 tags:
   - platform-engineering
@@ -18,7 +18,7 @@ category: reference
 
 # 多云平台工程技术白皮书
 
-**版本：1.3 · 源码盘点基线：2026-10-05 · 运行与额度补充：2026-10-06 · 跨仓状态补充：2026-10-07 · 状态：架构与契约评审稿**
+**版本：1.4 · 源码盘点基线：2026-10-05 · 跨仓状态补充：2026-10-07 · UAT Selfhost 环境隔离核查：2026-10-14 · 状态：架构与契约评审稿**
 
 [English version](multi-cloud-platform-engineering-whitepaper.en.md) · [参考资料总览](overview.zh.md)
 
@@ -973,6 +973,21 @@ GitOps 保存域名/模式/上游声明，IaC 执行 DNS、Worker domain 等云�
 
 合并与启用顺序：**IaC owner → Toolkit caller 与 Edge guarded 发布入口 → GitOps API 声明**。代码 PR 与无凭据路由 plan 可先审查；实际切换仍必须经过新目标完整业务一致性、最终追平、单写者和生产入口验收，不能用“文档/PR/plan 成功”跳过数据门禁。
 
+### 11.9 2026-10-14 Web SaaS UAT Selfhost 环境隔离核查
+
+本次只核查 `open-platform-uat / web-saas-uat`，没有改动主机、DNS、防火墙、数据库或 PROD。SSH 检查发现该 UAT 主机运行中的 Console 容器报告 `RUNTIME_ENV=prod`，浏览器 Accounts URL 指向 `https://accounts.svc.plus`；Doco-CD 当前轮询 GitOps `main`，根配置选用 `.env.prod`。因此“主机位于 UAT 云项目”不代表应用运行时已经是 UAT，当前状态属于环境配置串线，不能作为 UAT 发布验收。
+
+| 用途 | Selfhost UAT 规范主机名 | Serverless UAT 入口/连接方式 |
+| --- | --- | --- |
+| 浏览器 Console | `console-selfhost-uat.onwalk.net` | `console-serverless-uat.onwalk.net` |
+| Accounts API / 登录 | `accounts-selfhost-uat.onwalk.net` | `accounts-serverless-uat.onwalk.net` |
+| Billing API | `billing-selfhost-uat.onwalk.net` | `billing-serverless-uat.onwalk.net`，须与实际 Cloud Run/Worker 路由一致 |
+| PostgreSQL | `postgresql-selfhost-uat.onwalk.net:15433` 仅在隧道、TLS 和来源 ACL 验收后启用；5432 保持容器/私网内部 | Supabase 管理的连接端点，从 UAT Vault 注入；不创建或宣称 `postgresql-serverless-uat.onwalk.net` 是公网数据库入口 |
+
+`console-uat.onwalk.net`、`accounts-uat.onwalk.net` 等未带模式的别名只用于明确选定当前模式的兼容入口；应用间调用、回调、健康检查和环境配置必须优先使用带 `selfhost-uat` 或 `serverless-uat` 的专属名称。Selfhost 与 Serverless 的数据库、凭据、应用 URL 和发布版本分别管理，禁止通过别名或缺省值回退到 PROD。
+
+现场另发现 Selfhost 专属 Console/Accounts/Billing 域名解析到旧地址 `35.229.255.120`，而 VM 当前 NAT 地址为 `34.81.173.44`；主机内 Caddy 可按专属 Host 路由，外部到该 VM 的 TLS 握手失败。故域名规划和内部路由检查已完成，公网 DNS、TLS/防火墙路径及受限数据库隧道仍未验收。本节记录的是故障与目标合同，不声称主机已修复或发布成功。修复顺序为：确认目标 GitOps/不可变镜像及 UAT 环境变量 → 由 Playbooks 在该主机切换 Doco-CD 到 UAT 专属 target → 验证服务运行时不再读取 PROD 端点 → 由 IaC/DNS owner 更新并验证记录 → 从外部复测 HTTPS/API；数据库端口仅在来源限制通过后单独验收。任何一步失败均停止，不转用公共别名或 PROD 服务。
+
 ## 12. 差异登记与实施路线
 
 ### 12.1 原盘点的七项差异
@@ -986,6 +1001,7 @@ GitOps 保存域名/模式/上游声明，IaC 执行 DNS、Worker domain 等云�
 | D05 | CICD/WEB_SAAS 历史混装，2026-07-22 旧盘点 | 完整消费者、独立凭据、备份与迁移证据 |
 | D06 | generic 入口仍有 default account / 旧仓默认值，多账号成熟度不一 | Toolkit 输入、IaC 身份/state、GitOps 账号合同 |
 | D07 | 升级 adapter 空登记，Hybrid 当前 UAT-only | 数据 owner 与真实演练前提；不预宣称 PROD 能力 |
+| D08 | `web-saas-uat` 位于 UAT 云项目，但当前读取 `.env.prod` 且容器报告 PROD 运行端点；Selfhost canonical DNS/TLS 尚未通过公网验证 | UAT 专属 Doco-CD target 与不可变镜像/环境变量；由 IaC owner 验证公网 DNS/TLS；Serverless Supabase 连接仍由 Provider 管理；禁止 PROD 回退 |
 
 第 8.4 节的 AI Aggregator 文档差异是白皮书整合时另行补记，未把它伪装成原七项盘点已覆盖的结论。
 
