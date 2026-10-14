@@ -4,7 +4,7 @@ description: Architecture, delivery governance, and migration contracts grounded
 slug: multi-cloud-platform-engineering-whitepaper
 lang: en
 date: 2026-10-05
-version: "1.2"
+version: "1.4"
 status: review-draft
 tags:
   - platform-engineering
@@ -18,7 +18,7 @@ category: reference
 
 # Multi-Cloud Platform Engineering Technical White Paper
 
-**Version 1.3 · Source audit baseline: October 5, 2026 · Runtime and quota supplement: October 6, 2026 · Cross-repository status supplement: October 7, 2026 · Status: architecture and contract review draft**
+**Version 1.4 · Source audit baseline: October 5, 2026 · Cross-repository status supplement: October 7, 2026 · UAT Selfhost isolation review: October 14, 2026 · Status: architecture and contract review draft**
 
 [中文版](multi-cloud-platform-engineering-whitepaper.zh.md) · [Reference overview](overview.en.md)
 
@@ -663,6 +663,21 @@ The latest Toolkit [run 37612058777](https://github.com/ai-workspace-infra/platf
 
 For PROD data movement, the 53-table schema is a prerequisite. The four automated read-only comparisons are source/target user count, the email set and corresponding values matched per email, password-hash field values, and Proxy UUID field values. Login, subscription, quota, billing, and single-writer checks are manual business acceptance; no business API or synthetic pass is used. Writer pause, final catch-up, rollback preconditions, and independent HTTPS acceptance remain separate gates. Cloudflare Pages/Workers continue to serve `xworktech.com` and `console.svc.plus`; Edge Gateway selects Accounts/Billing serverless or selfhost, while IaC owns the mode-qualified Accounts/Billing CNAME declarations. GitOps [PR #392](https://github.com/ai-workspace-infra/gitops/pull/392) is merged and declares the three PROD topology modes, but a declaration is not a live DNS/Worker effect.
 
+### 11.9 October 14, 2026: Web SaaS UAT Selfhost environment isolation
+
+This review was limited to `open-platform-uat / web-saas-uat`. It did not change the host, DNS, firewall, database, or PROD. SSH inspection found the Console container on this UAT host reporting `RUNTIME_ENV=prod`, with its browser Accounts URL set to `https://accounts.svc.plus`; Doco-CD polls GitOps `main` and the root configuration selects `.env.prod`. A host in the UAT cloud project is therefore not evidence of a UAT application runtime. This is an environment-configuration leak and does not qualify as UAT release acceptance.
+
+| Purpose | Selfhost UAT canonical hostname | Serverless UAT entry/connection |
+| --- | --- | --- |
+| Browser Console | `console-selfhost-uat.onwalk.net` | `console-serverless-uat.onwalk.net` |
+| Accounts API / sign-in | `accounts-selfhost-uat.onwalk.net` | `accounts-serverless-uat.onwalk.net` |
+| Billing API | `billing-selfhost-uat.onwalk.net` | `billing-serverless-uat.onwalk.net`, subject to matching real Cloud Run/Worker routes |
+| PostgreSQL | `postgresql-selfhost-uat.onwalk.net:15433` only after tunnel, TLS, and source-ACL acceptance; keep 5432 container/private | Supabase-managed connection endpoint injected from UAT Vault; do not claim `postgresql-serverless-uat.onwalk.net` is a public database endpoint |
+
+Unqualified aliases such as `console-uat.onwalk.net` and `accounts-uat.onwalk.net` are compatibility entry points only when a runtime mode is explicitly selected. Service calls, callbacks, health checks, and environment configuration should use mode-qualified names. Selfhost and Serverless databases, credentials, application URLs, and release versions remain isolated; aliases or defaults must never fall back to PROD.
+
+The Selfhost Console/Accounts/Billing names currently resolve to stale address `35.229.255.120`, while the VM NAT address is `34.81.173.44`. Host-local Caddy routes by the dedicated Host values, but external TLS to the VM fails. Domain planning and local route checks are complete; public DNS, TLS/firewall reachability, and the restricted database tunnel remain unaccepted. This section records the observed fault and target contract, not a successful host repair or release. Repair order: pin the GitOps target and immutable images with UAT variables; switch Doco-CD on this host to the UAT-only target through Playbooks; verify runtime values no longer reference PROD; update and verify DNS through the IaC/DNS owner; then retest HTTPS/API externally. Check the database port separately only after source restrictions pass. Stop on any failed stage; do not fall back to public aliases or PROD services.
+
 ## 12. Gap register and implementation roadmap
 
 ### 12.1 Seven gaps from the original audit
@@ -676,6 +691,7 @@ For PROD data movement, the 53-table schema is a prerequisite. The four automate
 | D05 | CICD/WEB_SAAS legacy mixing and a 2026-07-22 inventory | Complete consumers, independent credentials, backup/migration evidence |
 | D06 | Generic entries retain default accounts/old repository defaults; uneven multi-account maturity | Toolkit inputs, IaC identity/state, GitOps account contracts |
 | D07 | Empty upgrade adapter registry and UAT-only Hybrid | Data owners and live rehearsal prerequisites; no premature PROD capability claim |
+| D08 | `web-saas-uat` is in the UAT cloud project but currently consumes `.env.prod` and reports PROD runtime endpoints; Selfhost canonical DNS/TLS is not publicly verified | UAT-only Doco-CD target and immutable image/env pins; validate public DNS/TLS through IaC owner; keep Serverless Supabase provider-managed; prohibit PROD fallback |
 
 The AI Aggregator documentation discrepancy in section 8.4 was recorded during white-paper consolidation. It is not presented as a finding already covered by the original seven-gap register.
 
