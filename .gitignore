@@ -3,3 +3,8 @@
 *~
 .idea/
 .vscode/
+node_modules/
+scripts/pdf/node_modules/
+output/
+dist/
+*.pdf
