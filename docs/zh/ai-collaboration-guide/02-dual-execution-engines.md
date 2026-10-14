@@ -19,6 +19,8 @@ category: ai-architecture
 > **字数统计**：约 1,320 字  
 > **核心导读**：Chat 位于整个团队的控制面，负责 Context 治理与混合路由分发；而 Worker 是极致性价比的批量利器。通过引入轻量开源与本地端模型，打造兼具成本与隐私的执行底座。
 
+![工程主力与闭环验证决策画布](../../../assets/images/ai-team-bento-02-workhorse.png)
+
 ---
 
 ### 一、Chat 不是打字机，而是团队控制面

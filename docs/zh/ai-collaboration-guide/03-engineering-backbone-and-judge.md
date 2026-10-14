@@ -20,6 +20,8 @@ category: ai-architecture
 > **字数统计**：约 1,480 字  
 > **核心导读**：工程能力不等于跑分，而是 Model × Context × Tools × Harness × Verification。颠覆直觉的是，“第二强”模型与开放前沿模型统治了日常代码工程，而最强模型应该退居二线充当审查裁判（Judge）。
 
+![顶配裁决与深度推理策略决策画布](../../../assets/images/ai-team-bento-03-judge.png)
+
 ---
 
 ### 一、Engineer：真正动手做工程的主力军

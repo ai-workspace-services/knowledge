@@ -20,6 +20,8 @@ category: ai-architecture
 > **Word Count**: ~1,310 words  
 > **Key Takeaway**: The common flaw of large models is mistaking internal reasoning for empirical truth. Production systems strictly decouple Reasoning from Retrieval, while relying on gated Specialists for high-barrier domains like cybersecurity, extreme science, and Computer Use.
 
+![Hybrid AI Gateway & Open-Weight Array Decision Canvas](../../../assets/images/ai-team-bento-04-hybrid-open.png)
+
 ---
 
 ### I. The Core Vulnerability: Confusing Reasoning with Empirical Fact

@@ -32,24 +32,25 @@ This series provides an enterprise-ready framework for software engineering team
 
 ### 📚 5-Part Serialized Column (~1,200 - 1,500 words each)
 
-1. **[Part 1: Cognitive Shift — Moving Beyond Model Benchmarks to a Hybrid 6-Agent Virtual Team](01-cognitive-shift.md)**  
-   *The obsolescence of prompt tricks; the 2026 dual-track landscape (Big Four commercial giants and nine open-weight ecosystems); shifting from Model Selection to Model Routing.*
-
-2. **[Part 2: Dual Execution Engines — Chat Control Plane & Worker's 1,000x Rule](02-dual-execution-engines.md)**  
-   *Upfront problem scoping via Chat; high-throughput bulk execution with Worker models (Cheap + Fast + Scalable); local edge deployments (Gemma 4 / Qwen 27B) for data privacy.*
-
-3. **[Part 3: The Engineering Backbone — Why Sub-flagships Rule and Frontier Models Adjudicate](03-engineering-backbone-and-judge.md)**  
-   *Model $\neq$ Agent; why GPT-6.1 Sol, Sonnet 5.5, Grok 4.7, and DeepSeek V4-Pro power day-to-day software delivery; four architect archetypes; frontier models serving as impartial Judges in automated design reviews.*
-
-4. **[Part 4: Research Grounding & Domain Defense — The Researcher and Specialist Roles](04-research-grounding-and-specialist.md)**  
-   *Decoupling reasoning from factual retrieval; Researcher evidence schemas (Kimi K3 / Deep Research / Grok+X); Specialist moats across gated cybersecurity (Mythos / Argon / GLM-5.3), frontier science, and Computer Use (MiniMax M3 / Grok Bot).*
-
-5. **[Part 5: Closed-Loop Lifecycle & Hybrid Routing — The Human Role and Open Licensing Governance](05-closed-loop-and-model-routing.md)**  
-   *The 6-tier on-demand escalation ladder; automated software lifecycle; open-weight licensing compliance matrix (MIT, Apache 2.0, OpenMDW vs custom restrictions); promoting human engineers from Operator to Owner; next-gen AI Workspace hybrid routing.*
+| Part | Decision Canvas / Poster | Article Link | Core Takeaway & Architecture |
+| :--- | :--- | :--- | :--- |
+| **Part 1** | [![Team Topology Canvas](../../../assets/images/ai-team-bento-01-routing.png)](01-cognitive-shift.md) | [**Cognitive Shift**: Moving Beyond Benchmarks to a 6-Agent Virtual Team](01-cognitive-shift.md) | The obsolescence of prompt tricks; the 2026 dual-track landscape (Big Four commercial giants and nine open-weight ecosystems); shifting from Model Selection to Model Routing. |
+| **Part 2** | [![Engineering Workhorse Canvas](../../../assets/images/ai-team-bento-02-workhorse.png)](02-dual-execution-engines.md) | [**Dual Execution Engines**: Chat Control Plane & Worker's 1,000x Rule](02-dual-execution-engines.md) | Upfront problem scoping via Chat; high-throughput bulk execution with Worker models (Cheap + Fast + Scalable); local edge deployments (Gemma 4 / Qwen 27B) for data privacy. |
+| **Part 3** | [![Judge Decision Canvas](../../../assets/images/ai-team-bento-03-judge.png)](03-engineering-backbone-and-judge.md) | [**The Engineering Backbone**: Why Sub-flagships Rule and Frontier Models Adjudicate](03-engineering-backbone-and-judge.md) | Model $\neq$ Agent; why GPT-6.1 Sol, Sonnet 5.5, Grok 4.7, and DeepSeek V4-Pro power day-to-day software delivery; four architect archetypes; frontier models as impartial Judges. |
+| **Part 4** | [![Hybrid Gateway Canvas](../../../assets/images/ai-team-bento-04-hybrid-open.png)](04-research-grounding-and-specialist.md) | [**Research Grounding & Domain Defense**: Researcher and Specialist Roles](04-research-grounding-and-specialist.md) | Decoupling reasoning from factual retrieval; Researcher evidence schemas (Kimi K3 / Deep Research / Grok+X); Specialist moats across gated cybersecurity, frontier science, and GUI. |
+| **Part 5** | [![Human Moat Canvas](../../../assets/images/ai-team-bento-05-human-owner.png)](05-closed-loop-and-model-routing.md) | [**Closed-Loop Lifecycle & Hybrid Routing**: Human Role and Licensing Governance](05-closed-loop-and-model-routing.md) | The 6-tier on-demand escalation ladder; automated software lifecycle; open-weight licensing compliance matrix; promoting humans from Operator to Owner; AI Workspace hybrid routing. |
 
 ---
 
 ## Visual Assets Directory
 
-- Long-Form / X Cover (16:9 Landscape): `assets/images/ai-team-collaboration-wechat-x-cover.jpg`
-- Mobile Card Cover (3:4 Portrait): `assets/images/ai-team-collaboration-xhs-cover.jpg`
+### 1. Series Global Covers
+- **Flagship / X Cover (16:9 Landscape Topology)**: `assets/images/ai-team-collaboration-wechat-x-cover.jpg`
+- **Mobile Card Cover (3:4 Portrait Hexagonal Badge)**: `assets/images/ai-team-collaboration-xhs-cover.jpg`
+
+### 2. 5-Part Bento Grid Decision Canvases & Posters (896 × 1024)
+- **Part 1 Canvas**: `assets/images/ai-team-bento-01-routing.png` (*01 Team Topology: From Model Selection to Model Routing*)
+- **Part 2 Canvas**: `assets/images/ai-team-bento-02-workhorse.png` (*02 Workhorse Revolution: Sub-flagships & Deterministic Verification*)
+- **Part 3 Canvas**: `assets/images/ai-team-bento-03-judge.png` (*03 Top-Tier Strategy: Top Models as Impartial Judges*)
+- **Part 4 Canvas**: `assets/images/ai-team-bento-04-hybrid-open.png` (*04 Hybrid AI Gateway: Commercial for Reasoning, Open for Infrastructure*)
+- **Part 5 Canvas**: `assets/images/ai-team-bento-05-human-owner.png` (*05 Human-AI Symbiosis: AI Delivers, Humans Frame and Account*)

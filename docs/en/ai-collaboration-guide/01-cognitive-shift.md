@@ -19,6 +19,8 @@ category: ai-architecture
 > **Word Count**: ~1,350 words  
 > **Key Takeaway**: In the era of autonomous agents and deep research, prompt engineering is no longer the core leverage. Success depends on orchestrating an AI team structured around Chat, Worker, Engineer, Architect, Researcher, and Specialist roles across both commercial APIs and open-weight models.
 
+![AI Team Architecture & Role Routing Decision Canvas](../../../assets/images/ai-team-bento-01-routing.png)
+
 ---
 
 ### I. The Sunset of Prompt Engineering, The Dawn of Team Design

@@ -23,10 +23,15 @@ category: ai-architecture
 
 ## Visual Assets Overview
 
-| Platform | Aspect Ratio | Visual Style | Local File Path |
+| Category / Platform | Aspect Ratio | Visual Style & Theme | Local File Path |
 | :--- | :--- | :--- | :--- |
-| **Long-form / X / Blog** | 16:9 Landscape | Sleek dark cyber architectural schematic (Apple Keynote aesthetic, deep space nodes) | `assets/images/ai-team-collaboration-wechat-x-cover.jpg` |
-| **Card / Visual Note** | 3:4 Portrait | 3D glassmorphic tech card badge with glowing multi-role crystalline core | `assets/images/ai-team-collaboration-xhs-cover.jpg` |
+| **Global Long-form / X Cover** | 16:9 Landscape | Sleek dark cyber architectural schematic (Apple Keynote aesthetic) | `assets/images/ai-team-collaboration-wechat-x-cover.jpg` |
+| **Mobile Card Cover** | 3:4 Portrait | 3D glassmorphic tech card badge with glowing multi-role crystalline core | `assets/images/ai-team-collaboration-xhs-cover.jpg` |
+| **Part 1 Bento Canvas** | 896 × 1024 | 01 Team Topology: From Model Selection to Model Routing | `assets/images/ai-team-bento-01-routing.png` |
+| **Part 2 Bento Canvas** | 896 × 1024 | 02 Engineering Workhorse: Sub-flagships & Deterministic Verification | `assets/images/ai-team-bento-02-workhorse.png` |
+| **Part 3 Bento Canvas** | 896 × 1024 | 03 Top-Tier Strategy: Frontier Models as Impartial Judges | `assets/images/ai-team-bento-03-judge.png` |
+| **Part 4 Bento Canvas** | 896 × 1024 | 04 Hybrid AI Gateway: Commercial for Reasoning, Open for Infrastructure | `assets/images/ai-team-bento-04-hybrid-open.png` |
+| **Part 5 Bento Canvas** | 896 × 1024 | 05 Human-AI Symbiosis: AI Delivers, Humans Frame and Account | `assets/images/ai-team-bento-05-human-owner.png` |
 
 ![AI Team Architecture Overview](../../../assets/images/ai-team-collaboration-wechat-x-cover.jpg)
 

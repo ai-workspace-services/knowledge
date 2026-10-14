@@ -20,6 +20,8 @@ category: ai-architecture
 > **Word Count**: ~1,380 words  
 > **Key Takeaway**: Real engineering capability is Model × Context × Tools × Harness × Verification. Sub-flagships and open-weight models dominate day-to-day code production, while top-tier frontier models provide maximum leverage as impartial system adjudicators (Judges).
 
+![Top-Tier Adjudication & Deep Reasoning Decision Canvas](../../../assets/images/ai-team-bento-03-judge.png)
+
 ---
 
 ### I. The Engineer: The True Workhorse of AI Software Delivery
