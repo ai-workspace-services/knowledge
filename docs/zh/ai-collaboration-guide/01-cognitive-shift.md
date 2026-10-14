@@ -19,6 +19,8 @@ category: ai-architecture
 > **字数统计**：约 1,450 字  
 > **核心导读**：进入 Agent、Coding Agent、Computer Use 与 Deep Research 时代，Prompt 技巧已经退居二线。真正拉开差距的，是如何组织一个由 Chat、Worker、Engineer、Architect、Researcher、Specialist 构成的虚拟工程团队，并打通商业闭源与开放权重的混合调度。
 
+![AI 团队建制与角色路由全景决策画布](../../../assets/images/ai-team-bento-01-routing.png)
+
 ---
 
 ### 一、Prompt 技巧退场，组织架构进场

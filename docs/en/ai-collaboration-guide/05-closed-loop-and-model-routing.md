@@ -20,6 +20,8 @@ category: ai-architecture
 > **Word Count**: ~1,390 words  
 > **Key Takeaway**: As autonomous agents handle routine coding, review architectures, and invoke specialists, human engineers step into systemic ownership: framing problems, setting constraints, judging trade-offs, and governing hybrid commercial and open-weight model routing.
 
+![Human Role & Final Accountability Moat Decision Canvas](../../../assets/images/ai-team-bento-05-human-owner.png)
+
 ---
 
 ### I. The 6-Tier On-Demand Escalation Ladder

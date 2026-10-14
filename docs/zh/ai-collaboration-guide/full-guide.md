@@ -23,10 +23,15 @@ category: ai-architecture
 
 ## 视觉资产总览
 
-| 平台 | 规格 | 视觉形态 | 本地存储路径 |
+| 类别 / 平台 | 规格 | 视觉形态与主题 | 本地存储路径 |
 | :--- | :--- | :--- | :--- |
-| **微信公众号 / X** | 16:9 横版 | 六大角色协作中枢全景图（Apple Keynote 科技质感，深空色调） | `assets/images/ai-team-collaboration-wechat-x-cover.jpg` |
-| **小红书** | 3:4 竖版 | 六边形全能战队 3D 科技卡片徽章（高美感玻璃拟态、霓虹光感） | `assets/images/ai-team-collaboration-xhs-cover.jpg` |
+| **全景封面（微信 / X）** | 16:9 横版 | 六大角色协作中枢全景拓扑图（科技深空质感） | `assets/images/ai-team-collaboration-wechat-x-cover.jpg` |
+| **小红书卡片封面** | 3:4 竖版 | 六边形全能战队 3D 科技卡片徽章（玻璃拟态、霓虹光感） | `assets/images/ai-team-collaboration-xhs-cover.jpg` |
+| **第 1 篇 Bento 看板** | 896 × 1024 | 01 团队建制篇：别选模型了，设计团队，按责路由 | `assets/images/ai-team-bento-01-routing.png` |
+| **第 2 篇 Bento 看板** | 896 × 1024 | 02 工程主力篇：主力不是最强，是性价比之王，验证闭环 | `assets/images/ai-team-bento-02-workhorse.png` |
+| **第 3 篇 Bento 看板** | 896 × 1024 | 03 顶配裁决篇：顶配不改 YAML，顶配做裁决，定位根因 | `assets/images/ai-team-bento-03-judge.png` |
+| **第 4 篇 Bento 看板** | 896 × 1024 | 04 混合网关篇：商业做裁决，开源做基建，合规不出域 | `assets/images/ai-team-bento-04-hybrid-open.png` |
+| **第 5 篇 Bento 看板** | 896 × 1024 | 05 人类终局篇：AI 负责交付，人负责定义，人负责担责 | `assets/images/ai-team-bento-05-human-owner.png` |
 
 ![全景架构图](../../../assets/images/ai-team-collaboration-wechat-x-cover.jpg)
 
@@ -63,6 +68,8 @@ $$\text{Chat} \longrightarrow \text{Worker} \longrightarrow \text{Engineer} \lon
 ---
 
 ### 一、认知升级：从“模型选秀”转向“设计 AI 团队”
+
+![AI 团队建制与角色路由全景决策画布](../../../assets/images/ai-team-bento-01-routing.png)
 
 截至 2026 年 10 月，主流 AI 已经形成了商业闭源与开放权重并行的完整能力阶梯：
 
@@ -135,9 +142,14 @@ $$\text{Engineering Power} = \text{Model} \times \text{Context} \times \text{Too
 - **Grok 4.7**：具备强大的自我反思与长时间运行能力；
 - **DeepSeek V4-Pro**：开放权重阵营中最强基础设施与代码落地模型。
 
+![工程主力与闭环验证决策画布](../../../assets/images/ai-team-bento-02-workhorse.png)
+
 你不会让 CTO 每天坐在工位上改 YAML，同样，也不应该把昂贵且耗时的 Frontier 模型耗费在日常的 CRUD 和单元测试编写上。
 
 #### 5. Architect：核心不在于写代码，而在于当“裁判（Judge）”
+
+![顶配裁决与深度推理策略决策画布](../../../assets/images/ai-team-bento-03-judge.png)
+
 Architect 的价值不是“写得快”，而在于：
 * 判明什么该写、什么绝不能写；
 * 评估系统故障域（Failure Domain）与安全穿透风险；
@@ -186,10 +198,12 @@ Architect 的价值不是“写得快”，而在于：
 
 ### 三、开放权重（Open-weight）阵营的许可证审查矩阵
 
+![混合网关与开源模型矩阵决策画布](../../../assets/images/ai-team-bento-04-hybrid-open.png)
+
 自建 AI Workspace 或企业级 Gateway 时，**必须严格区分“真开源”与“开放权重”**：
 
 | 模型家族 | 权重开放 | 开放数据/Recipe | 许可证类型 | 商业部署评价 |
-| :--- | :---: | :---: | :--- | :--- |
+| :--- | :--- | :--- | :--- | :--- |
 | **DeepSeek V4-Pro / Flash** | ✅ | ❌ | **MIT License** | 🟢 极度友好，无任何商业营收附加限制 |
 | **gpt-oss (20B / 120B)** | ✅ | ❌ | **Apache 2.0** | 🟢 极度友好，传统企业合规免检 |
 | **IBM Granite 4.2** | ✅ | ❌ | **Apache 2.0** | 🟢 极度友好，企业内网私有部署首选 |
@@ -206,6 +220,8 @@ Architect 的价值不是“写得快”，而在于：
 ---
 
 ### 四、实践心法：六级升级法则与人类的终极位置
+
+![人类终局与终审责任护城河决策画布](../../../assets/images/ai-team-bento-05-human-owner.png)
 
 #### 1. 动态升级阶梯 (Level 0 ~ Level 5)
 1. **Level 0 (Chat)**：先理清问题、边界与标准。

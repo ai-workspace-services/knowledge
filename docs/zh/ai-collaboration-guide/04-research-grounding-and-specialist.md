@@ -20,6 +20,8 @@ category: ai-architecture
 > **字数统计**：约 1,350 字  
 > **核心导读**：大模型最大的错觉是“无所不知”。工程落地中必须切分 Reasoning 与 Retrieval；而在特定高精尖领域，垂直特化模型的壁垒远非通用模型所能企及。
 
+![混合网关与开源模型矩阵决策画布](../../../assets/images/ai-team-bento-04-hybrid-open.png)
+
 ---
 
 ### 一、大模型的通病：把“推理”误当成了“事实”

@@ -19,6 +19,8 @@ category: ai-architecture
 > **Word Count**: ~1,250 words  
 > **Key Takeaway**: Chat functions as the upfront control plane establishing context and hybrid routing, while Worker handles high-volume tasks with extreme speed and cost efficiency—with open-weight models unlocking local edge privacy.
 
+![Engineering Workhorse & Verification Protocol Decision Canvas](../../../assets/images/ai-team-bento-02-workhorse.png)
+
 ---
 
 ### I. Chat is the Control Plane, Not a Code Generator
