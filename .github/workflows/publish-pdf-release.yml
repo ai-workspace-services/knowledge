@@ -1,0 +1,287 @@
+name: Publish PDF Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Git tag for Release (e.g. pdf-v2026.10.15 or v1.0.0-pdf, leave blank to auto-generate)'
+        required: false
+        default: ''
+      release_title:
+        description: 'Release Title (leave blank for auto title)'
+        required: false
+        default: ''
+      categories:
+        description: 'Categories to build (comma-separated, or "all")'
+        required: false
+        default: 'all'
+      prerelease:
+        description: 'Mark release as pre-release'
+        type: boolean
+        default: false
+      draft:
+        description: 'Create as draft release'
+        type: boolean
+        default: false
+  push:
+    tags:
+      - 'pdf-*'
+      - 'v*-pdf*'
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: publish-pdf-release
+  cancel-in-progress: false
+
+jobs:
+  setup-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      tag: ${{ steps.set-metadata.outputs.tag }}
+      title: ${{ steps.set-metadata.outputs.title }}
+      prerelease: ${{ steps.set-metadata.outputs.prerelease }}
+      draft: ${{ steps.set-metadata.outputs.draft }}
+    steps:
+      - name: Checkout knowledge repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: |
+          cd scripts/pdf
+          npm ci --prefer-offline || npm install
+
+      - name: Discover Matrix Categories
+        id: set-matrix
+        run: |
+          RAW_MATRIX=$(node scripts/pdf/generate_pdfs.js --discover-matrix)
+          echo "Discovered categories: $RAW_MATRIX"
+          
+          FILTER="${{ github.event.inputs.categories }}"
+          if [[ -n "$FILTER" && "$FILTER" != "all" ]]; then
+            # Filter categories by input
+            FILTERED=$(node -e "
+              const all = $RAW_MATRIX;
+              const filter = '$FILTER'.split(',').map(s => s.trim());
+              const res = all.filter(c => filter.includes(c));
+              console.log(JSON.stringify(res.length ? res : all));
+            ")
+            echo "matrix=$FILTERED" >> "$GITHUB_OUTPUT"
+          else
+            echo "matrix=$RAW_MATRIX" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Compute Release Metadata
+        id: set-metadata
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && -n "${{ github.event.inputs.release_tag }}" ]]; then
+            TAG="${{ github.event.inputs.release_tag }}"
+          elif [[ "${{ github.ref_type }}" == "tag" ]]; then
+            TAG="${{ github.ref_name }}"
+          else
+            TAG="pdf-v$(date -u +'%Y.%m.%d-%H%M%S')"
+          fi
+
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && -n "${{ github.event.inputs.release_title }}" ]]; then
+            TITLE="${{ github.event.inputs.release_title }}"
+          else
+            TITLE="Knowledge Base PDF Series (${TAG})"
+          fi
+
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "title=$TITLE" >> "$GITHUB_OUTPUT"
+          echo "prerelease=${{ github.event.inputs.prerelease || 'false' }}" >> "$GITHUB_OUTPUT"
+          echo "draft=${{ github.event.inputs.draft || 'false' }}" >> "$GITHUB_OUTPUT"
+
+  build-matrix-pdfs:
+    needs: setup-matrix
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        category: ${{ fromJson(needs.setup-matrix.outputs.matrix) }}
+    steps:
+      - name: Checkout knowledge repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install CJK fonts for high-fidelity PDF rendering
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq fonts-noto-cjk fonts-wqy-zenhei fonts-wqy-microhei
+          fc-cache -fv
+
+      - name: Cache Node modules
+        uses: actions/cache@v4
+        with:
+          path: scripts/pdf/node_modules
+          key: ${{ runner.os }}-node22-pdf-${{ hashFiles('scripts/pdf/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node22-pdf-
+
+      - name: Install script dependencies
+        run: |
+          cd scripts/pdf
+          npm ci --prefer-offline || npm install
+
+      - name: Build PDFs for category ${{ matrix.category }}
+        run: |
+          mkdir -p dist/pdf/${{ matrix.category }} dist/catalogs dist/bundles
+          node scripts/pdf/generate_pdfs.js \
+            --category "${{ matrix.category }}" \
+            --output-dir "dist/pdf/${{ matrix.category }}" \
+            --catalog "dist/catalogs/${{ matrix.category }}.md"
+
+      - name: Package category bundle zip
+        run: |
+          if [ -d "dist/pdf/${{ matrix.category }}" ] && [ "$(ls -A dist/pdf/${{ matrix.category }})" ]; then
+            echo "Creating zip bundle for ${{ matrix.category }}..."
+            (cd "dist/pdf/${{ matrix.category }}" && zip -q -r "../../bundles/knowledge-pdf-${{ matrix.category }}.zip" .)
+            echo "Bundle created: dist/bundles/knowledge-pdf-${{ matrix.category }}.zip"
+          else
+            echo "No PDFs generated for ${{ matrix.category }}"
+          fi
+
+      - name: Upload Category Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: pdf-${{ matrix.category }}
+          path: dist/
+          retention-days: 7
+
+  publish-release:
+    needs: [setup-matrix, build-matrix-pdfs]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout knowledge repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Cache Node modules
+        uses: actions/cache@v4
+        with:
+          path: scripts/pdf/node_modules
+          key: ${{ runner.os }}-node22-pdf-${{ hashFiles('scripts/pdf/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node22-pdf-
+
+      - name: Install script dependencies
+        run: |
+          cd scripts/pdf
+          npm ci --prefer-offline || npm install
+
+      - name: Download all category artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: pdf-*
+          path: all-dist
+          merge-multiple: true
+
+      - name: Compile Master Release Catalog and Notes
+        id: assemble
+        run: |
+          mkdir -p all-dist/bundles
+          
+          TAG="${{ needs.setup-matrix.outputs.tag }}"
+          TITLE="${{ needs.setup-matrix.outputs.title }}"
+          
+          # Create Master Archive of all PDFs
+          echo "Packaging master collection..."
+          if [ -d "all-dist/pdf" ]; then
+            (cd all-dist/pdf && zip -q -r "../bundles/knowledge-pdf-complete-collection.zip" .)
+          fi
+
+          # Compile clean markdown release notes
+          node scripts/pdf/generate_pdfs.js \
+            --compile-release-notes \
+            --dist-dir all-dist \
+            --tag "$TAG" \
+            --title "$TITLE" \
+            --repo "${{ github.repository }}" \
+            --notes-output /tmp/release_notes.md
+
+          cp /tmp/release_notes.md all-dist/PDF_RELEASE_CATALOG.md
+
+          TOTAL_PDFS=$(find all-dist/pdf -name "*.pdf" 2>/dev/null | wc -l | tr -d ' ')
+          TOTAL_BUNDLES=$(find all-dist/bundles -name "*.zip" 2>/dev/null | wc -l | tr -d ' ')
+
+          echo "total_pdfs=$TOTAL_PDFS" >> "$GITHUB_OUTPUT"
+          echo "total_bundles=$TOTAL_BUNDLES" >> "$GITHUB_OUTPUT"
+
+      - name: Create or Update GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.setup-matrix.outputs.tag }}
+          TITLE: ${{ needs.setup-matrix.outputs.title }}
+          PRERELEASE: ${{ needs.setup-matrix.outputs.prerelease }}
+          DRAFT: ${{ needs.setup-matrix.outputs.draft }}
+        run: |
+          set -euo pipefail
+
+          FLAGS=()
+          if [[ "$PRERELEASE" == "true" ]]; then
+            FLAGS+=("--prerelease")
+          fi
+          if [[ "$DRAFT" == "true" ]]; then
+            FLAGS+=("--draft")
+          fi
+
+          echo "Creating release $TAG..."
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists, updating notes..."
+            gh release edit "$TAG" --title "$TITLE" --notes-file /tmp/release_notes.md "${FLAGS[@]}"
+          else
+            gh release create "$TAG" \
+              --title "$TITLE" \
+              --notes-file /tmp/release_notes.md \
+              "${FLAGS[@]}"
+          fi
+
+      - name: Upload PDF Series Assets and Bundles
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.setup-matrix.outputs.tag }}
+        run: |
+          set -euo pipefail
+
+          echo "Uploading zip bundles..."
+          if [ -d "all-dist/bundles" ] && [ "$(ls -A all-dist/bundles)" ]; then
+            gh release upload "$TAG" all-dist/bundles/*.zip --clobber
+          fi
+
+          echo "Uploading master catalog..."
+          if [ -f "all-dist/PDF_RELEASE_CATALOG.md" ]; then
+            gh release upload "$TAG" all-dist/PDF_RELEASE_CATALOG.md --clobber
+          fi
+
+          echo "Uploading individual series PDFs in batches..."
+          find all-dist/pdf -name "*.pdf" | sort | while read -r file; do
+            echo "$file"
+          done | xargs -n 30 gh release upload "$TAG" --clobber
+
+      - name: Step Summary
+        run: |
+          echo "## 🎉 PDF Release Published Successfully" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Tag:** \`${{ needs.setup-matrix.outputs.tag }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Total PDFs Published:** ${{ steps.assemble.outputs.total_pdfs }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Release URL:** [View GitHub Release](https://github.com/${{ github.repository }}/releases/tag/${{ needs.setup-matrix.outputs.tag }})" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          cat /tmp/release_notes.md >> "$GITHUB_STEP_SUMMARY"
