@@ -984,6 +984,8 @@ GitOps 保存域名/模式/上游声明，IaC 执行 DNS、Worker domain 等云�
 | Billing API | `billing-selfhost-uat.onwalk.net` | `billing-serverless-uat.onwalk.net`，须与实际 Cloud Run/Worker 路由一致 |
 | PostgreSQL | `postgresql-selfhost-uat.onwalk.net:15433` 仅在隧道、TLS 和来源 ACL 验收后启用；5432 保持容器/私网内部 | Supabase 管理的连接端点，从 UAT Vault 注入；不创建或宣称 `postgresql-serverless-uat.onwalk.net` 是公网数据库入口 |
 
+以上是目标命名合同，不是当前所有入口的实况。现有 UAT GitOps topology 仍把 Serverless/Hybrid Billing 写作 `billing-uat.onwalk.net`，并列出 `postgresql-serverless-uat.onwalk.net` 作为数据库 endpoint；前者须由 Cloudflare/Worker/Cloud Run owner 连同调用端迁移，后者应视为待清理的逻辑占位，不可生成公网 DNS 或传给应用作为连接地址。完成各 owner 的引用盘点和目标校验前，保留旧记录并标记为迁移阻塞项。
+
 `console-uat.onwalk.net`、`accounts-uat.onwalk.net` 等未带模式的别名只用于明确选定当前模式的兼容入口；应用间调用、回调、健康检查和环境配置必须优先使用带 `selfhost-uat` 或 `serverless-uat` 的专属名称。Selfhost 与 Serverless 的数据库、凭据、应用 URL 和发布版本分别管理，禁止通过别名或缺省值回退到 PROD。
 
 现场另发现 Selfhost 专属 Console/Accounts/Billing 域名解析到旧地址 `35.229.255.120`，而 VM 当前 NAT 地址为 `34.81.173.44`；主机内 Caddy 可按专属 Host 路由，外部到该 VM 的 TLS 握手失败。故域名规划和内部路由检查已完成，公网 DNS、TLS/防火墙路径及受限数据库隧道仍未验收。本节记录的是故障与目标合同，不声称主机已修复或发布成功。修复顺序为：确认目标 GitOps/不可变镜像及 UAT 环境变量 → 由 Playbooks 在该主机切换 Doco-CD 到 UAT 专属 target → 验证服务运行时不再读取 PROD 端点 → 由 IaC/DNS owner 更新并验证记录 → 从外部复测 HTTPS/API；数据库端口仅在来源限制通过后单独验收。任何一步失败均停止，不转用公共别名或 PROD 服务。
