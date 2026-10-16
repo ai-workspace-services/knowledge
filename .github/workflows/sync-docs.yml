@@ -12,6 +12,9 @@ on:
       - 'scripts/sync-service-docs.sh'
       - '.github/workflows/sync-docs.yml'
 
+permissions:
+  contents: write
+
 jobs:
   sync-docs:
     runs-on: ubuntu-latest
@@ -21,7 +24,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          fetch-depth: 1
+          fetch-depth: 0
       
       - name: Configure Git
         run: |
@@ -60,6 +63,7 @@ jobs:
           Workflow: ${{ github.workflow }}
           Run: ${{ github.run_number }}"
           
+          git pull --rebase origin main
           git push
       
       - name: Summary
