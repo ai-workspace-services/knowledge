@@ -36,6 +36,9 @@ spec:
       - product/xscopehub/en/hero.md
       - product/xstream/zh/hero.md
       - product/xstream/en/hero.md
+    emailPreferences:
+      - account/email-preferences/zh.json
+      - account/email-preferences/en.json
     referral:
       - campaign/referral/zh.json
       - campaign/referral/en.json
