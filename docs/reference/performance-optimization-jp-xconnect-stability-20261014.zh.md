@@ -15,6 +15,10 @@ tags:
   - xray
 ---
 
+
+
+后续完整上传验证：[XConnect Free 节点大文件上传实测与优化验收（2026-10-18）](../performance-optimization/xconnect-free-proxy-upload-acceptance-20261018.zh.md)，覆盖 JP/SG/US 三节点的 1–512 MB 两种模式测试。
+
 ## Change Log
 
 | 日期 | 版本 | 变更 | 验证/记录 |
