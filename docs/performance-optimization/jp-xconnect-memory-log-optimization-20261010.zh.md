@@ -18,6 +18,8 @@ tags:
 
 # jp-xconnect 内存与日志优化分析报告
 
+后续完整上传验证：[XConnect Free 节点大文件上传实测与优化验收（2026-10-18）](xconnect-free-proxy-upload-acceptance-20261018.zh.md)，覆盖 JP/SG/US 三节点的 1–512 MB 两种模式测试。
+
 2026 年 10 月 10 日 · Haitao Pan · 时间口径：Asia/Shanghai
 
 ## 结论与证据范围

@@ -6,6 +6,8 @@
 
 - [性能优化归档](docs/performance-optimization/README.md)
 - [jp-xconnect 内存与日志优化分析报告（2026-10-10）](docs/performance-optimization/jp-xconnect-memory-log-optimization-20261010.zh.md)
+- [JP XConnect 稳定性增量配置验证报告（2026-10-14）](docs/reference/performance-optimization-jp-xconnect-stability-20261014.zh.md)
+- [XConnect Free 节点大文件上传实测与优化验收（2026-10-18）](docs/performance-optimization/xconnect-free-proxy-upload-acceptance-20261018.zh.md)
 
 ## 多云平台工程技术白皮书
 
