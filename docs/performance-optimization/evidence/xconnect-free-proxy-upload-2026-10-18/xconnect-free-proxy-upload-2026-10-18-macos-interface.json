@@ -1,0 +1,6 @@
+{
+  "captured_utc": "2026-10-18T05:58:02.968627+00:00",
+  "physical_interface": "en0",
+  "observed_established_proxy_tls_sockets": 5,
+  "all_established_sockets_bound_to_en0": true
+}

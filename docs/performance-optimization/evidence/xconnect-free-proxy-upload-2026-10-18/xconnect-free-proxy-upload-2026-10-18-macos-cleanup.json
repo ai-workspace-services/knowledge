@@ -1,0 +1,25 @@
+{
+  "clients": {
+    "local_macos": {
+      "processes_stopped": true,
+      "configs_removed": true
+    }
+  },
+  "sinks": {
+    "sg": {
+      "route_removed": true,
+      "receiver_stopped": true,
+      "scratch_removed": true
+    },
+    "us": {
+      "route_removed": true,
+      "receiver_stopped": true,
+      "scratch_removed": true
+    },
+    "jp": {
+      "route_removed": true,
+      "receiver_stopped": true,
+      "scratch_removed": true
+    }
+  }
+}
