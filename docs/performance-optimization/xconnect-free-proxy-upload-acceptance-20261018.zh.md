@@ -3,7 +3,7 @@ title: XConnect Free 节点大文件上传实测与优化验收
 slug: xconnect-free-proxy-upload-acceptance-20261018
 lang: zh
 date: 2026-10-18
-version: "1.0"
+version: "1.1"
 status: partial-acceptance
 category: performance-optimization
 tags:
@@ -21,6 +21,8 @@ tags:
 对三个 Free Selfhost PROD 节点执行真实文件上传，验证当前 `policy.levels.0.connIdle=3600` 配置下的传输正确性，并记录完整链路耗时、吞吐和失败阶段。所有 payload 均为随机合成二进制内容，不包含业务文件。
 
 本 case 验证 VLESS/XHTTP 到受控 HTTPS 接收端的链路，不代表 ChatGPT 应用端上传或某个客户端 App 的验收；没有更改配置前后的配对试验，不能据此量化 `connIdle` 调整带来的收益。
+
+三台节点已通过 SSH + Playbook 对齐 `connIdle=3600`，模板与运行配置均核验一致。远程 Linux 完整矩阵为 58/60（96.67%）：`auto` 为 30/30；`packet-up` 为 28/30，失败在 US 32 MB 与 JP 512 MB。简要结论：**`auto` 模式 32 MB 以内在该 Linux 测试链路中全部通过；大文件不承诺必然成功。**另行完成的 MacOS 本机矩阵为 27/60，说明该结论不能跨客户端和网络路径泛化。
 
 ## 固定矩阵
 
@@ -102,6 +104,86 @@ curl --config "$RUNTIME_CURL_CONFIG" \
 
 物理接口对照中，Mac 直连 SG HTTPS 接收端上传 1 MB 用时 29.602 秒（约 0.270 Mbps），经 JP `auto` 上传 1 MB 用时 24.680 秒（约 0.324 Mbps）。当时还有其他测试流量，这两项不能作为公平的协议快慢对比；它们表明本机到外网路径也存在低吞吐，不能把本机慢上传直接归因于服务端 Caddy/Xray 参数。完整阶梯验收使用上表的 Linux 客户端路径。
 
+## MacOS 本机临时客户端完整矩阵（补测）
+
+运行 `smoke-mac-20261018T054727Z-ff69c0ce`，UTC `2026-10-18T05:47:41Z` 至 `2026-10-18T07:46:05Z`。macOS 27.0.1 / Xray 26.3.27；临时客户端绑定 `en0`，观测到的 5 条代理 TLS socket 均使用 `en0`，未经过 utun VPN。三条代理链路并发，每条链路按尺寸递增；`auto` 后接 `packet-up`，每个 node/mode/size 一次，不重试。最终 **27/60 成功（45.00%）**，实际客户端发送 744,719,699 bytes；6,138 MB 是预期文件总量，不是实发量。此 MacOS 结果与 Linux 60 项矩阵分开统计。按节点：JP 8/20、SG 7/20、US 12/20；按模式：auto 12/30、packet-up 15/30。以下为 curl `time_total` 实测耗时；成功单元格显示 `PASS / 秒`，失败显示 `FAIL / 秒 / 阶段`。完整字段见 [MacOS CSV](evidence/xconnect-free-proxy-upload-2026-10-18/xconnect-free-proxy-upload-2026-10-18-macos.csv) 与 [MacOS JSON 原始记录](evidence/xconnect-free-proxy-upload-2026-10-18/xconnect-free-proxy-upload-2026-10-18-macos.json).
+
+### `auto` 模式
+
+| 文件 MB | JP | SG | US |
+| ---: | --- | --- | --- |
+| 1 | PASS / 25.4497s | PASS / 33.6378s | PASS / 17.3112s |
+| 2 | PASS / 48.4188s | PASS / 63.0924s | PASS / 19.7841s |
+| 4 | FAIL / 160.9632s / `target_http_or_response` | PASS / 85.6505s | PASS / 60.1266s |
+| 8 | PASS / 234.4672s | FAIL / 117.2636s / `upload_stream` | PASS / 150.7804s |
+| 16 | FAIL / 64.8183s / `upload_stream` | FAIL / 285.1152s / `upload_stream` | PASS / 261.2561s |
+| 32 | PASS / 704.4385s | FAIL / 591.6585s / `upload_stream` | FAIL / 245.3017s / `upload_stream` |
+| 64 | FAIL / 468.7630s / `upload_stream` | FAIL / 559.9905s / `upload_stream` | FAIL / 850.8114s / `upload_stream` |
+| 128 | FAIL / 667.7966s / `upload_stream` | FAIL / 166.6080s / `upload_stream` | FAIL / 99.3428s / `upload_stream` |
+| 256 | FAIL / 900.0025s / `upload_stream` | FAIL / 874.1781s / `upload_stream` | FAIL / 154.7952s / `upload_stream` |
+| 512 | FAIL / 595.9776s / `upload_stream` | FAIL / 572.4636s / `upload_stream` | FAIL / 736.9633s / `upload_stream` |
+
+### `packet-up` 模式
+
+| 文件 MB | JP | SG | US |
+| ---: | --- | --- | --- |
+| 1 | PASS / 37.1831s | PASS / 11.8155s | PASS / 33.9155s |
+| 2 | PASS / 78.3175s | PASS / 40.6235s | PASS / 51.4887s |
+| 4 | PASS / 143.6476s | PASS / 78.3304s | PASS / 77.7221s |
+| 8 | PASS / 155.7045s | PASS / 251.1727s | PASS / 227.6336s |
+| 16 | FAIL / 175.7022s / `upload_stream` | FAIL / 464.7073s / `upload_stream` | PASS / 382.6091s |
+| 32 | FAIL / 16.0027s / `proxy_transport_or_target_tls` | FAIL / 261.4913s / `upload_stream` | PASS / 568.8074s |
+| 64 | FAIL / 16.0025s / `proxy_transport_or_target_tls` | FAIL / 16.0032s / `proxy_transport_or_target_tls` | PASS / 735.3282s |
+| 128 | FAIL / 16.0023s / `proxy_transport_or_target_tls` | FAIL / 16.0020s / `proxy_transport_or_target_tls` | FAIL / 628.3387s / `upload_stream` |
+| 256 | FAIL / 16.0025s / `proxy_transport_or_target_tls` | FAIL / 16.0022s / `proxy_transport_or_target_tls` | FAIL / 900.0025s / `upload_stream` |
+| 512 | FAIL / 16.0027s / `proxy_transport_or_target_tls` | FAIL / 16.0023s / `proxy_transport_or_target_tls` | FAIL / 900.0064s / `upload_stream` |
+
+### 失败项实际耗时、已发送量与失败位置
+
+`curl/HTTP` 中 HTTP 0 表示未收到 HTTP 响应。错误文本保留 curl 原文。
+
+| 节点 | 模式 | MB | 实际耗时 s | 已发送 bytes | curl/HTTP | 失败位置 | 错误 |
+| --- | --- | ---: | ---: | ---: | --- | --- | --- |
+| jp | auto | 4 | 160.9632 | 4000000 | 28/0 | `target_http_or_response` | `curl: (28) Operation too slow. Less than 8192 bytes/sec transferred the last 60 seconds` |
+| sg | auto | 8 | 117.2636 | 2227923 | 28/0 | `upload_stream` | `curl: (28) Operation too slow. Less than 8192 bytes/sec transferred the last 60 seconds` |
+| jp | auto | 16 | 64.8183 | 1179346 | 16/0 | `upload_stream` | `curl: (16) Error in the HTTP2 framing layer` |
+| sg | auto | 16 | 285.1152 | 4652754 | 16/0 | `upload_stream` | `curl: (16) Error in the HTTP2 framing layer` |
+| us | auto | 32 | 245.3017 | 9961170 | 55/0 | `upload_stream` | `curl: (55) Send failure: Broken pipe` |
+| sg | auto | 32 | 591.6585 | 19988178 | 16/0 | `upload_stream` | `curl: (16) Error in the HTTP2 framing layer` |
+| us | auto | 64 | 850.8114 | 27459282 | 28/0 | `upload_stream` | `curl: (28) Operation too slow. Less than 8192 bytes/sec transferred the last 60 seconds` |
+| us | auto | 128 | 99.3428 | 6422225 | 16/0 | `upload_stream` | `curl: (16) Error in the HTTP2 framing layer` |
+| jp | auto | 64 | 468.7630 | 29621970 | 16/0 | `upload_stream` | `curl: (16) Error in the HTTP2 framing layer` |
+| sg | auto | 64 | 559.9905 | 20119250 | 16/0 | `upload_stream` | `curl: (16) Error in the HTTP2 framing layer` |
+| us | auto | 256 | 154.7952 | 2227921 | 28/0 | `upload_stream` | `curl: (28) Operation too slow. Less than 8192 bytes/sec transferred the last 60 seconds` |
+| sg | auto | 128 | 166.6080 | 2293457 | 16/0 | `upload_stream` | `curl: (16) Error in the HTTP2 framing layer` |
+| jp | auto | 128 | 667.7966 | 16383697 | 16/0 | `upload_stream` | `curl: (16) Error in the HTTP2 framing layer` |
+| us | auto | 512 | 736.9633 | 20119249 | 16/0 | `upload_stream` | `curl: (16) Error in the HTTP2 framing layer` |
+| sg | auto | 256 | 874.1781 | 25231057 | 16/0 | `upload_stream` | `curl: (16) Error in the HTTP2 framing layer` |
+| jp | auto | 256 | 900.0025 | 28901073 | 28/0 | `upload_stream` | `curl: (28) Operation timed out after 900002 milliseconds with 0 bytes received` |
+| sg | auto | 512 | 572.4636 | 15924945 | 16/0 | `upload_stream` | `curl: (16) Error in the HTTP2 framing layer` |
+| jp | auto | 512 | 595.9776 | 14155473 | 16/0 | `upload_stream` | `curl: (16) Error in the HTTP2 framing layer` |
+| sg | packet-up | 16 | 464.7073 | 11271890 | 16/0 | `upload_stream` | `curl: (16) Error in the HTTP2 framing layer` |
+| sg | packet-up | 32 | 261.4913 | 10550994 | 16/0 | `upload_stream` | `curl: (16) Error in the HTTP2 framing layer` |
+| jp | packet-up | 16 | 175.7022 | 8257234 | 16/0 | `upload_stream` | `curl: (16) Error in the HTTP2 framing layer` |
+| sg | packet-up | 64 | 16.0032 | 0 | 35/0 | `proxy_transport_or_target_tls` | `curl: (35) LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to us-free-selfhost-prod-v2.svc.plus:443` |
+| jp | packet-up | 32 | 16.0027 | 0 | 35/0 | `proxy_transport_or_target_tls` | `curl: (35) LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to sg-free-selfhost-prod-v2.svc.plus:443` |
+| sg | packet-up | 128 | 16.0020 | 0 | 35/0 | `proxy_transport_or_target_tls` | `curl: (35) LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to us-free-selfhost-prod-v2.svc.plus:443` |
+| jp | packet-up | 64 | 16.0025 | 0 | 35/0 | `proxy_transport_or_target_tls` | `curl: (35) LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to sg-free-selfhost-prod-v2.svc.plus:443` |
+| sg | packet-up | 256 | 16.0022 | 0 | 35/0 | `proxy_transport_or_target_tls` | `curl: (35) LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to us-free-selfhost-prod-v2.svc.plus:443` |
+| jp | packet-up | 128 | 16.0023 | 0 | 35/0 | `proxy_transport_or_target_tls` | `curl: (35) LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to sg-free-selfhost-prod-v2.svc.plus:443` |
+| sg | packet-up | 512 | 16.0023 | 0 | 35/0 | `proxy_transport_or_target_tls` | `curl: (35) LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to us-free-selfhost-prod-v2.svc.plus:443` |
+| jp | packet-up | 256 | 16.0025 | 0 | 35/0 | `proxy_transport_or_target_tls` | `curl: (35) Recv failure: Connection reset by peer` |
+| jp | packet-up | 512 | 16.0027 | 0 | 35/0 | `proxy_transport_or_target_tls` | `curl: (35) LibreSSL SSL_connect: SSL_ERROR_SYSCALL in connection to sg-free-selfhost-prod-v2.svc.plus:443` |
+| us | packet-up | 128 | 628.3387 | 88866513 | 16/0 | `upload_stream` | `curl: (16) Error in the HTTP2 framing layer` |
+| us | packet-up | 256 | 900.0025 | 91684561 | 28/0 | `upload_stream` | `curl: (28) Operation timed out after 900002 milliseconds with 0 bytes received` |
+| us | packet-up | 512 | 900.0064 | 45219537 | 28/0 | `upload_stream` | `curl: (28) Operation timed out after 900006 milliseconds with 0 bytes received` |
+
+### 本机补测结论与清理
+
+本轮 MacOS 外网链路通过率为 45%，与前一轮 Linux 客户端的 96.67% 明显不同。失败包含 HTTP/2 framing 中断、低速/超时、Broken pipe、TLS 握手失败与连接重置；结果受客户端接入网络、跨区路径、代理和接收链路共同影响。不能据此判断 XHTTP 或 packet-up 对所有用户网络的普遍优劣，也不能承诺大文件必然成功。Linux 轮 `auto` 1–32 MB 全通过；MacOS 补测中 US `auto` 32 MB 与 SG `auto` 32 MB 均失败，因此 Linux 结论只适用于该轮测试链路，不能扩展为跨客户端保证。
+
+测试后本机 Xray 进程均已停止；JP、SG、US 的临时接收 route、接收进程和 scratch 均确认清理。回执见 [cleanup JSON](evidence/xconnect-free-proxy-upload-2026-10-18/xconnect-free-proxy-upload-2026-10-18-macos-cleanup.json)。归档仅保留脱敏测量值和合成 payload 的 SHA-256；不含 token、私有 IP 或上传内容。
+
 ## 先前中断样本与修复
 
 首轮远程矩阵 `smoke-20261018T040909Z-92a47842` 执行 58 项，53 成功、5 失败，未完成完整矩阵。北京时间 12:16 左右各节点 Agent 配置同步并重启 Xray；运行配置随后回退到缓存的旧模板，Caddy 进程和临时接收路由仍存在。
@@ -127,7 +209,7 @@ curl --config "$RUNTIME_CURL_CONFIG" \
 
 本报告将后续验证扩展至 JP、SG、US 三个 Free 节点和两种 XHTTP 模式，以受控合成文件执行 1–512 MB 全阶梯。两项 packet-up 失败仍待定位，因此它补充了前两次记录，不代表原目标已全部解决。Playbooks 侧实现及部署记录见 [配置优化说明](https://github.com/ai-workspace-infra/playbooks/blob/main/docs/env/xconnect-proxy-large-upload-timeout-2026-10-18.md)、[PR #675](https://github.com/ai-workspace-infra/playbooks/pull/675) 与 [PR #676](https://github.com/ai-workspace-infra/playbooks/pull/676)。
 
-## 本轮结果
+## 远程 Linux 客户端矩阵结果
 
 运行 `smoke-20261018T042856Z-cf2597e6`；北京时间 2026-10-18 12:28:56 至 13:05:31。完整矩阵 **58/60 通过（96.67%）**；实际发送合成 payload 5,901.363 MB。
 
