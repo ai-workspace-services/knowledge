@@ -6,16 +6,18 @@ CH      ?=
 DPI     ?=
 DRIVE_DIR ?=
 DPI_ARG  = $(if $(DPI),--dpi $(DPI),)
+CI_OUTPUT = dist/ci-smoke-$(VERSION).pdf
+FROM    ?=
 
 .DEFAULT_GOAL := help
-.PHONY: help deps check pdf preview dpi sync zip clean
+.PHONY: help deps check pdf preview dpi sync zip clean lint ci-check ci-pdf lock fetch
 
 help: ## 列出所有命令
 	@echo "用法：make <目标> [变量=值]"
 	@echo ""
-	@grep -E '^[a-z]+:.*## ' Makefile | sed 's/:.*## /|/' | awk -F'|' '{printf "  %-9s %s\n", $$1, $$2}'
+	@grep -E '^[a-z-]+:.*## ' Makefile | sed 's/:.*## /|/' | awk -F'|' '{printf "  %-10s %s\n", $$1, $$2}'
 	@echo ""
-	@echo "变量：VERSION=$(VERSION)（默认读 book.yml）  CH=03,05  DPI=180  DRIVE_DIR=/path/to/整理版"
+	@echo "变量：VERSION=$(VERSION)（默认读 book.yml）  CH=03,05  DPI=180  DRIVE_DIR=/path/to/整理版  FROM=/path/to/drive-mirror"
 
 deps: ## 安装 Python 依赖并检查字体等
 	$(PYTHON) -m pip install -r requirements.txt || $(PYTHON) -m pip install --user --break-system-packages -r requirements.txt
@@ -47,3 +49,21 @@ zip: ## 打包源文件到 dist/book-src.zip（含 images，不含 dist）；NOI
 
 clean: ## 清理 dist/ 和缓存
 	rm -rf dist scripts/__pycache__
+
+lint: ## 无图静态检查：Python 语法、book.yml、各章 chapter.md 与 front matter
+	$(PYTHON) -m py_compile scripts/*.py
+	$(PYTHON) -c "import sys; sys.path.insert(0,'scripts'); from common import *; c=load_book(); [load_chapter(d) for d in c['chapters']]; [read_md(f) for f in __import__('glob').glob('front/*.md')+__import__('glob').glob('appendix/*.md')]; import yaml; yaml.safe_load(open('appendix/excluded.yml',encoding='utf-8')); print('lint OK：%d 章' % len(c['chapters']))"
+
+ci-check: lint ## CI：check，缺图只提示不报错（仓库不含图片）
+	$(PYTHON) scripts/check.py --no-pdf --allow-missing-images
+
+ci-pdf: ci-check ## CI：缺图用灰色占位页出冒烟 PDF，并校验目录/书签/页码
+	$(PYTHON) scripts/build.py --version $(VERSION) --out "$(CI_OUTPUT)" --placeholder-images $(DPI_ARG)
+	$(PYTHON) scripts/check.py --pdf "$(CI_OUTPUT)" --allow-missing-images
+
+lock: ## 加图/换图后重写 images.lock.tsv（需本地有全部图片）
+	$(PYTHON) scripts/fetch_images.py --write-lock
+
+fetch: ## 按 images.lock.tsv 从下载目录放回图片：make fetch FROM=/tmp/drive-mirror
+	@test -n "$(FROM)" || (echo "请指定 FROM=<rclone 下载目录>"; exit 1)
+	$(PYTHON) scripts/fetch_images.py --from "$(FROM)"

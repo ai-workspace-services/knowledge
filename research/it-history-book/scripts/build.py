@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """《图解 IT 简史》PDF 生成器：book.yml + front/*.md + chapters/*/chapter.md + images -> dist/*.pdf
-用法：python3 scripts/build.py [--chapters 03,05] [--dpi 180] [--quality 85] [--version v3] [--out 路径]
+用法：python3 scripts/build.py [--chapters 03,05] [--dpi 180] [--quality 85] [--version v3] [--out 路径] [--placeholder-images]
+--placeholder-images（或环境变量 BOOK_PLACEHOLDER_IMAGES=1）：缺图时用灰色占位页，供 CI 在无图仓库里做冒烟构建；默认缺图直接报错。
 """
 import os, re, sys, argparse, hashlib
 from concurrent.futures import ProcessPoolExecutor
@@ -8,13 +9,26 @@ import numpy as np
 from PIL import Image
 import pymupdf as fitz
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import ROOT, read_md, load_book, load_chapter
+from common import ROOT, read_md, load_book, load_chapter, placeholder_mode
 import fonts as F
 Image.MAX_IMAGE_PIXELS = None
 W, H = 595.28, 841.89; ML = MR = 56; MT = 60; MB = 56; CW = W - ML - MR
 IMGH = H - MT - MB - 34
 NAVY = (0.05, 0.2, 0.45); TXT = (0.12, 0.12, 0.12)
 CACHE = os.path.join(ROOT, 'dist', '.cache'); os.makedirs(os.path.join(CACHE, 'jpg'), exist_ok=True)
+
+def placeholder(rel):
+    """缺图占位：浅灰 1600×1000 PNG（含 ASCII 文件名哈希），缓存在 dist/.cache/placeholder/"""
+    d = os.path.join(CACHE, 'placeholder'); os.makedirs(d, exist_ok=True)
+    out = os.path.join(d, hashlib.md5(rel.encode()).hexdigest()[:16] + '.png')
+    if not os.path.exists(out):
+        from PIL import ImageDraw
+        im = Image.new('RGB', (1600, 1000), (222, 222, 222)); dr = ImageDraw.Draw(im)
+        dr.rectangle((20, 20, 1579, 979), outline=(160, 160, 160), width=6)
+        dr.line((20, 20, 1579, 979), fill=(190, 190, 190), width=4); dr.line((20, 979, 1579, 20), fill=(190, 190, 190), width=4)
+        dr.text((60, 60), 'PLACEHOLDER  missing image  ' + os.path.basename(out)[:16], fill=(90, 90, 90))
+        im.save(out)
+    return out
 
 # ---------------- text utils ----------------
 def clean(s):
@@ -83,13 +97,16 @@ class Book:
         import yaml
         ex = os.path.join(ROOT, 'appendix', 'excluded.yml')
         s.excluded = (yaml.safe_load(open(ex, encoding='utf-8')) or {}).get('excluded_files', []) if os.path.exists(ex) else []
-        s.items = []
+        s.items = []; s.n_placeholder = 0
+        ph = getattr(args, 'placeholder_images', False) or placeholder_mode()
         for c in s.chs:
             m = c['meta']; ch = m['ch']; pre = str(m.get('fig_prefix') or (int(ch) if ch.isdigit() else ch)); n = 0
             for b in c['blocks']:
                 if b[0] != 'img': continue
-                n += 1; w, h = Image.open(b[2]).size
-                s.items.append(dict(ch=ch, cap=b[1], src=b[2], fig='%s-%d' % (pre, n), w=w, h=h))
+                n += 1; src = b[2]
+                if ph and not os.path.exists(src): src = placeholder(m['dir'] + '/' + b[3]); s.n_placeholder += 1
+                w, h = Image.open(src).size
+                s.items.append(dict(ch=ch, cap=b[1], src=src, fig='%s-%d' % (pre, n), w=w, h=h))
         s.fmt = dict(image_count=len(s.items), dpi=s.dpi, quality=s.q)
     def label(s, m): return m.get('label') or m['ch']
     def chtitle(s, m): return '%s　%s' % (s.label(m), m['title'])
@@ -364,12 +381,14 @@ def main():
     ap.add_argument('--chapters', help='只生成这些章（章号逗号分隔，如 03,05），用于预览')
     ap.add_argument('--dpi', type=int); ap.add_argument('--quality', type=int)
     ap.add_argument('--version'); ap.add_argument('--out')
+    ap.add_argument('--placeholder-images', action='store_true', help='缺图用灰色占位页（CI 冒烟构建）')
     a = ap.parse_args(); bk = Book(a)
     if a.out: out = a.out
     elif a.chapters: out = os.path.join(ROOT, 'dist', 'preview-%s.pdf' % a.chapters.replace(',', '_'))
     else: out = os.path.join(ROOT, 'dist', bk.cfg['output'].format(version=bk.version))
     n = bk.build(out); mb = os.path.getsize(out) / 1e6
     print('生成：%s\n页数：%d　大小：%.1f MB　dpi=%d　quality=%d' % (out, n, mb, bk.dpi, bk.q))
+    if bk.n_placeholder: print('占位页：%d 张图片缺失，已用灰色占位（仅供冒烟检查，勿发布）' % bk.n_placeholder)
     lim = bk.cfg.get('max_size_mb')
     if lim and not a.chapters and mb > lim:
         print('警告：超过大小上限 %s MB，可用 --dpi 130 等降低压缩参数' % lim); sys.exit(2)

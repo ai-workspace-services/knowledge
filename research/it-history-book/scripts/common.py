@@ -35,3 +35,7 @@ def load_chapter(d):
 def images_on_disk(d):
     base = os.path.join(ROOT, 'chapters', d, 'images')
     return sorted(p for p in glob.glob(os.path.join(base, '*')) if p.lower().endswith(IMG_EXT))
+
+def placeholder_mode():
+    """环境变量 BOOK_PLACEHOLDER_IMAGES=1：缺图时用灰色占位页（CI 冒烟构建用；本地默认关闭）"""
+    return os.environ.get('BOOK_PLACEHOLDER_IMAGES', '').strip().lower() in ('1', 'true', 'yes')
