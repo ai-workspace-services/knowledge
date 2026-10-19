@@ -4,14 +4,23 @@
   2) images/ 里有没有未被引用的图片；
   3) 所有文字在 Noto Sans CJK SC 中是否都有字形（防方框字）；
   4) 若给出 --pdf（或 dist/ 下已有当前版本 PDF）：抽查目录链接与书签是否一致、页脚页码、PDF 文字有无缺字。
+CI 用：--allow-missing-images（或环境变量 BOOK_PLACEHOLDER_IMAGES=1）时，缺图只计数提示、不算错误（Git 里不含图片）。
 退出码：0 通过；1 有错误。"""
 import os, sys, re, argparse, glob
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from common import ROOT, load_book, load_chapter, images_on_disk, read_md
+from common import ROOT, load_book, load_chapter, images_on_disk, read_md, placeholder_mode
 import fonts as F
 def main():
-    ap = argparse.ArgumentParser(); ap.add_argument('--pdf'); ap.add_argument('--no-pdf', action='store_true'); a = ap.parse_args()
-    cfg = load_book(); err = []; warn = []; n_img = 0; text = ''
+    ap = argparse.ArgumentParser(); ap.add_argument('--pdf'); ap.add_argument('--no-pdf', action='store_true')
+    ap.add_argument('--allow-missing-images', action='store_true', help='缺图只提示不报错（CI 无图检查用）'); a = ap.parse_args()
+    allow_missing = a.allow_missing_images or placeholder_mode()
+    cfg = load_book(); err = []; warn = []; n_img = 0; text = ''; missing = []
+    if not isinstance(cfg.get('chapters'), list) or not cfg['chapters']: err.append('book.yml 缺少 chapters 列表')
+    for k in ('title', 'subtitle', 'version', 'output'):
+        if not cfg.get(k): err.append('book.yml 缺少 %s' % k)
+    for k in ('cover', 'about', 'preface', 'back-cover'):
+        if not os.path.exists(os.path.join(ROOT, 'front', k + '.md')): err.append('缺少 front/%s.md' % k)
+    if len(set(cfg.get('chapters') or [])) != len(cfg.get('chapters') or []): err.append('book.yml chapters 有重复项')
     for d in cfg['chapters']:
         if not os.path.exists(os.path.join(ROOT, 'chapters', d, 'chapter.md')): err.append('缺少 chapters/%s/chapter.md' % d); continue
         c = load_chapter(d); refs = [b for b in c['blocks'] if b[0] == 'img']; n_img += len(refs)
@@ -19,7 +28,9 @@ def main():
             if not c['meta'].get(k): err.append('%s: front matter 缺少 %s' % (d, k))
         seen = set()
         for _, cap, p, rel in refs:
-            if not os.path.exists(p): err.append('%s: 图片不存在 %s' % (d, rel))
+            if not os.path.exists(p):
+                if allow_missing: missing.append('%s/%s' % (d, rel))
+                else: err.append('%s: 图片不存在 %s' % (d, rel))
             if p in seen: warn.append('%s: 重复引用 %s' % (d, rel))
             if not cap: warn.append('%s: 图片缺少图注 %s' % (d, rel))
             seen.add(p)
@@ -36,6 +47,9 @@ def main():
     miss = sorted({ch for ch in text.replace('κέρας', 'keras') if ord(ch) > 31 and ord(ch) not in cm and ch not in '\n\t'})
     if miss: err.append('字体缺字（会显示为方框）：%s' % ''.join(miss))
     print('图片引用：%d 张，章数：%d' % (n_img, len(cfg['chapters'])))
+    if missing:
+        msg = '本地缺图 %d / %d 张（已按 --allow-missing-images 放行；构建时用灰色占位页）' % (len(missing), n_img)
+        print(('::notice title=it-history-book::' if os.environ.get('GITHUB_ACTIONS') else '提示：') + msg)
     pdf = a.pdf or os.path.join(ROOT, 'dist', cfg['output'].format(version=cfg['version']))
     if not a.no_pdf and os.path.exists(pdf):
         import pymupdf as fitz

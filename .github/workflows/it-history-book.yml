@@ -1,0 +1,165 @@
+name: IT History Book
+
+# 《图解 IT 简史》书稿流水线（research/it-history-book/）。
+#
+# Git 里只有 Markdown、脚本和 images.lock.tsv，章节图片在 Google Drive。
+#   check     每次 PR / push 都跑，不用任何 secret：lint、缺图放行的自检、
+#             用灰色占位页出冒烟 PDF 并校验目录/书签/页码，PDF 作为 artifact 保留 7 天。
+#   full-pdf  只在 workflow_dispatch 或 push 到 main 时运行，并且需要仓库 secret
+#             GDRIVE_SA_JSON（对整理版文件夹有查看权限的服务账号 JSON 密钥）。
+#             未配置时自动跳过，fork 或新仓库不会失败。
+#             rclone 以 drive.readonly 只读拷贝 Drive 文件夹，再按 images.lock.tsv
+#             的 MD5 把图片放回 chapters/*/images/，然后 make pdf。
+
+on:
+  pull_request:
+    paths:
+      - 'research/it-history-book/**'
+      - '.github/workflows/it-history-book.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'research/it-history-book/**'
+      - '.github/workflows/it-history-book.yml'
+  workflow_dispatch:
+    inputs:
+      allow_missing:
+        description: 'full-pdf: Drive 上找不到的图片用占位页代替（不推荐用于发布）'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: it-history-book-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: research/it-history-book
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout knowledge repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: research/it-history-book/requirements.txt
+
+      - name: Install fonts and poppler
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq fonts-noto-cjk poppler-utils
+
+      - name: Install Python dependencies
+        run: make deps
+
+      - name: Lint (no images)
+        run: make lint
+
+      - name: Check (missing images allowed)
+        run: make ci-check
+
+      - name: Smoke PDF with placeholder images
+        run: make ci-pdf
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "## 图解 IT 简史 · check"
+            echo "- 版本：$(sed -n 's/^version:[ ]*//p' book.yml)"
+            for f in dist/ci-smoke-*.pdf; do
+              [ -f "$f" ] && echo "- 冒烟 PDF：$(basename "$f")，$(pdfinfo "$f" | awk '/^Pages/{print $2}') 页，$(du -h "$f" | cut -f1)（图片为占位页，勿发布）"
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload smoke PDF
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: it-history-book-smoke-pdf
+          path: research/it-history-book/dist/ci-smoke-*.pdf
+          retention-days: 7
+          if-no-files-found: warn
+
+  full-pdf:
+    needs: check
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for Drive credentials
+        id: gate
+        working-directory: .
+        env:
+          GDRIVE_SA_JSON: ${{ secrets.GDRIVE_SA_JSON }}
+        run: |
+          if [ -n "${GDRIVE_SA_JSON:-}" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "GDRIVE_SA_JSON is not configured; skipping full PDF build." | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Checkout knowledge repository
+        if: steps.gate.outputs.enabled == 'true'
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        if: steps.gate.outputs.enabled == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: research/it-history-book/requirements.txt
+
+      - name: Install fonts, poppler and rclone
+        if: steps.gate.outputs.enabled == 'true'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq fonts-noto-cjk poppler-utils rclone
+          make deps
+
+      - name: Pull images from Google Drive (read-only)
+        if: steps.gate.outputs.enabled == 'true'
+        env:
+          GDRIVE_SA_JSON: ${{ secrets.GDRIVE_SA_JSON }}
+        run: |
+          set -euo pipefail
+          folder_id="$(python3 -c "import yaml; print(yaml.safe_load(open('book.yml', encoding='utf-8'))['drive']['folder_id'])")"
+          sa="$RUNNER_TEMP/gdrive-sa.json"
+          umask 077
+          printf '%s' "$GDRIVE_SA_JSON" > "$sa"
+          mirror="$RUNNER_TEMP/drive-mirror"
+          rclone copy ":drive:" "$mirror" \
+            --drive-service-account-file "$sa" \
+            --drive-scope drive.readonly \
+            --drive-root-folder-id "$folder_id" \
+            --include '*.{png,PNG,jpg,JPG,jpeg,JPEG,webp,gif}' \
+            --exclude '_重复与待定/**' \
+            --transfers 8 --checkers 16 --fast-list --stats-one-line --stats 30s
+          rm -f "$sa"
+          python3 scripts/fetch_images.py --from "$mirror" ${{ inputs.allow_missing && '--allow-missing' || '' }}
+
+      - name: Build full PDF
+        if: steps.gate.outputs.enabled == 'true'
+        env:
+          BOOK_PLACEHOLDER_IMAGES: ${{ inputs.allow_missing && '1' || '' }}
+        run: make pdf
+
+      - name: Upload full PDF
+        if: steps.gate.outputs.enabled == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: it-history-book-pdf
+          path: research/it-history-book/dist/图解IT简史-合集-*.pdf
+          retention-days: 7
+          if-no-files-found: error

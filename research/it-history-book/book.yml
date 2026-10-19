@@ -1,11 +1,11 @@
 # 《图解 IT 简史》书籍配置
 title: 图解 IT 简史
 subtitle: 从大型机到 AI 时代 · 图文合集
-version: v3
+version: v3.1
 author: Haitao Pan
 publisher: XWork Technologies LLC
 website: https://xworktech.com/products/open-platform
-edition: v3 · 2026-10
+edition: v3.1 · 2026-10
 support_line: XWork Technologies LLC 服务支持
 # 封面署名区（两行）与页脚右侧小字
 cover_credit: Haitao Pan · XWork Technologies LLC 服务支持
@@ -22,10 +22,10 @@ chapters:
 - 05-cloud-s3-hybrid
 - 06-automation-platform
 - 07-data-warehouse-bi
-- 07x-data-infra-evolution
 - 08-identity-security
 - 09-open-source-cloud-neutral
 - 10-ai-era
+- 07x-data-infra-evolution
 image:
   dpi: 145
   jpeg_quality: 85
