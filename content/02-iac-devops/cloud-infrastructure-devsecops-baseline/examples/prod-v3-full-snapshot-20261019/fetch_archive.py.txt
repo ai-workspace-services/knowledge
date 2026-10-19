@@ -1,0 +1,18 @@
+import hashlib,json,os,pathlib,subprocess
+os.umask(0o077)
+base=pathlib.Path(__file__).parent
+base.chmod(0o700)
+receipt=json.loads((base/'capture-receipt.json').read_text())
+root=receipt['snapshot_dir']
+assert root=='/data/backups/web-saas/prod-v3/full-snapshot-20261019/20261019T151628Z'
+target=base/'prod-v3-full-snapshot-20261019T151628Z.tar'
+args=['ssh','-i','/Users/shenlan/.ssh/google_compute_engine','-o','IdentitiesOnly=yes','-o','StrictHostKeyChecking=yes','-o','UserKnownHostsFile=/Users/shenlan/.ssh/google_compute_known_hosts','-o','HostKeyAlias=compute.8067251746712969252','haitaopan_xworktech_com@35.236.129.210','sudo tar -C '+root+' -cf - .']
+with target.open('xb') as f: subprocess.run(args,stdout=f,stderr=subprocess.PIPE,check=True)
+import tarfile
+final=json.loads((base/'final-receipt.json').read_text())
+with tarfile.open(target) as archive:
+    for item in final['sha256sums']:
+        expected,name=item.split('  ',1)
+        stream=archive.extractfile('./'+name)
+        assert hashlib.file_digest(stream,'sha256').hexdigest()==expected
+print(json.dumps({'controller_copy':str(target),'sha256':hashlib.file_digest(target.open('rb'),'sha256').hexdigest(),'all_members_verified':True}))
