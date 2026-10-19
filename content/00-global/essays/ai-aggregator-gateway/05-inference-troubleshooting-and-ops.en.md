@@ -58,7 +58,7 @@ During our October 2026 Home-Lab verification, we executed non-streaming minimal
 
 ## 3. Automated Health Verification Script for Home-Lab
 
-To avoid executing manual curl commands following maintenance windows, we maintain an automated health probe script: [`scripts/ai-gateway-internal-verify.sh`](file:///Users/shenlan/workspaces/ai-workspace-service/knowledge/scripts/ai-gateway-internal-verify.sh). This script executes comprehensive smoke tests without exposing secret tokens:
+To avoid executing manual curl commands following maintenance windows, we maintain an automated health probe script: [`scripts/ai-gateway-internal-verify.sh`](../../../../scripts/ai-gateway-internal-verify.sh). This script executes comprehensive smoke tests without exposing secret tokens:
 
 ```bash
 #!/usr/bin/env bash

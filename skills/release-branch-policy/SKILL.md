@@ -97,7 +97,7 @@ Script: `skills/release-branch-policy/scripts/apply_ruleset.sh`
 
 Script: `skills/release-branch-policy/scripts/sync_skill_to_subrepos.sh`
 
-- Copies this skill folder into each local repo under `/Users/shenlan/workspaces/cloud-neutral-toolkit/*`
+- Copies this skill folder into each local repo under `~/workspaces/cloud-neutral-toolkit/*`
 - Skips repos without `.git`
 - Keeps existing files unless overwritten explicitly
 

@@ -17,8 +17,8 @@
    "component":"agent-xray-sync","target":"tcp",
    "err":"list clients: controller returned 404 Not Found: 404 page not found"}
   
-  POST 404 https://accounts-svc-plus-266500572462.asia-northeast1.run.app/api/agent-server/v1/status
-  GET 404 https://accounts-svc-plus-266500572462.asia-northeast1.run.app/api/agent-server/v1/users
+  POST 404 https://accounts-svc-plus-<gcp-project-number-xzerolab>.asia-northeast1.run.app/api/agent-server/v1/status
+  GET 404 https://accounts-svc-plus-<gcp-project-number-xzerolab>.asia-northeast1.run.app/api/agent-server/v1/users
   ```
 
 ### 2. 用户 UUID 变更需求
@@ -42,11 +42,11 @@
 2. **生产环境未部署最新代码**：
    - Cloud Run 服务 `accounts-svc-plus` 运行的是旧版本代码
    - 旧版本不包含 agent API 路由
-   - 测试确认：`curl https://accounts-svc-plus-266500572462.asia-northeast1.run.app/api/agent-server/v1/users` 返回 `404 page not found`
+   - 测试确认：`curl https://accounts-svc-plus-<gcp-project-number-xzerolab>.asia-northeast1.run.app/api/agent-server/v1/users` 返回 `404 page not found`
 
 3. **Agent 配置正确**：
    - Agent 配置文件：`/etc/agent/account-agent.yaml`
-   - Controller URL: `https://accounts-svc-plus-266500572462.asia-northeast1.run.app`
+   - Controller URL: `https://accounts-svc-plus-<gcp-project-number-xzerolab>.asia-northeast1.run.app`
    - API Token: 正确配置（与 `INTERNAL_SERVICE_TOKEN` 匹配）
 
 ## 诊断步骤
@@ -67,7 +67,7 @@ journalctl -u agent-svc-plus -n 50 --no-pager
 ssh root@hk-xhttp.svc.plus "cat /etc/agent/account-agent.yaml"
 
 # 确认 controller URL 和 token 配置正确
-# controllerUrl: "https://accounts-svc-plus-266500572462.asia-northeast1.run.app"
+# controllerUrl: "https://accounts-svc-plus-<gcp-project-number-xzerolab>.asia-northeast1.run.app"
 # apiToken: "<REDACTED_TOKEN>"
 ```
 
@@ -76,7 +76,7 @@ ssh root@hk-xhttp.svc.plus "cat /etc/agent/account-agent.yaml"
 # 测试 /api/agent-server/v1/users 端点
 # gitleaks:allow
 curl -s -H "Authorization: Bearer ${INTERNAL_SERVICE_TOKEN}" \
-  "https://accounts-svc-plus-266500572462.asia-northeast1.run.app/api/agent-server/v1/users"
+  "https://accounts-svc-plus-<gcp-project-number-xzerolab>.asia-northeast1.run.app/api/agent-server/v1/users"
 
 # 返回: 404 page not found
 # 确认生产环境缺少该路由
@@ -120,7 +120,7 @@ docker exec postgresql-svc-plus psql -U postgres -d account -c "
 
 ```bash
 # 1. 进入项目目录
-cd /Users/shenlan/workspaces/cloud-neutral-toolkit/accounts.svc.plus
+cd ~/workspaces/cloud-neutral-toolkit/accounts.svc.plus
 
 # 2. 设置 GCP 项目
 export GCP_PROJECT=xzerolab-480008
@@ -357,7 +357,7 @@ async function fetcher(url: string): Promise<VlessNode[]> {
 # 测试 agent API 端点
 # gitleaks:allow
 curl -s -H "Authorization: Bearer ${INTERNAL_SERVICE_TOKEN}" \
-  "https://accounts-svc-plus-266500572462.asia-northeast1.run.app/api/agent-server/v1/users"
+  "https://accounts-svc-plus-<gcp-project-number-xzerolab>.asia-northeast1.run.app/api/agent-server/v1/users"
 
 # 预期结果: JSON 响应包含用户列表
 # {
@@ -422,7 +422,7 @@ docker exec postgresql-svc-plus psql -U postgres -d account -c "
 
 ```bash
 # 1. 进入项目目录
-cd /Users/shenlan/workspaces/cloud-neutral-toolkit/accounts.svc.plus
+cd ~/workspaces/cloud-neutral-toolkit/accounts.svc.plus
 
 # 2. 确认代码已提交
 git status
@@ -461,7 +461,7 @@ gcloud run deploy accounts-svc-plus \
 # 测试 API 端点
 # gitleaks:allow
 curl -s -H "Authorization: Bearer ${INTERNAL_SERVICE_TOKEN}" \
-  "https://accounts-svc-plus-266500572462.asia-northeast1.run.app/api/agent-server/v1/users"
+  "https://accounts-svc-plus-<gcp-project-number-xzerolab>.asia-northeast1.run.app/api/agent-server/v1/users"
 
 # 应该返回 JSON 而不是 404
 ```
@@ -568,7 +568,7 @@ log:
 
 agent:
   id: "hk-proxy-server"
-  controllerUrl: "https://accounts-svc-plus-266500572462.asia-northeast1.run.app"
+  controllerUrl: "https://accounts-svc-plus-<gcp-project-number-xzerolab>.asia-northeast1.run.app"
   apiToken: "<REDACTED_TOKEN>"
   httpTimeout: 15s
   statusInterval: 1m
@@ -619,7 +619,7 @@ postgres
 ### 相关服务
 
 - **accounts-svc-plus**: Cloud Run 服务，处理认证和用户管理
-  - URL: `https://accounts-svc-plus-266500572462.asia-northeast1.run.app`
+  - URL: `https://accounts-svc-plus-<gcp-project-number-xzerolab>.asia-northeast1.run.app`
   - 域名: `https://accounts.svc.plus`
 - **console.svc.plus**: 前端控制台
   - URL: `https://www.svc.plus`

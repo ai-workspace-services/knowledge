@@ -1,7 +1,7 @@
 import os
 import subprocess
 
-OUTPUT_DIR = "/Users/shenlan/workspaces/ai-workspace-service/knowledge/assets/images"
+OUTPUT_DIR = os.path.expanduser("~/workspaces/ai-workspace-service/knowledge/assets/images")
 HTML_DIR = "/tmp/canvases_html"
 os.makedirs(HTML_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)

@@ -3,7 +3,7 @@
 ## 目标与执行边界
 
 本次 GCP 跨账号迁移全流程由 **AI Agent（ChatGPT APP）协同自动化驱动完成，端到端总耗时仅 2 小时 30 分钟**。
-使用当前 `gcloud` 登录的 `haitaopan@xworktech.com`，严格结合 GitOps 声明与
+使用当前 `gcloud` 登录的 `<org-account-email>`，严格结合 GitOps 声明与
 [`daily-main-snapshot.yaml`](https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/main/.github/workflows/daily-main-snapshot.yaml)
 自动化调度流水线，在目标项目中无状态重部署 Cloud Run 服务，并将现有域名路由 upstream 动态对齐到新服务：
 
@@ -26,11 +26,11 @@ GCP 项目管理员邮箱与 CI 部署 Service Account 是两种身份。`GCP_SE
 
 本机 `gcloud auth list` 在不同终端输出过不同 ACTIVE 账号。开始每次操作前都以
 `gcloud config get-value account` 与 `gcloud auth list` 的现场输出为准。工具终端当前活动账号
-是 `haitaopan@xworktech.com`，当前配置的默认 project 为 `open-platform-prod`。旧账号
-`haitaopanhq@gmail.com` 仅保留用于旧项目只读盘点和回退，不作为新项目部署身份。
+是 `<org-account-email>`，当前配置的默认 project 为 `open-platform-prod`。旧账号
+`<personal-account-email>` 仅保留用于旧项目只读盘点和回退，不作为新项目部署身份。
 
 Cloud Run 的默认 `run.app` URL 含项目编号。新项目编号和新服务 URL 需在获准访问并创建服务后
-读取，不能从项目 ID 推算。GitOps 中现有 `1004637461064.asia-northeast1.run.app` upstream
+读取，不能从项目 ID 推算。GitOps 中现有 `<gcp-project-number-xworktech>.asia-northeast1.run.app` upstream
 属于旧部署；部署完成后必须更新为目标服务的真实 URL，再执行 Worker/路由切换。
 
 ## 0. 现有服务只读基线
@@ -39,23 +39,23 @@ Cloud Run 的默认 `run.app` URL 含项目编号。新项目编号和新服务 
 
 ```text
 configuration: default (active)
-account: haitaopan@xworktech.com
+account: <org-account-email>
 project: open-platform-prod
 ```
 
 这只说明本机默认上下文已经切到新账号和 PROD 目标项目；实际服务操作仍显式传入
 `--project`、`--region`，避免被默认 project 误导。
 
-`haitaopanhq@gmail.com` 在本次盘点可见项目如下：
+`<personal-account-email>` 在本次盘点可见项目如下：
 
 | Project ID | 显示名 | Project number |
 |---|---|---|
-| `xworktech` | xworktech | `1004637461064` |
-| `xzerolab-480008` | xzerolab | `266500572462` |
+| `xworktech` | xworktech | `<gcp-project-number-xworktech>` |
+| `xzerolab-480008` | xzerolab | `<gcp-project-number-xzerolab>` |
 
 六个服务都在 `xworktech / asia-northeast1`；每项的 Ingress 为 `all`，IAM invoker 含
 `allUsers`，100% 流量指向最新 Ready revision，运行身份均为
-`1004637461064-compute@developer.gserviceaccount.com`。
+`<gcp-project-number-xworktech>-compute@developer.gserviceaccount.com`。
 
 | 服务 | 当前 status URL | 最新 Ready revision（UTC） | 镜像 tag |
 |---|---|---|---|
@@ -76,8 +76,8 @@ Supabase/internal token 与 `KNOWLEDGE_REPO_PATH/URL/REF`。没有读取或记�
 
 | Project ID | Project number | 访问结果 |
 |---|---:|---|
-| `open-platform-uat` | `142822217216` | 新账号可读 |
-| `open-platform-prod` | `986070475391` | 新账号可读 |
+| `open-platform-uat` | `<gcp-project-number-uat>` | 新账号可读 |
+| `open-platform-prod` | `<gcp-project-number-prod>` | 新账号可读 |
 
 PROD 目标项目在 `asia-east1` 当前没有 Cloud Run 服务，也没有 Artifact Registry 仓库；UAT 新项目
 已创建且目标 API 已启用，因此服务/仓库清单仍为空，等待无状态部署。此前 GitOps 中的
@@ -95,15 +95,15 @@ PROD 目标项目在 `asia-east1` 当前没有 Cloud Run 服务，也没有 Arti
 先设置当前目标参数：
 
 ```bash
-cd /Users/shenlan/workspaces/ai-workspace-infra/platform-ops-toolkit
+cd ~/workspaces/ai-workspace-infra/platform-ops-toolkit
 
 export GCP_ENVIRONMENT=uat
 export GCP_PROJECT_ID=open-platform-uat
 export GCP_REGION=asia-east1
 export GCP_ACCOUNT_ID=xworktech
 export GCP_BILLING_ACCOUNT=01180B-F40C7F-BADE24
-export GCP_GITOPS_MANIFEST=/Users/shenlan/workspaces/ai-workspace-infra/gitops/resources/xworktech.com/uat/gcp/open-platform-uat.yaml
-export GCP_OIDC_CONFIG=/Users/shenlan/workspaces/ai-workspace-infra/gitops/resources/xworktech.com/uat/gcp/github-actions-oidc.yaml
+export GCP_GITOPS_MANIFEST=~/workspaces/ai-workspace-infra/gitops/resources/xworktech.com/uat/gcp/open-platform-uat.yaml
+export GCP_OIDC_CONFIG=~/workspaces/ai-workspace-infra/gitops/resources/xworktech.com/uat/gcp/github-actions-oidc.yaml
 export VAULT_ADDR=https://vault.svc.plus
 ```
 
@@ -146,7 +146,7 @@ gcloud auth application-default login \
 ```
 
 如果命令进入 remote bootstrap 提示，请在另一台可打开浏览器的终端运行它打印出的完整
-`--remote-bootstrap` 命令，在浏览器中选择 `haitaopan@xworktech.com` 并同意
+`--remote-bootstrap` 命令，在浏览器中选择 `<org-account-email>` 并同意
 `cloud-platform` scope，再把命令输出复制回原终端。不要把 URL、授权码或 token 发到聊天中。
 严格 ADC 模式验证：
 
@@ -166,7 +166,7 @@ scripts/gcp/gcp_account_migration.sh prepare --link-billing --token-source=adc
 账单/API 已经完成时，重复执行是幂等的；如果只需要绑定账单并启用 API、不写 bootstrap KV，
 可使用 `--skip-bootstrap`。如果只需要重新写 bootstrap KV，可使用 `--skip-api-enable`。
 
-2026-09-26 实际执行结果：活动账号为 `haitaopan@xworktech.com`；UAT 和 PROD 的
+2026-09-26 实际执行结果：活动账号为 `<org-account-email>`；UAT 和 PROD 的
 `prepare --link-billing --token-source=auto` 均成功，账单均为 `01180B-F40C7F-BADE24`，
 所需 API 各 5 项全部启用。`kv/CICD/uat/gcp-bootstrap/xworktech` 与
 `kv/CICD/prod/gcp-bootstrap/xworktech` 均已写入 version `2`。复核只读取 KV 键名，当前均为
@@ -178,13 +178,13 @@ workflow；provider 和 deploy Service Account 在 workflow 成功前保持未�
 状态：绑定命令已执行（用户确认）；新账号已可读取真实 UAT/PROD 目标项目。旧账号仍保留作为
 短期回退入口，暂不撤销。
 
-如果当前要用 `haitaopanhq@gmail.com` 盘点旧服务，`gcloud auth login` 显示
+如果当前要用 `<personal-account-email>` 盘点旧服务，`gcloud auth login` 显示
 `Re-using locally stored credentials` 时，说明没有重新进行 OAuth。使用 `--force` 后再切换并
 核对活动账号：
 
 ```bash
-gcloud auth login --force haitaopanhq@gmail.com
-gcloud config set account haitaopanhq@gmail.com
+gcloud auth login --force <personal-account-email>
+gcloud config set account <personal-account-email>
 gcloud config get-value account
 gcloud auth list
 ```
@@ -201,8 +201,8 @@ gcloud config list
 ```bash
 gcloud config configurations create gcp-account-inventory
 gcloud config configurations activate gcp-account-inventory
-gcloud auth login --force haitaopanhq@gmail.com
-gcloud config set account haitaopanhq@gmail.com
+gcloud auth login --force <personal-account-email>
+gcloud config set account <personal-account-email>
 ```
 
 此前使用旧账号尝试绑定时，两个项目曾返回
@@ -226,7 +226,7 @@ gcloud config set account haitaopanhq@gmail.com
 清理前必须确认当前账号是新账号，并先做只读预览。以下命令已用于本次清理复核：
 
 ```bash
-gcloud config set account haitaopan@xworktech.com
+gcloud config set account <org-account-email>
 
 projects_to_delete=(
   cs-poc-nvea0hpeuovvhd20lrhz0fy
@@ -274,7 +274,7 @@ gcloud projects list \
 ```bash
 for project in open-platform-uat open-platform-prod; do
   gcloud projects add-iam-policy-binding "$project" \
-    --member='user:haitaopan@xworktech.com' \
+    --member='user:<org-account-email>' \
     --role='roles/browser'
 done
 ```
@@ -336,7 +336,7 @@ account，并从 bootstrap 输出获取新值。
    ```
 
 2. 将两个 OIDC 声明合并到 GitOps `main`。当前声明已统一使用规范的数字项目号 audience：
-   UAT `142822217216`、PROD `986070475391`；这与 `google-github-actions/auth` 的默认 audience
+   UAT `<gcp-project-number-uat>`、PROD `<gcp-project-number-prod>`；这与 `google-github-actions/auth` 的默认 audience
    一致。`gcp-oidc-bootstrap.yml` 已固定到 GitOps 合并提交
    `7b8528e2dad579ec8bd38e743510ee8dc7721c78`，运行 workflow 前仍要确认 ref 没有回退。
 
@@ -523,13 +523,13 @@ upstream 的链路。公开 canonical DNS cutover 不属于本次。
 
 | 检查项 | 结果 | 说明 |
 |---|---|---|
-| `gcloud` 活动账号 | 通过 | `haitaopan@xworktech.com` 为 ACTIVE |
-| 新账号项目级 IAM | 通过（需后续收敛） | UAT/PROD 当前均可读；现场策略显示 `haitaopan@xworktech.com` 拥有 `roles/owner`，迁移稳定后再按最小权限拆分，不在本次重部署中撤销 |
+| `gcloud` 活动账号 | 通过 | `<org-account-email>` 为 ACTIVE |
+| 新账号项目级 IAM | 通过（需后续收敛） | UAT/PROD 当前均可读；现场策略显示 `<org-account-email>` 拥有 `roles/owner`，迁移稳定后再按最小权限拆分，不在本次重部署中撤销 |
 | 新账号无关项目清理 | 通过 | 截图中的 5 个 Project ID 已删除并从 `gcloud projects list` 复核消失；`open-platform-uat` 与 `open-platform-prod` 保留 |
 | UAT 账单账号 | 通过 | `open-platform-uat` 已绑定 `billingAccounts/01180B-F40C7F-BADE24` |
-| UAT 目标项目 | 通过 | `open-platform-uat`，项目号 `142822217216` |
-| PROD 目标项目 | 通过 | `open-platform-prod`，项目号 `986070475391` |
-| 组织归属 | 通过 | 两个项目均属于 Organization `744119519286` |
+| UAT 目标项目 | 通过 | `open-platform-uat`，项目号 `<gcp-project-number-uat>` |
+| PROD 目标项目 | 通过 | `open-platform-prod`，项目号 `<gcp-project-number-prod>` |
+| 组织归属 | 通过 | 两个项目均属于 Organization `<gcp-org-id>` |
 | 区域 | 通过 | 目标区域统一为 `asia-east1` |
 | Cloud Run API | 通过 | UAT/PROD 均启用 `run.googleapis.com` |
 | Artifact Registry API | 通过 | UAT/PROD 均启用 `artifactregistry.googleapis.com` |
@@ -551,10 +551,10 @@ upstream 的链路。公开 canonical DNS cutover 不属于本次。
 
 | 环境 | 服务 | 项目 / 区域 | 最新就绪修订 | 运行时身份 | 镜像 | 入口状态 |
 |---|---|---|---|---|---|---|
-| UAT | `uat-accounts` | `open-platform-uat / asia-east1` | `uat-accounts-00001-q2g` | `142822217216-compute@developer.gserviceaccount.com` | `asia-east1-docker.pkg.dev/open-platform-uat/serverless/accounts:daily-build-2026.09.25-r1` | 100% 最新修订；Ingress `all`；Invoker IAM check disabled；`/readyz` 200 |
+| UAT | `uat-accounts` | `open-platform-uat / asia-east1` | `uat-accounts-00001-q2g` | `<gcp-project-number-uat>-compute@developer.gserviceaccount.com` | `asia-east1-docker.pkg.dev/open-platform-uat/serverless/accounts:daily-build-2026.09.25-r1` | 100% 最新修订；Ingress `all`；Invoker IAM check disabled；`/readyz` 200 |
 | UAT | `uat-content-service` | `open-platform-uat / asia-east1` | `uat-content-service-00001-ffm` | 同上 | `asia-east1-docker.pkg.dev/open-platform-uat/serverless/content-service:daily-build-2026.09.25-r1` | 100% 最新修订；Ingress `all`；Invoker IAM check disabled；`/readyz` 200 |
 | UAT | `uat-billing-service` | `open-platform-uat / asia-east1` | `uat-billing-service-00001-rnh` | 同上 | `asia-east1-docker.pkg.dev/open-platform-uat/serverless/billing-service:daily-build-2026.09.25-r1` | 100% 最新修订；Ingress `all`；Invoker IAM check disabled；`/readyz` 200 |
-| PROD | `prod-accounts` | `open-platform-prod / asia-east1` | `prod-accounts-00001-l4q` | `986070475391-compute@developer.gserviceaccount.com` | `asia-east1-docker.pkg.dev/open-platform-prod/serverless/accounts:v2026.09.13-r4` | 100% 最新修订；Ingress `all`；Invoker IAM check disabled；`/readyz` 200 |
+| PROD | `prod-accounts` | `open-platform-prod / asia-east1` | `prod-accounts-00001-l4q` | `<gcp-project-number-prod>-compute@developer.gserviceaccount.com` | `asia-east1-docker.pkg.dev/open-platform-prod/serverless/accounts:v2026.09.13-r4` | 100% 最新修订；Ingress `all`；Invoker IAM check disabled；`/readyz` 200 |
 | PROD | `prod-content-service` | `open-platform-prod / asia-east1` | `prod-content-service-00001-thr` | 同上 | `asia-east1-docker.pkg.dev/open-platform-prod/serverless/content-service:v2026.09.13-r4` | 100% 最新修订；Ingress `all`；Invoker IAM check disabled；`/readyz` 200 |
 | PROD | `prod-billing-service` | `open-platform-prod / asia-east1` | `prod-billing-service-00001-ktq` | 同上 | `asia-east1-docker.pkg.dev/open-platform-prod/serverless/billing-service:v2026.09.13-r4` | 100% 最新修订；Ingress `all`；Invoker IAM check disabled；`/readyz` 200 |
 

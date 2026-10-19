@@ -1,8 +1,8 @@
 import os
 import shutil
 
-DESKTOP_DIR = "/Users/shenlan/Desktop/AI聚合网关-工程决策与图文发布包"
-KNOWLEDGE_ROOT = "/Users/shenlan/workspaces/ai-workspace-service/knowledge"
+DESKTOP_DIR = os.path.expanduser("~/Desktop/AI聚合网关-工程决策与图文发布包")
+KNOWLEDGE_ROOT = os.path.expanduser("~/workspaces/ai-workspace-service/knowledge")
 ESSAYS_DIR = os.path.join(KNOWLEDGE_ROOT, "content/00-global/essays/ai-aggregator-gateway")
 ASSETS_DIR = os.path.join(KNOWLEDGE_ROOT, "assets/images")
 

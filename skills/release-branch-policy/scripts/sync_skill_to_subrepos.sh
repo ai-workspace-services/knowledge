@@ -12,7 +12,7 @@ Copies:
   skills/release-branch-policy -> <repo>/skills/release-branch-policy
 
 Notes:
-  - Local path root: /Users/shenlan/workspaces/cloud-neutral-toolkit
+  - Local path root: ~/workspaces/cloud-neutral-toolkit
   - Skips directories without .git
 EOF
 }
@@ -32,7 +32,7 @@ print(os.path.realpath(sys.argv[1]))
 PY
 }
 
-BASE="/Users/shenlan/workspaces/cloud-neutral-toolkit"
+BASE="$HOME/workspaces/cloud-neutral-toolkit"
 if [[ ! -d "${BASE}" ]]; then
   echo "missing base dir: ${BASE}" >&2
   exit 1

@@ -58,7 +58,7 @@ category: essays
 
 ## 三、Home-Lab 自动化验收脚本实装
 
-为了避免每次维护后都需要繁琐地手动执行多条 curl，我们在知识库中内置了自动化健康探测脚本 [`scripts/ai-gateway-internal-verify.sh`](file:///Users/shenlan/workspaces/ai-workspace-service/knowledge/scripts/ai-gateway-internal-verify.sh)。该脚本在不打印敏感 Token 的前提下，一键完成全链路冒烟测试：
+为了避免每次维护后都需要繁琐地手动执行多条 curl，我们在知识库中内置了自动化健康探测脚本 [`scripts/ai-gateway-internal-verify.sh`](../../../../scripts/ai-gateway-internal-verify.sh)。该脚本在不打印敏感 Token 的前提下，一键完成全链路冒烟测试：
 
 ```bash
 #!/usr/bin/env bash

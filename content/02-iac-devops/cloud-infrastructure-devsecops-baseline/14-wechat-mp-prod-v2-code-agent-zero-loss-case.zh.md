@@ -1,6 +1,6 @@
 # 生产带病升级突发7重连环断门！AI如何做到300客户与12万账本零丢失？
 
-![AI Code Agent 生产恢复零数据丢失全景](/Users/shenlan/workspaces/ai-workspace-service/knowledge/assets/images/prod-v2-code-agent-recovery-cover.jpg)
+![AI Code Agent 生产恢复零数据丢失全景](../../../assets/images/prod-v2-code-agent-recovery-cover.jpg)
 
 > **导读**：面对生产升级的 7 项连环故障，依托不可变构件、增量迁移与沙箱内存校验，实现 300 用户、120 订阅及 12 万+ 账本零丢失。**全程均由 Code Agent 在既定工程技能（Skills）与安全护栏约束下自主执行完成。**
 

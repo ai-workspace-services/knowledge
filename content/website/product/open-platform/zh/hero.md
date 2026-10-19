@@ -69,8 +69,8 @@ solutions:
     links:
       - label: GitHub 组织：ai-workspace-infra
         href: https://github.com/ai-workspace-infra
-      - label: OIDC 无密钥 CI
-        href: /blogs/02-iac-devops/cloud-infrastructure-devsecops-baseline/01-github-actions-oidc-keyless-ci
+      - label: Cloud OIDC 无密钥接入 TLDR
+        href: /blogs/04-infra-platform/public-cloud-iaas/cloud-oidc-bootstrap-tldr.zh
       - label: 参考资料总览
         href: /docs/reference/overview
       - label: 内容规范

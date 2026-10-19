@@ -23,11 +23,11 @@
 | GCP 项目 | `open-platform-prod` |
 | GCP 网络 | `vault-shared` |
 | 当前 GCP 节点 | `vault-prod-0`，`RUNNING` |
-| GCP 地址 | 私网 `10.81.0.4`，公网 `35.221.167.104` |
+| GCP 地址 | 私网 `10.81.0.4`，公网 `<vault-public-ip>` |
 | Vault | 1.21.4，Raft，initialized，unsealed，active leader |
 | 当前 Raft 规模 | 1 个 voter/leader |
-| 旧节点 | `46.250.251.132`，`vault-2`，独立 Vault server，已暂停容器观察 |
-| DNS | `vault.svc.plus` 仅返回 `35.221.167.104` |
+| 旧节点 | `<legacy-node-public-ip>`，`vault-2`，独立 Vault server，已暂停容器观察 |
+| DNS | `vault.svc.plus` 仅返回 `<vault-public-ip>` |
 | XConnect Gateway | `10.79.0.1` |
 
 旧节点和 GCP 节点由同一个 Raft snapshot 产生过相同 `cluster_id`。因此两套 server 不能同时接受写流量；任何回滚都必须先把 DNS 指回单一入口，并停止另一套写入口。
@@ -40,7 +40,7 @@
                       策略、设备、配置分发
                               |
                               v
-      旧节点 46.250.251.132          GCP vault-prod-0
+      旧节点 <legacy-node-public-ip>          GCP vault-prod-0
               |                         |
               | WireGuard over VLESS    | Gateway
               +-------- XConnect -------+ 10.79.0.1
@@ -150,7 +150,7 @@
 | XConnect Gateway | `vault-prod-0`，`10.79.0.1` | One 地址 `10.79.0.2/10.79.0.3` 是三节点扩容目标 | Gateway signed-config、`wg show` |
 | LAN SecOPS One | `10.79.0.7`，独立 device ID，systemd 持久运行 | 不属于 Vault Raft voter | Accounts device、`xconnect-one status`、Mac → `10.79.0.7` |
 | 操作 Mac One | 当前重邀请设备为 `10.79.0.9` | 旧设备登记保留，待单独撤销窗口处理 | GitOps operator device、signed-config、`utun7` |
-| 旧节点 | `46.250.251.132`/`vault-2`，独立 server，暂停观察 | 不由 GCP destroy 删除 | 旧节点服务状态、DNS 与 Vault health |
+| 旧节点 | `<legacy-node-public-ip>`/`vault-2`，独立 server，暂停观察 | 不由 GCP destroy 删除 | 旧节点服务状态、DNS 与 Vault health |
 | DNS | `vault.svc.plus` 指向 GCP 当前入口 | 回滚目标仍是旧节点 | 多 resolver `dig`、HTTPS health |
 
 这里的“数量对比”必须分成资源数、Raft voter 数、Accounts active device 数和 KV path 数，不能把四种数量混成一个结论。尤其是 operator/LAN One 设备不是 Vault voter，旧节点也不应因缩容被 Terraform 删除。
@@ -318,8 +318,8 @@ One 的 `/api/overlay/v1/enrollment/signed-config` 和 Gateway 的 `/api/overlay
 | Vault One 模板 | `vault-prod-1` | `10.79.0.2` | One invite，扩容时消费 | Raft voter/standby（当前未部署） |
 | Vault One 模板 | `vault-prod-2` | `10.79.0.3` | One invite，扩容时消费 | Raft voter/standby（当前未部署） |
 | 旧 Vault One | `vault-legacy` | `10.79.0.4` | 迁移源独立 One enrollment | 旧节点数据面/回滚观察 |
-| LAN SecOPS One | `xconnect-linux-secops-shenlan-inspiron-5415-ops` | `10.79.0.7` | 独立 One invite + systemd | 运维访问，不加入 Raft |
-| Mac One | `xconnect-darwin-haitaodemacbook-pro-rejoin.local` | `10.79.0.9` | 重邀请后复用受保护 credential | 运维访问，不加入 Raft |
+| LAN SecOPS One | `<secops-linux-device>` | `10.79.0.7` | 独立 One invite + systemd | 运维访问，不加入 Raft |
+| Mac One | `<ops-mac-device>.local` | `10.79.0.9` | 重邀请后复用受保护 credential | 运维访问，不加入 Raft |
 
 `.5` 和 `.8` 等历史分配不能因为“看起来空闲”就手工复用；地址是否可用以 Accounts signed-config 和 active device 记录为准。
 
@@ -634,7 +634,7 @@ Gateway (`10.79.0.1`) 与 XConnect 数据面运行在同一台主机上，使用
   dnsmasq 读取自动生成的 hosts 文件，因此不需要为新节点手工填写 IP；
 - 撤销设备后，下一次 Gateway 签名配置同步会删除对应 A 记录；
 - `spec.dns.records` 只声明服务别名和目标 `device_id`，例如
-  `internal-xworkmate-bridge.svc.plus -> xconnect-linux-secops-shenlan-inspiron-5415-ops`；
+  `internal-xworkmate-bridge.svc.plus -> <secops-linux-device>`；
   Gateway 将别名动态解析到该 One 当前分配的 overlay IP。设备离线或未加入时
   不发布该别名。
 - `shared.internal` 由 `local` 区域标记为内网权威区域；
@@ -667,7 +667,7 @@ Vault token 或 XConnect enrollment token。
 验证新加入 One 的自动记录和公网递归：
 
 ```bash
-dig +short @10.79.0.1 xconnect-linux-secops-shenlan-inspiron-5415-ops.shared.internal
+dig +short @10.79.0.1 <secops-linux-device>.shared.internal
 dig +short @10.79.0.1 internal-xworkmate-bridge.svc.plus
 dig +short @10.79.0.1 example.com
 ```

@@ -8,7 +8,7 @@ sections:
       - title: 快速开始
         href: /docs/get-started/quickstart
       - title: 海外 AI 服务注册与订阅攻略
-        href: /docs/zh/overseas-ai-service-access-guide
+        href: /docs/get-started/overseas-ai-service-access-guide
       - title: 项目地图
         href: /docs/get-started/project-map
   - title: 基础认知
@@ -52,16 +52,30 @@ sections:
   - title: AI 协作指南
     items:
       - title: 专栏总览与目录
-        href: /docs/zh/ai-collaboration-guide/
+        href: /docs/ai-collaboration-guide/overview
       - title: 完整全渠道指南
-        href: /docs/zh/ai-collaboration-guide/full-guide
+        href: /docs/ai-collaboration-guide/ai-collaboration-full-guide
       - title: 第 1 篇：认知重构篇
-        href: /docs/zh/ai-collaboration-guide/01-cognitive-shift
+        href: /docs/ai-collaboration-guide/01-cognitive-shift
       - title: 第 2 篇：执行双核篇
-        href: /docs/zh/ai-collaboration-guide/02-dual-execution-engines
+        href: /docs/ai-collaboration-guide/02-dual-execution-engines
       - title: 第 3 篇：工程中枢篇
-        href: /docs/zh/ai-collaboration-guide/03-engineering-backbone-and-judge
+        href: /docs/ai-collaboration-guide/03-engineering-backbone-and-judge
       - title: 第 4 篇：事实与壁垒篇
-        href: /docs/zh/ai-collaboration-guide/04-research-grounding-and-specialist
+        href: /docs/ai-collaboration-guide/04-research-grounding-and-specialist
       - title: 第 5 篇：闭环与未来篇
-        href: /docs/zh/ai-collaboration-guide/05-closed-loop-and-model-routing
+        href: /docs/ai-collaboration-guide/05-closed-loop-and-model-routing
+  - title: AI Workspace 顶层架构与远景
+    items:
+      - title: "系列导读与目录"
+        href: /docs/design/ai-workspace-architecture-vision
+      - title: "第 1 篇：愿景与四个组织的长期边界"
+        href: /docs/design/ai-workspace-architecture-vision/01-vision-and-org-boundaries
+      - title: "第 2 篇：总体架构与 Workspace Specification 声明式契约"
+        href: /docs/design/ai-workspace-architecture-vision/02-architecture-and-workspace-spec
+      - title: "第 3 篇：两级 Lego 模型、三种消费方式与三阶段产品演进"
+        href: /docs/design/ai-workspace-architecture-vision/03-lego-model-and-product-evolution
+      - title: "第 4 篇：Services 层、Lab 生命周期、XConnect 与 Infra"
+        href: /docs/design/ai-workspace-architecture-vision/04-services-lab-xconnect-infra
+      - title: "第 5 篇：架构治理、Roadmap 与 North Star（附术语速查）"
+        href: /docs/design/ai-workspace-architecture-vision/05-governance-roadmap-north-star

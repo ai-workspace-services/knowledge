@@ -24,9 +24,9 @@ flowchart TD
     end
 
     subgraph Compute ["GCP Cloud Run 计算层 (asia-northeast1)"]
-        CR_Accounts["uat-accounts<br/>https://uat-accounts-1004637461064.asia-northeast1.run.app"]
-        CR_Content["uat-content-service<br/>https://uat-content-service-1004637461064.asia-northeast1.run.app"]
-        CR_Billing["uat-billing-service<br/>https://uat-billing-service-1004637461064.asia-northeast1.run.app"]
+        CR_Accounts["uat-accounts<br/>https://uat-accounts-<gcp-project-number-xworktech>.asia-northeast1.run.app"]
+        CR_Content["uat-content-service<br/>https://uat-content-service-<gcp-project-number-xworktech>.asia-northeast1.run.app"]
+        CR_Billing["uat-billing-service<br/>https://uat-billing-service-<gcp-project-number-xworktech>.asia-northeast1.run.app"]
     end
 
     subgraph Data ["数据持久化层 (Data Tier)"]
@@ -60,9 +60,9 @@ flowchart TD
 ### 2. 后端微服务与真实端点映射 (`spec.serverless`)
 实际部署在 GCP Cloud Run（区域 `asia-northeast1`，项目 `xworktech`）的微服务端点：
 
-* **Accounts Service**: `https://uat-accounts-1004637461064.asia-northeast1.run.app`
-* **Content Service**: `https://uat-content-service-1004637461064.asia-northeast1.run.app`
-* **Billing Service**: `https://uat-billing-service-1004637461064.asia-northeast1.run.app`
+* **Accounts Service**: `https://uat-accounts-<gcp-project-number-xworktech>.asia-northeast1.run.app`
+* **Content Service**: `https://uat-content-service-<gcp-project-number-xworktech>.asia-northeast1.run.app`
+* **Billing Service**: `https://uat-billing-service-<gcp-project-number-xworktech>.asia-northeast1.run.app`
 
 ---
 
@@ -114,7 +114,7 @@ flowchart TD
 | **4** | **`ssr-auth`** | **Worker (OpenNext)**<br>`frontend-ssr-auth-uat` | `console-cloudflare-uat.onwalk.net` | `/login*`<br>`/register*`<br>`/email-verification*`<br>`/logout*`<br>`/_edge/auth/*` | 身份流转页面 (登录、注册、邮箱激活、重置密码及登出) 的 SSR 渲染 | 边缘前置校验 + 客户端调用 API 网关 |
 | **5** | **`ssr-console`** | **Worker (OpenNext)**<br>`frontend-ssr-console-uat` | `console-cloudflare-uat.onwalk.net` | `/panel*`<br>`/dashboard*`<br>`/_edge/console/*` | 用户个人中心、多租户控制面板、订阅套餐概览及组织管理面板 SSR 渲染 | 边缘聚合 + 客户端交互 |
 | **6** | **`ssr-workspace`** | **Worker (OpenNext)**<br>`frontend-ssr-workspace-uat` | `console-cloudflare-uat.onwalk.net` | `/ai-workspace*`<br>`/cloud_iac*`<br>`/editor*`<br>`/support*`<br>`/xworkmate*`<br>`/_edge/workspace/*` | 在线 Web IDE、AI 对话工作区、云端 IaC 资源编排器及工单/客服支持交互界面 | 客户端直连数据面及核心 API 网关 |
-| **7** | **`api-auth`** | **Worker (Edge Gateway)**<br>`edge-gateway-auth-uat` | `accounts-cloudflare-uat.onwalk.net` | `/api/auth/*` | 拦截所有认证请求，负责边缘 JWT 签名/验签、OAuth 回调分发及登录 Token 交换 | **Cloud Run: `uat-accounts`**<br>`https://uat-accounts-1004637461064.asia-northeast1.run.app` |
+| **7** | **`api-auth`** | **Worker (Edge Gateway)**<br>`edge-gateway-auth-uat` | `accounts-cloudflare-uat.onwalk.net` | `/api/auth/*` | 拦截所有认证请求，负责边缘 JWT 签名/验签、OAuth 回调分发及登录 Token 交换 | **Cloud Run: `uat-accounts`**<br>`https://uat-accounts-<gcp-project-number-xworktech>.asia-northeast1.run.app` |
 | **8** | **`api-admin`** | **Worker (Edge Gateway)**<br>`edge-gateway-admin-uat` | `accounts-cloudflare-uat.onwalk.net` | `/api/admin/*` | 管理员/运维平台专属网关，负责高权限接口隔离与 RBAC 访问权限拦截 | **Cloud Run: `uat-accounts`** (Admin 模块) |
 | **9** | **`api-core`** | **Worker (Edge Gateway)**<br>`edge-gateway-core-uat` | `accounts-cloudflare-uat.onwalk.net` | `/api/*`<br>*(全局通配兜底)* | 核心业务网关，处理租户元数据、计费调用、内容接口，支持 2500ms 超时自动故障转移 (Failover) | **Cloud Run: `uat-accounts`** / `uat-billing-service` / `uat-content-service` |
 
@@ -207,11 +207,11 @@ sequenceDiagram
 curl -sSL -I https://ai-workspace-portal-uat.pages.dev/
 
 # 2. 验证 Cloud Run Accounts 容器与应用响应
-curl -sSL -I https://uat-accounts-1004637461064.asia-northeast1.run.app/readyz
+curl -sSL -I https://uat-accounts-<gcp-project-number-xworktech>.asia-northeast1.run.app/readyz
 
 # 3. 验证 Cloud Run Content 与 Billing 服务响应
-curl -sSL -I https://uat-content-service-1004637461064.asia-northeast1.run.app/
-curl -sSL -I https://uat-billing-service-1004637461064.asia-northeast1.run.app/
+curl -sSL -I https://uat-content-service-<gcp-project-number-xworktech>.asia-northeast1.run.app/
+curl -sSL -I https://uat-billing-service-<gcp-project-number-xworktech>.asia-northeast1.run.app/
 
 # 4. 验证 Supabase 心跳保活 (通过 Vault API 提取凭据或 REST ping)
 curl -sSL -H "apikey: <SUPABASE_ANON_KEY>" "https://<PROJECT_REF>.supabase.co/rest/v1/"

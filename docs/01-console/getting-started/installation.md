@@ -13,7 +13,7 @@
 cp .env.example .env
 ```
 
-2. Use `/Users/shenlan/workspaces/cloud-neutral-toolkit/openclaw-deploy-example/.env` as the reference source for deployment-aligned values when available.
+2. Use `~/workspaces/cloud-neutral-toolkit/openclaw-deploy-example/.env` as the reference source for deployment-aligned values when available.
 
 ## Assistant and integrations variables
 

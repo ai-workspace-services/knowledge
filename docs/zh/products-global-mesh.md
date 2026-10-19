@@ -1,4 +1,20 @@
-# Global Mesh 产品介绍与云中立现代架构深度白皮书
+---
+title: "Global Mesh（Cloud Hub）产品介绍与云中立现代架构深度白皮书"
+description: "Global Mesh（控制台现名 Cloud Hub）的产品定位、VPS 算力 PoP、SaaS 零信任网格、应用架构拓扑与工程生命周期的权威版本白皮书。"
+slug: products-global-mesh
+lang: zh
+author: shenlan
+category: product
+tags:
+  - global-mesh
+  - cloud-hub
+  - cloud-neutral
+  - whitepaper
+---
+
+# Global Mesh（Cloud Hub）产品介绍与云中立现代架构深度白皮书
+
+> **更名说明**：该产品在控制台与产品页中现以 **Cloud Hub** 名称呈现；本文是 Global Mesh / Cloud Hub 白皮书的唯一权威版本，原根目录副本与网站产品目录副本已合并至此，正文中的 “Global Mesh” 与 “Cloud Hub” 指同一产品。
 
 > **作者**：沈蓝（IT 基础设施架构师 / 独立开发者）  
 > **产品模块**：`products/global-mesh`  

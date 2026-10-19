@@ -2,8 +2,8 @@ import subprocess
 import os
 import shutil
 
-ASSETS_DIR = "/Users/shenlan/workspaces/ai-workspace-service/knowledge/assets/images"
-DESKTOP_DIR = "/Users/shenlan/Desktop/AI团队协作Bento海报"
+ASSETS_DIR = os.path.expanduser("~/workspaces/ai-workspace-service/knowledge/assets/images")
+DESKTOP_DIR = os.path.expanduser("~/Desktop/AI团队协作Bento海报")
 CHROME_BIN = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 
 os.makedirs(ASSETS_DIR, exist_ok=True)

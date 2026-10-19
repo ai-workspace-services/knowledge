@@ -1,7 +1,7 @@
 import os
 from PIL import Image, ImageDraw, ImageFont
 
-ASSETS_DIR = "/Users/shenlan/workspaces/ai-workspace-service/knowledge/assets/images"
+ASSETS_DIR = os.path.expanduser("~/workspaces/ai-workspace-service/knowledge/assets/images")
 FONT_ZH_BOLD = "/System/Library/Fonts/STHeiti Medium.ttc"
 FONT_ZH_LIGHT = "/System/Library/Fonts/STHeiti Light.ttc"
 FONT_EN = "/System/Library/Fonts/HelveticaNeue.ttc"

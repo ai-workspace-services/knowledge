@@ -5,7 +5,7 @@
 
 ---
 
-![AI, Platform Engineering, and the Fallacy of the Hyperscaler Tax](/Users/shenlan/.gemini/antigravity/brain/1ea21b79-a35e-4892-9694-6a16915a7c27/linkedin-hero-cover.png)
+![AI, Platform Engineering, and the Fallacy of the Hyperscaler Tax](../../../../assets/images/global-mesh/linkedin-hero-cover.png)
 
 ---
 
@@ -110,7 +110,7 @@ No SSH port 22 exposed to the web, no public database listeners, and no open GPU
 
 ## 💰 Dimension 3: FinOps, Scale-to-Zero & Capital Efficiency (The Capital Dimension)
 
-![Cloud hub 50-PoP Capability Matrix & Live Sync FinOps Reconciliation Engine](/Users/shenlan/.gemini/antigravity/brain/1ea21b79-a35e-4892-9694-6a16915a7c27/vps-matrix-finops.png)
+![Cloud hub 50-PoP Capability Matrix & Live Sync FinOps Reconciliation Engine](../../../../assets/images/global-mesh/vps-matrix-finops.png)
 
 The transition from a free launchpad to production scale often triggers violent "cloud bill shock." A standard multi-region Kubernetes cluster (EKS/GKE) on a major hyperscaler immediately demands between 980 USD and 1,550+ USD per month in baseline fixed overhead—even before processing meaningful customer traffic.
 

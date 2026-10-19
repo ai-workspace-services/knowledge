@@ -15,7 +15,7 @@
 cp .env.example .env
 ```
 
-2. 如有联调环境，优先参考 `/Users/shenlan/workspaces/cloud-neutral-toolkit/openclaw-deploy-example/.env` 中对应值。
+2. 如有联调环境，优先参考 `~/workspaces/cloud-neutral-toolkit/openclaw-deploy-example/.env` 中对应值。
 
 ## AI 助手与集成变量
 

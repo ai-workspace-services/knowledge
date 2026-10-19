@@ -127,7 +127,7 @@
 | --- | --- | --- | --- |
 | `forbidden` | `403` | `requireAdminPermission`、`RequireRole` | 用户权限不足。 |
 | `root_only` | `403` | sandbox bind / assume / tenant bootstrap | 只有 root 可执行。 |
-| `root_email_enforced` | `403` | `requireAdminPermission` | root role 被限制给 `admin@svc.plus`。 |
+| `root_email_enforced` | `403` | `requireAdminPermission` | root role 被限制给 `<admin-email>`。 |
 | `metrics_unavailable` | `503` / 其他 | `adminUsersMetrics` | 指标 provider 未配置或执行失败。 |
 | `read_only_account` | `403` | 多个写接口 | demo/read-only 账号禁止写操作。 |
 | `account_suspended` | `403` | session user checks | 账号被暂停。 |
@@ -303,7 +303,7 @@ Typical sources:
 | --- | --- | --- | --- |
 | `forbidden` | `403` | `requireAdminPermission`, `RequireRole` | The caller lacks the required permission. |
 | `root_only` | `403` | Sandbox bind / assume / tenant bootstrap flows | Only the root user may perform the action. |
-| `root_email_enforced` | `403` | `requireAdminPermission` | The root role is restricted to `admin@svc.plus`. |
+| `root_email_enforced` | `403` | `requireAdminPermission` | The root role is restricted to `<admin-email>`. |
 | `metrics_unavailable` | `503` and others | `adminUsersMetrics` | The metrics provider is missing or failed. |
 | `read_only_account` | `403` | Multiple write handlers | Demo/read-only accounts are blocked from writes. |
 | `account_suspended` | `403` | Session user checks | The account has been suspended. |

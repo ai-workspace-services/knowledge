@@ -37,4 +37,4 @@ OpenAI 从 [Codex 云端](https://openai.com/index/introducing-codex/) 到 [Code
 
 上一篇：[桌面、远控、共享记忆与持久任务](03-desktop-remote-memory-tasks.zh.md)。下一篇：[OpenCode、DeepSeek Harness 与 DS Bot](05-opencode-deepseek-harness.zh.md)。
 
-相关背景：[AI 协作指南](../../../../docs/zh/ai-collaboration-guide/README.md)、[XWorkmate 产品定位](../../../website/product/xworkmate/zh/hero.md)。
+相关背景：[AI 协作指南](../../../../docs/ai-collaboration-guide/overview.zh.md)、[XWorkmate 产品定位](../../../website/product/xworkmate/zh/hero.md)。

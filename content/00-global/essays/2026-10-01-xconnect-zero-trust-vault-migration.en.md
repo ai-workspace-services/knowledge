@@ -30,7 +30,7 @@ category: essays
 ### 1. From AI Gateways to the Root of Trust
 In modern cloud-native architectures, reverse proxies and API gateways (such as Caddy and APISIX) provide lightweight routing and tenant isolation. However, all authentication checks ultimately terminate at a Single Source of Truth—**HashiCorp Vault**.
 
-In early Home-Lab and hybrid cloud prototypes, Vault frequently resided as a standalone instance on a single overseas VPS (legacy node `46.250.251.132`). As workloads scaled across multiple cloud providers, this "publicly exposed single-node" posture revealed critical operational hazards:
+In early Home-Lab and hybrid cloud prototypes, Vault frequently resided as a standalone instance on a single overseas VPS (legacy node `<legacy-node-public-ip>`). As workloads scaled across multiple cloud providers, this "publicly exposed single-node" posture revealed critical operational hazards:
 * **The Peril of Public Attack Surfaces**: Exposing Vault API port `8200` and Raft consensus replication port `8201` directly to the public internet results in thousands of automated vulnerability scans and brute-force attempts daily.
 * **Consensus Fracture Under Generic Cross-Cloud VPNs**: When interconnecting cloud providers via public IPs or standard WireGuard/Tailscale tunnels, internet service providers frequently throttle unstandardized UDP traffic. High packet loss rates (30% to 50%) cause Vault Raft heartbeats to miss deadlines, triggering cascading `raft_leader_lost` errors and catastrophic split-brain scenarios.
 * **The High-Stakes Statefulness of Secret Engines**: Vault is intrinsically stateful. Its underlying storage binds Raft cluster topologies, cryptographic unseal shares, dynamic leases, and audit logs. Any state divergence or concurrent write traffic during migration leads to permanent data corruption.
@@ -53,7 +53,7 @@ To resolve public UDP QoS degradation and attack surface exposure, our self-host
            Device Auth, Single-Use Invites, Topology Sync
                                 │
                                 ▼
-       Legacy Node (46.250.251.132)        GCP Node (vault-prod-0)
+       Legacy Node (<legacy-node-public-ip>)        GCP Node (vault-prod-0)
                 │                                    │
                 │        WireGuard over VLESS        │ Gateway
                 └─────────── XConnect ───────────────┘ 10.79.0.1

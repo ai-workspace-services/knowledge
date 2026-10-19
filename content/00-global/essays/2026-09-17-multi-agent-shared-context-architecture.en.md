@@ -259,7 +259,7 @@ flowchart TD
 Official container registries often only supply `linux/amd64` images. On macOS arm64 machines, running under Rosetta 2 emulation leads to crippling I/O hangs. We build natively using `deploy/base-images/postgres-runtime-wth-extensions.Dockerfile`:
 
 ```bash
-cd /Users/shenlan/workspaces/ai-workspace-service/postgresql.svc.plus
+cd ~/workspaces/ai-workspace-service/postgresql.svc.plus
 docker build --build-arg PG_MAJOR=17 -f deploy/base-images/postgres-runtime-wth-extensions.Dockerfile -t postgres-extensions:17 .
 ```
 

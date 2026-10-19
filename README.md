@@ -38,7 +38,7 @@
 
 ### XWorkmate / AI Workspace
 
-- [AI Workspace 顶层架构与远景项目设计](ai-workspace-architecture-vision.md)（Vision / Architecture Draft）
+- [AI Workspace 顶层架构与远景项目设计（系列 5 篇）](docs/design/ai-workspace-architecture-vision/README.md)（Vision / Architecture Draft）：[1 愿景与组织边界](docs/design/ai-workspace-architecture-vision/01-vision-and-org-boundaries.zh.md) · [2 总体架构与声明式契约](docs/design/ai-workspace-architecture-vision/02-architecture-and-workspace-spec.zh.md) · [3 Lego 模型与产品演进](docs/design/ai-workspace-architecture-vision/03-lego-model-and-product-evolution.zh.md) · [4 Services、Lab、XConnect 与 Infra](docs/design/ai-workspace-architecture-vision/04-services-lab-xconnect-infra.zh.md) · [5 治理、Roadmap 与 North Star](docs/design/ai-workspace-architecture-vision/05-governance-roadmap-north-star.zh.md)
 - [AI Workspace 演变记录：从 Chat 到可验证的 Agent 工作空间](content/00-global/essays/ai-workspace-evolution/index.md)（review-draft，6 篇）
 - [AI Workspace 架构验证 Test Cases](docs/ai-workspace-validation-test-cases.md)
 - [AI App 都卷成这样了，我为什么还要继续做 Xworkmate？](content/00-global/essays/2026-07-30-Why-I-Keep-Building-Xworkmate.zh.md) · [English](content/00-global/essays/2026-07-30-Why-I-Keep-Building-Xworkmate.en.md)
@@ -46,8 +46,8 @@
 
 ### XConnect
 
-- [一个人、4 台设备、5 端全平台（一）：自建零信任私网](why-i-built-xconnect-zero-trust-network-cn.md) · [English](why-i-built-xconnect-zero-trust-network-en.md)
-- [一个人、4 台设备、5 端全平台（二）：XConnect 控制面上线与抗干扰落地](why-i-built-xconnect-zero-trust-network-part2-cn.md)
+- [一个人、4 台设备、5 端全平台：自建 XConnect 零信任私网（系列 5 篇）](content/04-infra-platform/xconnect-zero-trust-network/README.md)：[1 成熟方案为何失灵](content/04-infra-platform/xconnect-zero-trust-network/01-why-mature-mesh-falls-short.zh.md) · [2 分层设计与拓扑演进](content/04-infra-platform/xconnect-zero-trust-network/02-architecture-and-topology.zh.md) · [3 三大场景实战](content/04-infra-platform/xconnect-zero-trust-network/03-field-scenarios.zh.md) · [4 指标对比与写在最后](content/04-infra-platform/xconnect-zero-trust-network/04-benchmarks-and-reflections.zh.md) · [5 控制面上线](content/04-infra-platform/xconnect-zero-trust-network/05-control-plane-launch.zh.md)
+  - English (Parts 1–4): [1](content/04-infra-platform/xconnect-zero-trust-network/01-why-mature-mesh-falls-short.en.md) · [2](content/04-infra-platform/xconnect-zero-trust-network/02-architecture-and-topology.en.md) · [3](content/04-infra-platform/xconnect-zero-trust-network/03-field-scenarios.en.md) · [4](content/04-infra-platform/xconnect-zero-trust-network/04-benchmarks-and-reflections.en.md)
 - [XConnect 架构演进与突围之路](content/00-global/essays/2026-08-14-XConnect-Architecture-Evolution-and-Breakthrough.zh.md) · [English](content/00-global/essays/2026-08-14-XConnect-Architecture-Evolution-and-Breakthrough.en.md)
 - [自建零信任网络应用案例：XConnect + AI Agent 协同 Vault 跨云迁移](content/00-global/essays/2026-10-01-xconnect-zero-trust-vault-migration.zh.md) · [English](content/00-global/essays/2026-10-01-xconnect-zero-trust-vault-migration.en.md)
 - [XConnect + Vault 迁移、部署、扩缩容与回滚运行手册](products/solution/open-platform/IAC/xconnect-vault-migration-runbook.zh-CN.md) · [English](products/solution/open-platform/IAC/xconnect-vault-migration-runbook.en.md)
@@ -55,14 +55,14 @@
 
 ### Open Platform / 多云 IaC
 
-- [撕破云厂高墙：把割裂的异构云拧成一股绳](why-i-built-multi-cloud-iac-mesh-cn.md) · [English](why-i-built-multi-cloud-iac-mesh-en.md)
+- [撕破云厂高墙：把割裂的异构云拧成一股绳（系列 5 篇）](content/02-iac-devops/multi-cloud-iac-mesh/README.md)：[1 背景与 FinOps 对冲](content/02-iac-devops/multi-cloud-iac-mesh/01-background-and-finops-arbitrage.zh.md) · [2 S3 统一 IaC 状态](content/02-iac-devops/multi-cloud-iac-mesh/02-unified-iac-state-on-s3.zh.md) · [3 Zero-Secret 凭据网络](content/02-iac-devops/multi-cloud-iac-mesh/03-zero-secret-credential-mesh.zh.md) · [4 Global Mesh 与跨仓库闭环](content/02-iac-devops/multi-cloud-iac-mesh/04-global-mesh-and-cross-repo-orchestration.zh.md) · [5 迁移与验收](content/02-iac-devops/multi-cloud-iac-mesh/05-migration-and-verification.zh.md)
+  - English: [1](content/02-iac-devops/multi-cloud-iac-mesh/01-background-and-finops-arbitrage.en.md) · [2](content/02-iac-devops/multi-cloud-iac-mesh/02-unified-iac-state-on-s3.en.md) · [3](content/02-iac-devops/multi-cloud-iac-mesh/03-zero-secret-credential-mesh.en.md) · [4](content/02-iac-devops/multi-cloud-iac-mesh/04-global-mesh-and-cross-repo-orchestration.en.md) · [5](content/02-iac-devops/multi-cloud-iac-mesh/05-migration-and-verification.en.md)
 - [GCP Cloud IAC 方案：Bootstrap OIDC、凭据分层与多云 Landing Zone 接入](products/solution/open-platform/IAC/gcp-oidc-bootstrap-solution.md)
 - [GCP OIDC Bootstrap 交接文档](products/solution/open-platform/IAC/gcp-oidc-bootstrap-handoff.md)
 
 ### Global Mesh / Cloud Hub
 
-- [Global Mesh 产品介绍与云中立现代架构深度白皮书](docs/zh/products-global-mesh.md) · [English](docs/en/products-global-mesh.md)
-- 同题的另两份副本：[根目录版（cn）](why-i-built-global-mesh-cloud-neutral-infrastructure-cn.md) · [en](why-i-built-global-mesh-cloud-neutral-infrastructure-en.md)；[网站版 Cloud hub 产品指南](content/website/product/global-mesh/global-mesh-product-guide.zh.md) · [English](content/website/product/global-mesh/global-mesh-product-guide.en.md)
+- [Global Mesh（Cloud Hub）产品介绍与云中立现代架构深度白皮书](docs/zh/products-global-mesh.md) · [English](docs/en/products-global-mesh.md)（唯一权威版本，原副本已合并）
 - [App Hub、Cloud Hub、FinOps 统一数据模型](docs/reference/unified-hub-data-model.zh.md)（0.1，待评审）
 
 ## 2. 多云平台工程：白皮书与参考规范
@@ -124,7 +124,6 @@
 - [多云身份 Bootstrap 与状态契约](content/02-iac-devops/cloud-infrastructure-devsecops-baseline/11-cloud-oidc-bootstrap-contract.zh.md) · 操作版：[Cloud OIDC Bootstrap TLDR](content/04-infra-platform/public-cloud-iaas/cloud-oidc-bootstrap-tldr.zh.md)
 - [数据库同步与发布晋级状态机](content/02-iac-devops/cloud-infrastructure-devsecops-baseline/12-uat-database-sync-and-prod-promotion-state-machine.zh.md)
 - [生产环境“带病升级”如何实现零数据丢失](content/02-iac-devops/cloud-infrastructure-devsecops-baseline/13-prod-v2-upgrade-recovery-zero-data-loss-case.zh.md) · 公众号版：[AI 如何做到 300 客户与 12 万账本零丢失](content/02-iac-devops/cloud-infrastructure-devsecops-baseline/14-wechat-mp-prod-v2-code-agent-zero-loss-case.zh.md)
-- 01–08 篇目前为空占位文件（见 [迁移建议](#维护说明)）
 
 ### GitOps 实践
 
@@ -132,7 +131,7 @@
 - [从单机到多云：Zero-Trust GitOps & AI 重塑多环境交付](content/00-global/essays/2026-07-30-From-Single-Node-to-Multi-Cloud.zh.md) · [English](content/00-global/essays/2026-07-30-From-Single-Node-to-Multi-Cloud.en.md)
 - [平台工程的核心命题：开发环境 ≠ 构建环境 ≠ 运行环境](content/00-global/essays/2026-07-31-Platform-Engineering-Environment-Isolation-and-Convergence.zh.md) · [English](content/00-global/essays/2026-07-31-Platform-Engineering-Environment-Isolation-and-Convergence.en.md)
 - [实践验证：PROD 数据如何安全“倒灌”到 UAT](content/00-global/essays/2026-08-07-PROD-to-UAT-Data-Mirror-and-Validation.zh.md) · [English](content/00-global/essays/2026-08-07-PROD-to-UAT-Data-Mirror-and-Validation.en.md)
-- [Argo CD 系列](content/02-iac-devops/argo-cd/README.md)（已有：[使用 Argo CD 管理 Helm / Helmfile](content/02-iac-devops/argo-cd/04-helm-and-helmfile.md)、[Application 与同步模型](content/02-iac-devops/argo-cd/03-application-and-sync-model.md)；其余章节为空占位）
+- [Argo CD 系列](content/02-iac-devops/argo-cd/README.md)（已有：[使用 Argo CD 管理 Helm / Helmfile](content/02-iac-devops/argo-cd/04-helm-and-helmfile.md)、[Application 与同步模型](content/02-iac-devops/argo-cd/03-application-and-sync-model.md)）
 
 ### AI 聚合服务（Ansible 交付）
 
@@ -172,13 +171,13 @@
 
 从 Model Selection（模型选秀）走向 Model Routing（模型路由与团队建制）：
 
-- [中文专栏索引与全渠道指南](docs/zh/ai-collaboration-guide/README.md) · [English Series Index](docs/en/ai-collaboration-guide/README.md)
-- 完整版：[中文](docs/zh/ai-collaboration-guide/full-guide.md) · [English](docs/en/ai-collaboration-guide/full-guide.md)
-- 第 1 篇 认知重构：[中文](docs/zh/ai-collaboration-guide/01-cognitive-shift.md) · [English](docs/en/ai-collaboration-guide/01-cognitive-shift.md)
-- 第 2 篇 执行双核：[中文](docs/zh/ai-collaboration-guide/02-dual-execution-engines.md) · [English](docs/en/ai-collaboration-guide/02-dual-execution-engines.md)
-- 第 3 篇 工程中枢：[中文](docs/zh/ai-collaboration-guide/03-engineering-backbone-and-judge.md) · [English](docs/en/ai-collaboration-guide/03-engineering-backbone-and-judge.md)
-- 第 4 篇 事实与壁垒：[中文](docs/zh/ai-collaboration-guide/04-research-grounding-and-specialist.md) · [English](docs/en/ai-collaboration-guide/04-research-grounding-and-specialist.md)
-- 第 5 篇 闭环与模型路由：[中文](docs/zh/ai-collaboration-guide/05-closed-loop-and-model-routing.md) · [English](docs/en/ai-collaboration-guide/05-closed-loop-and-model-routing.md)
+- [中文专栏索引与全渠道指南](docs/ai-collaboration-guide/overview.zh.md) · [English Series Index](docs/ai-collaboration-guide/overview.en.md)
+- 完整版：[中文](docs/ai-collaboration-guide/full-guide.zh.md) · [English](docs/ai-collaboration-guide/full-guide.en.md)
+- 第 1 篇 认知重构：[中文](docs/ai-collaboration-guide/01-cognitive-shift.zh.md) · [English](docs/ai-collaboration-guide/01-cognitive-shift.en.md)
+- 第 2 篇 执行双核：[中文](docs/ai-collaboration-guide/02-dual-execution-engines.zh.md) · [English](docs/ai-collaboration-guide/02-dual-execution-engines.en.md)
+- 第 3 篇 工程中枢：[中文](docs/ai-collaboration-guide/03-engineering-backbone-and-judge.zh.md) · [English](docs/ai-collaboration-guide/03-engineering-backbone-and-judge.en.md)
+- 第 4 篇 事实与壁垒：[中文](docs/ai-collaboration-guide/04-research-grounding-and-specialist.zh.md) · [English](docs/ai-collaboration-guide/04-research-grounding-and-specialist.en.md)
+- 第 5 篇 闭环与模型路由：[中文](docs/ai-collaboration-guide/05-closed-loop-and-model-routing.zh.md) · [English](docs/ai-collaboration-guide/05-closed-loop-and-model-routing.en.md)
 
 ## 9. 服务文档集（docs.svc.plus）
 
@@ -190,7 +189,7 @@
 - 集成关系：[总览](docs/integrations/overview.zh.md) · [EN](docs/integrations/overview.en.md)；[docs.svc.plus](docs/integrations/docs-svc-plus.zh.md) · [EN](docs/integrations/docs-svc-plus.en.md)；[同步链路](docs/integrations/sync-pipeline.zh.md) · [EN](docs/integrations/sync-pipeline.en.md)
 - 参考：[总览](docs/reference/overview.zh.md) · [EN](docs/reference/overview.en.md)；[内容规范](docs/reference/content-schema.zh.md) · [EN](docs/reference/content-schema.en.md)；[覆盖矩阵](docs/reference/coverage-matrix.zh.md) · [EN](docs/reference/coverage-matrix.en.md)；[历史文档映射](docs/reference/legacy-docs.zh.md) · [EN](docs/reference/legacy-docs.en.md)
 - 仓库级双语页：[架构](docs/zh/architecture.md) · [EN](docs/en/architecture.md)；[设计](docs/zh/design.md) · [EN](docs/en/design.md)；[部署](docs/zh/deployment.md) · [EN](docs/en/deployment.md)；[使用手册](docs/zh/user-guide.md) · [EN](docs/en/user-guide.md)；[开发手册](docs/zh/developer-guide.md) · [EN](docs/en/developer-guide.md)；[Vibe Coding 参考](docs/zh/vibe-coding-reference.md) · [EN](docs/en/vibe-coding-reference.md)
-- 实用指南：[海外 AI 服务注册与订阅实践攻略](docs/zh/overseas-ai-service-access-guide.md)
+- 实用指南：[海外 AI 服务注册与订阅实践攻略](docs/get-started/overseas-ai-service-access-guide.zh.md)
 
 ### 服务集合
 
@@ -260,7 +259,7 @@
 
 ## 12. Cloud-Neutral Radar 资讯雷达
 
-每个技术领域目录下的 `README.md` 是该项 Radar 的落点；`content/00-global/news/` 存放资讯稿（其中多数为空占位，见维护说明）。已有正文的资讯稿：
+每个技术领域目录下的 `README.md` 是该项 Radar 的落点；`content/00-global/news/` 存放资讯稿。已有正文的资讯稿：
 
 - 平台基础设施：[KVM / QEMU](content/00-global/news/Cloud-Neutral-Radar-Platform-Foundation-KVM-QEMU.md) · [K3K](content/00-global/news/Cloud-Neutral-Radar-Platform-Foundation-k3k.md) · [K3s](content/00-global/news/Cloud-Neutral-Radar-Platform-Foundation-k3s.md) · [Kubernetes（控制平面）](content/00-global/news/Cloud-Neutral-Radar-Platform-Foundation-kubernetes.md) · [容器引擎](content/00-global/news/Cloud-Neutral-Radar_Runtime-Boundary_Container-Engine.md)
 - 交付与变更控制：[Ansible](content/00-global/news/Cloud-Neutral-Radar_Delivery-Change-Control_Ansible.md) · [Argo CD](content/00-global/news/Cloud-Neutral-Radar_Delivery-Change-Control_Argo-CD.md) · [GitLab](content/00-global/news/Cloud-Neutral-Radar_Delivery-Change-Control_GitLab.md) · [Terraform / OpenTofu](content/00-global/news/Cloud-Neutral-Radar_Delivery-Change-Control_Terraform-OpenTofu.md)
@@ -328,4 +327,4 @@ skills/  scripts/  assets/
 
 - 本索引的链接均为仓库内相对路径，可用 `python3` 脚本校验无死链；新增文档后请同步在对应分类登记。
 - 标注 draft / review-draft / proposed-not-applied / implementation-plan 的条目不代表已实施或已验收。
-- 空占位文件（Radar 资讯稿、Argo CD 与 DevSecOps 基线 01–08 等）暂不单独列出，补全正文后再登记。
+- 尚未撰写的 Radar 资讯稿、Argo CD 与 DevSecOps 基线章节不预建空文件，写好正文后再新增并登记。

@@ -255,7 +255,7 @@ flowchart TD
 我们通过本地多阶段构建快速产出原生 arm64 镜像：
 
 ```bash
-cd /Users/shenlan/workspaces/ai-workspace-service/postgresql.svc.plus
+cd ~/workspaces/ai-workspace-service/postgresql.svc.plus
 docker build --build-arg PG_MAJOR=17 -f deploy/base-images/postgres-runtime-wth-extensions.Dockerfile -t postgres-extensions:17 .
 ```
 

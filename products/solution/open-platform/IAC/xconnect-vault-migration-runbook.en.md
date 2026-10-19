@@ -21,11 +21,11 @@ Tokens, unseal shares, private keys, invitation URIs, and age private keys must 
 | GCP project | `open-platform-prod` |
 | GCP network | `vault-shared` |
 | GCP node | `vault-prod-0`, `RUNNING` |
-| GCP addresses | private `10.81.0.4`, public `35.221.167.104` |
+| GCP addresses | private `10.81.0.4`, public `<vault-public-ip>` |
 | Vault | 1.21.4, Raft, initialized, unsealed, active leader |
 | Raft size | one voter/leader |
-| Legacy node | `46.250.251.132`, `vault-2`, independent Vault server, container paused for observation |
-| DNS | `vault.svc.plus` returns only `35.221.167.104` |
+| Legacy node | `<legacy-node-public-ip>`, `vault-2`, independent Vault server, container paused for observation |
+| DNS | `vault.svc.plus` returns only `<vault-public-ip>` |
 | XConnect Gateway | `10.79.0.1` |
 
 The legacy and GCP servers were both derived from the same Raft snapshot and therefore have the same `cluster_id`. They must never serve writes at the same time. Any rollback must first point DNS to one active entry point and stop the other write-capable server.
@@ -38,7 +38,7 @@ The legacy and GCP servers were both derived from the same Raft snapshot and the
                   policy, devices, config delivery
                               |
                               v
-      Legacy 46.250.251.132          GCP vault-prod-0
+      Legacy <legacy-node-public-ip>          GCP vault-prod-0
               |                         |
               | WireGuard over VLESS    | Gateway
               +-------- XConnect -------+ 10.79.0.1
@@ -148,7 +148,7 @@ The live shared state and the retained scale-out template are separate objects:
 | XConnect Gateway | `vault-prod-0`, `10.79.0.1` | One addresses `10.79.0.2/10.79.0.3` are scale-out targets | Gateway signed-config, `wg show` |
 | LAN SecOPS One | `10.79.0.7`, independent device ID, persistent systemd service | Not a Vault Raft voter | Accounts device, `xconnect-one status`, Mac → `10.79.0.7` |
 | Operations Mac One | Re-enrolled device currently uses `10.79.0.9` | Old registration remains for a separate revoke window | GitOps operator device, signed-config, `utun7` |
-| Legacy node | `46.250.251.132`/`vault-2`, independent server under observation | Not deleted by GCP IaC | Legacy service state, DNS and Vault health |
+| Legacy node | `<legacy-node-public-ip>`/`vault-2`, independent server under observation | Not deleted by GCP IaC | Legacy service state, DNS and Vault health |
 | DNS | `vault.svc.plus` points to the current GCP entry point | Legacy target remains the rollback target | Multiple resolver `dig`, HTTPS health |
 
 Always compare resource count, Raft voter count, active Accounts device count and KV path count separately. An operator/LAN One is not a Vault voter, and the legacy node must not be destroyed as a side effect of GCP scale-down.
@@ -309,8 +309,8 @@ The One `/api/overlay/v1/enrollment/signed-config` and Gateway `/api/overlay/v1/
 | Vault One template | `vault-prod-1` | `10.79.0.2` | One invite during scale-out | Raft voter/standby (not deployed in the current live state) |
 | Vault One template | `vault-prod-2` | `10.79.0.3` | One invite during scale-out | Raft voter/standby (not deployed in the current live state) |
 | Legacy Vault One | `vault-legacy` | `10.79.0.4` | Independent One enrollment for migration source | Legacy data plane and rollback observation |
-| LAN SecOPS One | `xconnect-linux-secops-shenlan-inspiron-5415-ops` | `10.79.0.7` | Independent One invite + systemd | Operations access, not Raft |
-| Mac One | `xconnect-darwin-haitaodemacbook-pro-rejoin.local` | `10.79.0.9` | Re-enrollment with protected credential | Operations access, not Raft |
+| LAN SecOPS One | `<secops-linux-device>` | `10.79.0.7` | Independent One invite + systemd | Operations access, not Raft |
+| Mac One | `<ops-mac-device>.local` | `10.79.0.9` | Re-enrollment with protected credential | Operations access, not Raft |
 
 Historical allocations such as `.5` or `.8` must not be manually reused because they appear free. Accounts signed-config and active-device state are the source of truth for address availability.
 
@@ -591,7 +591,7 @@ the XConnect data plane and listens on `xconone0` at `10.79.0.1:53`:
   its A record;
 - `spec.dns.records` declares service aliases by target `device_id`, for
   example `internal-xworkmate-bridge.svc.plus ->
-  xconnect-linux-secops-shenlan-inspiron-5415-ops`; the Gateway resolves the
+  <secops-linux-device>`; the Gateway resolves the
   alias to that One's current overlay address. The alias is absent while the
   device is not enrolled.
 - `shared.internal` is marked as a local authoritative zone;
@@ -629,7 +629,7 @@ enrollment token.
 Verify a newly enrolled One's automatic record and public recursion:
 
 ```bash
-dig +short @10.79.0.1 xconnect-linux-secops-shenlan-inspiron-5415-ops.shared.internal
+dig +short @10.79.0.1 <secops-linux-device>.shared.internal
 dig +short @10.79.0.1 internal-xworkmate-bridge.svc.plus
 dig +short @10.79.0.1 example.com
 ```

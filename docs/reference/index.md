@@ -101,7 +101,7 @@ GitHub 组织入口：[ai-workspace-infra](https://github.com/ai-workspace-infra
 
 | # | 标题 | 语言 | 来源版本 | 文件或入口 |
 | ---: | --- | --- | --- | --- |
-| 31 | 撕破云厂高墙：把割裂的异构云拧成一股绳 | zh | knowledge working tree | [why-i-built-multi-cloud-iac-mesh-cn.md](../../why-i-built-multi-cloud-iac-mesh-cn.md) |
+| 31 | 撕破云厂高墙：把割裂的异构云拧成一股绳 | zh | knowledge working tree | [content/02-iac-devops/multi-cloud-iac-mesh/](../../content/02-iac-devops/multi-cloud-iac-mesh/README.md)（系列 5 篇） |
 | 32 | Global Mesh 产品介绍与云中立现代架构深度白皮书 | zh | knowledge working tree | [docs/zh/products-global-mesh.md](../zh/products-global-mesh.md) |
 | 33 | cloud-infrastructure-devsecops-baseline 目录 | mixed | knowledge working tree | [content/02-iac-devops/cloud-infrastructure-devsecops-baseline/](../../content/02-iac-devops/cloud-infrastructure-devsecops-baseline/) |
 | 34 | 02-iac-devops 目录 | mixed | knowledge working tree | [content/02-iac-devops/](../../content/02-iac-devops/) |

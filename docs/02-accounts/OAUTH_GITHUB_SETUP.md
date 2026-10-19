@@ -136,7 +136,7 @@ pipeline 从 `ai-workspace-services/accounts` 的仓库 secrets 取值(**不是*
 
 排查 SSH prep 失败时踩过的坑,记录如下:
 
-- 目标机 `jp-xhttp-contabo.svc.plus` 与 `install.svc.plus` **是同一台 VPS**(都解析到 `46.250.251.132`,容器名 `accounts-managed-prod-contabo`)。
+- 目标机 `jp-xhttp-contabo.svc.plus` 与 `install.svc.plus` **是同一台 VPS**(都解析到 `<legacy-node-public-ip>`,容器名 `accounts-managed-prod-contabo`)。
 - 该机 root `authorized_keys` 有 3 把公钥,其中两把可用于 CI:
   - `SHA256:gzdFOEMwseZMm28xj/OMgAw5DNhAMsZalvswt0yKO1o` — `github-actions@cloud-neutral-toolkit`(ED25519)
   - `SHA256:OsewibjqqX2/22JWDNUfxxM0GcPae29DbSFJm9v1hGM` — `shenlan@…`(RSA 3072)
@@ -167,7 +167,7 @@ openssl rand -base64 32 | tr -d '\n' | gcloud secrets create auth-token-access-s
 
 for s in github-client-secret auth-token-public auth-token-refresh-secret auth-token-access-secret; do
   gcloud secrets add-iam-policy-binding "$s" \
-    --member="serviceAccount:266500572462-compute@developer.gserviceaccount.com" \
+    --member="serviceAccount:<gcp-project-number-xzerolab>-compute@developer.gserviceaccount.com" \
     --role="roles/secretmanager.secretAccessor"
 done
 ```
