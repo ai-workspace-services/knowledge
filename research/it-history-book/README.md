@@ -2,6 +2,8 @@
 
 以 Markdown + 图片为源，一条命令生成书籍式 PDF（封面 → 关于服务支持方 → 序言 → 总目录 → 各章 → 附录 → 封底广告页）。
 
+完整目录索引（章节概要、图题、PDF 页码、分层对照）：[index.md](index.md)
+
 **本仓库只收录 Markdown、配置与脚本；章节图片不进 Git。** 克隆后需从 Google Drive 拉图再出 PDF。
 
 整理版 Drive 文件夹：https://drive.google.com/drive/folders/1GOf7MX28-JpUwWuKjVtbNm7V8HtY1NMO  
