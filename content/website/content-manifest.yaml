@@ -36,6 +36,9 @@ spec:
       - product/xscopehub/en/hero.md
       - product/xstream/zh/hero.md
       - product/xstream/en/hero.md
+    billingPolicy:
+      - account/billing-policy/zh.json
+      - account/billing-policy/en.json
     emailPreferences:
       - account/email-preferences/zh.json
       - account/email-preferences/en.json
