@@ -216,7 +216,7 @@ aws-actions/configure-aws-credentials
 
 JP AWS 子流程不能直接假设 `GithubAction_IAC_Deploy_Role` 已可用。执行 JP Terraform 之前，必须确认：
 
-- AWS account 为 GitOps 声明的具体账户 `950604983695`。
+- AWS account 为 GitOps 声明的具体账户 `<aws-account-id>`。
 - OIDC provider 为 `token.actions.githubusercontent.com`。
 - audience 为 `sts.amazonaws.com`。
 - Role 为 `GithubAction_IAC_Deploy_Role`。
@@ -308,7 +308,7 @@ UAT 示例：
 
 ```text
 terraform/uat/svc.plus/akamai-cloud/manbuzhe2026/open-platform/terraform.tfstate
-terraform/uat/svc.plus/aws-cloud/950604983695/agent-proxy-jp/terraform.tfstate
+terraform/uat/svc.plus/aws-cloud/<aws-account-id>/agent-proxy-jp/terraform.tfstate
 terraform/uat/svc.plus/gcp-cloud/xworktech/agent-proxy-us/terraform.tfstate
 terraform/uat/svc.plus/akamai-cloud/manbuzhe2026/agent-proxy-sg/terraform.tfstate
 ```

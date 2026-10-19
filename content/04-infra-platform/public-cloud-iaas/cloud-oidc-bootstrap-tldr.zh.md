@@ -7,7 +7,7 @@
 `gcloud auth login` 与 ADC 是不同的本地凭据。浏览器里选择有权限访问 `open-platform-shared` 的账号；验证命令只检查退出码，不显示 Token。
 
 ```bash
-cd /Users/shenlan/workspaces/ai-workspace-infra/platform-ops-toolkit
+cd ~/workspaces/ai-workspace-infra/platform-ops-toolkit
 export VAULT_ADDR='https://vault.svc.plus'
 gcloud auth application-default login
 gcloud auth application-default print-access-token >/dev/null

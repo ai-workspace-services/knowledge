@@ -7,7 +7,7 @@
 ### 目录结构
 
 ```
-/Users/shenlan/workspaces/XControl/
+~/workspaces/XControl/
 ├── dashboard-fresh/
 │   ├── config/
 │   │   └── runtime-service-config.base.yaml

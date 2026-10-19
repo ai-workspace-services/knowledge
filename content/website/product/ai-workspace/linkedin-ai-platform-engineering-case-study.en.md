@@ -4,7 +4,7 @@
 
 ---
 
-![Autonomous AI in Mission-Critical Platform Engineering](/Users/shenlan/workspaces/ai-workspace-service/knowledge/assets/images/prod-v2-code-agent-recovery-cover.jpg)
+![Autonomous AI in Mission-Critical Platform Engineering](../../../../assets/images/prod-v2-code-agent-recovery-cover.jpg)
 
 ---
 

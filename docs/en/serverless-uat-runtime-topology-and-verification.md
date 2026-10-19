@@ -23,9 +23,9 @@ flowchart TD
     end
 
     subgraph Compute ["GCP Cloud Run Compute Tier (asia-northeast1)"]
-        CR_Accounts["uat-accounts<br/>https://uat-accounts-1004637461064.asia-northeast1.run.app"]
-        CR_Content["uat-content-service<br/>https://uat-content-service-1004637461064.asia-northeast1.run.app"]
-        CR_Billing["uat-billing-service<br/>https://uat-billing-service-1004637461064.asia-northeast1.run.app"]
+        CR_Accounts["uat-accounts<br/>https://uat-accounts-<gcp-project-number-xworktech>.asia-northeast1.run.app"]
+        CR_Content["uat-content-service<br/>https://uat-content-service-<gcp-project-number-xworktech>.asia-northeast1.run.app"]
+        CR_Billing["uat-billing-service<br/>https://uat-billing-service-<gcp-project-number-xworktech>.asia-northeast1.run.app"]
     end
 
     subgraph Data ["Data Persistence Tier"]
@@ -59,9 +59,9 @@ The topology configuration resides at `gitops/topology/uat/serverless/runtime-to
 ### 2. Backend Cloud Run Endpoints (`spec.serverless`)
 The microservices deployed on GCP Cloud Run (region `asia-northeast1`, project `xworktech`):
 
-* **Accounts Service**: `https://uat-accounts-1004637461064.asia-northeast1.run.app`
-* **Content Service**: `https://uat-content-service-1004637461064.asia-northeast1.run.app`
-* **Billing Service**: `https://uat-billing-service-1004637461064.asia-northeast1.run.app`
+* **Accounts Service**: `https://uat-accounts-<gcp-project-number-xworktech>.asia-northeast1.run.app`
+* **Content Service**: `https://uat-content-service-<gcp-project-number-xworktech>.asia-northeast1.run.app`
+* **Billing Service**: `https://uat-billing-service-<gcp-project-number-xworktech>.asia-northeast1.run.app`
 
 ---
 
@@ -113,7 +113,7 @@ flowchart TD
 | **4** | **`ssr-auth`** | **Worker (OpenNext)**<br>`frontend-ssr-auth-uat` | `console-cloudflare-uat.onwalk.net` | `/login*`<br>`/register*`<br>`/email-verification*`<br>`/logout*`<br>`/_edge/auth/*` | SSR rendering for user identity flows (login, registration, email activation, password reset, logout) | Edge pre-validation + Client API calls |
 | **5** | **`ssr-console`** | **Worker (OpenNext)**<br>`frontend-ssr-console-uat` | `console-cloudflare-uat.onwalk.net` | `/panel*`<br>`/dashboard*`<br>`/_edge/console/*` | SSR rendering for user profile, multi-tenant control panel, subscription tier management, and organization settings | Edge aggregation + Client interactivity |
 | **6** | **`ssr-workspace`** | **Worker (OpenNext)**<br>`frontend-ssr-workspace-uat` | `console-cloudflare-uat.onwalk.net` | `/ai-workspace*`<br>`/cloud_iac*`<br>`/editor*`<br>`/support*`<br>`/xworkmate*`<br>`/_edge/workspace/*` | SSR rendering for online Web IDE, AI workspace, cloud IaC orchestrator, and customer support interfaces | Direct data plane connection + Core Gateway API |
-| **7** | **`api-auth`** | **Worker (Edge Gateway)**<br>`edge-gateway-auth-uat` | `accounts-cloudflare-uat.onwalk.net` | `/api/auth/*` | Intercepts auth requests, performs edge JWT verification/signing, OAuth callback handling, and login token exchange | **Cloud Run: `uat-accounts`**<br>`https://uat-accounts-1004637461064.asia-northeast1.run.app` |
+| **7** | **`api-auth`** | **Worker (Edge Gateway)**<br>`edge-gateway-auth-uat` | `accounts-cloudflare-uat.onwalk.net` | `/api/auth/*` | Intercepts auth requests, performs edge JWT verification/signing, OAuth callback handling, and login token exchange | **Cloud Run: `uat-accounts`**<br>`https://uat-accounts-<gcp-project-number-xworktech>.asia-northeast1.run.app` |
 | **8** | **`api-admin`** | **Worker (Edge Gateway)**<br>`edge-gateway-admin-uat` | `accounts-cloudflare-uat.onwalk.net` | `/api/admin/*` | Dedicated admin/ops gateway, enforces high-privilege endpoint isolation and RBAC access control | **Cloud Run: `uat-accounts`** (Admin module) |
 | **9** | **`api-core`** | **Worker (Edge Gateway)**<br>`edge-gateway-core-uat` | `accounts-cloudflare-uat.onwalk.net` | `/api/*`<br>*(Catch-all fallback)* | Core business gateway for tenant metadata, billing, and content API calls with 2500ms timeout failover support | **Cloud Run: `uat-accounts`** / `uat-billing-service` / `uat-content-service` |
 
@@ -206,11 +206,11 @@ The orchestration pipeline is implemented in `platform-ops-toolkit/.github/workf
 curl -sSL -I https://ai-workspace-portal-uat.pages.dev/
 
 # 2. Verify Cloud Run Accounts container readiness
-curl -sSL -I https://uat-accounts-1004637461064.asia-northeast1.run.app/readyz
+curl -sSL -I https://uat-accounts-<gcp-project-number-xworktech>.asia-northeast1.run.app/readyz
 
 # 3. Verify Cloud Run Content and Billing microservices
-curl -sSL -I https://uat-content-service-1004637461064.asia-northeast1.run.app/
-curl -sSL -I https://uat-billing-service-1004637461064.asia-northeast1.run.app/
+curl -sSL -I https://uat-content-service-<gcp-project-number-xworktech>.asia-northeast1.run.app/
+curl -sSL -I https://uat-billing-service-<gcp-project-number-xworktech>.asia-northeast1.run.app/
 
 # 4. Supabase Keepalive Ping
 curl -sSL -H "apikey: <SUPABASE_ANON_KEY>" "https://<PROJECT_REF>.supabase.co/rest/v1/"

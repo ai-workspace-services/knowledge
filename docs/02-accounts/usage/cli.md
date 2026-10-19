@@ -22,7 +22,7 @@ go run ./cmd/createadmin/main.go \
   --dsn "$DB_URL" \
   --username Admin \
   --password ChangeMe \
-  --email admin@svc.plus
+  --email <admin-email>
 ```
 
 常用参数：

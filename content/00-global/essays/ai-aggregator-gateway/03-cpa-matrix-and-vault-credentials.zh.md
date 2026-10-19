@@ -30,10 +30,10 @@ category: essays
 
 | 实例标识 | Provider 平台 | CPA 登录触发命令 | 绑定账号标识 | 本地端口 |
 | :--- | :--- | :--- | :--- | :--- |
-| `cpa-codex-01` | OpenAI / Codex | `--codex-device-login` | `manbuzhe2009@qq.com` | 本地独占端口 A |
-| `cpa-codex-02` | OpenAI / Codex | `--codex-device-login` | `manbuzhe2008@gmail.com` | 本地独占端口 B |
-| `cpa-claude-01` | Anthropic / Claude | `--claude-login` | `haitaopanhq@gmail.com` | 本地独占端口 C |
-| `cpa-antigravity-01` | Google / Antigravity | `--antigravity-login` | `haitaopanhq@gmail.com` | 本地独占端口 D |
+| `cpa-codex-01` | OpenAI / Codex | `--codex-device-login` | `<codex-account-1-email>` | 本地独占端口 A |
+| `cpa-codex-02` | OpenAI / Codex | `--codex-device-login` | `<codex-account-2-email>` | 本地独占端口 B |
+| `cpa-claude-01` | Anthropic / Claude | `--claude-login` | `<personal-account-email>` | 本地独占端口 C |
+| `cpa-antigravity-01` | Google / Antigravity | `--antigravity-login` | `<personal-account-email>` | 本地独占端口 D |
 | `cpa-grok-01` | xAI / Grok | `--xai-login` | 待部署规划 | 本地独占端口 E |
 
 每个 CPA 实例只承载一个具体的账号实体，拥有完全隔离的端口、配置文件与系统级用户身份。即便其中一个账号需要重新认证，其他实例依然稳定运转，故障半径被严格锁定。
@@ -64,7 +64,7 @@ cd /tmp
 runuser -u cpa-codex-01 -- /opt/ai-aggregator/cliproxyapi \
   --config /run/ai-aggregator/cpa-codex-01.yaml --codex-device-login --no-browser
 
-# 2. 登录 OpenAI 第二实例 (核对浏览器登录的账号为 manbuzhe2008@gmail.com)
+# 2. 登录 OpenAI 第二实例 (核对浏览器登录的账号为 <codex-account-2-email>)
 runuser -u cpa-codex-02 -- /opt/ai-aggregator/cliproxyapi \
   --config /run/ai-aggregator/cpa-codex-02.yaml --codex-device-login --no-browser
 

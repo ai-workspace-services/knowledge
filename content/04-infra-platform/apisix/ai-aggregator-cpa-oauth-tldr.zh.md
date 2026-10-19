@@ -80,7 +80,7 @@ Codex device code: <DEVICE_CODE>
 1. 打开浏览器。
 2. 访问终端显示的 `Codex device URL`，不要手工改写域名。
 3. 输入终端显示的 `<DEVICE_CODE>`。
-4. 登录矩阵指定的账号 `manbuzhe2009@qq.com`。
+4. 登录矩阵指定的账号 `<codex-account-1-email>`。
 5. 完成授权后回到 SSH 窗口，等待出现登录成功或认证完成提示。
 
 成功后，在 SSH 窗口按 `Ctrl-C` 结束登录进程，再启动服务：
@@ -106,7 +106,7 @@ runuser -u cpa-codex-01 -- /opt/ai-aggregator/cliproxyapi \
   --codex-device-login --no-browser
 ```
 
-第二个账号使用完全独立的实例和登录流程。确认账号为 `manbuzhe2008@gmail.com`：
+第二个账号使用完全独立的实例和登录流程。确认账号为 `<codex-account-2-email>`：
 
 ```bash
 cd /var/lib/ai-aggregator/cpa-codex-02
@@ -131,7 +131,7 @@ runuser -u cpa-claude-01 -- /opt/ai-aggregator/cliproxyapi \
 ```
 
 在 AI Desktop 远程桌面浏览器中打开终端显示的授权 URL，确认账号为
-`haitaopanhq@gmail.com`，完成授权后回到 SSH 窗口等待成功提示。若 CPA 明确提示 localhost 回调，按本文后面的 SSH 隧道步骤处理。
+`<personal-account-email>`，完成授权后回到 SSH 窗口等待成功提示。若 CPA 明确提示 localhost 回调，按本文后面的 SSH 隧道步骤处理。
 
 完成后按 `Ctrl-C`，恢复服务并检查：
 
@@ -183,7 +183,7 @@ runuser -u cpa-antigravity-01 -- /opt/ai-aggregator/cliproxyapi \
   --antigravity-login --no-browser
 ```
 
-在 AI Desktop 远程桌面浏览器中打开终端显示的授权 URL，确认 `haitaopanhq@gmail.com`，等待终端完成。随后按 `Ctrl-C`，恢复并检查：
+在 AI Desktop 远程桌面浏览器中打开终端显示的授权 URL，确认 `<personal-account-email>`，等待终端完成。随后按 `Ctrl-C`，恢复并检查：
 
 ```bash
 systemctl start ai-aggregator-cpa-antigravity-01.service
@@ -198,7 +198,7 @@ find /var/lib/ai-aggregator/cpa/cpa-antigravity-01/auth \
 
 1. 进入 AI Desktop 远程桌面，打开该 CodeAgent 用户的终端。
 2. 启动已安装的 `gemini` CLI，按当前版本交互提示选择 Google 登录。
-3. 在远程桌面浏览器中完成 Google 登录，确认 `haitaopanhq@gmail.com`。
+3. 在远程桌面浏览器中完成 Google 登录，确认 `<personal-account-email>`。
 4. 回到 Gemini CLI，等待登录完成后再做最小模型列表或请求检查。
 
 不要凭空使用未在当前版本帮助中确认的 `gemini login` 参数，也不要将 `.gemini/config/config.json` 或整个 `.gemini/` 复制到 CPA、Vault、Git 或聊天。
@@ -247,7 +247,7 @@ OAuth bundle 仅保存在本实例本地加密 auth 目录，不上传 Vault、�
 python3 /opt/ai-aggregator/bootstrap/activate-cpa.py --help
 python3 /opt/ai-aggregator/bootstrap/activate-cpa.py cpa-codex-01 \
   --model '<实际模型 ID>' \
-  --confirm-account-email 'manbuzhe2009@qq.com' --approve-inference
+  --confirm-account-email '<codex-account-1-email>' --approve-inference
 ```
 
 完整验收路径为 `stage → 人工 OAuth → validate / smoke test → activate`。OAuth 登录使用 CPA，客户端随后使用 APISIX 网关凭据和约定的上游授权，不把 OAuth token 发给客户端。

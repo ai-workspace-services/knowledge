@@ -41,10 +41,12 @@ const CATEGORY_DEFINITIONS = {
     'docs/04-postgresql'
   ],
   'docs-guides-zh': [
-    'docs/zh'
+    'docs/zh',
+    'docs/ai-collaboration-guide/*.zh.md'
   ],
   'docs-guides-en': [
-    'docs/en'
+    'docs/en',
+    'docs/ai-collaboration-guide/*.en.md'
   ],
   'docs-reference': [
     'docs/reference'
@@ -97,6 +99,9 @@ function getFileCategory(relPath) {
   if (norm.startsWith('docs/02-accounts/')) return 'docs-02-accounts';
   if (norm.startsWith('docs/03-rag-server/')) return 'docs-03-rag-server';
   if (norm.startsWith('docs/04-postgresql/')) return 'docs-04-postgresql';
+  if (norm.startsWith('docs/ai-collaboration-guide/')) {
+    return norm.endsWith('.en.md') ? 'docs-guides-en' : 'docs-guides-zh';
+  }
   if (norm.startsWith('docs/zh/')) return 'docs-guides-zh';
   if (norm.startsWith('docs/en/')) return 'docs-guides-en';
   if (norm.startsWith('docs/reference/')) return 'docs-reference';

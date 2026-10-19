@@ -69,8 +69,8 @@ solutions:
     links:
       - label: 'GitHub organization: ai-workspace-infra'
         href: https://github.com/ai-workspace-infra
-      - label: OIDC keyless CI
-        href: /blogs/02-iac-devops/cloud-infrastructure-devsecops-baseline/01-github-actions-oidc-keyless-ci
+      - label: Cloud OIDC keyless bootstrap TLDR
+        href: /blogs/04-infra-platform/public-cloud-iaas/cloud-oidc-bootstrap-tldr.zh
       - label: Reference overview
         href: /docs/reference/overview
       - label: Content schema

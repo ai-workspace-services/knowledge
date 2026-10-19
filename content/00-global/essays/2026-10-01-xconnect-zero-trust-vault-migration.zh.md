@@ -30,7 +30,7 @@ category: essays
 ### 1. 从 AI 网关到底层凭据中枢
 在现代云原生与多模型应用架构中，网关可以通过 Caddy 和 APISIX 实现轻量化与多租户隔离，但所有的动态鉴权最终都指向唯一的信任源（Single Source of Truth）——**HashiCorp Vault**。
 
-在早期的 Home-Lab 与混合云原型中，Vault 往往单点驻留在某一台海外独立 VPS 上（旧节点 `46.250.251.132`）。随着业务扩展与多云部署，这种“单机裸奔”模式迅速暴露出致命隐患：
+在早期的 Home-Lab 与混合云原型中，Vault 往往单点驻留在某一台海外独立 VPS 上（旧节点 `<legacy-node-public-ip>`）。随着业务扩展与多云部署，这种“单机裸奔”模式迅速暴露出致命隐患：
 * **公网暴露面的安全原罪**：Vault 的 API 端口 `8200` 和集群 Raft 复制端口 `8201` 若直接暴露在公网，每天会遭遇成千上万次自动化漏洞扫描与爆破攻击；
 * **传统组网在跨云环境下的“心跳碎裂”**：若通过公网 IP 或普通 WireGuard/Tailscale 打通跨云集群，运营商对高频非标 UDP 流量的 QoS 惩罚（丢包率高达 30%~50%）会导致 Vault Raft 的心跳瞬间中断，频繁引发 `raft_leader_lost`，甚至导致脑裂（Split-Brain）；
 * **跨云状态迁移的高危心智负担**：Vault 是强状态（Stateful）服务，底层存储绑定了 Raft 集群拓扑、密封密钥（Unseal Shares）与动态租约。一旦迁移过程中数据不一致或新旧节点同时接受写流量，后果是全网凭据损坏。
@@ -53,7 +53,7 @@ category: essays
                        设备授权、一次性令牌、拓扑分发
                                 │
                                 ▼
-        旧节点 (46.250.251.132)          GCP 生产节点 (vault-prod-0)
+        旧节点 (<legacy-node-public-ip>)          GCP 生产节点 (vault-prod-0)
                 │                                    │
                 │        WireGuard over VLESS        │ Gateway
                 └─────────── XConnect ───────────────┘ 10.79.0.1

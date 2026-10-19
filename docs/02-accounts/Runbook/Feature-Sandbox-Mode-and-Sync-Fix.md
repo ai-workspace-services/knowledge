@@ -14,7 +14,7 @@ Resolved critical agent synchronization failures and implemented a robust "Sandb
 ### A. Backend (`accounts.svc.plus`)
 - **Integrated Route Registry**: Moved agent routes into the central `api` package and removed legacy registrations in `main.go`.
 - **Root Assume Logic**: 
-    - `POST /api/auth/admin/assume`: Signs a temporary token for `sandbox@svc.plus`.
+    - `POST /api/auth/admin/assume`: Signs a temporary token for `<sandbox-email>`.
     - `POST /api/auth/admin/assume/revert`: Stateless endpoint for revert logging.
 - **Public Binding Access**: Added `GET /sandbox/binding` (readable by any authenticated user) to allow VLESS QR codes to find their bound node without admin privileges.
 - **Hourly UUID Rotation**: Enforced hourly rotation for the sandbox user's ProxyUUID with automatic UI refreshes.

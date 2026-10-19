@@ -107,7 +107,7 @@ Repository/environment variables recommended:
 Local syntax checks:
 
 ```bash
-cd /Users/shenlan/workspaces/cloud-neutral-toolkit/console.svc.plus
+cd ~/workspaces/cloud-neutral-toolkit/console.svc.plus
 bash -n scripts/github-actions/render-frontend-runtime-env.sh
 bash -n scripts/github-actions/deploy-frontend-single-node.sh
 cp deploy/single-node/.env.runtime.example deploy/single-node/.env.runtime

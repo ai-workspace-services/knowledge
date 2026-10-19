@@ -29,11 +29,11 @@
 该 Secret 存储您的发件人邮箱地址。
 
 ```bash
-# 替换 admin@svc.plus 为您的真实发信邮箱
+# 替换 <admin-email> 为您的真实发信邮箱
 gcloud secrets create smtp-username --replication-policy="automatic"
 
 # 添加版本
-printf "admin@svc.plus" | gcloud secrets versions add smtp-username --data-file=-
+printf "<admin-email>" | gcloud secrets versions add smtp-username --data-file=-
 ```
 
 ### 2.2 创建 SMTP 密码 Secret
@@ -51,18 +51,18 @@ printf "xxxx xxxx xxxx xxxx" | gcloud secrets versions add smtp-password --data-
 
 ## 3. 绑定 svc.plus 域名
 
-如果您希望发件人显示为 `@svc.plus` 后缀（如 `admin@svc.plus`），有两种情况：
+如果您希望发件人显示为 `@svc.plus` 后缀（如 `<admin-email>`），有两种情况：
 
 ### 情况 A：使用 Google Workspace (企业邮箱)
-*   **适用场景**：您的 Google 账号本身就是 `admin@svc.plus`，且域名托管在 Google Workspace。
+*   **适用场景**：您的 Google 账号本身就是 `<admin-email>`，且域名托管在 Google Workspace。
 *   **配置方式**：
     *   **SMTP Host**: `smtp.gmail.com`
-    *   **SMTP Username**: 填入您的完整企业邮箱，例如 `admin@svc.plus`。
+    *   **SMTP Username**: 填入您的完整企业邮箱，例如 `<admin-email>`。
     *   **SMTP Password**: 使用该账号生成的**应用专用密码**。
 *   此方式最稳定、专业，推荐使用。
 
 ### 情况 B：使用个人 Gmail 代发
-*   **适用场景**：您持有普通 Gmail 账号 (例如 `shenlan@gmail.com`)，但拥有 `svc.plus` 域名。
+*   **适用场景**：您持有普通 Gmail 账号 (例如 `<redacted-email>`)，但拥有 `svc.plus` 域名。
 *   **配置方式**：
     1.  在 Gmail 网页端设置 -> 账号和导入 -> "发送邮件为" 中，添加另一个电子邮件地址。
     2.  输入您的域名邮箱（如 `no-reply@svc.plus`）。

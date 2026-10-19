@@ -1,4 +1,20 @@
-# Global Mesh Product Guide & Cloud-Neutral Modern Architecture Whitepaper
+---
+title: "Global Mesh (Cloud Hub) Product Guide & Cloud-Neutral Modern Architecture Whitepaper"
+description: "Canonical whitepaper for Global Mesh (now presented as Cloud Hub in the console): product positioning, VPS compute PoPs, SaaS zero-trust mesh, application topology and engineering lifecycle."
+slug: products-global-mesh
+lang: en
+author: shenlan
+category: product
+tags:
+  - global-mesh
+  - cloud-hub
+  - cloud-neutral
+  - whitepaper
+---
+
+# Global Mesh (Cloud Hub) Product Guide & Cloud-Neutral Modern Architecture Whitepaper
+
+> **Naming note**: The console and product page now present this product as **Cloud Hub**. This is the single canonical version of the Global Mesh / Cloud Hub whitepaper; the former root-level and website product-folder copies have been merged here. “Global Mesh” and “Cloud Hub” refer to the same product.
 
 > **Author**: Shen Lan (IT Infrastructure Architect / Independent Developer)  
 > **Product Module**: `products/global-mesh`  

@@ -366,7 +366,7 @@ path "kv/data/{{identity.entity.metadata.env}}/ai-aggregator/instances/*" {
 
 ## 七、前端 Token 配额分析看板与 Supabase 直连数据流
 
-针对类似截图风格的可视化前端仪表盘（[token_usage_dashboard.html](file:///Users/shenlan/.gemini/antigravity/brain/c2936dc3-490c-4bbb-950b-6b0c81c832e7/token_usage_dashboard.html)）：
+针对类似截图风格的可视化前端仪表盘（本地原型 `token_usage_dashboard.html`，未纳入仓库）：
 
 1. **部署形态**：通过 **Cloudflare Pages** 托管静态 SPA 构建产物，绑定路由 `ai.svc.plus/` 与 `ai.svc.plus/dashboard*`。
 2. **数据交互**：

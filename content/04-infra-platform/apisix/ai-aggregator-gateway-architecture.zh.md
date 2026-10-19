@@ -89,10 +89,10 @@ GitOps 保存租户 ID、允许路由、模型范围、限流和启用状态，�
 
 | 实例 | Provider | CPA 登录参数 | 账号标识 |
 | --- | --- | --- | --- |
-| `cpa-codex-01` | Codex | `--codex-device-login` | `manbuzhe2009@qq.com` |
-| `cpa-codex-02` | Codex | `--codex-device-login` | `manbuzhe2008@gmail.com` |
-| `cpa-claude-01` | Claude | `--claude-login` | `haitaopanhq@gmail.com` |
-| `cpa-antigravity-01` | Antigravity | `--antigravity-login` | `haitaopanhq@gmail.com` |
+| `cpa-codex-01` | Codex | `--codex-device-login` | `<codex-account-1-email>` |
+| `cpa-codex-02` | Codex | `--codex-device-login` | `<codex-account-2-email>` |
+| `cpa-claude-01` | Claude | `--claude-login` | `<personal-account-email>` |
+| `cpa-antigravity-01` | Antigravity | `--antigravity-login` | `<personal-account-email>` |
 | `cpa-grok-01` | xAI / Grok | `--xai-login` | 尚未部署 |
 
 每个实例拥有独立 Unix 用户、端口、配置、认证目录和 New API Channel。OAuth bundle 仅保存在节点本地加密目录 `/var/lib/ai-aggregator/cpa/<instance-id>/auth/`，权限 `0700`，不进入 Git、Vault、数据库明文、Terraform state、CI artifact 或日志。

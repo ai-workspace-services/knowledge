@@ -11,7 +11,7 @@ Usage:
 Examples:
   generate_release_manifest.sh v0.1
   generate_release_manifest.sh v0.1 --out releases/v0.1.yaml
-  generate_release_manifest.sh v0.1 --base /Users/shenlan/workspaces/cloud-neutral-toolkit
+  generate_release_manifest.sh v0.1 --base ~/workspaces/cloud-neutral-toolkit
 
 Notes:
   - This script does NOT create/push branches or tags.
@@ -28,7 +28,7 @@ fi
 VERSION="$1"
 shift || true
 
-BASE="/Users/shenlan/workspaces/cloud-neutral-toolkit"
+BASE="$HOME/workspaces/cloud-neutral-toolkit"
 OUT=""
 
 while [[ $# -gt 0 ]]; do

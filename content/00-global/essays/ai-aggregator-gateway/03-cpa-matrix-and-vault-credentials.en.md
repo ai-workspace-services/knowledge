@@ -30,10 +30,10 @@ Monolithic architectures that pool multiple accounts within a single runtime dae
 
 | Instance Identifier | Provider Platform | CPA Interactive Login Command | Bound Account Identifier | Local Listening Port |
 | :--- | :--- | :--- | :--- | :--- |
-| `cpa-codex-01` | OpenAI / Codex | `--codex-device-login` | `manbuzhe2009@qq.com` | Dedicated Local Port A |
-| `cpa-codex-02` | OpenAI / Codex | `--codex-device-login` | `manbuzhe2008@gmail.com` | Dedicated Local Port B |
-| `cpa-claude-01` | Anthropic / Claude | `--claude-login` | `haitaopanhq@gmail.com` | Dedicated Local Port C |
-| `cpa-antigravity-01` | Google / Antigravity | `--antigravity-login` | `haitaopanhq@gmail.com` | Dedicated Local Port D |
+| `cpa-codex-01` | OpenAI / Codex | `--codex-device-login` | `<codex-account-1-email>` | Dedicated Local Port A |
+| `cpa-codex-02` | OpenAI / Codex | `--codex-device-login` | `<codex-account-2-email>` | Dedicated Local Port B |
+| `cpa-claude-01` | Anthropic / Claude | `--claude-login` | `<personal-account-email>` | Dedicated Local Port C |
+| `cpa-antigravity-01` | Google / Antigravity | `--antigravity-login` | `<personal-account-email>` | Dedicated Local Port D |
 | `cpa-grok-01` | xAI / Grok | `--xai-login` | Planned for deployment | Dedicated Local Port E |
 
 Each CPA daemon encapsulates a single account identity, operating on an exclusive local port with independent configuration and process isolation. If an individual account requires credential re-authentication, adjacent instances continue serving production requests unaffected.
@@ -64,7 +64,7 @@ cd /tmp
 runuser -u cpa-codex-01 -- /opt/ai-aggregator/cliproxyapi \
   --config /run/ai-aggregator/cpa-codex-01.yaml --codex-device-login --no-browser
 
-# 2. Authenticate OpenAI Second Instance (Ensure browser is logged into manbuzhe2008@gmail.com)
+# 2. Authenticate OpenAI Second Instance (Ensure browser is logged into <codex-account-2-email>)
 runuser -u cpa-codex-02 -- /opt/ai-aggregator/cliproxyapi \
   --config /run/ai-aggregator/cpa-codex-02.yaml --codex-device-login --no-browser
 

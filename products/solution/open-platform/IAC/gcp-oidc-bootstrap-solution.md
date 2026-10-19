@@ -34,7 +34,7 @@ gcloud projects add-iam-policy-binding xworktech-open-platform-uat ...
 | UAT | `xworktech-open-platform-uat` | `xwork-open-platform-uat` |
 | PROD | `xworktech-open-platform-prod` | `xwork-open-platform-prod` |
 
-两个真实项目都挂在 Organization `744119519286`（xworktech.com）下。修复方式是在三个仓库里做了一次全局订正（详见第 7 节），而不是去追加 IAM 授权——追加权限只会授权到一个不存在的项目，永远不会生效。
+两个真实项目都挂在 Organization `<gcp-org-id>`（xworktech.com）下。修复方式是在三个仓库里做了一次全局订正（详见第 7 节），而不是去追加 IAM 授权——追加权限只会授权到一个不存在的项目，永远不会生效。
 
 ## 3. 凭据分层架构
 
@@ -95,11 +95,11 @@ WIF Pool、Provider、deploy Service Account 这些资源本身还不存在，�
 
 ### 4.3 组织策略约束：`iam.disableServiceAccountKeyCreation`
 
-实测确认该组织策略在 Organization `744119519286` 上是 `enforced: true`：
+实测确认该组织策略在 Organization `<gcp-org-id>` 上是 `enforced: true`：
 
 ```
 gcloud resource-manager org-policies describe iam.disableServiceAccountKeyCreation \
-  --organization=744119519286 --effective
+  --organization=<gcp-org-id> --effective
 booleanPolicy:
   enforced: true
 ```
@@ -335,7 +335,7 @@ GitHub Actions OIDC token
 
 | 项目 | 值 |
 |---|---|
-| Organization | `744119519286`（xworktech.com） |
+| Organization | `<gcp-org-id>`（xworktech.com） |
 | UAT 项目 ID | `xwork-open-platform-uat` |
 | PROD 项目 ID | `xwork-open-platform-prod` |
 | Bootstrap 凭据 Vault 路径 | `kv/CICD/<env>/gcp-bootstrap/<account>` |

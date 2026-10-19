@@ -24,7 +24,7 @@ description: docs.svc.plus 的中文入口，按入门、基础、集成、参�
 
 ## 实用指南
 
-- [海外 AI 服务注册与订阅实践攻略](overseas-ai-service-access-guide.md)
+- [海外 AI 服务注册与订阅实践攻略](../get-started/overseas-ai-service-access-guide.zh.md)
 
 ## 现有双语规范页
 
