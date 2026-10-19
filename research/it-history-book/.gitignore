@@ -1,0 +1,18 @@
+# Generated
+dist/
+preview/
+*.pdf
+__pycache__/
+*.pyc
+.Python
+.venv/
+venv/
+
+# Chapter images (pull with: make sync DRIVE_DIR=...)
+chapters/*/images/*
+!chapters/*/images/.gitkeep
+
+# OS / editor
+.DS_Store
+*.swp
+*~
