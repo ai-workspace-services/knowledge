@@ -30,7 +30,7 @@ sections:
       - title: 同步链路
         href: /docs/integrations/sync-pipeline
       - title: Console 服务文档
-        href: /docs/01-console/CONFIG_SYSTEM_SUMMARY
+        href: /docs/01-console/overview
       - title: Accounts 服务文档
         href: /docs/02-accounts/SMTP_GMAIL_SETUP
       - title: RAG Server 文档

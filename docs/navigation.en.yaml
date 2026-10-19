@@ -28,7 +28,7 @@ sections:
       - title: Sync pipeline
         href: /docs/integrations/sync-pipeline
       - title: Console service docs
-        href: /docs/01-console/CONFIG_SYSTEM_SUMMARY
+        href: /docs/01-console/overview
       - title: Accounts service docs
         href: /docs/02-accounts/SMTP_GMAIL_SETUP
       - title: RAG server docs
