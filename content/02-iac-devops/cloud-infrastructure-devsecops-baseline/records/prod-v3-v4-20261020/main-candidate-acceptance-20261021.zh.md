@@ -60,6 +60,8 @@
 
 私有脱敏证据根目录：`/data/backups/web-saas/prod-v4/fresh-native-20261020-233500/`，包括 `verify-full.json`、`post-sync-restore.json`、`cases/b5987fefc5e591e0fdba33c684ca83766a16ff37/`。备份和凭据不得提交仓库。
 
+业务备份归档 SHA-256：`c82e0bbfb4237770cded91986a9a8f230cfba6520cf607589c1438eac7e5a109`；恢复库 `fresh_after_verify_20261020233500`；恢复前后业务行指纹均为 `f257cd457dffdfc03285ee8d94934355ba3dbd3684ce8b671d5c6de3a22717e2`，schema 指纹 `8e6e55a1a5373d16f5cdcc5a9fb7cdc2e8ec82aa58544e280e88a95c418862d7`，权限指纹 `cc65f0ffdbabe78cb93a4c1f5964051a5e18ce4074c57160f32628b8f5fd4d58`。
+
 ## 修复与后续门禁
 
 - [GitOps #475](https://github.com/ai-workspace-infra/gitops/pull/475)：V4 声明与不可变镜像。
