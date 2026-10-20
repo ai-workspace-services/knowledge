@@ -36,6 +36,9 @@ spec:
       - product/xscopehub/en/hero.md
       - product/xstream/zh/hero.md
       - product/xstream/en/hero.md
+    teamAgentEnrollments:
+      - account/team-agent-enrollments/zh.json
+      - account/team-agent-enrollments/en.json
     billingPolicy:
       - account/billing-policy/zh.json
       - account/billing-policy/en.json

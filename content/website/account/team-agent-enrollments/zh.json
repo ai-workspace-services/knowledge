@@ -1,0 +1,21 @@
+{
+  "title": "Team 节点分配",
+  "loading": "正在读取节点状态…",
+  "empty": "暂无 Team 节点登记",
+  "onlineRegion": "在线状态 / 区域",
+  "suggestedTeam": "建议团队",
+  "statusAssignedTeam": "状态 / 分配团队",
+  "actions": "操作",
+  "pending": "待分配",
+  "approved": "已批准",
+  "rejected": "已拒绝",
+  "revoked": "已停用",
+  "online": "在线",
+  "offline": "离线",
+  "selectTeam": "选择团队",
+  "reason": "操作原因",
+  "reasonPlaceholder": "操作原因（必填）",
+  "approve": "分配并批准",
+  "reject": "拒绝",
+  "revoke": "停用"
+}
