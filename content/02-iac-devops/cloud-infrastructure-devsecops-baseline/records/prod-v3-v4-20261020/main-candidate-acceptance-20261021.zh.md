@@ -62,6 +62,8 @@
 
 业务备份归档 SHA-256：`c82e0bbfb4237770cded91986a9a8f230cfba6520cf607589c1438eac7e5a109`；恢复库 `fresh_after_verify_20261020233500`；恢复前后业务行指纹均为 `f257cd457dffdfc03285ee8d94934355ba3dbd3684ce8b671d5c6de3a22717e2`，schema 指纹 `8e6e55a1a5373d16f5cdcc5a9fb7cdc2e8ec82aa58544e280e88a95c418862d7`，权限指纹 `cc65f0ffdbabe78cb93a4c1f5964051a5e18ce4074c57160f32628b8f5fd4d58`。
 
+观察实际起止：2026-10-20 16:06:10.231874 UTC 至 16:09:10.343903 UTC（本地 2026-10-21 00:06:10 至 00:09:10），180 秒、60 秒一次、4 份五服务状态采样，覆盖 3 个 Doco-CD 轮询间隔。结果 FAIL：Billing 未健康收敛；**不能将 Doco-CD 轮询周期替代 Exporter/Vector 的相关业务采集周期**，后者仍未验证。回执 `observation-20261021.json`。
+
 ## 修复与后续门禁
 
 - [GitOps #475](https://github.com/ai-workspace-infra/gitops/pull/475)：V4 声明与不可变镜像。
