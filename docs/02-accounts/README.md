@@ -6,6 +6,8 @@ This `docs/` directory now has a bilingual canonical layer for the current repos
 
 ## Quick Entry / 快速入口
 
+- Resource access policy / 资源权限矩阵：[Shared、Plus、Pro 与 Team 白皮书](architecture/public-tier-and-team-resource-access.zh.md) · [English](architecture/public-tier-and-team-resource-access.en.md)
+
 - Coverage checklist / 覆盖检查矩阵: `docs/DOC_COVERAGE.md`
 - GitHub OAuth setup / GitHub 登录配置: `docs/OAUTH_GITHUB_SETUP.md`
 - English index / 英文入口: `docs/en/README.md`
