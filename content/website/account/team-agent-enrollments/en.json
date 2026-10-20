@@ -1,0 +1,21 @@
+{
+  "title": "Team node assignments",
+  "loading": "Loading node status…",
+  "empty": "No registered Team nodes",
+  "onlineRegion": "Online / Region",
+  "suggestedTeam": "Suggested team",
+  "statusAssignedTeam": "Status / Assigned team",
+  "actions": "Actions",
+  "pending": "Pending",
+  "approved": "Approved",
+  "rejected": "Rejected",
+  "revoked": "Revoked",
+  "online": "Online",
+  "offline": "Offline",
+  "selectTeam": "Select team",
+  "reason": "Reason",
+  "reasonPlaceholder": "Reason (required)",
+  "approve": "Assign and approve",
+  "reject": "Reject",
+  "revoke": "Revoke"
+}
