@@ -124,6 +124,7 @@
 - [多云身份 Bootstrap 与状态契约](content/02-iac-devops/cloud-infrastructure-devsecops-baseline/11-cloud-oidc-bootstrap-contract.zh.md) · 操作版：[Cloud OIDC Bootstrap TLDR](content/04-infra-platform/public-cloud-iaas/cloud-oidc-bootstrap-tldr.zh.md)
 - [数据库同步与发布晋级状态机](content/02-iac-devops/cloud-infrastructure-devsecops-baseline/12-uat-database-sync-and-prod-promotion-state-machine.zh.md)
 - [PROD V2/V3 快照、跨机恢复与升级复盘](content/02-iac-devops/cloud-infrastructure-devsecops-baseline/15-prod-v2-v3-snapshots-and-upgrade-retrospective.zh.md) · 含最新快照证据、复用模板和维护源码归档
+- [PROD V3/V4 运行基线、快照与升级复盘](content/02-iac-devops/cloud-infrastructure-devsecops-baseline/16-prod-v3-v4-baseline-and-upgrade-retrospective.zh.md) · 固定构件、现场状态、问题台账和回归收尾清单
 - [生产环境“带病升级”如何实现零数据丢失](content/02-iac-devops/cloud-infrastructure-devsecops-baseline/13-prod-v2-upgrade-recovery-zero-data-loss-case.zh.md) · 公众号版：[AI 如何做到 300 客户与 12 万账本零丢失](content/02-iac-devops/cloud-infrastructure-devsecops-baseline/14-wechat-mp-prod-v2-code-agent-zero-loss-case.zh.md)
 
 ### GitOps 实践

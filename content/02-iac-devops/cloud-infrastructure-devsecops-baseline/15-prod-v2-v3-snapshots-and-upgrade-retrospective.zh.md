@@ -4,6 +4,8 @@
 
 ## 按类别阅读
 
+后续代际：[V3→V4 运行基线与完整问题复盘（2026-10-21）](16-prod-v3-v4-baseline-and-upgrade-retrospective.zh.md)。历史 V2/V3 快照数值不回写为 V4 当前状态。
+
 2026-10-20 补充：[V2→V3 升级关联 Billing/Vector P0 时间线](records/prod-v2-v3-20261019/20261020-billing-vector-ingest-p0.zh.md)。健康探针通过但采集 POST 被恢复期入口规则拦截；首次真实入库恢复已确认，逐节点和断档覆盖验收单独记录。
 
 | 类别 | 文档 |
