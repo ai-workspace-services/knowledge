@@ -15,6 +15,8 @@ Personal entitlements inherit lower tiers: Free ⊆ Plus ⊆ Pro. Pro currently 
 
 Team is the only team-owned exclusive resource category. Root inventory visibility does not automatically grant customer proxy access or bypass account suspension, quota, credential validity or team membership. All other callers, including admins/operators, must not receive cross-team endpoint metadata.
 
+Admins/operators may retain diagnostics for closed nodes only after their own entitlement and team filters have been applied. Diagnostic visibility must not widen the resource scope.
+
 Accounts owns entitlement decisions. Reuse one public-tier authorization function for node discovery, full Agent user configuration and incremental/reconnect updates. Team membership remains a separate explicit check. Reject unknown or contradictory scopes; preserve account, quota, blacklist, node freshness and health gates.
 
 Tests must cover the complete tier matrix; Pro aggregation without a physical pro node; root versus ordinary administrator inventory; own/other/expired/removed teams; node-list/configuration consistency; blocked users; downgrade/removal and stale events; and UI validation without fabricated endpoints. Fixtures must remain isolated from real subscriptions and financial data.
