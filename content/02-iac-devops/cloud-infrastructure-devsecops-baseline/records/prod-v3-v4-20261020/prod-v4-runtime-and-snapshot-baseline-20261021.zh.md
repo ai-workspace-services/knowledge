@@ -80,6 +80,18 @@ Caddy 的证书目录 `/etc/xcontrol/tls` 为只读挂载；Caddyfile 也为只�
 
 其他凭据引用沿用所属声明：OAuth、SMTP、Billing 和域名证书。当前只重新读取了脱敏进程元数据，没有重新导出所有 Vault 值，也未验证最新三服务 Token 与 Vault 的逐项相等；早期 Token case PASS 见历史证据，不能代替本版本复核。
 
+### Stripe Sandbox / Live 配置合同（2026-10-21 补记）
+
+Billing 的 Stripe 配置统一以 `kv/prod/billing-service` 为权威 Vault 路径，按 Stripe 环境区分 Key；**不得添加 V3/V4 等部署代际后缀**。Vault 保存密钥及相关配置值；文档、GitOps 和快照清单仅记录字段名、非敏感路由及核验状态，不记录 secret value。
+
+| 配置项 | Sandbox / Test | Live | 说明 |
+| --- | --- | --- | --- |
+| Webhook URL | `SANDBOX_STRIPE_WEBHOOK_URL`；当前有效接收端点：`https://accounts.svc.plus/api/billing/stripe/webhook` | `PROD_STRIPE_WEBHOOK_URL`；现存记录仅到 `https://accounts-serverless-prod.svc.plus/api/billing/`，**完整路径待补** | Sandbox 的 Vault URL 字段记录为空，实际端点由 GitOps 配置；源任务记载验签正常。Live 路径不完整，不据此推断 webhook suffix。 |
+| API secret key | `SANDBOX_STRIPE_SECRET_KEY`；仅记录预期格式 `sk_test_…` | `PROD_STRIPE_SECRET_KEY`；仅记录预期格式 `sk_live_…` | 不记录、展示或复制密钥值；`PROD_` 是既有 Live 命名，不按 V3/V4 分叉。 |
+| Webhook signing secret | `SANDBOX_STRIPE_WEBHOOK_SECRET`；仅记录预期格式 `whsec_…` | `PROD_STRIPE_WEBHOOK_SECRET`；仅记录预期格式 `whsec_…` | 不记录或比较 secret 明文；运行时验签应与实际 Stripe endpoint 配对。 |
+
+关联来源：Codex 任务 `01a15c72-9370-7372-928c-e4a2ec93886c`（修复订阅 Sandbox 结算）；既有 P0 问题与回归状态见[历史 V3→V4 P0 记录](20261021-prod-v3-v4-p0-regression-record.zh.md)。表中 Sandbox 验签状态是该来源任务的历史记录，不替代对当前 V4 运行配置的重新核验。
+
 ## 5. 数据与 schema 基线
 
 采样边界：2026-10-21 **03:17:27 +08:00**，一个 `REPEATABLE READ READ ONLY` 事务。
