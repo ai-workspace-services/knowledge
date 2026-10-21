@@ -8,10 +8,10 @@
 | --- | --- |
 | 主机 | `web-saas-prod-v4`；GCP 控制面及 SSH hostname 一致 |
 | 平台 | GCP，`open-platform-prod / asia-east1-a` |
-| 运行路径 | SSH → Playbook → 固定 GitOps → Doco-CD；未使用 CI 部署 |
-| 发布引用 | `refs/tags/v2026.10.21-r4`，不可移动或复用 |
-| GitOps 实际 SHA | `cbdd876e088176e10128cc5f9f3153b82c0500e4`，由 Doco-CD 日志核实 |
-| Doco-CD | target=`prod-v4`，interval=60 秒；03:16:50 完成一次成功任务 |
+| 部署模式 | SSH → Playbook → 固定 GitOps → Doco-CD；本次现场核验未使用 CI 部署 |
+| 发布引用 | `v2026.10.21-r4` 是历史候选引用，不足以代表当前所有运行容器 |
+| GitOps 实际 SHA | `5c602b6874e9cf2c37be43dd02c4472c1234778b`，Doco-CD 当前 revision |
+| Doco-CD | target=`prod-v4-stripe-sandbox`，interval=60 秒；2026-10-21 12:28–12:31 +08 连续成功任务 |
 | 独立数据盘 | 50 GiB，ext4，挂载 `/data`；根盘约 20 GiB |
 | PostgreSQL 挂载 | `/data/postgresql` → `/var/lib/postgresql/data`，读写 |
 | 实际业务库 | `account`，PostgreSQL 17.10 |
@@ -19,7 +19,7 @@
 | Caddy 激活模式 | `generation=prod-v4`、`runtime_mode=primary`、target 与主机一致 |
 | 入口配置 SHA-256 | `42f01244e16fa3fe3274fedfd52e443d4287dd2f7f1b437f7f431539c3348d83` |
 
-GitOps 声明见 [compose/web-saas](https://github.com/ai-workspace-infra/gitops/tree/cbdd876e088176e10128cc5f9f3153b82c0500e4/compose/web-saas)。此前 `prod-v4-acceptance-2026.10.21-r1` 和分支演练 SHA 为历史候选，不能冒充上述运行版本。
+GitOps 声明见 [compose/web-saas](https://github.com/ai-workspace-infra/gitops/tree/5c602b6874e9cf2c37be43dd02c4472c1234778b/compose/web-saas)。该 revision 对应提交 `fix: release paid sandbox activation recovery to V4 (#486)`。本次没有核实一个同时绑定所有当前服务镜像的统一不可变 release tag；应用镜像各自的 tag/digest 见下表。此前 `prod-v4-acceptance-2026.10.21-r1`、`v2026.10.21-r4` 和分支演练 SHA 都是历史引用，不能冒充当前运行版本。
 
 ## 2. 容器构件
 
@@ -27,32 +27,34 @@ GitOps 声明见 [compose/web-saas](https://github.com/ai-workspace-infra/gitops
 
 | 服务 | tag / source SHA | 完整 digest |
 | --- | --- | --- |
-| Accounts | `sha-6565297116c502c1b89557b201234f9d6e8f5e08` | `sha256:53bdb8037ddbd32516bff965e0853d4767e2f6eecde13284b7f39eb4dc91356e` |
+| Accounts | `sha-1a82ca1621dbb2959f289de5b14723a157999515` | `sha256:462492053d8e5c8effc4fb34a678a1aee536cdcb525847f724f55f080214ad61` |
 | Billing | `sha-77557d796a66dcd3373d7731125890bd91ebc5d3` | `sha256:974a012cd032a291c495120f70dc1da1dbe35d05c7554b4912836cac983d438b` |
-| Console | `sha-22e1485bad13995caa4012316c9cf0012e265059` | `sha256:a0b0935ca530b44b02d1e165ed16c9f71636f98abb3404675a287eef575a1810` |
+| Console | `sha-422c74e695de04bfc53b962ba0bbc5440bac794b` | `sha256:590b6cbe4d4d68d16b7d4c85f646cfa87833e9e47cd1a998ec3a1638e0c756a2` |
 | PostgreSQL | `sha-7759f4513e1710e86332795b611507bbed37ea39` | `sha256:f97857bd59c1fc55e3be3942b2c8f5554a8e9ee1d08bf3e834940c33189a141c` |
 | Caddy | `959d6c8` | `sha256:9895385033fea2bdb445841b45f37e6cd58b9e071a16e4c147e483abb74a0acf` |
 | Doco-CD | digest 固定，无需推断 tag | `sha256:46f3e44106fd0f4f30bc450682038509484d9aa28916edd6039b0af45bdc1cec` |
 
-当前运行版本及已测试版本并非始终一致；应用 tag 不等同于 GitOps tag。回退构件先保留当前上述 digest 和此前固定声明，业务库的回退需独立评估。
+本表来自 2026-10-21 12:32 +08 的运行容器只读盘点；Accounts、Console 于 12:19 +08 左右启动，Billing 沿用前一日运行容器。当前运行版本及已测试版本并非始终一致；应用 tag 不等同于 GitOps revision。回退构件先保留当前上述 digest 和此前固定声明，业务库的回退需独立评估。
 
 ## 3. 域名、SNI 与路由
 
-| 域名 | 当前解析归属 | 本轮 HTTPS 结果 |
+核验边界：2026-10-21 12:36 +08；DNS 解析和 HTTPS/SNI 均为只读检查。当前根域及 `www` 均指向 V4（`35.229.188.193`）。
+
+| 域名 | 当前解析归属 | 本轮 HTTPS/SNI 结果 |
 | --- | --- | --- |
-| `console.svc.plus` | V4 | `/login` 200 |
-| `accounts.svc.plus` | V4 | `/readyz` 200；API 服务 |
-| `billing.svc.plus` | V4 | `/readyz` 200；API 服务 |
-| `xworktech.com` | V3 | `/` 200 |
-| `www.xworktech.com` | V3 | 301 到根域 |
-| `console-selfhost-prod-v4.svc.plus` | V4 | 登录页此前已核验 200 |
-| `accounts-selfhost-prod-v4.svc.plus` | V4 | API 版本别名 |
-| `billing-selfhost-prod-v4.svc.plus` | V4 | API 版本别名 |
-| `postgresql-selfhost-prod-v4.svc.plus` | V4 | 预留解析；本轮未做 DB 隧道/TLS 连接验收 |
+| `console.svc.plus` | V4 CNAME → `console-selfhost-prod-v4.svc.plus` → `35.229.188.193` | `/login` 200；证书主机名校验通过 |
+| `accounts.svc.plus` | V4 CNAME → `accounts-selfhost-prod-v4.svc.plus` → `35.229.188.193` | `/readyz` 200；API 服务，证书主机名校验通过 |
+| `billing.svc.plus` | V4 CNAME → `billing-selfhost-prod-v4.svc.plus` → `35.229.188.193` | `/readyz` 200；API 服务，证书主机名校验通过 |
+| `xworktech.com` | V4 A → `35.229.188.193` | `/` 200；证书主机名校验通过 |
+| `www.xworktech.com` | V4 A → `35.229.188.193` | 301 到 `https://xworktech.com/`；证书主机名校验通过 |
+| `console-selfhost-prod-v4.svc.plus` | V4 A → `35.229.188.193` | `/login` 200；证书主机名校验通过 |
+| `accounts-selfhost-prod-v4.svc.plus` | V4 A → `35.229.188.193` | `/readyz` 200；API 版本别名，证书主机名校验通过 |
+| `billing-selfhost-prod-v4.svc.plus` | V4 A → `35.229.188.193` | `/readyz` 200；API 版本别名，证书主机名校验通过 |
+| `postgresql-selfhost-prod-v4.svc.plus` | V4 A → `35.229.188.193` | DB 预留别名；不是普通 HTTPS 服务，本轮未验证数据库隧道/TLS |
 
-使用 `curl --resolve` 对 V4 执行五个公共 SNI 检查，使用正常 CA 校验、不加 `-k`：Console 登录及两个 API readyz 返回 200，品牌根域 200，www 301。这证明 V4 的五域证书/路由可响应，不代表品牌 DNS 已切换。
+三个公共 `svc.plus` SNI、两个品牌域名及三个版本 HTTPS 别名均使用正常 CA/主机名校验通过；`/readyz` 只证明 API 基础就绪，不代表写入、OAuth、Webhook 或端到端业务验收通过。证书有效期核验至 2027-01-05（`svc.plus` 与品牌证书分别略有差异）。
 
-**03:27 后续更新**：按用户明确授权，两条品牌 A 记录已从 V3 改为 V4，保留代理/TTL。两个权威 NS 及 1.1.1.1、8.8.8.8 均验证到 V4；根域 200，www 301 且保留 URI。上表保留初次盘点事实，当前解析以[变更回执](brand-dns-handoff-20261021.zh.md)为准。
+此前记录的品牌域名仍指向 V3 已过时；本节以上述 12:36 +08 只读核验为当前状态。DNS 变更审批和历史操作回执见[品牌 DNS 交接记录](brand-dns-handoff-20261021.zh.md)。本轮没有修改 DNS。
 
 Caddy 的证书目录 `/etc/xcontrol/tls` 为只读挂载；Caddyfile 也为只读挂载。03:09 正式入口激活后，Accounts 与 Console 采用正常业务代理规则；Billing 仅开放受应用 Token 鉴权的 `POST /v1/ingest/snapshots` 及探针。数据库不作为普通 HTTPS 页或直接公网数据库开放。
 
@@ -94,19 +96,19 @@ Billing 的 Stripe 配置统一以 `kv/prod/billing-service` 为权威 Vault 路
 
 ## 5. 数据与 schema 基线
 
-采样边界：2026-10-21 **03:17:27 +08:00**，一个 `REPEATABLE READ READ ONLY` 事务。
+采样边界：2026-10-21 **12:35:59 +08:00**（数据库 UTC 时间 04:35:59），只读事务采样。对象计数在同一 PostgreSQL 会话内读取。
 
 | 对象 | 数量／版本 |
 | --- | --- |
 | schema | `2026102002`，dirty=false |
 | `users` | 33 |
-| `subscription_records` | 13（另次只读核实） |
-| `subscriptions` | 1；不是历史 13 条的同一统计对象 |
-| `account_quota_states` | 33（另次只读核实） |
-| `traffic_minute_buckets` | 35,369 |
-| `billing_ledger` | 35,369 |
+| `subscription_records` | 13 |
+| `subscriptions` | 3；与 `subscription_records` 是不同统计对象 |
+| `account_quota_states` | 33 |
+| `traffic_minute_buckets` | 39,850；最新 bucket `2026-10-21 12:35:00 +08`，最新 created_at `12:35:59 +08` |
+| `billing_ledger` | 39,850；最新 created_at `12:35:59 +08` |
 
-另次查询两表最新时间约为 03:17:53。计数与最新时间证明当时存在数据，不能替代逐用户金额/额度指纹、逐节点采集归属或 V3→V4 最新一致性比较。本轮未执行 migratectl 数据同步，也没有产生新的完整数据指纹。
+`traffic_minute_buckets` 与 `billing_ledger` 在本次采样的行数一致，且最新时间接近采样时刻，说明数据写入有新鲜度；这不能单独证明每个节点均有非零字节增量，也不能替代逐用户金额/额度指纹或 V3→V4 一致性比较。本轮未执行 migratectl 数据同步，也没有产生新的完整数据指纹。
 
 历史审核迁移：`2026101902 → 2026102001 → 2026102002`。对应 SQL SHA-256：
 
@@ -158,7 +160,7 @@ V4 主机保留 `prod-v3-online-full-2026.10.20-r2/1792496457/restore-verify-rec
 | `runtime/configuration.tar.gz.enc` | `fe9f706fb32e7540d9d0d08d332a19087303fc575fa20fb4e0981a4a9f13a821` |
 | `runtime/manifest.json` | `d8428269daf5fe660b2a6202debe210303b85aae19541b3e49729af04a411844` |
 
-四个文件权限均为 0600。本轮目录检查未发现该候选的完整 `SHA256SUMS`、隔离恢复完成回执或 Vault 加密快照；不能宣称“V4 最新全量快照及全部恢复验收通过”。名称里有 full-snapshot 不能代替完成状态。本轮未解密、恢复或补建快照。
+四个文件权限均为 0600。随附 `runtime/manifest.json` 记录该快照对应的 schema `2026102002`、33 用户、13 条订阅、35,306 条账本，并标记隔离恢复 `passed`；源与恢复后的行指纹均为 `156ecdcbdcaf93ca913e041b418857e8bcd18cdab56866e9bf86f856373bf229`。这证明该时间点的 DB 归档曾完成隔离恢复及行指纹比对，但该快照早于 2026-10-21 12:19 +08 的应用重部署，且本轮未重新执行恢复。目录未发现完整 `SHA256SUMS` 和 Vault 加密快照，因此不能宣称它是覆盖当前运行配置与密钥引用的最新完整环境快照。本轮未解密、恢复或补建快照。
 
 后续应按模板补齐最新发布、在线一致性边界、配置/角色/DB 归档、加密校验清单、独立恢复、应用连接和主机外副本。共享 Vault 的独立实例恢复与 DB 恢复分开授权、分开留证，不覆盖共享 Vault。
 
