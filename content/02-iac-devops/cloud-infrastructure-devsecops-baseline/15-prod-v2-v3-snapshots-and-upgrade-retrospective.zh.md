@@ -6,6 +6,8 @@
 
 2026-10-20 补充：[V2→V3 升级关联 Billing/Vector P0 时间线](records/prod-v2-v3-20261019/20261020-billing-vector-ingest-p0.zh.md)。健康探针通过但采集 POST 被恢复期入口规则拦截；首次真实入库恢复已确认，逐节点和断档覆盖验收单独记录。
 
+2026-10-21 补充：[V3→V4 升级 P0 事件、回归 Case 与证据索引](records/prod-v2-v3-20261019/20261021-prod-v3-v4-p0-regression-record.zh.md)。逐项映射业务 DB 权限、Stripe 出站与 Webhook、Agent 注册、Exporter/Vector/Billing 流量链、重复采集源、最近一小时用量展示及登录/引导 API。可执行检查和未覆盖的人工验收明确分开；未运行或被阻断的 Case 不算通过。
+
 | 类别 | 文档 |
 | --- | --- |
 | 本轮完整记录与问题复盘 | [V2/V3 快照与升级复盘](records/prod-v2-v3-20261019/20261019-prod-v2-v3-snapshot-and-upgrade-retrospective.zh.md) |
@@ -16,6 +18,7 @@
 | VLESS 传输路径 | [P0 修复与不可变构件发布](records/prod-v2-v3-20261019/20261019-prod-v3-vless-path-p0-release.zh.md) |
 | 后续代际证据模板 | [快照和恢复证据模板](records/prod-v2-v3-20261019/web-saas-generation-snapshot-recovery-template.zh.md) |
 | 本轮维护脚本历史源码 | [源码目录与执行边界](examples/prod-v3-full-snapshot-20261019/README.md) |
+| V3→V4 P0 故障与回归用例 | [事件时间线、Case ID 与验收状态](records/prod-v2-v3-20261019/20261021-prod-v3-v4-p0-regression-record.zh.md) |
 
 ## V3 最新快照结果
 
