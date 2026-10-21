@@ -2,6 +2,35 @@
 
 核验日期：2026-10-21，Asia/Shanghai。与[升级复盘](v3-v4-upgrade-retrospective-20261021.zh.md)、[回归清单](regression-and-closure-checklist-20261021.zh.md)配套使用。本文是有时间边界的运维记录，不是第二套配置源。
 
+## 后续应用发布：r8，13:23–13:24
+
+以下为 2026-10-21 13:23:50 +08:00 的新核验。原第 1–7 节保留此前的采样和快照事实，其中 r4 构件不再代表当前 Accounts/Console 版本。权威期望状态为 [GitOps r8](https://github.com/ai-workspace-infra/gitops/tree/v2026.10.21-r8/compose/web-saas)，本文不生成第二套配置。
+
+| 项目 | r8 现场结果 |
+| --- | --- |
+| 发布路径 | SSH → Playbook → 固定 GitOps → Doco-CD；本次未使用 CI 部署 |
+| GitOps | [PR #487](https://github.com/ai-workspace-infra/gitops/pull/487)，tag `v2026.10.21-r8`，SHA `e5e11d2718c9f992c760b6c542d3c40b48fdf7bb` |
+| Playbook | [select-doco-cd-release.yml](https://github.com/ai-workspace-infra/playbooks/blob/c2203a388efa0eb0815c6594509137df96532cc9/select-doco-cd-release.yml)，选择既有 V4 reconciler；云控制面核定后生成单次临时 inventory，执行后删除 |
+| Doco-CD | target=`prod-v4-stripe-sandbox`；13:23:30 +08:00 报告成功，运行容器标签的 ref/SHA 与固定 tag 一致 |
+| Accounts | source `21de352383d183be5bbbf5b3109a19c52a408abe`；digest `sha256:b23c205a72cb580262a62916cee1a8d54ee9a5639327496283ac23532b960baf` |
+| Console | 保留 r7 source `422c74e695de04bfc53b962ba0bbc5440bac794b`；digest `sha256:590b6cbe4d4d68d16b7d4c85f646cfa87833e9e47cd1a998ec3a1638e0c756a2` |
+| schema | `2026102002`，dirty=false；无新增迁移，无 schema SQL 变化 |
+| 启动写入 | `schema_management=external`；bootstrap/background writers/proxy UUID rotator 均 false |
+| 健康与版本 | Accounts ping/readyz、Console ping、Billing readyz 均 200；Accounts source/image 与锁定构件一致 |
+| 未更新的服务 | Console、Billing、PostgreSQL、Caddy 的镜像及启动时间与发布前相同 |
+| 数据核验 | 订阅、订阅记录、套餐、账户计费配置、发票、付款共六表的行数与稳定内容指纹前后一致；不将此扩大为全部用量表静止 |
+| 配置核验 | 受保护的 account/Caddy 配置及 secrets/business-database/internal-service 环境文件 hash 前后一致；不记录值 |
+
+r7 已修复首次 Free→Plus 激活：Free 的 5GB 耗尽后获得完整新付费周期 20GB，已消费额度不会因重投事件补满。r8 增加 [Accounts #257 模式隔离](https://github.com/ai-workspace-services/accounts/pull/257) 和 [#258 完成记录失败重试](https://github.com/ai-workspace-services/accounts/pull/258)：错误支付模式、缺失事件字段和不支持的 Connect 上下文在持久化前拒绝；完成记录写入失败返回 503，不能误报 200。
+
+本轮 Stripe MCP 仅选择 svc.plus Sandbox：三个当前活动 Price 与本地目录匹配，分别为 Plus ¥20/月20GiB、Pro ¥50/月50GiB、Pro ¥500/年不限流量。Canonical 测试端点仍为 `https://accounts.svc.plus/api/billing/stripe/webhook`；12:48:23 的 Checkout 和 12:48:08 的 invoice 投递均 200。周窗口 25 次尝试中有 14 次历史失败，不能冒充最新事件仍失败，也不能写成整周零失败。旧 UAT 端点未改动。r8 未签名请求返回 401 `invalid_signature`，是预期的安全拒绝，不是新的真实 Stripe 投递失败。
+
+凭据继续引用 `kv/prod/billing-service` 的 `SANDBOX_STRIPE_SECRET_KEY`、`SANDBOX_STRIPE_WEBHOOK_SECRET`；部署版本不构成 Stripe 支付模式，不新增 V3/V4 secret 字段。本次没有新付款、事件重投、手工修改业务行、Live 操作或密钥变更。
+
+验证分层：[Accounts #259](https://github.com/ai-workspace-services/accounts/pull/259) 的本地 PostgreSQL 17 副本只含 public 结构、四条必要套餐目录和合成测试身份，内部网络无主机端口，未复制原用户/财务记录/Stripe 凭据。三个套餐均通过完整激活、未付拒绝、节点 API 403→200、finish 故障后重建 handler 重试、财务去重和消费保留。provider 为 loopback fixture，不等同真实新付款或 Agent 连接验收。独立公共回调入口与 Agent 仍待 [F9](https://github.com/ai-workspace-services/.github/issues/36)；并发/崩溃恢复、退款事件订阅及完整端到端矩阵继续保留。
+
+回滚只需通过相同 Playbook 选择保留的 `v2026.10.21-r7`；不执行数据库 down/覆盖恢复，不撤销已有金融事实。第 6 节的备份与恢复清单仍是其原时间边界，本轮没有新增完整环境快照或恢复演练，不能把本次结构副本测试记作业务备份恢复验收。
+
 ## 1. 环境与实际部署
 
 | 项目 | 现场结果 |
