@@ -45,6 +45,9 @@ spec:
     emailPreferences:
       - account/email-preferences/zh.json
       - account/email-preferences/en.json
+    accountSecurity:
+      - account/security/zh.json
+      - account/security/en.json
     referral:
       - campaign/referral/zh.json
       - campaign/referral/en.json
