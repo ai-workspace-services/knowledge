@@ -120,11 +120,11 @@ category: reference
 
 ### 3.3 方案 C：DSH 精简目标
 
-#### C-01 总体分层
+#### C-01 总体分层 (目标态·v2.1)
 
-![方案 C 总体分层](assets/ai-workspace-agent-memory/variants/c-target-dsh-minimal/01-overall-layered-architecture.png)
+![方案 C 总体分层架构 (目标态·v2.1)](assets/ai-workspace-agent-memory/ai-workspace-layered-architecture-v2.1.png)
 
-可编辑源：[C-01 SVG](assets/ai-workspace-agent-memory/variants/c-target-dsh-minimal/01-overall-layered-architecture.svg)；状态：目标结构方向已确认，箭头语义与运行能力仍需验收。
+*图 C-01：演进至 v2.1 的目标态全貌（涵盖 WebRTC 远程人工接管、DSH + DS Bot stdio 编排、多执行器协同及三级记忆体系）。历史可编辑源：[C-01 SVG](assets/ai-workspace-agent-memory/variants/c-target-dsh-minimal/01-overall-layered-architecture.svg) / [历史初版 PNG](assets/ai-workspace-agent-memory/variants/c-target-dsh-minimal/01-overall-layered-architecture.png)；状态：目标结构方向已确认。*
 
 #### C-02 角色路由时序
 

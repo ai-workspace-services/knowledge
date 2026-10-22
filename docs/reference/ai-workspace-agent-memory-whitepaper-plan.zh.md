@@ -133,9 +133,9 @@ Bridge（共享控制面）── role-router-policy v0.4（GitOps 唯一策略�
 
 ### 2.0 总体分层架构原图
 
-![总体分层架构：XWorkmate、Bridge、多执行器、可选 Gateway 与三级记忆](assets/ai-workspace-agent-memory/variants/c-target-dsh-minimal/01-overall-layered-architecture.png)
+![AI Workspace 总体分层架构 (目标态·v2.1)](assets/ai-workspace-agent-memory/ai-workspace-layered-architecture-v2.1.png)
 
-*图 1：脱敏的方案 C 总体分层 PNG。原始五张用户图仅保留在本地工作树用于历史对照，未纳入公开 PR；执行器接通状态、模型可用性、部署连接和历史计数均须以独立证据核验。*
+*图 1：AI Workspace 总体分层架构目标态 (v2.1)，涵盖 XWorkmate App 轻交互、Bridge 共享控制面、DSH 编排与 WebRTC 远程人工接管、多执行器（DSH、OpenCode、Codex、Claude、Grok）以及 L1/L2/L3 三级记忆体系。历史脱敏方案 C 初稿见 [variants 索引](assets/ai-workspace-agent-memory/variants/c-target-dsh-minimal/01-overall-layered-architecture.png)。*
 
 ### 2.1 关键调用链
 
@@ -350,6 +350,14 @@ L2 内容压缩前必须有 L3 `committed` 回执，不能只凭上传成功或�
 | W4-04 QMD rebuild | L2/L3 committed 内容 | BM25+向量热缓存、重建 receipt | QMD owner | W4-01 | 删除/重建/一致性计数 | QMD 失效时只影响搜索，不影响权威数据 |
 
 ### W5：会话中心与 UI
+
+![XWorkmate App 数据总览与任务线程看板](assets/ai-workspace-agent-memory/xworkmate-app-dashboard-threads.png)
+
+*图 W5-1：XWorkmate App 数据总览看板与线程状态视图。*
+
+![XWorkmate App 侧栏任务聚合与 Bridge 连接引导交互](assets/ai-workspace-agent-memory/xworkmate-app-sidebar-bridge-connect.png)
+
+*图 W5-2：XWorkmate App 侧栏任务多源汇聚展示与自建 Bridge 连接配置引导。*
 
 | 卡 | 输入 | 输出 | owner | 依赖 | 验证 | 失败分支 |
 | --- | --- | --- | --- | --- | --- | --- |
