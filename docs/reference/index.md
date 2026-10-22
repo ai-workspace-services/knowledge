@@ -1,6 +1,6 @@
 ---
 title: 参考资料总索引与 PDF 合订编排 / Reference index and PDF compilation plan
-description: 42 项多云白皮书、总体架构、容灾、四仓契约、共用规范、数据库安全操作、三档权限、CMDB、AI Workspace 与性能调优规范来源索引。
+description: 45 项多云白皮书、总体架构、容灾、四仓契约、共用规范、数据库安全操作、三档权限、CMDB、AI Workspace 与性能调优规范及验收归档来源索引。
 slug: index
 lang: zh
 tags:
@@ -12,7 +12,7 @@ tags:
 
 # 参考资料总索引与 PDF 合订编排
 
-本页是 42 项资料的可编辑索引，服务于多云平台工程白皮书、总体架构评审和后续 PDF 合订准备。条目按主题分组，优先链接到本仓库真实文件；跨仓库条目使用固定 `origin/main` SHA 的 GitHub 链接，便于复核来源版本。实施规划条目不代表功能或运行验收已完成。
+本页是 45 项资料的可编辑索引，服务于多云平台工程白皮书、总体架构评审和后续 PDF 合订准备。条目按主题分组，优先链接到本仓库真实文件；跨仓库条目使用固定 `origin/main` SHA 的 GitHub 链接，便于复核来源版本。实施规划条目不代表功能或运行验收已完成。
 
 GitHub 组织入口：[ai-workspace-infra](https://github.com/ai-workspace-infra)。
 
@@ -101,7 +101,7 @@ GitHub 组织入口：[ai-workspace-infra](https://github.com/ai-workspace-infra
 
 | # | 标题 | 语言 | 来源版本 | 文件或入口 |
 | ---: | --- | --- | --- | --- |
-| 31 | 撕破云厂高墙：把割裂的异构云拧成一股绳 | zh | knowledge working tree | [content/02-iac-devops/multi-cloud-iac-mesh/](../../content/02-iac-devops/multi-cloud-iac-mesh/README.md)（系列 5 篇） |
+| 31 | 撕破云厂高墙：把割裂的异构云拧成一股绳 | zh | knowledge working tree | [why-i-built-multi-cloud-iac-mesh-cn.md](../../why-i-built-multi-cloud-iac-mesh-cn.md) |
 | 32 | Global Mesh 产品介绍与云中立现代架构深度白皮书 | zh | knowledge working tree | [docs/zh/products-global-mesh.md](../zh/products-global-mesh.md) |
 | 33 | cloud-infrastructure-devsecops-baseline 目录 | mixed | knowledge working tree | [content/02-iac-devops/cloud-infrastructure-devsecops-baseline/](../../content/02-iac-devops/cloud-infrastructure-devsecops-baseline/) |
 | 34 | 02-iac-devops 目录 | mixed | knowledge working tree | [content/02-iac-devops/](../../content/02-iac-devops/) |
@@ -122,12 +122,16 @@ GitHub 组织入口：[ai-workspace-infra](https://github.com/ai-workspace-infra
 | ---: | --- | --- | --- | --- |
 | 40 | AI Workspace、XWorkmate 多执行器与三级记忆技术白皮书规划（含独立 macOS / Home-Lab Workspace profiles） | zh | knowledge working tree · review-draft · proposed-not-applied | [docs/reference/ai-workspace-agent-memory-whitepaper-plan.zh.md](ai-workspace-agent-memory-whitepaper-plan.zh.md) |
 | 41 | AI Workspace 三套架构版本图与迁移验收索引 | zh | knowledge working tree · review-draft · A historical / B transition / C target-pending | [docs/reference/ai-workspace-agent-memory-variants.zh.md](ai-workspace-agent-memory-variants.zh.md) |
+| 42 | QMD + PG + 云盘三级任务聚合与记忆系统落地规范 | zh | knowledge working tree · v1.0-release · approved | [docs/reference/qmd-pg-cloud-drive-three-tier-memory-spec.zh.md](qmd-pg-cloud-drive-three-tier-memory-spec.zh.md) |
 
 ## 八、性能调优与容量规划
 
 | # | 标题 | 语言 | 来源版本 | 文件或入口 |
 | ---: | --- | --- | --- | --- |
-| 42 | XWorkTech 性能调优技术白皮书与工程规范 | zh | knowledge working tree · v1.0 · review-draft · 未执行环境变更或运行验收 | [docs/reference/performance-optimization-whitepaper.zh.md](performance-optimization-whitepaper.zh.md) |
+| 43 | XWorkTech 性能调优技术白皮书与工程规范 | zh | knowledge working tree · v1.0 · review-draft · 未执行环境变更或运行验收 | [docs/reference/performance-optimization-whitepaper.zh.md](performance-optimization-whitepaper.zh.md) |
+| 43 | jp-xconnect 内存与日志优化分析报告（2026-10-10） | zh | knowledge working tree · reported-results-pending-follow-up | [docs/performance-optimization/jp-xconnect-memory-log-optimization-20261010.zh.md](../performance-optimization/jp-xconnect-memory-log-optimization-20261010.zh.md) |
+| 44 | JP XConnect 稳定性增量配置验证报告（2026-10-14） | zh | knowledge working tree · v0.1 · prod-partial-validated | [docs/reference/performance-optimization-jp-xconnect-stability-20261014.zh.md](performance-optimization-jp-xconnect-stability-20261014.zh.md) |
+| 45 | XConnect Free 节点大文件上传实测与优化验收（2026-10-18） | zh | knowledge working tree · v1.1 · partial-acceptance · Linux 58/60 & MacOS 27/60 | [docs/performance-optimization/xconnect-free-proxy-upload-acceptance-20261018.zh.md](../performance-optimization/xconnect-free-proxy-upload-acceptance-20261018.zh.md) |
 
 ## 使用与维护约束
 
