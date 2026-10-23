@@ -1,4 +1,4 @@
-"""Contract tests for 9 core platform services OrbStack deployment and acceptance matrix."""
+"""Contract tests for 10 core platform services OrbStack deployment and acceptance matrix."""
 import os
 from pathlib import Path
 import re
@@ -12,18 +12,19 @@ VERIFY_DIR = REPO_ROOT / "scripts" / "orbstack-verification"
 VERIFY_SCRIPT = VERIFY_DIR / "verify-orbstack-all-services.sh"
 
 
-class TestOrbStack9CoreServicesMatrix(unittest.TestCase):
+class TestOrbStack10CoreServicesMatrix(unittest.TestCase):
     def test_acceptance_matrix_document_exists(self):
         self.assertTrue(DOC_PATH.exists(), f"Missing acceptance document: {DOC_PATH}")
         content = DOC_PATH.read_text(encoding="utf-8")
-        self.assertIn("title: 9 大核心服务类别 macOS OrbStack 单机部署与健康验收矩阵", content)
+        self.assertIn("title: 10 大核心服务类别 macOS OrbStack 单机部署与健康验收矩阵", content)
         self.assertIn("slug: platform-core-services-orbstack-acceptance-matrix", content)
         self.assertIn("status: approved", content)
 
-    def test_all_9_service_categories_in_matrix(self):
+    def test_all_10_service_categories_in_matrix(self):
         content = DOC_PATH.read_text(encoding="utf-8")
         expected_projects = [
             "platform-gitea",
+            "platform-harbor",
             "platform-silo",
             "platform-cmdb",
             "platform-vault-zitadel",
@@ -38,6 +39,7 @@ class TestOrbStack9CoreServicesMatrix(unittest.TestCase):
 
         expected_pinned_images = [
             "gitea/gitea:1.22.6",
+            "goharbor/harbor-portal:v2.15.4",
             "pgsty/silo:RELEASE.2026-10-18T00-00-00Z",
             "hashicorp/vault:1.17.6",
             "ghcr.io/kimdre/doco-cd:0.1.28",
@@ -55,14 +57,15 @@ class TestOrbStack9CoreServicesMatrix(unittest.TestCase):
 
         expected_dirs = [
             "01-git-ci-gitea",
-            "02-s3-storage-silo",
-            "03-cmdb-inventory",
-            "04-identity-vault-zitadel",
-            "05-gitops-doco-cd",
-            "06-container-vector-node",
-            "07-pg-backup-drill",
-            "08-ai-gateway",
-            "09-mcp-server",
+            "02-artifact-harbor",
+            "03-s3-storage-silo",
+            "04-cmdb-inventory",
+            "05-identity-vault-zitadel",
+            "06-gitops-doco-cd",
+            "07-container-vector-node",
+            "08-pg-backup-drill",
+            "09-ai-gateway",
+            "10-mcp-server",
         ]
         assigned_ports = set()
         for d in expected_dirs:
@@ -77,17 +80,17 @@ class TestOrbStack9CoreServicesMatrix(unittest.TestCase):
                 assigned_ports.add(p)
 
         # Ensure all key platform ports are assigned
-        critical_ports = {"13000", "13001", "14000", "15434", "15435", "15436", "18000", "18200", "18888", "19000", "19001", "19088", "19128"}
+        critical_ports = {"13000", "13001", "14000", "15434", "15435", "15436", "18000", "18080", "18200", "18888", "19000", "19001", "19088", "19128"}
         self.assertTrue(critical_ports.issubset(assigned_ports), f"Missing critical ports: {critical_ports - assigned_ports}")
 
     def test_index_and_overview_cross_references(self):
         index_content = INDEX_PATH.read_text(encoding="utf-8")
         self.assertIn("platform-core-services-orbstack-acceptance-matrix.zh.md", index_content)
-        self.assertIn("9 大核心服务类别 macOS OrbStack 单机部署与健康验收矩阵", index_content)
+        self.assertIn("10 大核心服务类别 macOS OrbStack 单机部署与健康验收矩阵", index_content)
 
         overview_content = OVERVIEW_PATH.read_text(encoding="utf-8")
         self.assertIn("platform-core-services-orbstack-acceptance-matrix.zh.md", overview_content)
-        self.assertIn("平台工程单机验证与本地基座", overview_content)
+        self.assertIn("10 大核心服务类别", overview_content)
 
 
 if __name__ == "__main__":
