@@ -4,7 +4,27 @@
 
 [统一部署与迁移流程](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md) · [V4→V5 基线与升级复盘](../../17-prod-v4-v5-baseline-and-upgrade-retrospective.zh.md) · [V5 部署流程复盘](prod-v5-deployment-postmortem-20261023.zh.md)
 
-## 当前候选状态（截至 2026-10-24 01:07 +08）
+<!-- BEGIN CLEANROOM 20261024 -->
+## 当前净室验证周期（2026-10-24 03:09 +08）
+
+本节及[本轮完整回执](prod-v5-cleanroom-deployment-migration-validation-20261024.zh.md)取代下方 01:07 样本作为新周期事实；原 r5/r103、Docker 未安装、旧 apply 运行中及各次失败仍按采样背景保留。
+
+| 阶段 | 当前证据 | 状态 |
+| --- | --- | --- |
+| 安全替换 | 源/目标真实 state 和云资源隔离；删除前可恢复备份及原证据异机保留；只删除 1 个 V5 计算实例，保留防火墙与源 state；新机严格 SSH 通过 | PASS |
+| 净室资源与首次部署 | 固定 main：IaC `9a5ff9a139509ca18759191370d9788df49b221c`、GitOps `615beaab59330fec1b595fa462138d4f05ebbe9b`、Playbooks `ff984bce9ebddef3e93f1dde7a98b1987245b143`、installer `d35ce6f5457e3d2ecebbc0b3fdbfa1cb410e074e`；8 项运行与 HTTPS/SNI 探测通过 | PASS |
+| 用户同步 | 预构建 r104，精确 commit/二进制/schema/计划摘要见本轮回执；迁移应用前 V4 的 33 users 与只读快照全部字段一致；目标 0→33，原 UUID 依目标语义重新生成，其他字段一致；其余业务表不变，服务未停止 | PASS（users-only） |
+| 备份恢复 | 新目标 0 users 迁移前及 33 users 迁移后，完整数据库加密备份、独立恢复与异机校验均通过 | PASS（本轮目标实际数据范围） |
+| 带数据完整重放 | 每轮 IaC 0 变更、真实部署、fresh preview/精确计划 apply/只读复核；13 配置文件、255 静态文件、76 业务表、数据库/checkpoint 与常驻容器状态比较；用户 tuple 版本不得变化 | PASS（3/3） |
+| 登录路由回归 | 合成不存在身份 POST 为业务 `user_not_found`，MFA status 200，非 403/405/503 | PASS（不代表真实凭据登录） |
+| 终点上游鲜度 | V4 仍为 33 users，但 Proxy UUID、版本与有效期等字段摘要相对固定快照出现增量；只读比较 exit 1，最终追齐尚未执行 | BLOCKED（切换前门禁；不否定同输入三轮幂等） |
+| 全业务及切换 | OAuth/MFA 关联表、完整账务/订阅、Agent/VLESS 与真实支付/采集周期未纳入 users-only；公共 DNS 和 V4 写入权不变 | NOT_RUN / BLOCKED；切换未授权 |
+
+每轮起止、run_id、退出码、故障、修复 PR、真实回归 case 与受控证据索引均在[完整回执](prod-v5-cleanroom-deployment-migration-validation-20261024.zh.md)。配置路径沿用下方服务汇总：本周期角色精确 ref 为 `ff984bce9ebddef3e93f1dde7a98b1987245b143`、声明 ref 为 `615beaab59330fec1b595fa462138d4f05ebbe9b`；下方固定到 r5 的旧源码链接保留其历史版本含义。
+
+<!-- END CLEANROOM 20261024 -->
+
+## 历史候选状态（2026-10-24 01:07 +08 采样）
 
 源为持续服务的 V4；目标为独立 V5 候选。V4 公共服务、公共 DNS 与写入权保持不变。V5 仍未承接流量；本节只记录当时已完成的部署、users-only 数据追加和恢复演练。随后获明确授权的 V5 主机 clean-room 重建与三次重复验证属于下一轮，本记录不预写其结果。
 
@@ -50,7 +70,7 @@ r3/r4 的实际部署 exit 2 保留为失败事实，不被后续 r5 成功覆�
 | Caddy | 同一候选 Compose；[模板](https://github.com/ai-workspace-infra/playbooks/blob/86c6a3c39c30df079e047eb77194ea670514a6c2/roles/vhosts/web_saas_host_config/templates/Caddyfile.j2) | Caddyfile 与 TLS 文件由 Playbooks 生成只读挂载；仅边缘入口暴露 HTTP(S) | DNS API Token 只供 Caddy 运行时读取；r5 HTTPS/SNI 探测通过；公共 DNS 未改变 |
 | OpenTelemetry Collector | Compose/role 模板中声明；`roles/vhosts/web_saas_host_config/templates/otel-collector.yaml.j2` | 模板存在 | 本轮运行容器盘点未发现该服务，明确标记未运行，不纳入探测 PASS |
 
-### V5 clean-room 重复验证计划
+### 历史 V5 clean-room 重复验证计划（01:07 采样）
 
 依据[统一流程八阶段](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md)执行。获授权的目标替换尚未在本回执采样时执行，因此以下均为 **NOT_RUN**：
 
