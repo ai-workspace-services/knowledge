@@ -66,7 +66,7 @@ V4 数据问题，因为这些步骤没有开始。
 | PR | 当前状态 | 对本次复盘的意义 |
 | --- | --- | --- |
 | [IaC #460：生产资源替换需显式授权](https://github.com/ai-workspace-infra/iac_modules/pull/460) | MERGED；`ecddc9073d57a00abba79bb38f1bd26af1192583` 已核对为 `main` | 默认保留 `prevent_destroy`；生产替换必须显式授权。PR 本身未执行云资源操作。 |
-| [IaC #461：由 GitOps/CMDB 渲染四个版本别名](https://github.com/ai-workspace-infra/iac_modules/pull/461) | MERGED；`8a0bb4440af820b9f2f0091ed00023f8e5e7de95` 已核对为 `main` | 固定声明、CMDB、四条记录的验证和预检已实现；不等于 DNS 已写入。 |
+| [IaC #461：由 GitOps/CMDB 渲染四个版本别名](https://github.com/ai-workspace-infra/iac_modules/pull/461) | MERGED；`8a0bb4440af820b9f2f0091ed00023f8e5e7de95` 已核对为 `main` | 固定声明、CMDB、四条记录的验证和预检已实现；合并本身不证明 DNS 写入，本次 apply 回执另见上文。 |
 | [GitOps #504：部署与迁移声明合同](https://github.com/ai-workspace-infra/gitops/pull/504) | MERGED | 明确五服务镜像 pin、Playbooks SHA、初始化输入和分阶段验收；示例仍不能替代真实输入。 |
 | [Playbooks #730：安装、权限与路由修复](https://github.com/ai-workspace-infra/playbooks/pull/730) | MERGED | 包含恢复 ACL/grant 导致 SQLSTATE `42501` 的路径，以及持久目标私有路由目录设计；合并不代表本机已执行。 |
 | [Playbooks #731：V5 回归批次准备](https://github.com/ai-workspace-infra/playbooks/pull/731) | MERGED | 1d64444d5a99d8eb45ee9c2004dd4f404be6272a 提供离线回归 manifest 和输入门禁；不是部署或运行验收。 |
