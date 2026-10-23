@@ -4,6 +4,13 @@
 
 统一流程：[Selfhost 控制面部署与核心数据迁移](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md)。前序记录：[V3→V4 快照与升级复盘](16-prod-v3-v4-baseline-and-upgrade-retrospective.zh.md)；[V2→V3 快照与升级复盘](15-prod-v2-v3-snapshots-and-upgrade-retrospective.zh.md)。
 
+<!-- BEGIN CLEANROOM 20261024 -->
+## 净室执行与三轮重验（2026-10-24 02:55 +08）
+
+新增[实际执行回执](records/prod-v5-20261023/prod-v5-cleanroom-deployment-migration-validation-20261024.zh.md)，与[当前 V5 基线](records/prod-v5-20261023/prod-v5-runtime-and-snapshot-baseline-20261023.zh.md)双向关联。候选精确删除、净室创建、首次部署、r104 users-only 同步及含 33 users 的独立恢复已通过；完整带数据重放为 **RUNNING，1/3 已通过；未完成轮次不计 PASS**。首次失败、修复 PR 与仓库内真实回归 case 在该回执逐项关联。范围保持 users-only；未执行业务及切换不因这些结果升级为 PASS。
+
+<!-- END CLEANROOM 20261024 -->
+
 ## 阅读链
 
 | 阶段 | 权威记录 | 作用 |
@@ -19,7 +26,7 @@
 - r102 迁移预览在空目标失败且未写入；[Accounts #270](https://github.com/ai-workspace-services/accounts/pull/270) 修复后，预构建 r103 users-only 工具从逻辑源 V4 追加 33 用户到 V5，exit 0，字段摘要核对通过。服务未停止，V4 未写入。
 - 迁移后完整加密备份与隔离恢复通过，目标恢复为 33 users；订阅仍为 0。因此该恢复不等于全业务恢复或业务验收。
 - 真实凭据登录、OAuth、支付、Agent、订阅、完整 Billing/Vector 周期及最终业务验收仍 NOT_RUN/BLOCKED；最终 DNS/流量/写入切换未执行，须人工另行明确确认。
-- 最新新一轮 V5 主机删除/重建及部署、迁移各三次重复验证在本页记录时尚未执行，状态 NOT_RUN。旧“Docker 未安装、旧 apply 运行中”等文字仅属于 2026-10-23 前序采样，已由后续 r5/r103 回执取代，不作为当前状态。
+- 本节 01:07 采样时，新一轮 V5 主机删除/重建及部署、迁移各三次重复验证尚未执行，状态 NOT_RUN；后续实际进展见上方净室执行回执。旧“Docker 未安装、旧 apply 运行中”等文字仅属于 2026-10-23 前序采样，已由后续 r5/r103 回执取代，不作为当前状态。
 
 ## 专项故障与仓库内真实回归
 
