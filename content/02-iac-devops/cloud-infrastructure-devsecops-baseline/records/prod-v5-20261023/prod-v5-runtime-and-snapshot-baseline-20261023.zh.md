@@ -4,12 +4,12 @@
 
 ## 后续应用发布：r101，预检通过、实际部署待回执
 
-public install wrapper `59b603a` precheck PASS、exit 0；真实 CMDB 108977826、五项 refs、policy valid。#507 #507 已合并 `4af219e9486bdcd1c7cdb053795fa55e692efb29`（head `08ecf3`，用户最新回执），installer owner 独占 actual apply，回执前 NOT_RUN。
+public install wrapper `59b603a` precheck PASS、exit 0；真实 CMDB 108977826、五项 refs、policy valid。#507 已合并 `4af219e9486bdcd1c7cdb053795fa55e692efb29`（head `08ecf3`，用户最新回执），installer owner 独占 actual apply，回执前 NOT_RUN。
 
 | 项目 | r101 现场结果 |
 | --- | --- |
 | 发布路径 | installer owner 独占实际 apply；预检 PASS，部署回执待补 |
-| GitOps | #507 head 59b603a，owner 975693；真实 precheck PASS、exit 0 |
+| GitOps | #507 已合并 `4af219e9486bdcd1c7cdb053795fa55e692efb29`，head `08ecf3`；owner 975693；历史 precheck `59b603a` PASS、exit 0 |
 | Playbook | NOT_RUN；实际状态及已有证据见本节 V5 更新，声明不代表运行值 |
 | Doco-CD | NOT_RUN；最后样本无 Docker/Caddy |
 | Accounts | r101 / b423432dc5f993e5261423e27373703aaff48f2d；sha256:39716c2941b6f8ebbc0602589a59711d846234cb8313ae21254a91ba6073def7（已发布；运行匹配 NOT_RUN） |
@@ -29,7 +29,7 @@ public install wrapper `59b603a` precheck PASS、exit 0；真实 CMDB 108977826�
 主机；Akamai Singapore，2 vCPU / 4 GiB / 80 GiB；替换后实例 108977826，目标地址 104.64.208.209（用户明确要求记录）
 SSH / 初始化；最新交接 SSH 可连接、cloud-init 完成；最后样本仅 22 监听，无 Docker、Caddy、运行应用
 部署路径；主线 owner 继续 SSH → Playbook → 固定 GitOps → Doco-CD 安装；本知识库任务未执行
-GitOps；[#507](https://github.com/ai-workspace-infra/gitops/pull/507)，head `59b603a`，固定 Playbooks owner `975693`；public install wrapper 真实 precheck PASS、exit 0，真实 CMDB 108977826、五项 refs 和 policy valid。主线已合并 #507（`4af219e9486bdcd1c7cdb053795fa55e692efb29`；head `08ecf3`，用户最新回执）；installer owner 独占 actual apply，回执前 NOT_RUN
+GitOps；[#507](https://github.com/ai-workspace-infra/gitops/pull/507)，precheck 来源 `59b603a`，固定 Playbooks owner `975693`；public install wrapper 真实 precheck PASS、exit 0，真实 CMDB 108977826、五项 refs 和 policy valid。主线已合并 #507（`4af219e9486bdcd1c7cdb053795fa55e692efb29`；head `08ecf3`，用户最新回执）；installer owner 独占 actual apply，回执前 NOT_RUN
 Playbooks；[#732](https://github.com/ai-workspace-infra/playbooks/pull/732)、[#733](https://github.com/ai-workspace-infra/playbooks/pull/733) 已合并（最新交接）；不替代安装与 runtime 结果
 服务与写入；V5 尚无运行验收；V4 继续承接公共服务和业务写入，公共 DNS 切换待验收及人工授权
 
@@ -39,7 +39,7 @@ Playbooks；[#732](https://github.com/ai-workspace-infra/playbooks/pull/732)、[
 | 平台 | Akamai Singapore；2 vCPU / 4 GiB / 80 GiB |
 | 部署模式 | SSH → Playbook → 固定 GitOps → Doco-CD；actual apply NOT_RUN |
 | 发布引用 | daily-build-2026.10.23-r101；候选制品，尚无运行引用 |
-| GitOps 实际 SHA | #507 head 59b603a；#507 已合并 `4af219e9486bdcd1c7cdb053795fa55e692efb29`（head `08ecf3`，用户最新回执），尚无 Doco-CD runtime revision |
+| GitOps 实际 SHA | #507 precheck 来源 59b603a；#507 已合并 `4af219e9486bdcd1c7cdb053795fa55e692efb29`（head `08ecf3`，用户最新回执），尚无 Doco-CD runtime revision |
 | Doco-CD | NOT_RUN；最后样本无 Docker/Caddy |
 | 独立数据盘 | NOT_RUN；实际状态及已有证据见本节 V5 更新，声明不代表运行值 |
 | PostgreSQL 挂载 | NOT_RUN；无实际挂载回执 |
