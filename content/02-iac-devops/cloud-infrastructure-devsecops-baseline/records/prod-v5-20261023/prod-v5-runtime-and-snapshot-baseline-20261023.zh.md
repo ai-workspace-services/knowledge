@@ -17,7 +17,7 @@
 | 不可变标识 | 三个执行/声明仓库新增 `v2026.10.23-v5-r2`，未移动旧 r1；五个业务镜像仍为原 r101 digest |
 | 解析根因及修复 | Docker 之后动态解析主机配置需要 `community.hashi_vault.vault_kv2_get`；跳过 Vault 读取不等于无解析依赖。common 统一持有 `ansible.posix 2.1.0` / `community.hashi_vault 7.1.0`；安装器在解析前调用固定 common 入口，并隔离 collection 路径 |
 | 验证范围 | 缺依赖解析 exit 4 可复现，完整静态角色预检转为 exit 0；本地 45 项 owner 测试及 30 项安装器测试通过；三个 PR 的适用 CI 全部完成通过；新固定引用的真实 `--check` exit 0 |
-| 实际安装 | 本轮 `run-controller-repair-20261023T1456Z` 已启动，最终回执待取得；当前不得标为五服务运行通过或业务可用 |
+| 实际安装 | 本轮 `run-controller-repair-20261023T1456Z` 已结束，退出码 2；控制器 collection 安装和角色解析通过，应用部署尚未通过。PostgreSQL 与 Doco-CD 健康；stunnel 私钥权限、Caddy 重复 host matcher、Accounts 连接身份摘要阻塞后续启动。修复见 [Playbooks #740](https://github.com/ai-workspace-infra/playbooks/pull/740)，重验待执行 |
 | 迁移和切换 | 尚未执行本轮 V4→V5 迁移、业务恢复演练及观察验收；V4 继续服务和写入，Accounts readyz / Console 只读探测均为 HTTP 200；切换仍需独立明确确认 |
 
 控制器依赖归 Playbooks common；GitOps 仅引用执行版本和非敏感业务配置；凭据继续由 Vault KV 运行时提供；资源、DNS、state 和 CMDB 由 IaC 维护。私钥和凭据值未写入知识库。
