@@ -5,7 +5,7 @@
 [统一部署与迁移流程](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md) · [V4→V5 基线与升级复盘](../../17-prod-v4-v5-baseline-and-upgrade-retrospective.zh.md) · [V5 部署流程复盘](prod-v5-deployment-postmortem-20261023.zh.md)
 
 <!-- BEGIN CLEANROOM 20261024 -->
-## 当前净室验证周期（2026-10-24 02:55 +08）
+## 当前净室验证周期（2026-10-24 03:09 +08）
 
 本节及[本轮完整回执](prod-v5-cleanroom-deployment-migration-validation-20261024.zh.md)取代下方 01:07 样本作为新周期事实；原 r5/r103、Docker 未安装、旧 apply 运行中及各次失败仍按采样背景保留。
 
@@ -13,10 +13,11 @@
 | --- | --- | --- |
 | 安全替换 | 源/目标真实 state 和云资源隔离；删除前可恢复备份及原证据异机保留；只删除 1 个 V5 计算实例，保留防火墙与源 state；新机严格 SSH 通过 | PASS |
 | 净室资源与首次部署 | 固定 main：IaC `9a5ff9a139509ca18759191370d9788df49b221c`、GitOps `615beaab59330fec1b595fa462138d4f05ebbe9b`、Playbooks `ff984bce9ebddef3e93f1dde7a98b1987245b143`、installer `d35ce6f5457e3d2ecebbc0b3fdbfa1cb410e074e`；8 项运行与 HTTPS/SNI 探测通过 | PASS |
-| 用户同步 | 预构建 r104，精确 commit/二进制/schema/计划摘要见本轮回执；源当前 33 users 与只读快照全部字段一致；目标 0→33，原 UUID 依目标语义重新生成，其他字段一致；其余业务表不变，服务未停止 | PASS（users-only） |
+| 用户同步 | 预构建 r104，精确 commit/二进制/schema/计划摘要见本轮回执；迁移应用前 V4 的 33 users 与只读快照全部字段一致；目标 0→33，原 UUID 依目标语义重新生成，其他字段一致；其余业务表不变，服务未停止 | PASS（users-only） |
 | 备份恢复 | 新目标 0 users 迁移前及 33 users 迁移后，完整数据库加密备份、独立恢复与异机校验均通过 | PASS（本轮目标实际数据范围） |
-| 带数据完整重放 | 每轮 IaC 0 变更、真实部署、fresh preview/精确计划 apply/只读复核；13 配置文件、255 静态文件、76 业务表、数据库/checkpoint 与常驻容器状态比较；用户 tuple 版本不得变化 | RUNNING，1/3 已通过；未完成轮次不计 PASS |
+| 带数据完整重放 | 每轮 IaC 0 变更、真实部署、fresh preview/精确计划 apply/只读复核；13 配置文件、255 静态文件、76 业务表、数据库/checkpoint 与常驻容器状态比较；用户 tuple 版本不得变化 | PASS（3/3） |
 | 登录路由回归 | 合成不存在身份 POST 为业务 `user_not_found`，MFA status 200，非 403/405/503 | PASS（不代表真实凭据登录） |
+| 终点上游鲜度 | V4 仍为 33 users，但 Proxy UUID、版本与有效期等字段摘要相对固定快照出现增量；只读比较 exit 1，最终追齐尚未执行 | BLOCKED（切换前门禁；不否定同输入三轮幂等） |
 | 全业务及切换 | OAuth/MFA 关联表、完整账务/订阅、Agent/VLESS 与真实支付/采集周期未纳入 users-only；公共 DNS 和 V4 写入权不变 | NOT_RUN / BLOCKED；切换未授权 |
 
 每轮起止、run_id、退出码、故障、修复 PR、真实回归 case 与受控证据索引均在[完整回执](prod-v5-cleanroom-deployment-migration-validation-20261024.zh.md)。配置路径沿用下方服务汇总：本周期角色精确 ref 为 `ff984bce9ebddef3e93f1dde7a98b1987245b143`、声明 ref 为 `615beaab59330fec1b595fa462138d4f05ebbe9b`；下方固定到 r5 的旧源码链接保留其历史版本含义。

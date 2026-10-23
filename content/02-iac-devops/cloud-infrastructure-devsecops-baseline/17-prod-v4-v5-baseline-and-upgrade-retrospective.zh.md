@@ -5,9 +5,9 @@
 统一流程：[Selfhost 控制面部署与核心数据迁移](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md)。前序记录：[V3→V4 快照与升级复盘](16-prod-v3-v4-baseline-and-upgrade-retrospective.zh.md)；[V2→V3 快照与升级复盘](15-prod-v2-v3-snapshots-and-upgrade-retrospective.zh.md)。
 
 <!-- BEGIN CLEANROOM 20261024 -->
-## 净室执行与三轮重验（2026-10-24 02:55 +08）
+## 净室执行与三轮重验（2026-10-24 03:09 +08）
 
-新增[实际执行回执](records/prod-v5-20261023/prod-v5-cleanroom-deployment-migration-validation-20261024.zh.md)，与[当前 V5 基线](records/prod-v5-20261023/prod-v5-runtime-and-snapshot-baseline-20261023.zh.md)双向关联。候选精确删除、净室创建、首次部署、r104 users-only 同步及含 33 users 的独立恢复已通过；完整带数据重放为 **RUNNING，1/3 已通过；未完成轮次不计 PASS**。首次失败、修复 PR 与仓库内真实回归 case 在该回执逐项关联。范围保持 users-only；未执行业务及切换不因这些结果升级为 PASS。
+新增[实际执行回执](records/prod-v5-20261023/prod-v5-cleanroom-deployment-migration-validation-20261024.zh.md)，与[当前 V5 基线](records/prod-v5-20261023/prod-v5-runtime-and-snapshot-baseline-20261023.zh.md)双向关联。候选精确删除、净室创建、首次部署、r104 users-only 同步及含 33 users 的独立恢复已通过；完整带数据重放为 **PASS（3/3）**。首次失败、修复 PR 与仓库内真实回归 case 在该回执逐项关联。范围保持 users-only；终点 V4 字段相对快照已有增量，最终追齐仍 BLOCKED，未执行业务及切换不因三轮结果升级为 PASS。
 
 <!-- END CLEANROOM 20261024 -->
 

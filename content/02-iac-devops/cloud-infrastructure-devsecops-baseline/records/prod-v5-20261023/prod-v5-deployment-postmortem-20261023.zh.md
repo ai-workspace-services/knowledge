@@ -9,9 +9,9 @@
 代际索引：[V4→V5 基线与升级复盘](../../17-prod-v4-v5-baseline-and-upgrade-retrospective.zh.md) · [统一部署与迁移流程](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md)。
 
 <!-- BEGIN CLEANROOM 20261024 -->
-## 2026-10-24 净室周期追加（2026-10-24 02:55 +08）
+## 2026-10-24 净室周期追加（2026-10-24 03:09 +08）
 
-原 10-23 的 Docker/依赖/SSH 采样及 01:07 的 r5/r103 回执保持原时点。最新[净室回执](prod-v5-cleanroom-deployment-migration-validation-20261024.zh.md)已实测 V5 精确删除、重建、部署、在线 users-only 同步与独立恢复。新周期发现并分别修复：源 state 无序校验集合导致删除前误报（[IaC #465](https://github.com/ai-workspace-infra/iac_modules/pull/465)）；创建后 IPv6 `/128` 导致 CMDB 发布失败（[IaC #466](https://github.com/ai-workspace-infra/iac_modules/pull/466)）；新机缺完整可信 SSH 指纹采集路线（[IaC #464](https://github.com/ai-workspace-infra/iac_modules/pull/464)）；users-only 沿用暂停写进程前提（[Accounts #271](https://github.com/ai-workspace-services/accounts/pull/271)，真实使用预构建 r104）。三轮带数据重验为 **RUNNING，1/3 已通过；未完成轮次不计 PASS**。每个失败与重验独立记录，不将资源创建成功改写为当次 owner 全流程成功，也不把候选就绪写成业务或切换通过。
+原 10-23 的 Docker/依赖/SSH 采样及 01:07 的 r5/r103 回执保持原时点。最新[净室回执](prod-v5-cleanroom-deployment-migration-validation-20261024.zh.md)已实测 V5 精确删除、重建、部署、在线 users-only 同步与独立恢复。新周期发现并分别修复：源 state 无序校验集合导致删除前误报（[IaC #465](https://github.com/ai-workspace-infra/iac_modules/pull/465)）；创建后 IPv6 `/128` 导致 CMDB 发布失败（[IaC #466](https://github.com/ai-workspace-infra/iac_modules/pull/466)）；新机缺完整可信 SSH 指纹采集路线（[IaC #464](https://github.com/ai-workspace-infra/iac_modules/pull/464)）；users-only 沿用暂停写进程前提（[Accounts #271](https://github.com/ai-workspace-services/accounts/pull/271)，真实使用预构建 r104）。三轮带数据重验为 **PASS（3/3）**。终点只读复核另发现上游 Proxy UUID/版本/有效期字段增量，最终追齐仍 BLOCKED，未改变 V4 写入权。每个失败与重验独立记录，不将资源创建成功改写为当次 owner 全流程成功，也不把候选就绪写成业务或切换通过。
 
 <!-- END CLEANROOM 20261024 -->
 
