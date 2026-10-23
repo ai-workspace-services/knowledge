@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# 《图解平台工程 · 云中立实践》9 大核心服务类别 MacOS OrbStack 单机部署验证套件
+# 《图解平台工程 · 云中立实践》10 大核心服务类别 MacOS OrbStack 单机部署验证套件
 # ==============================================================================
 set -euo pipefail
 
@@ -13,7 +13,7 @@ log_warn() { echo -e "\033[1;33m[WARN]\033[0m $*"; }
 log_err()  { echo -e "\033[1;31m[FAIL]\033[0m $*" >&2; }
 
 echo "=============================================================================="
-echo "🚀 开始在 MacOS 本机 OrbStack 执行 9 大核心服务类别单机部署与健康验收"
+echo "🚀 开始在 MacOS 本机 OrbStack 执行 10 大核心服务类别单机部署与健康验收"
 echo "=============================================================================="
 
 # 1. 验证 Docker / OrbStack 连通性
@@ -24,17 +24,18 @@ fi
 ORB_VER=$(orbctl version 2>/dev/null || echo "OrbStack (Docker Engine)")
 log_info "运行环境: MacOS $(uname -m) | ${ORB_VER}"
 
-# 2. 依次拉起并验证 9 大核心服务
+# 2. 依次拉起并验证 10 大核心服务
 declare -A CATEGORIES=(
   ["01"]="01-git-ci-gitea:platform-gitea:Git 与 CI/CD 引擎 (Gitea + Actions)"
-  ["02"]="02-s3-storage-silo:platform-silo:S3 兼容对象存储 (pgsty/silo)"
-  ["03"]="03-cmdb-inventory:platform-cmdb:配置管理与 CMDB 动态清单"
-  ["04"]="04-identity-vault-zitadel:platform-vault-zitadel:密钥中枢与统一身份认证 (Vault + Zitadel)"
-  ["05"]="05-gitops-doco-cd:platform-doco-cd:声明式 GitOps 持续交付 (Doco CD)"
-  ["06"]="06-container-vector-node:platform-k3s-pgvector:云中立容器与向量底座 (PostgreSQL + pgvector)"
-  ["07"]="07-pg-backup-drill:platform-pg-backup:数据库灾备演练与还原沙箱"
-  ["08"]="08-ai-gateway:platform-ai-gateway:AI 模型接入与路由网关 (New API + LiteLLM)"
-  ["09"]="09-mcp-server:platform-mcp-server:AI 基础设施工具网关 (Infrastructure MCP)"
+  ["02"]="02-artifact-harbor:platform-harbor:云原生制品管理仓库 (Harbor)"
+  ["03"]="03-s3-storage-silo:platform-silo:S3 兼容对象存储 (pgsty/silo)"
+  ["04"]="04-cmdb-inventory:platform-cmdb:配置管理与 CMDB 动态清单"
+  ["05"]="05-identity-vault-zitadel:platform-vault-zitadel:密钥中枢与统一身份认证 (Vault + Zitadel)"
+  ["06"]="06-gitops-doco-cd:platform-doco-cd:声明式 GitOps 持续交付 (Doco CD)"
+  ["07"]="07-container-vector-node:platform-k3s-pgvector:云中立容器与向量底座 (PostgreSQL + pgvector)"
+  ["08"]="08-pg-backup-drill:platform-pg-backup:数据库灾备演练与还原沙箱"
+  ["09"]="09-ai-gateway:platform-ai-gateway:AI 模型接入与路由网关 (New API + LiteLLM)"
+  ["10"]="10-mcp-server:platform-mcp-server:AI 基础设施工具网关 (Infrastructure MCP)"
 )
 
 # 按照顺序验证
@@ -42,7 +43,7 @@ for key in $(echo "${!CATEGORIES[@]}" | tr ' ' '\n' | sort -n); do
   IFS=':' read -r folder project title <<< "${CATEGORIES[$key]}"
   echo ""
   echo "------------------------------------------------------------------------------"
-  log_info "[${key}/09] 正在部署并验证类别: ${title}"
+  log_info "[${key}/10] 正在部署并验证类别: ${title}"
   log_info "  Compose 工程: ${project} (路径: ${folder})"
   
   stack_dir="${SCRIPT_DIR}/${folder}"
@@ -58,11 +59,11 @@ for key in $(echo "${!CATEGORIES[@]}" | tr ' ' '\n' | sort -n); do
   log_info "  等待容器健康状态收敛..."
   sleep 4
 
-  # 功能与端点眼验收
+  # 功能与端点验收
   case "$key" in
     "01")
       # Gitea HTTP
-      for i in {1..15}; do
+      for _ in {1..15}; do
         if res=$(curl -fsS http://127.0.0.1:13000/api/v1/version 2>/dev/null); then
           log_ok "Gitea API 正常响应: ${res}"
           break
@@ -71,8 +72,18 @@ for key in $(echo "${!CATEGORIES[@]}" | tr ' ' '\n' | sort -n); do
       done
       ;;
     "02")
+      # Harbor Web UI & API
+      for _ in {1..15}; do
+        if curl -fsS http://127.0.0.1:18080 >/dev/null 2>&1; then
+          log_ok "Harbor (Artifact Management) Web UI 存活检查成功 (端口 18080)"
+          break
+        fi
+        sleep 2
+      done
+      ;;
+    "03")
       # Silo S3 Live Check
-      for i in {1..15}; do
+      for _ in {1..15}; do
         if curl -fsS http://127.0.0.1:19000/minio/health/live >/dev/null 2>&1; then
           log_ok "Silo (S3-Compatible Object Storage) API 存活检查成功 (端口 19000)"
           break
@@ -80,16 +91,16 @@ for key in $(echo "${!CATEGORIES[@]}" | tr ' ' '\n' | sort -n); do
         sleep 2
       done
       ;;
-    "03")
+    "04")
       # CMDB API & Inventory
       res_health=$(curl -fsS http://127.0.0.1:18000/healthz)
       res_inv=$(curl -fsS http://127.0.0.1:18000/api/v1/inventory)
       log_ok "CMDB 健康探针: ${res_health}"
       log_ok "CMDB 动态清单正常输出: hosts=$(echo "$res_inv" | grep -o 'platform-node-[0-9]*' | tr '\n' ' ')"
       ;;
-    "04")
+    "05")
       # Vault Health Check
-      for i in {1..15}; do
+      for _ in {1..15}; do
         if res=$(curl -s http://127.0.0.1:18200/v1/sys/health 2>/dev/null); then
           if echo "$res" | grep -q '"initialized":true'; then
             log_ok "HashiCorp Vault 正常就绪 (端口 18200)"
@@ -103,9 +114,9 @@ for key in $(echo "${!CATEGORIES[@]}" | tr ' ' '\n' | sort -n); do
         log_ok "Zitadel 后端 PostgreSQL 数据库就绪 (端口 15434)"
       fi
       ;;
-    "05")
+    "06")
       # Doco CD
-      for i in {1..15}; do
+      for _ in {1..15}; do
         if curl -fsS http://127.0.0.1:19088/v1/health >/dev/null 2>&1 || curl -fsS http://127.0.0.1:19128/metrics >/dev/null 2>&1; then
           log_ok "Doco CD 控制器运行正常 (端口 19088 / 19128)"
           break
@@ -113,9 +124,9 @@ for key in $(echo "${!CATEGORIES[@]}" | tr ' ' '\n' | sort -n); do
         sleep 2
       done
       ;;
-    "06")
+    "07")
       # K3s Postgres pgvector
-      for i in {1..15}; do
+      for _ in {1..15}; do
         if docker exec platform-k3s-pgvector psql -U k3s -d k3s_vector -c "SELECT extname FROM pg_extension WHERE extname = 'vector';" | grep -q "vector"; then
           log_ok "PostgreSQL 16 + pgvector 向量扩展正常加载 (端口 15435)"
           break
@@ -123,22 +134,22 @@ for key in $(echo "${!CATEGORIES[@]}" | tr ' ' '\n' | sort -n); do
         sleep 2
       done
       ;;
-    "07")
+    "08")
       # PG Backup Drill
       if docker exec platform-pg-backup-source pg_isready -U postgres -d test_backup_db >/dev/null 2>&1; then
         log_ok "PG 灾备演练源数据库就绪 (端口 15436)"
       fi
       ;;
-    "08")
+    "09")
       # AI Gateway
-      for i in {1..15}; do
+      for _ in {1..15}; do
         if res=$(curl -fsS http://127.0.0.1:13001/api/status 2>/dev/null); then
           log_ok "New API 认证与限额服务就绪: ${res}"
           break
         fi
         sleep 2
       done
-      for i in {1..15}; do
+      for _ in {1..15}; do
         if curl -fsS http://127.0.0.1:14000/health/liveliness >/dev/null 2>&1; then
           log_ok "LiteLLM 模型路由代理服务就绪 (端口 14000)"
           break
@@ -146,9 +157,9 @@ for key in $(echo "${!CATEGORIES[@]}" | tr ' ' '\n' | sort -n); do
         sleep 2
       done
       ;;
-    "09")
+    "10")
       # MCP Gateway
-      for i in {1..10}; do
+      for _ in {1..10}; do
         if res=$(curl -fsS http://127.0.0.1:18888 2>/dev/null); then
           log_ok "Infrastructure MCP Server 守护网关就绪: ${res}"
           break
@@ -161,6 +172,6 @@ done
 
 echo ""
 echo "=============================================================================="
-echo "🎉 OrbStack 9 大核心服务类别单机部署验证全部完成！"
+echo "🎉 OrbStack 10 大核心服务类别单机部署验证全部完成！"
 echo "=============================================================================="
 docker ps --filter "name=platform-" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"

@@ -1,6 +1,6 @@
 ---
 title: 参考资料总索引与 PDF 合订编排 / Reference index and PDF compilation plan
-description:多云白皮书、总体架构、容灾、四仓契约、共用规范、数据库安全操作、三档权限、CMDB、AI Workspace、9 大核心服务 OrbStack 验证与性能调优规范及验收归档来源索引。
+description:多云白皮书、总体架构、容灾、四仓契约、共用规范、数据库安全操作、三档权限、CMDB、AI Workspace、10 大核心服务 OrbStack 验证与性能调优规范及验收归档来源索引。
 slug: index
 lang: zh
 tags:
@@ -146,7 +146,7 @@ GitHub 组织入口：[ai-workspace-infra](https://github.com/ai-workspace-infra
 
 | # | 标题 | 语言 | 来源版本 | 文件或入口 |
 | ---: | --- | --- | --- | --- |
-| 46 | 9 大核心服务类别 macOS OrbStack 单机部署与健康验收矩阵 | zh | knowledge working tree · v1.0-release · approved | [docs/reference/platform-core-services-orbstack-acceptance-matrix.zh.md](platform-core-services-orbstack-acceptance-matrix.zh.md) |
+| 46 | 10 大核心服务类别 macOS OrbStack 单机部署与健康验收矩阵 | zh | knowledge working tree · v1.0-release · approved | [docs/reference/platform-core-services-orbstack-acceptance-matrix.zh.md](platform-core-services-orbstack-acceptance-matrix.zh.md) |
 
 ## 使用与维护约束
 
