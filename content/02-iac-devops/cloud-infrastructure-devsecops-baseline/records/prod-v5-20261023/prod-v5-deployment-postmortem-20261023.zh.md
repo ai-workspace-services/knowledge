@@ -1,8 +1,10 @@
 # PROD V5 部署中断复盘：资源替换后未进入可部署状态
 
 记录日期：2026-10-23（Asia/Shanghai）；状态更新至 18:29 +08。主机检查是有时间边界的
-样本；DNS 写入与 PR 状态按本次更新分别记录。与[V4 运行基线](prod-v3-v4-20261020/prod-v4-runtime-and-snapshot-baseline-20261021.zh.md)
-及[V3→V4 复盘](prod-v3-v4-20261020/v3-v4-upgrade-retrospective-20261021.zh.md)配套阅读。
+样本；DNS 写入与 PR 状态按本次更新分别记录。本文保留该时点的部署中断事实；2026-10-24 r5 部署、r103 users-only 同步与隔离恢复已由[V5 运行基线](prod-v5-runtime-and-snapshot-baseline-20261023.zh.md)追加，不把旧“Docker 未安装/部署待执行”表述沿用为当前状态。与[V4 运行基线](../prod-v3-v4-20261020/prod-v4-runtime-and-snapshot-baseline-20261021.zh.md)
+及[V3→V4 复盘](../prod-v3-v4-20261020/v3-v4-upgrade-retrospective-20261021.zh.md)配套阅读。
+
+代际索引：[V4→V5 基线与升级复盘](../../17-prod-v4-v5-baseline-and-upgrade-retrospective.zh.md) · [统一部署与迁移流程](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md)。
 
 ## 1. 结论与影响边界
 
@@ -30,7 +32,7 @@ HTTPS/SNI 复核仍 pending。尚无证据表明服务启动后发生应用或�
 
 | 阶段 | 已观察到的事实 | 证据边界 |
 | --- | --- | --- |
-| V4 基线 | 依照[既有 V4 运行快照](prod-v3-v4-20261020/prod-v4-runtime-and-snapshot-baseline-20261021.zh.md)，V4 仍承接公共入口和业务写入。 | V4 基线有自己的采样时间；不据此推断 V5 状态。 |
+| V4 基线 | 依照[既有 V4 运行快照](../prod-v3-v4-20261020/prod-v4-runtime-and-snapshot-baseline-20261021.zh.md)，V4 仍承接公共入口和业务写入。 | V4 基线有自己的采样时间；不据此推断 V5 状态。 |
 | 云资源替换 | 按明确授权将 V5 实例替换为 2 vCPU、4 GiB 内存、80 GiB 磁盘规格；替换后的 IaC 计划为 0 项变更，既有防火墙保持不变。 | 不在公开记录中保存实例 ID、IP 或防火墙 ID。该步骤只证明资源变更，不证明主机配置管理或应用部署完成。 |
 | 主机采样（10-23） | SSH 主密钥可连接；cloud-init 已完成。采样中只有 22 端口监听，未发现 Docker、`/etc/xcontrol` 或 PostgreSQL 数据目录。 | 这是当日主机状态样本；没有容器、进程或数据库健康证据。 |
 | 不可变构件 | `daily-build-2026.10.23-r101` 的四个应用构件曾发布；PostgreSQL 有干净源码构建，源码提交为 `253d69a3ad19558a4bd272dee0509a498e091e24`。观察到的 OCI index descriptor 摘要前缀为 `56f4179b`，其下 image config digest 前缀为 `6cc…`。 | OCI index 与 image config 是不同层级的摘要；二者不同是预期结构，不是损坏证据。完整 registry manifest 回读仍未完成；本地构建本身不证明制品已部署。 |

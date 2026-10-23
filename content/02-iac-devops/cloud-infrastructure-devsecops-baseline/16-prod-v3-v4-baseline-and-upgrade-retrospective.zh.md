@@ -32,3 +32,7 @@ V4 已承接 Console、Accounts、Billing 三个公共服务域名；正式 Cadd
 同一记录必须绑定候选 SHA、digest、SQL checksum、run_id 和采集时间。旧快照恢复通过、早期集成测试通过、当前探针通过分别陈述；不能拼成一个实际上没有执行过的完整验收。原始备份、数据库内容、凭据和用户标识不进入 Knowledge。
 
 当前已接收 V4 写请求，不能直接把公共 DNS 回指旧库作为数据库回退。具体恢复计划应先判断新写入、数据差异和单写入者状态，再另行审核执行。完成正式稳定验收前，不把 V4 登记为下一轮来源。
+
+## 代际关联与重验入口
+
+统一流程：[Selfhost 控制面部署与核心数据迁移](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md)。本轮由[V4 运行基线](records/prod-v3-v4-20261020/prod-v4-runtime-and-snapshot-baseline-20261021.zh.md)、[回归清单](records/prod-v3-v4-20261020/regression-and-closure-checklist-20261021.zh.md)、[域名交接](records/prod-v3-v4-20261020/brand-dns-handoff-20261021.zh.md)和[V3→V4 P0 case 记录](records/prod-v2-v3-20261019/20261021-prod-v3-v4-p0-regression-record.zh.md)组成；下一代入口为[V4→V5 基线与复盘](17-prod-v4-v5-baseline-and-upgrade-retrospective.zh.md)。各 case 的原时间与 PASS/FAIL/BLOCKED/NOT_RUN 状态以对应回执为准。

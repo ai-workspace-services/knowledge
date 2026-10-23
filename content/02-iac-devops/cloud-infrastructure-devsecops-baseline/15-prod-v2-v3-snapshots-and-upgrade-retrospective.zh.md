@@ -50,3 +50,7 @@ Knowledge 维护文档、证据及不可直接执行的历史样本。正式主�
 本轮同快照维护代码仍有参数化与门禁固化工作，不能将归档源码当作已验证通用 Role。现有 `web_saas_cold_recovery` 的备份/指纹读取分离问题也在复盘中列为后续事项。
 
 前置设计见[数据库同步与发布晋级状态机](12-uat-database-sync-and-prod-promotion-state-machine.zh.md)。历史 V2 升级案例见[零数据丢失案例](13-prod-v2-upgrade-recovery-zero-data-loss-case.zh.md)。本次仅整理知识库，不触发部署或在线数据操作。
+
+## 代际关联与重验入口
+
+统一流程：[Selfhost 控制面部署与核心数据迁移](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md)。本轮 V2→V3 历史回执与真实专项记录保持原时间背景；后续代际入口见[V3→V4 复盘](16-prod-v3-v4-baseline-and-upgrade-retrospective.zh.md)和[V4→V5 基线与复盘](17-prod-v4-v5-baseline-and-upgrade-retrospective.zh.md)。共享服务 Token、公共 SNI、VLESS 路径、Billing/Vector 入库、恢复权限和后续回归的逐案链接见上方“按类别阅读”及本页记录表；失败项仍以各原始回执为准。

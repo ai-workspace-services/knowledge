@@ -2,6 +2,9 @@
 
 核验日期：2026-10-21，Asia/Shanghai。与[升级复盘](v3-v4-upgrade-retrospective-20261021.zh.md)、[回归清单](regression-and-closure-checklist-20261021.zh.md)配套使用。本文是有时间边界的运维记录，不是第二套配置源。
 
+代际索引：[V4→V5 基线与升级复盘](../../17-prod-v4-v5-baseline-and-upgrade-retrospective.zh.md) · [统一部署与迁移流程](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md)。
+
+
 ## 后续应用发布：r8，13:23–13:24
 
 以下为 2026-10-21 13:23:50 +08:00 的新核验。原第 1–7 节保留此前的采样和快照事实，其中 r4 构件不再代表当前 Accounts/Console 版本。权威期望状态为 [GitOps r8](https://github.com/ai-workspace-infra/gitops/tree/v2026.10.21-r8/compose/web-saas)，本文不生成第二套配置。
@@ -121,7 +124,7 @@ Billing 的 Stripe 配置统一以 `kv/prod/billing-service` 为权威 Vault 路
 | API secret key | `SANDBOX_STRIPE_SECRET_KEY`；仅记录预期格式 `sk_test_…` | `PROD_STRIPE_SECRET_KEY`；仅记录预期格式 `sk_live_…` | 不记录、展示或复制密钥值；`PROD_` 是既有 Live 命名，不按 V3/V4 分叉。 |
 | Webhook signing secret | `SANDBOX_STRIPE_WEBHOOK_SECRET`；仅记录预期格式 `whsec_…` | `PROD_STRIPE_WEBHOOK_SECRET`；仅记录预期格式 `whsec_…` | 不记录或比较 secret 明文；运行时验签应与实际 Stripe endpoint 配对。 |
 
-关联来源：Codex 任务 `01a15c72-9370-7372-928c-e4a2ec93886c`（修复订阅 Sandbox 结算）；既有 P0 问题与回归状态见[历史 V3→V4 P0 记录](20261021-prod-v3-v4-p0-regression-record.zh.md)。表中 Sandbox 验签状态是该来源任务的历史记录，不替代对当前 V4 运行配置的重新核验。
+关联来源：Codex 任务 `01a15c72-9370-7372-928c-e4a2ec93886c`（修复订阅 Sandbox 结算）；既有 P0 问题与回归状态见[历史 V3→V4 P0 记录](../prod-v2-v3-20261019/20261021-prod-v3-v4-p0-regression-record.zh.md)。表中 Sandbox 验签状态是该来源任务的历史记录，不替代对当前 V4 运行配置的重新核验。
 
 ## 5. 数据与 schema 基线
 
