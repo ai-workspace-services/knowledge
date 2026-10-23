@@ -12,8 +12,8 @@ public install wrapper `59b603a` precheck PASS、exit 0；真实 CMDB 108977826�
 | GitOps | #507 head 59b603a，owner 975693；真实 precheck PASS、exit 0 |
 | Playbook | NOT_RUN；实际状态及已有证据见本节 V5 更新，声明不代表运行值 |
 | Doco-CD | NOT_RUN；最后样本无 Docker/Caddy |
-| Accounts | r101 / b423432dc5f993e5261423e27373703aaff48f2d | sha256:39716c2941b6f8ebbc0602589a59711d846234cb8313ae21254a91ba6073def7（已发布；运行匹配 NOT_RUN） |
-| Console | r101 / 02607cf315570097606d90a8ba514fe37dcbe9e6 | sha256:cc9b85339d82cefd264455c3d28c4e25dcd9e293378675855e23822730d5d0c5（已发布；运行匹配 NOT_RUN） |
+| Accounts | r101 / b423432dc5f993e5261423e27373703aaff48f2d；sha256:39716c2941b6f8ebbc0602589a59711d846234cb8313ae21254a91ba6073def7（已发布；运行匹配 NOT_RUN） |
+| Console | r101 / 02607cf315570097606d90a8ba514fe37dcbe9e6；sha256:cc9b85339d82cefd264455c3d28c4e25dcd9e293378675855e23822730d5d0c5（已发布；运行匹配 NOT_RUN） |
 | schema | 声明 2026102002；目标实际 schema/dirty NOT_RUN |
 | 启动写入 | NOT_RUN；实际状态及已有证据见本节 V5 更新，声明不代表运行值 |
 | 健康与版本 | NOT_RUN；尚无运行应用验收 |
@@ -70,7 +70,7 @@ PostgreSQL registry OCI index 已验证，child manifest 前缀 `7f643d59`；cha
 | Console | r101 / 02607cf315570097606d90a8ba514fe37dcbe9e6 | sha256:cc9b85339d82cefd264455c3d28c4e25dcd9e293378675855e23822730d5d0c5（已发布；运行匹配 NOT_RUN） |
 | PostgreSQL | r101 / 253d69a3ad19558a4bd272dee0509a498e091e24 | sha256:56f4179bafafa52061ac21003dc80c1a0b7ceb63fffb2c7bd05f29237b62b85e（已发布；运行匹配 NOT_RUN） |
 | Caddy | NOT_RUN；实际状态及已有证据见本节 V5 更新，声明不代表运行值 | NOT_RUN；实际状态及已有证据见本节 V5 更新，声明不代表运行值 |
-| Doco-CD | NOT_RUN；最后样本无 Docker/Caddy |
+| Doco-CD | NOT_RUN；最后样本无 Docker/Caddy | NOT_RUN；无运行镜像回执 |
 ## 3. 域名、SNI 与路由
 
 本次 V5 证据（逐项更新）：
