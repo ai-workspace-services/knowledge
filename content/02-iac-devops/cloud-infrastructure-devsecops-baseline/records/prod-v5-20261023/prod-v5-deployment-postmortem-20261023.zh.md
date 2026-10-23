@@ -1,19 +1,26 @@
 # PROD V5 部署中断复盘：资源替换后未进入可部署状态
 
-记录日期：2026-10-23（Asia/Shanghai）。本记录按该日可见的实例、构件、DNS 与 PR
-证据整理；主机检查是有时间边界的样本，不代表后续状态。与[V4 运行基线](prod-v3-v4-20261020/prod-v4-runtime-and-snapshot-baseline-20261021.zh.md)
-及[V3→V4 复盘](prod-v3-v4-20261020/v3-v4-upgrade-retrospective-20261021.zh.md)
-配套阅读。
+记录日期：2026-10-23（Asia/Shanghai）；状态更新至 18:22 +08。主机检查是有时间边界的
+样本；DNS 写入与 PR 状态按本次更新分别记录。与[V4 运行基线](prod-v3-v4-20261020/prod-v4-runtime-and-snapshot-baseline-20261021.zh.md)
+及[V3→V4 复盘](prod-v3-v4-20261020/v3-v4-upgrade-retrospective-20261021.zh.md)配套阅读。
 
 ## 1. 结论与影响边界
 
-V5 只完成了获授权的云实例替换和基础云初始化；没有完成控制面安装、服务部署、PostgreSQL
-初始化、业务数据迁移或应用验收。V4 仍是公共服务与业务写入来源；V5 未接管写入，公共 DNS
-未切换。本次记录不代表 V5 已上线或可承载流量。
+V5 已完成获授权的云实例替换和基础云初始化；主线 DNS owner 后续通过 `--apply` 创建了四条
+版本化记录，并收到 Cloudflare 创建成功回执。但应用容器仍未部署，控制面安装、PostgreSQL
+初始化、业务数据迁移及应用验收均未完成。V4 仍是公共服务与业务写入来源；V5 未接管写入，
+公共服务 DNS 未切换。本次记录不代表 V5 已上线或可承载流量。
+
+状态更新（2026-10-23 18:22 +08）：四条版本化 DNS 记录由主线 owner 的 apply 创建，Cloudflare
+回执确认创建成功，且 `public_aliases_modified=false`。首次后续 preview 请求曾因网络错误失败；
+之后的 provider preview 对四条记录均返回 `noop`，目标地址与预期 V5 地址一致。provider 幂等性
+记为 **PASS**。权威 DNS 与公网传播核验仍在运行，故传播验证仍是 **PENDING**。当前没有 Docker
+应用容器；DNS 写入和 preview 结果不代表服务已部署。
 
 本次可确认的故障边界是“基础设施已替换，但部署链未到达可运行应用”：主机采样显示仅 SSH
-监听，未发现 Docker、控制面目录或 PostgreSQL 数据目录；四个 V5 版本别名均无 A 记录，直接
-HTTPS/SNI 请求失败。尚无证据表明服务启动后发生应用或数据库故障，因为服务部署和迁移都未运行。
+监听，未发现 Docker、控制面目录或 PostgreSQL 数据目录；初始 DNS 检查时四个 V5 版本别名均无
+A 记录，直接 HTTPS/SNI 请求失败。之后记录已创建且 provider preview 返回 noop，但独立解析及
+HTTPS/SNI 复核仍 pending。尚无证据表明服务启动后发生应用或数据库故障，因为服务部署和迁移都未运行。
 
 ## 2. 证据时间线
 
@@ -22,9 +29,11 @@ HTTPS/SNI 请求失败。尚无证据表明服务启动后发生应用或数据�
 | V4 基线 | 依照[既有 V4 运行快照](prod-v3-v4-20261020/prod-v4-runtime-and-snapshot-baseline-20261021.zh.md)，V4 仍承接公共入口和业务写入。 | V4 基线有自己的采样时间；不据此推断 V5 状态。 |
 | 云资源替换 | 按明确授权将 V5 实例替换为 2 vCPU、4 GiB 内存、80 GiB 磁盘规格；替换后的 IaC 计划为 0 项变更，既有防火墙保持不变。 | 不在公开记录中保存实例 ID、IP 或防火墙 ID。该步骤只证明资源变更，不证明主机配置管理或应用部署完成。 |
 | 主机采样（10-23） | SSH 主密钥可连接；cloud-init 已完成。采样中只有 22 端口监听，未发现 Docker、`/etc/xcontrol` 或 PostgreSQL 数据目录。 | 这是当日主机状态样本；没有容器、进程或数据库健康证据。 |
-| 不可变构件 | `daily-build-2026.10.23-r101` 的四个应用构件曾发布；PostgreSQL 有干净源码构建，源码提交为 `253d69a3ad19558a4bd272dee0509a498e091e24`，配置摘要前缀为 `56f4179b`。 | 未核验完整 registry manifest。PostgreSQL 本地编译产物/镜像 ID 不能替代 registry manifest 或 digest。 |
-| 推送失败 | PostgreSQL GHCR 推送遇到代理连接关闭（`use of closed network connection`）。 | 未得到可读回的 registry manifest；不能把编译成功写成制品发布成功。 |
-| DNS 与 HTTPS | 四个版本服务别名均无 A 记录，解析失败；对目标的直接 HTTPS/SNI 检查失败。 | 不包含 DNS 写入或证书签发/安装证明；没有切换公共入口。 |
+| 不可变构件 | `daily-build-2026.10.23-r101` 的四个应用构件曾发布；PostgreSQL 有干净源码构建，源码提交为 `253d69a3ad19558a4bd272dee0509a498e091e24`。观察到的 OCI index descriptor 摘要前缀为 `56f4179b`，其下 image config digest 前缀为 `6cc…`。 | OCI index 与 image config 是不同层级的摘要；二者不同是预期结构，不是损坏证据。完整 registry manifest 回读仍未完成；本地构建本身不证明制品已部署。 |
+| 推送失败 | 较早一次 PostgreSQL GHCR 推送遇到代理连接关闭（`use of closed network connection`）。 | 这是该次推送尝试的失败记录；不把 index/config 摘要差异误判为损坏，也不据此声称随后完成了 registry 回读。 |
+| DNS 初始采样 | 初始检查中四个版本服务别名均无 A 记录，解析失败；对目标的直接 HTTPS/SNI 检查失败。 | 这是 apply 之前的时间点，不代表后续 DNS 状态。 |
+| DNS 写入更新（18:21 +08） | 主线 DNS owner 执行 `--apply`，Cloudflare 返回四条版本化记录已创建，`public_aliases_modified=false`。 | 该回执证明 provider 写入结果，不证明权威/public propagation 已完成。 |
+| DNS provider preview（18:22 +08） | 首次 preview 因网络错误失败；后续 preview 对四条记录均返回 `noop`，目标地址与预期 V5 地址一致，`public_aliases_modified=false`。provider 幂等性 **PASS**。 | 权威 DNS 与公网传播的独立核验仍运行中，状态 **PENDING**；不将 provider noop 扩大为解析/TLS 或应用验收。 |
 | 数据迁移与验收 | 没有执行迁移；没有服务健康、数据对账、回归或用户流量验收回执。 | 全链路部署、迁移与验收均为 **NOT_RUN**，不是 PASS。 |
 
 历史 `r101` 工作流还保留了 PostgreSQL GitHub App dispatch 的 HTTP 422 与 actor 权限问题；它是早先的工作流事实，不应改写成此次主机运行错误。之后获准的本地构建路径属于单独的构建路线，不会自动补齐 registry push、manifest read-back 或部署证据。完整交付仍须满足 [`.github` PR #41](https://github.com/ai-workspace-services/.github/pull/41) 所述的来源、摘要、manifest 与制品回读契约。
@@ -34,9 +43,9 @@ HTTPS/SNI 请求失败。尚无证据表明服务启动后发生应用或数据�
 ### 有证据支持的根因
 
 交付流程把“实例替换及 cloud-init 完成”推进到了可交付边界之前，没有先取得全部服务的、可从 registry
-回读的不可变构件，也没有完成主机引导和控制面 reconcile。证据是主机仍只有 SSH 入口、所需
-运行目录/数据库目录不存在，同时 PostgreSQL registry manifest 缺失。随后版本别名也未解析到
-目标，因此无法通过 HTTPS 验证服务入口。
+回读的不可变构件，也没有完成主机引导和控制面 reconcile。证据是主机样本仍只有 SSH 入口、所需
+运行目录/数据库目录不存在，同时 PostgreSQL 完整 registry manifest 回读尚缺。初始 DNS 检查
+也未解析到目标；后续 apply 虽收到四条记录创建成功回执，独立验证仍未完成。
 
 这是阶段与交接门禁未收敛导致的部署中断。没有证据支持把根因归为应用回归、数据库迁移错误或
 V4 数据问题，因为这些步骤没有开始。
@@ -56,7 +65,7 @@ V4 数据问题，因为这些步骤没有开始。
 
 | PR | 当前状态 | 对本次复盘的意义 |
 | --- | --- | --- |
-| [IaC #460：生产资源替换需显式授权](https://github.com/ai-workspace-infra/iac_modules/pull/460) | OPEN | 默认保留 `prevent_destroy`；生产替换必须显式授权。PR 本身未执行云资源操作。 |
+| [IaC #460：生产资源替换需显式授权](https://github.com/ai-workspace-infra/iac_modules/pull/460) | MERGED；`ecddc9073d57a00abba79bb38f1bd26af1192583` 已核对为 `main` | 默认保留 `prevent_destroy`；生产替换必须显式授权。PR 本身未执行云资源操作。 |
 | [IaC #461：由 GitOps/CMDB 渲染四个版本别名](https://github.com/ai-workspace-infra/iac_modules/pull/461) | MERGED；`8a0bb4440af820b9f2f0091ed00023f8e5e7de95` 已核对为 `main` | 固定声明、CMDB、四条记录的验证和预检已实现；不等于 DNS 已写入。 |
 | [GitOps #504：部署与迁移声明合同](https://github.com/ai-workspace-infra/gitops/pull/504) | MERGED | 明确五服务镜像 pin、Playbooks SHA、初始化输入和分阶段验收；示例仍不能替代真实输入。 |
 | [Playbooks #730：安装、权限与路由修复](https://github.com/ai-workspace-infra/playbooks/pull/730) | MERGED | 包含恢复 ACL/grant 导致 SQLSTATE `42501` 的路径，以及持久目标私有路由目录设计；合并不代表本机已执行。 |
@@ -92,9 +101,10 @@ V4 数据问题，因为这些步骤没有开始。
 | 获授权的云实例替换 | 已完成；资源身份不公开记录 |
 | cloud-init / SSH | 样本中已完成 / 可连接 |
 | Docker、控制面、PostgreSQL 初始化 | 未观察到 / 未完成 |
-| 四个 V5 版本别名与 HTTPS | DNS 无 A / 解析失败；直接 HTTPS 检查失败 |
+| 四个 V5 版本别名与 HTTPS | 初始采样无 A 且 HTTPS 失败；18:21 +08 apply 回执确认四条记录创建，`public_aliases_modified=false`；后续四条 preview 均 `noop`（provider 幂等性 PASS）；权威 DNS 与公网传播核验 PENDING |
 | 应用构件 | 四个应用构件曾发布；完整 registry manifest 未逐项回读 |
-| PostgreSQL 构件 | 本地干净源码构建；registry push 失败；manifest 未验证 |
+| PostgreSQL 构件 | 本地干净源码构建；OCI index descriptor `56f4179b…` 与 image config `6cc…` 为不同层级、属于预期结构；早先 push 失败，完整 registry manifest 回读未完成 |
+| Docker 应用 | 仍未部署；DNS apply 不代表应用容器已运行 |
 | 服务部署、数据库迁移、业务验收 | **NOT_RUN** |
 | V4 公共流量与写入 | 保持为来源；无 V5 接管证据 |
 | 公共 DNS 切换 | 未执行；仍需单独人工授权及完整验收 |
