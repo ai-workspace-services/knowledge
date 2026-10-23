@@ -256,7 +256,7 @@ DB 初始化、迁移、权限与数据对账；NOT_RUN；无运行回执
 | 顶层 syntax-check 覆盖缺口 | 原 owner 顶层检查未展开该动态依赖 | 增加动态角色解析 case，不能只检查顶层入口 |
 | 控制端依赖补齐及同一复测 | `ansible.posix 2.1.0` 已安装；同一最小 syntax-check 从 exit 4 转为 exit 0 | 只证明该动态解析阻断已解除；不代表完整 installer 或目标运行健康通过 |
 | 最新公共入口 actual apply | 固定 ref 重试 `60471` 运行中 | 标识类型未确认，不构造 Actions run 链接；最终退出码、完整阶段及 runtime 结果 PENDING，未部署完成，不标 ready |
-| 四个版本 A 记录 | 已更新至目标地址，TTL 60、DNS only；公共 DNS 未动 | provider 状态来自主线；不扩大为全部 resolver、TLS 或应用健康通过 |
+| 四个版本 A 记录 | 已更新至目标地址，TTL 60、DNS only；公共 DNS 未动 | provider 状态来自主线；本轮只读 Google DoH 对 Console/Accounts/Billing/PostgreSQL 四域均返回 status 0、A `104.64.208.209`、TTL 60。只证明该外部 resolver 本次结果，不扩大为全球传播、TLS 或应用健康通过 |
 | PostgreSQL r101 | 已发布；隔离 smoke PASS | 独立构件验证，不代表 V5 已拉取、初始化或服务健康通过；smoke run ID 未提供 |
 | V5 runtime / 迁移 / 快照 | 健康验收未通过；迁移 NOT_RUN；快照 NOT_CREATED | 待安装成功、运行镜像与挂载核验、数据库健康、应用回归与独立恢复证据 |
 
