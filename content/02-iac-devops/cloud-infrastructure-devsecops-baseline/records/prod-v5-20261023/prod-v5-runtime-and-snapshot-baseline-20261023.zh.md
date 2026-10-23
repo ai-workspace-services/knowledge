@@ -2,17 +2,39 @@
 
 核验日期：2026-10-23，Asia/Shanghai。直接复制 [V4 原版模板](../prod-v3-v4-20261020/prod-v4-runtime-and-snapshot-baseline-20261021.zh.md) 的标题、表格列与章节顺序；V5 尚无运行回执的格位明确留为 NOT_RUN，后续持续按实际回执更新。[已合并 #191](https://github.com/ai-workspace-services/knowledge/pull/191)；[部署复盘](prod-v5-deployment-postmortem-20261023.zh.md)。
 
-## 后续应用发布：r101，预检通过、实际部署仍受阻
+## 当前交付：Tokyo 3 重建与控制器依赖修复
 
-最新状态（2026-10-23，用户主线核验）：目标 `104.64.208.209` 仅 22 端口监听，Docker 未安装，
+本节为 2026-10-23 本轮实时核验；后续旧表保留历史样本，不作为当前主机或执行状态。
+
+| 项目 | 当前回执 |
+| --- | --- |
+| 云主机 | Akamai `jp-tyo-3`，实例 `109004032`，`172.237.1.202`；2 vCPU / 4 GiB / 80 GiB |
+| 资源替换 | 两次精确计划均只替换本轮 V5；旧 Singapore 实例 `108977826`、`109003044` 已替换，未操作 V4 |
+| 资源保护 | 防火墙 `219186285` 保留；独立 V5 后端 state 已保留前后恢复点；恢复 `prevent_destroy` 后 plan 无变更 |
+| SSH | Vault `kv/CICD/prod` 的部署公私钥匹配，公钥与本地 `id_ed25519` 一致；通过 TLS 验证的 Akamai LISH 启动日志核验新主机身份后，严格 hostkey 下本地私钥登录 PASS |
+| 版本 DNS | 四个 `*-selfhost-prod-v5.svc.plus` A 记录通过固定 IaC owner 更新为 `172.237.1.202`，复查均为 noop；公共别名未修改 |
+| 固定执行版本 | GitOps [#512](https://github.com/ai-workspace-infra/gitops/pull/512)，`bca8c715e4236fbd6049d00a24e9943b9d2e1844`；Playbooks [#739](https://github.com/ai-workspace-infra/playbooks/pull/739)，`926897038be85df0cfb20e5e1b17fae848193d3a`；安装器 [#42](https://github.com/ai-workspace-services/.github/pull/42)，`2042cfe1e6d6ac66985c4f3e4a44eea15ae7d014` |
+| 不可变标识 | 三个执行/声明仓库新增 `v2026.10.23-v5-r2`，未移动旧 r1；五个业务镜像仍为原 r101 digest |
+| 解析根因及修复 | Docker 之后动态解析主机配置需要 `community.hashi_vault.vault_kv2_get`；跳过 Vault 读取不等于无解析依赖。common 统一持有 `ansible.posix 2.1.0` / `community.hashi_vault 7.1.0`；安装器在解析前调用固定 common 入口，并隔离 collection 路径 |
+| 验证范围 | 缺依赖解析 exit 4 可复现，完整静态角色预检转为 exit 0；本地 45 项 owner 测试及 30 项安装器测试通过；三个 PR 的适用 CI 全部完成通过；新固定引用的真实 `--check` exit 0 |
+| 实际安装 | 本轮 `run-controller-repair-20261023T1456Z` 已启动，最终回执待取得；当前不得标为五服务运行通过或业务可用 |
+| 迁移和切换 | 尚未执行本轮 V4→V5 迁移、业务恢复演练及观察验收；V4 继续服务和写入，Accounts readyz / Console 只读探测均为 HTTP 200；切换仍需独立明确确认 |
+
+控制器依赖归 Playbooks common；GitOps 仅引用执行版本和非敏感业务配置；凭据继续由 Vault KV 运行时提供；资源、DNS、state 和 CMDB 由 IaC 维护。私钥和凭据值未写入知识库。
+
+迁移兼容性另行阻断：r101 的旧 `copy-full-business` 清单包含会话/临时状态，Billing 常量也不同于本轮候选；不得拿该旧路径直接执行本轮迁移或声称全范围覆盖。后续必须使用经核验的安全迁移模块及真实范围回执，源保持只读快照读取。
+
+## 历史样本：Singapore r101 预检与早期部署阻断
+
+接管前历史状态（已被本轮替换）：旧目标 `104.64.208.209` 仅 22 端口监听，Docker 未安装，
 owner journal 已存在；exit 4 后已实证控制端动态角色解析缺少 `ansible.posix`。安装 `ansible.posix 2.1.0`
-后同一最小 syntax-check 从 exit 4 转为 exit 0；固定 ref 的公共入口 apply `60471` 运行中，尚未部署成功或 ready。该次不能沿用早期“主机写入前”的阶段结论，
+后同一最小 syntax-check 从 exit 4 转为 exit 0；旧公共入口 apply `60471` 已在本轮接管前停止，未取得部署成功或 ready 回执。该次不能沿用早期“主机写入前”的阶段结论，
 也不能凭 journal 存在推断安装完成。四个版本 A 记录已更新，TTL 60、DNS only；公共 DNS 未改。
 PG r101 已发布并通过隔离 smoke；目标 V5 的服务健康、运行镜像匹配与业务验收仍未通过。
 
 本次文档基于最新 main `2dbd9d62869af1096d3f89e30800c2aa92450fde`，即已合并的
 [#193](https://github.com/ai-workspace-services/knowledge/pull/193)。后续旧表保留各次样本来源；
-当前交付引用与阻断以本文“追加执行回执：最新固定版本与 exit 4 阻断”为准。
+当前交付引用与阻断以本文首节“当前交付：Tokyo 3 重建与控制器依赖修复”为准。
 
 public install wrapper `59b603a` precheck PASS、exit 0；真实 CMDB 108977826、五项 refs、policy valid。#507 已合并 `4af219e9486bdcd1c7cdb053795fa55e692efb29`（head `08ecf3`，用户最新回执），installer owner 独占 actual apply；首次实际执行已在主机写入前失败，修复后重试待回执。
 
@@ -240,7 +262,7 @@ DB 初始化、迁移、权限与数据对账；NOT_RUN；无运行回执
 
 最后主机样本仍无 Docker/Caddy。实际迁移、runtime 回归和 V5 快照仍未执行/创建；V4 公共服务和业务写入保持原状态。主线 installer owner 独占生产执行，本知识库 PR 仅更新回执。
 
-## 追加执行回执：最新固定版本与 exit 4 阻断
+## 历史追加执行回执：旧固定版本与 exit 4 阻断
 
 2026-10-23 更新。PR/tag 状态由本次远端查询确认；主机、DNS provider 与 smoke 事实来自用户主线核验，
 本知识库任务没有再次执行 installer、SSH 或 Vault 读取。新结果不能反向改写早期失败尝试。
@@ -255,7 +277,7 @@ DB 初始化、迁移、权限与数据对账；NOT_RUN；无运行回执
 | 控制端依赖实证 | 初始只有 `community.hashi_vault 7.1`，缺少 `ansible.posix`；最小 `import_role vhosts/docker`、bootstrap=false 的 syntax-check exit 4 | `common/tasks/firewall_ports.yml:56` 不能解析 `ansible.posix.firewalld`。false when 不免除 parse 依赖；该次根因是控制端 collection 缺失，不是 SSH 不可达或云防火墙 |
 | 顶层 syntax-check 覆盖缺口 | 原 owner 顶层检查未展开该动态依赖 | 增加动态角色解析 case，不能只检查顶层入口 |
 | 控制端依赖补齐及同一复测 | `ansible.posix 2.1.0` 已安装；同一最小 syntax-check 从 exit 4 转为 exit 0 | 只证明该动态解析阻断已解除；不代表完整 installer 或目标运行健康通过 |
-| 最新公共入口 actual apply | 固定 ref 重试 `60471` 运行中 | 标识类型未确认，不构造 Actions run 链接；最终退出码、完整阶段及 runtime 结果 PENDING，未部署完成，不标 ready |
+| 旧公共入口 actual apply | 固定 ref 重试 `60471` 已停止 | 标识类型未确认，不构造 Actions run 链接；未取得最终完整阶段及 runtime 通过回执，不标 ready |
 | 四个版本 A 记录 | 已更新至目标地址，TTL 60、DNS only；公共 DNS 未动 | provider 状态来自主线；本轮只读 Google DoH 对 Console/Accounts/Billing/PostgreSQL 四域均返回 status 0、A `104.64.208.209`、TTL 60。只证明该外部 resolver 本次结果，不扩大为全球传播、TLS 或应用健康通过 |
 | PostgreSQL r101 | 已发布；隔离 smoke PASS | 独立构件验证，不代表 V5 已拉取、初始化或服务健康通过；smoke run ID 未提供 |
 | V5 runtime / 迁移 / 快照 | 健康验收未通过；迁移 NOT_RUN；快照 NOT_CREATED | 待安装成功、运行镜像与挂载核验、数据库健康、应用回归与独立恢复证据 |
@@ -266,7 +288,7 @@ DB 初始化、迁移、权限与数据对账；NOT_RUN；无运行回执
 `import_role vhosts/docker` 和 bootstrap=false 重现解析路径，记录完整 collection 版本及 syntax-check
 exit code；缺失 collection 应在主机操作前失败，安装后应复测原 case。云端安装后仍需独立验收。
 
-当前 installer apply `60471` 尚在运行，目标服务未验收。此前 exit 4 的已实证原因是控制端动态角色
+旧 installer apply `60471` 已停止，该旧目标未验收。此前 exit 4 的已实证原因是控制端动态角色
 collection 缺失；旧 SSH timeout 和 launcher binding 保留为各自历史尝试，不能替代此次根因。
 主线 owner 继续实际安装；知识库只补充
 脱敏事实。公共流量、写入和最终切换仍由 V4 保持，切换须验收后独立人工授权。
