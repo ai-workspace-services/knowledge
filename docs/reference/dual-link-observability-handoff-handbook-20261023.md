@@ -14,9 +14,9 @@ tags:
 > **2026-10-23 r2 补充（优先于下文 r1 历史执行示例）**：网络链路止于代理节点出口，不含数据库；流量统计完整链路独立保留。五个 OPEN 应用 PR 继续不合并，#722/#183 已合并但部署未在本轮复核。r1 中固定端口/SSH 用户、容器 loopback、无条件重启和“零开销”表述不可直接执行，详见第 8 节。
 
 
-**文档版本**：v2026.10.23-r2（保留 r1 历史回执）  
-**编制时间**：2026-10-23T20:28:00+08:00  
-**项目看板**：[GitHub Projects #4: 网络延迟与流量统计可观测性](https://github.com/orgs/ai-workspace-services/projects/4)  
+**文档版本**：v2026.10.23-r2（保留 r1 历史回执）
+**编制时间**：2026-10-23T20:28:00+08:00
+**项目看板**：[GitHub Projects #4: 网络延迟与流量统计可观测性](https://github.com/orgs/ai-workspace-services/projects/4)
 **方案基准**：[network-and-traffic-otel-plan-20261021.zh.md](../../content/02-iac-devops/cloud-infrastructure-devsecops-baseline/records/prod-v3-v4-20261020/network-and-traffic-otel-plan-20261021.zh.md)
 
 ---
@@ -141,7 +141,7 @@ graph LR
 | `agent-server-plus-prod-v2` | `xhttp` & `tcp` | `:07.823Z` / `:08.103Z`（`~110µs`） | 每 60s 200 OK，`Samples: []` | **`PASS`**（空样本投递健全） |
 | `sg-free-selfhost-prod-v2.svc.plus` | `xhttp` & `tcp` | **无请求到达 Billing** | 本地快照探针虽通，但 VictoriaMetrics 缺失指标、Billing 未收到请求、DB checkpoint 停留在 10-18（`age=268,159s`） | **`FAIL` / `BLOCKED`**<br>(Vector 转发断链) |
 
-> [!WARNING] 
+> [!WARNING]
 > 新加坡节点 `sg-free-selfhost-prod-v2.svc.plus` 处于 **`FAIL / BLOCKED`** 状态，严禁在此状态下宣称全链路 100% 验收通过。详见第 5 节的排查指引。
 
 ---
