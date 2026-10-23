@@ -4,7 +4,7 @@
 
 ## 后续应用发布：r101，预检通过、实际部署待回执
 
-public install wrapper `59b603a` precheck PASS、exit 0；真实 CMDB 108977826、五项 refs、policy valid。#507 主线合并推进中，installer owner 独占 actual apply，回执前 NOT_RUN。
+public install wrapper `59b603a` precheck PASS、exit 0；真实 CMDB 108977826、五项 refs、policy valid。#507 #507 已合并 `4af219e9486bdcd1c7cdb053795fa55e692efb29`（head `08ecf3`，用户最新回执），installer owner 独占 actual apply，回执前 NOT_RUN。
 
 | 项目 | r101 现场结果 |
 | --- | --- |
@@ -29,7 +29,7 @@ public install wrapper `59b603a` precheck PASS、exit 0；真实 CMDB 108977826�
 主机；Akamai Singapore，2 vCPU / 4 GiB / 80 GiB；替换后实例 108977826，目标地址 104.64.208.209（用户明确要求记录）
 SSH / 初始化；最新交接 SSH 可连接、cloud-init 完成；最后样本仅 22 监听，无 Docker、Caddy、运行应用
 部署路径；主线 owner 继续 SSH → Playbook → 固定 GitOps → Doco-CD 安装；本知识库任务未执行
-GitOps；[#507](https://github.com/ai-workspace-infra/gitops/pull/507)，head `59b603a`，固定 Playbooks owner `975693`；public install wrapper 真实 precheck PASS、exit 0，真实 CMDB 108977826、五项 refs 和 policy valid。主线推进合并；installer owner 独占 actual apply，回执前 NOT_RUN
+GitOps；[#507](https://github.com/ai-workspace-infra/gitops/pull/507)，head `59b603a`，固定 Playbooks owner `975693`；public install wrapper 真实 precheck PASS、exit 0，真实 CMDB 108977826、五项 refs 和 policy valid。主线已合并 #507（`4af219e9486bdcd1c7cdb053795fa55e692efb29`；head `08ecf3`，用户最新回执）；installer owner 独占 actual apply，回执前 NOT_RUN
 Playbooks；[#732](https://github.com/ai-workspace-infra/playbooks/pull/732)、[#733](https://github.com/ai-workspace-infra/playbooks/pull/733) 已合并（最新交接）；不替代安装与 runtime 结果
 服务与写入；V5 尚无运行验收；V4 继续承接公共服务和业务写入，公共 DNS 切换待验收及人工授权
 
@@ -39,7 +39,7 @@ Playbooks；[#732](https://github.com/ai-workspace-infra/playbooks/pull/732)、[
 | 平台 | Akamai Singapore；2 vCPU / 4 GiB / 80 GiB |
 | 部署模式 | SSH → Playbook → 固定 GitOps → Doco-CD；actual apply NOT_RUN |
 | 发布引用 | daily-build-2026.10.23-r101；候选制品，尚无运行引用 |
-| GitOps 实际 SHA | #507 head 59b603a；主线合并推进中，尚无 Doco-CD runtime revision |
+| GitOps 实际 SHA | #507 head 59b603a；#507 已合并 `4af219e9486bdcd1c7cdb053795fa55e692efb29`（head `08ecf3`，用户最新回执），尚无 Doco-CD runtime revision |
 | Doco-CD | NOT_RUN；最后样本无 Docker/Caddy |
 | 独立数据盘 | NOT_RUN；实际状态及已有证据见本节 V5 更新，声明不代表运行值 |
 | PostgreSQL 挂载 | NOT_RUN；无实际挂载回执 |
@@ -205,11 +205,19 @@ Google DoH Console + PostgreSQL；PASS（限定两域）；run ID 未提供；�
 SSH key 字段可见；OBSERVED；public key 字段存在；pair-match NOT_RUN
 SSH 写入脚本；SYNTAX_CHECKED / NOT_EXECUTED_BY_THIS_TASK；无 Vault 写入回执
 GitOps #507 public install wrapper precheck；PASS，exit 0；`59b603a`；真实 CMDB 108977826、五项 refs、policy valid；run ID 未提供
-#507 main merge / 固定引用安装；合并推进中；actual apply NOT_RUN；installer owner 独占执行；等待真实回执
+#507 main merge / 固定引用安装；已合并 `4af219e9486bdcd1c7cdb053795fa55e692efb29`，head `08ecf3`；actual apply NOT_RUN；installer owner 独占执行；等待真实回执
 一次性实际部署后立即 runtime tests；PENDING / NOT_RUN；无 run ID；不以离线 manifest PASS 代替
 DB 初始化、迁移、权限与数据对账；NOT_RUN；无运行回执
 登录、账务、采集、恢复与稳定观察；NOT_RUN；无运行回执
 公共 DNS / 写入切换；NOT_RUN；验收后人工授权
 
 后续 case 结果绑定固定 source SHA、镜像 digest、owner SHA、目标、执行时间与真实 run ID。未获结果继续保留 NOT_RUN/PENDING；本轮知识库变更不执行 installer，不创建快照或迁移。
+
+
+## 历代记录（V4 → V3 → V2 → V1 初始记录）
+
+1. [V4：运行基线与快照清单](../prod-v3-v4-20261020/prod-v4-runtime-and-snapshot-baseline-20261021.zh.md)。
+2. [V3：V2→V3 快照恢复、切库与平滑升级验收](../prod-v2-v3-20261019/v2-to-v3-snapshot-refresh-20261019.zh.md)。
+3. [V2：冷备、容灾与跨机恢复白皮书](../prod-v2-v3-20261019/web-saas-prod-v2-cold-backup-disaster-recovery-whitepaper.zh.md)。
+4. V1 初始记录：当前仓库未找到明确标记为 PROD V1 的独立记录，链接待定位后补齐；现有[云基础设施 DevSecOps 基线方法论](../../09-cloud-infrastructure-devsecops-baseline-closing-the-loop.md)是未标代际的通用基线，不将其冒称 V1 运行记录。
 
