@@ -304,3 +304,15 @@ PR、CI、合并、构件生成、部署和实际验收分别记录。任何上�
 - [PostgreSQL 18 pg_stat_statements](https://www.postgresql.org/docs/18/pgstatstatements.html)：统计能力与启用条件；目标版本不同时需查对应版本文档。
 
 外部技术资料于 2026-10-14 核对。本文不包含实时监控快照，引用资料不能替代目标环境实测。
+
+
+## 13. 全链路网络、TCP 与 L4/L7 性能分析补充（2026-10-23）
+
+新增[全链路网络性能分析参考白皮书](network-full-path-performance-whitepaper.zh.md)，覆盖 DNS、TUN/真实出站、TCP、TLS、Caddy、XHTTP/VLESS 与节点业务出口。包含双端重传、RTT/RTO、拥塞与接收窗口、队列、吞吐量/Goodput、受控抓包，以及 DeepFlow 类 L4/L7 观测和 TLS/HTTP2/Unix socket 可见性边界。
+
+实测案例见[JP 双入口网络与 TLS 性能诊断记录（2026-10-23）](network-performance-jp-comparison-20261023.zh.md)。该记录为客户端有限样本；服务器资源、双端重传、业务吞吐和认证隧道仍未观测，根因未确认，不构成生产变更或运行验收。主白皮书前述 v1.0 状态保留为原始规范基线，本节为后续方法与案例补充。
+
+
+## 14. 双链路深化实施规划（2026-10-23）
+
+[客户端与代理节点采集、工具选型、实现方式、进展和任务拆解](dual-link-client-edge-observability-implementation-plan.zh.md)将网络性能限定到代理节点出口，独立保留完整流量统计链路。既有 OTel PR 按实际覆盖映射，新增真实出站/双端 TCP/出口观测作为规划任务；不将数据库查询耗时计入用户代理延迟。本节不授权合并、部署或采集 Agent 安装。

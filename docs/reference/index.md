@@ -1,6 +1,6 @@
 ---
 title: 参考资料总索引与 PDF 合订编排 / Reference index and PDF compilation plan
-description: 46 项多云白皮书、总体架构、容灾、四仓契约、共用规范、数据库安全操作、三档权限、CMDB、AI Workspace、9 大核心服务 OrbStack 验证与性能调优规范及验收归档来源索引。
+description:多云白皮书、总体架构、容灾、四仓契约、共用规范、数据库安全操作、三档权限、CMDB、AI Workspace、9 大核心服务 OrbStack 验证与性能调优规范及验收归档来源索引。
 slug: index
 lang: zh
 tags:
@@ -12,7 +12,7 @@ tags:
 
 # 参考资料总索引与 PDF 合订编排
 
-本页是 46 项资料的可编辑索引，服务于多云平台工程白皮书、总体架构评审和后续 PDF 合订准备。条目按主题分组，优先链接到本仓库真实文件；跨仓库条目使用固定 `origin/main` SHA 的 GitHub 链接，便于复核来源版本。实施规划条目不代表功能或运行验收已完成。
+本页是参考资料的可编辑索引，服务于多云平台工程白皮书、总体架构评审和后续 PDF 合订准备。条目按主题分组，优先链接到本仓库真实文件；跨仓库条目使用固定 `origin/main` SHA 的 GitHub 链接，便于复核来源版本。实施规划条目不代表功能或运行验收已完成。
 
 GitHub 组织入口：[ai-workspace-infra](https://github.com/ai-workspace-infra)。
 
@@ -132,6 +132,15 @@ GitHub 组织入口：[ai-workspace-infra](https://github.com/ai-workspace-infra
 | 43 | jp-xconnect 内存与日志优化分析报告（2026-10-10） | zh | knowledge working tree · reported-results-pending-follow-up | [docs/performance-optimization/jp-xconnect-memory-log-optimization-20261010.zh.md](../performance-optimization/jp-xconnect-memory-log-optimization-20261010.zh.md) |
 | 44 | JP XConnect 稳定性增量配置验证报告（2026-10-14） | zh | knowledge working tree · v0.1 · prod-partial-validated | [docs/reference/performance-optimization-jp-xconnect-stability-20261014.zh.md](performance-optimization-jp-xconnect-stability-20261014.zh.md) |
 | 45 | XConnect Free 节点大文件上传实测与优化验收（2026-10-18） | zh | knowledge working tree · v1.1 · partial-acceptance · Linux 58/60 & MacOS 27/60 | [docs/performance-optimization/xconnect-free-proxy-upload-acceptance-20261018.zh.md](../performance-optimization/xconnect-free-proxy-upload-acceptance-20261018.zh.md) |
+
+### 全链路网络性能与双链路可观测性专题（2026-10-23）
+
+| 文档 | 用途 | 状态 |
+| --- | --- | --- |
+| [客户端与代理节点深化实施规划](dual-link-client-edge-observability-implementation-plan.zh.md) | 工具选型、采集契约、任务与验收 | 规划，未部署 |
+| [双链路实施与交付交接手册](dual-link-observability-handoff-handbook-20261023.md) | 交付基准、历史回执、PR 进展及校正 | 历史证据与规划分开记录 |
+| [全链路网络性能分析白皮书](network-full-path-performance-whitepaper.zh.md) | TCP/TLS、双端重传、吞吐与 L4/L7 方法 | 诊断参考 |
+| [JP 双入口诊断实测记录](network-performance-jp-comparison-20261023.zh.md) | TUN、DNS、TLS 与 mtr 数据及根因边界 | 有限样本，根因未确认 |
 
 ## 九、平台工程单机验证与本地基座
 
