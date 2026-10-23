@@ -1,6 +1,6 @@
 # PROD V5 部署中断复盘：资源替换后未进入可部署状态
 
-记录日期：2026-10-23（Asia/Shanghai）；状态更新至 18:22 +08。主机检查是有时间边界的
+记录日期：2026-10-23（Asia/Shanghai）；状态更新至 18:29 +08。主机检查是有时间边界的
 样本；DNS 写入与 PR 状态按本次更新分别记录。与[V4 运行基线](prod-v3-v4-20261020/prod-v4-runtime-and-snapshot-baseline-20261021.zh.md)
 及[V3→V4 复盘](prod-v3-v4-20261020/v3-v4-upgrade-retrospective-20261021.zh.md)配套阅读。
 
@@ -11,11 +11,15 @@ V5 已完成获授权的云实例替换和基础云初始化；主线 DNS owner 
 初始化、业务数据迁移及应用验收均未完成。V4 仍是公共服务与业务写入来源；V5 未接管写入，
 公共服务 DNS 未切换。本次记录不代表 V5 已上线或可承载流量。
 
-状态更新（2026-10-23 18:22 +08）：四条版本化 DNS 记录由主线 owner 的 apply 创建，Cloudflare
-回执确认创建成功，且 `public_aliases_modified=false`。首次后续 preview 请求曾因网络错误失败；
-之后的 provider preview 对四条记录均返回 `noop`，目标地址与预期 V5 地址一致。provider 幂等性
-记为 **PASS**。权威 DNS 与公网传播核验仍在运行，故传播验证仍是 **PENDING**。当前没有 Docker
-应用容器；DNS 写入和 preview 结果不代表服务已部署。
+状态更新（2026-10-23 18:29 +08）：四条版本化 DNS 记录由主线 owner 的 apply 创建，Cloudflare
+回执确认创建成功，且 `public_aliases_modified=false`。之后的 provider preview 对四条记录均返回
+`noop`，目标地址与预期 V5 地址一致，provider 幂等性 **PASS**。Google DoH 已验证 Console 的 A
+查询返回预期 V5 地址，TTL 60、状态 0（NOERROR）；仅 Console 的外部递归解析记为 **PASS**，其余
+三个别名尚无同等外部核验。与此同时，本机 `dig` 仍返回 NXDOMAIN，符合本地负缓存/网络代理路径的
+现象；这不推翻 provider 写入或 Google DoH 的结果，也不等于权威记录不存在。权威服务器直接查询、
+其余三个别名的外部解析及 HTTPS/SNI 仍待独立验证。当前没有 Docker 应用容器；DNS 成功不代表服务
+已部署。用户期望在前置输入和运行时 Vault 引用修复就绪后，一次性执行实际部署并紧接 runtime
+测试；该操作与测试仍为 **PENDING / NOT_RUN**。
 
 本次可确认的故障边界是“基础设施已替换，但部署链未到达可运行应用”：主机采样显示仅 SSH
 监听，未发现 Docker、控制面目录或 PostgreSQL 数据目录；初始 DNS 检查时四个 V5 版本别名均无
@@ -33,7 +37,8 @@ HTTPS/SNI 复核仍 pending。尚无证据表明服务启动后发生应用或�
 | 推送失败 | 较早一次 PostgreSQL GHCR 推送遇到代理连接关闭（`use of closed network connection`）。 | 这是该次推送尝试的失败记录；不把 index/config 摘要差异误判为损坏，也不据此声称随后完成了 registry 回读。 |
 | DNS 初始采样 | 初始检查中四个版本服务别名均无 A 记录，解析失败；对目标的直接 HTTPS/SNI 检查失败。 | 这是 apply 之前的时间点，不代表后续 DNS 状态。 |
 | DNS 写入更新（18:21 +08） | 主线 DNS owner 执行 `--apply`，Cloudflare 返回四条版本化记录已创建，`public_aliases_modified=false`。 | 该回执证明 provider 写入结果，不证明权威/public propagation 已完成。 |
-| DNS provider preview（18:22 +08） | 首次 preview 因网络错误失败；后续 preview 对四条记录均返回 `noop`，目标地址与预期 V5 地址一致，`public_aliases_modified=false`。provider 幂等性 **PASS**。 | 权威 DNS 与公网传播的独立核验仍运行中，状态 **PENDING**；不将 provider noop 扩大为解析/TLS 或应用验收。 |
+| DNS provider preview（18:22 +08） | 首次 preview 因网络错误失败；后续 preview 对四条记录均返回 `noop`，目标地址与预期 V5 地址一致，`public_aliases_modified=false`。provider 幂等性 **PASS**。 | 不将 provider noop 扩大为解析/TLS 或应用验收。 |
+| 外部解析与本机 resolver（18:29 +08） | Google DoH 对 Console A 查询返回预期 V5 地址，TTL 60、状态 0（NOERROR）；本机 `dig` 仍为 NXDOMAIN。 | 仅 Console 的外部递归解析 **PASS**；本机结果按负缓存/网络代理路径单列，不覆盖外部结果。其余三个别名、权威 DNS 直接查询与 HTTPS/SNI 仍 **PENDING**。 |
 | 数据迁移与验收 | 没有执行迁移；没有服务健康、数据对账、回归或用户流量验收回执。 | 全链路部署、迁移与验收均为 **NOT_RUN**，不是 PASS。 |
 
 历史 `r101` 工作流还保留了 PostgreSQL GitHub App dispatch 的 HTTP 422 与 actor 权限问题；它是早先的工作流事实，不应改写成此次主机运行错误。之后获准的本地构建路径属于单独的构建路线，不会自动补齐 registry push、manifest read-back 或部署证据。完整交付仍须满足 [`.github` PR #41](https://github.com/ai-workspace-services/.github/pull/41) 所述的来源、摘要、manifest 与制品回读契约。
@@ -45,7 +50,9 @@ HTTPS/SNI 复核仍 pending。尚无证据表明服务启动后发生应用或�
 交付流程把“实例替换及 cloud-init 完成”推进到了可交付边界之前，没有先取得全部服务的、可从 registry
 回读的不可变构件，也没有完成主机引导和控制面 reconcile。证据是主机样本仍只有 SSH 入口、所需
 运行目录/数据库目录不存在，同时 PostgreSQL 完整 registry manifest 回读尚缺。初始 DNS 检查
-也未解析到目标；后续 apply 虽收到四条记录创建成功回执，独立验证仍未完成。
+也未解析到目标；之后四条记录创建并通过 provider 幂等预检，Google DoH 已确认 Console 记录可解析，
+但其余别名、权威查询和 HTTPS/SNI 尚未核验。DNS 初始失败已不能代表当前 Console 外部解析状态，
+本机 NXDOMAIN 属于单独的 resolver 观察，不改变主机未部署这一根因判断。
 
 这是阶段与交接门禁未收敛导致的部署中断。没有证据支持把根因归为应用回归、数据库迁移错误或
 V4 数据问题，因为这些步骤没有开始。
@@ -60,6 +67,10 @@ V4 数据问题，因为这些步骤没有开始。
   已经写入，也不等于记录当前解析正确。
 - [Playbooks #731](https://github.com/ai-workspace-infra/playbooks/pull/731) 合并的是离线回归清单与
   新鲜输入门禁。其 manifest 要求目标运行时输入，不能作为运行时 PASS 回执。
+- [Playbooks #732：允许已建立的生产运行时 Vault 引用](https://github.com/ai-workspace-infra/playbooks/pull/732)
+  已合并（merge commit `9ffee25530ddc10a1ad11a54252ea7d8297a58f7`）。它修复 Playbooks 对既有生产
+  AUTH、CICD TLS/GHCR 引用的精确校验映射，不读取或改写 Vault 值、不创建凭据，也不运行安装器；
+  合并不证明目标运行时 Vault 内容存在或部署已执行。
 
 ## 4. 已合并修复与当前 PR 状态
 
@@ -70,6 +81,7 @@ V4 数据问题，因为这些步骤没有开始。
 | [GitOps #504：部署与迁移声明合同](https://github.com/ai-workspace-infra/gitops/pull/504) | MERGED | 明确五服务镜像 pin、Playbooks SHA、初始化输入和分阶段验收；示例仍不能替代真实输入。 |
 | [Playbooks #730：安装、权限与路由修复](https://github.com/ai-workspace-infra/playbooks/pull/730) | MERGED | 包含恢复 ACL/grant 导致 SQLSTATE `42501` 的路径，以及持久目标私有路由目录设计；合并不代表本机已执行。 |
 | [Playbooks #731：V5 回归批次准备](https://github.com/ai-workspace-infra/playbooks/pull/731) | MERGED | 1d64444d5a99d8eb45ee9c2004dd4f404be6272a 提供离线回归 manifest 和输入门禁；不是部署或运行验收。 |
+| [Playbooks #732：允许已建立的生产运行时 Vault 引用](https://github.com/ai-workspace-infra/playbooks/pull/732) | MERGED；`9ffee25530ddc10a1ad11a54252ea7d8297a58f7` | 精确修复引用校验映射；不读取 Vault 值、不创建凭据、不运行安装器，亦不代表运行时值/访问或部署已就绪。 |
 | [`.github` #41：部署证据与切流门禁](https://github.com/ai-workspace-services/.github/pull/41) | MERGED；`546cac02dd7f492e54e02eaf4ff0e2fc8c768404` 已核对为 `main` | 已合入八阶段交付、不可变制品证明及 DNS/切流授权边界；合并不代表 V5 已部署或验收。 |
 
 ## 5. 恢复顺序与验收门
@@ -83,14 +95,18 @@ V4 数据问题，因为这些步骤没有开始。
 2. **主机引导**：通过授权的 SSH → Playbook → 固定 GitOps → Doco-CD 路径安装依赖并 reconcile。
    留存主机配置、容器清单、挂载、网络边界及各进程来源核验；确认 PostgreSQL 完成原生初始化、
    持久数据目录就绪，再进入服务健康检查。
-3. **候选域名验证**：先核对 GitOps 声明、CMDB、四条版本别名的计划和 DNS 查询结果；执行 DNS
+3. **一次性部署与 runtime 测试**：在运行时 Vault 引用修复已合入、运行时值/访问已核验、五项不可变
+   制品和新鲜部署输入齐备后，按授权路径一次性执行实际部署，并紧接着运行服务、数据库、身份/账务及
+   Console 健康测试；保存命令回执、固定 SHA/digest、运行容器和测试结果。该阶段当前 **PENDING / NOT_RUN**，
+   不得用 DNS、Playbook 校验或旧主机采样代替。部署/测试通过仍不代表迁移或切流获准。
+4. **候选域名验证**：先核对 GitOps 声明、CMDB、四条版本别名的计划和 DNS 查询结果；执行 DNS
    写入需要独立授权。验证解析、证书/SNI 和各服务版本/健康端点，不将渲染或 CI 结果记作写入回执。
-4. **备份与迁移预检**：确认源端只读、目标端隔离和真实备份/恢复收据；使用固定迁移工具执行只读
+5. **备份与迁移预检**：确认源端只读、目标端隔离和真实备份/恢复收据；使用固定迁移工具执行只读
    预览，对身份、账务、配额和权限冲突停止，不覆盖源数据。缺少数据边界、双端身份或恢复证明时不 apply。
-5. **迁移和回归**：仅在独立审批及前置证明具备后执行受控单向迁移。对目标进行数据对账、权限、登录、
+6. **迁移和回归**：仅在独立审批及前置证明具备后执行受控单向迁移。对目标进行数据对账、权限、登录、
    Accounts/Billing/Console/PostgreSQL 健康、采集写入和业务回归；以固定 SHA、digest、SQL 版本、
    采样时间及可复查回执记录结果。
-6. **保持 V4 写入与最终切换分离**：V4 公共服务和写入继续作为来源，直到目标部署、恢复、迁移、
+7. **保持 V4 写入与最终切换分离**：V4 公共服务和写入继续作为来源，直到目标部署、恢复、迁移、
    回归及稳定观察均有通过证据。公共 DNS 切换是独立的人工门禁，需要重新确认写入所有权、数据
    追齐和回滚方向；任何 PR merge、CI 绿灯或主机健康探针都不授权切流。
 
@@ -101,11 +117,13 @@ V4 数据问题，因为这些步骤没有开始。
 | 获授权的云实例替换 | 已完成；资源身份不公开记录 |
 | cloud-init / SSH | 样本中已完成 / 可连接 |
 | Docker、控制面、PostgreSQL 初始化 | 未观察到 / 未完成 |
-| 四个 V5 版本别名与 HTTPS | 初始采样无 A 且 HTTPS 失败；18:21 +08 apply 回执确认四条记录创建，`public_aliases_modified=false`；后续四条 preview 均 `noop`（provider 幂等性 PASS）；权威 DNS 与公网传播核验 PENDING |
+| V5 DNS | 四条记录 apply 已确认，四条 provider preview 均 `noop`（provider 幂等性 PASS）；Google DoH 的 Console A 查询 TTL 60/status 0，外部解析 PASS；本机 `dig` NXDOMAIN（本地负缓存/网络代理路径观察）；其余三个别名、权威直接查询与 HTTPS/SNI PENDING |
 | 应用构件 | 四个应用构件曾发布；完整 registry manifest 未逐项回读 |
 | PostgreSQL 构件 | 本地干净源码构建；OCI index descriptor `56f4179b…` 与 image config `6cc…` 为不同层级、属于预期结构；早先 push 失败，完整 registry manifest 回读未完成 |
 | Docker 应用 | 仍未部署；DNS apply 不代表应用容器已运行 |
-| 服务部署、数据库迁移、业务验收 | **NOT_RUN** |
+| Playbooks #732 Vault 引用校验修复 | MERGED；`9ffee25530ddc10a1ad11a54252ea7d8297a58f7`；不代表 Vault 值/访问就绪 |
+| 一次性实际部署及紧接 runtime 测试 | **PENDING / NOT_RUN**；等待真实输入与运行时访问核验 |
+| 数据迁移、业务回归/验收 | **NOT_RUN** |
 | V4 公共流量与写入 | 保持为来源；无 V5 接管证据 |
 | 公共 DNS 切换 | 未执行；仍需单独人工授权及完整验收 |
 
