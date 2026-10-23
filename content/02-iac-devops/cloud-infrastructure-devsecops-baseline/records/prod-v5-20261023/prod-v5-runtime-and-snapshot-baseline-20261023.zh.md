@@ -18,7 +18,7 @@
 | 解析根因及修复 | Docker 之后动态解析主机配置需要 `community.hashi_vault.vault_kv2_get`；跳过 Vault 读取不等于无解析依赖。common 统一持有 `ansible.posix 2.1.0` / `community.hashi_vault 7.1.0`；安装器在解析前调用固定 common 入口，并隔离 collection 路径 |
 | 验证范围 | 缺依赖解析 exit 4 可复现，完整静态角色预检转为 exit 0；本地 45 项 owner 测试及 30 项安装器测试通过；三个 PR 的适用 CI 全部完成通过；新固定引用的真实 `--check` exit 0 |
 | 实际安装 | r2/r3/r4 各次失败保留历史回执；r5 完整部署与相同输入重跑均 exit 0、owner_completed、8 项探测 PASS；数据库、配置和容器运行身份不变，幂等性 PASS |
-| 迁移和切换 | users-only 源快照与隔离恢复、V5 空目标回滚备份和独立恢复 PASS；用户应用仍待预构建工具修复后执行。真实登录及全业务验收未通过；V4 保持公共服务、DNS 和写入，切换仍需独立明确确认 |
+| 迁移和切换 | users-only 已通过 SSH 使用预构建 r103 追加 33 用户，重复同步无变化、其他业务表不变；源快照及迁移前备份恢复 PASS，迁移后 33 用户全库备份及独立恢复 PASS。真实登录及全业务验收待完成；V4 保持公共服务、DNS 和写入，切换仍需独立明确确认 |
 
 ### 三处运行故障修复重验（独立回合）
 
@@ -81,9 +81,22 @@ Accounts/Billing `/readyz` 均 HTTP 200，Console HTTP 200。原始安装仍保�
 - users 归档在 V5 隔离数据库 `v4_restore_20261024003301` 恢复，计数 33；隔离库 `default_transaction_read_only=on`，checkpoint `2026102002:false`，主目标 users 仍为 0。
 - [Accounts #269](https://github.com/ai-workspace-services/accounts/pull/269) 已合并 `740a59592bad2d91a8f4be11d3e3455c3cab7528`，拆除 users-only 对 Billing DDL 的错误依赖；预览默认只读，应用绑定精确计划摘要，摘要覆盖两端所有 users 字段并在写锁下重验。
 - CI [39986687337](https://github.com/ai-workspace-services/accounts/actions/runs/39986687337) 发布预构建 `daily-build-2026.10.24-r102`；linux-amd64 二进制 SHA256 `af3220defa05cf051501fbeb1d392deb62c7f642622316e7895633b55cd7f0e9`，已与 release manifest 的提交、大小、SHA256SUMS 和实际文件复核。
-- r102 首次真实预览失败：空目标被共享 source digest 的非空条件错误拒绝；没有目标数据写入，V5 暂停的服务均已恢复。修复见 [Accounts #270](https://github.com/ai-workspace-services/accounts/pull/270)，新增真实 PostgreSQL 17 空目标预览→精确计划应用→比较回归测试，本地已通过；等待 CI 后发布新的预构建版本，不在目标编译绕过。
+- r102 首次真实预览失败：空目标被共享 source digest 的非空条件错误拒绝；没有目标数据写入，V5 暂停的服务均已恢复。修复见 [Accounts #270](https://github.com/ai-workspace-services/accounts/pull/270)，新增真实 PostgreSQL 17 空目标预览→精确计划应用→比较回归测试；本地测试与全部适用 CI 通过后合入 `fd5aa7dff95bfd324349a303b790738c11487be3`。新预构建 `daily-build-2026.10.24-r103` 由 CI [39989022553](https://github.com/ai-workspace-services/accounts/actions/runs/39989022553) 发布且全部成功；linux-amd64 SHA256 `934955967ecb25ed2d41c2a5d5010f9037423faa8c96d4bf18c1fbb7c8f95735`，目标不编译工具。
 
-公共流量、DNS 与写入权仍在 V4；当前尚无用户同步成功或真实登录验收回执。
+迁移前再次比对 V4 在线用户与只读快照：均 33，全部 users 字段摘要一致。
+
+### r103 实际用户追加与在线重放
+
+- 用户明确确认 V5 无业务流量、服务不必停止；2026-10-24 01:04:47 至 01:05:06（Asia/Shanghai）通过 SSH 使用官方 r103 二进制完成 users-only 同步，exit 0。实际执行前 V5 users=0、活跃目标事务=0；服务保持运行，迁移没有执行 stop/start。
+- 发布 manifest 提交、SHA256SUMS、目标二进制实际大小/摘要均匹配 r103；执行工具未在本地或目标机临时编译。业务应用镜像仍为固定 r101，未将工具发布误写为应用升级。
+- 先只读预览，再按精确 `core_users_plan_sha256` 应用；目标从 0 增为 33，因此本次仅追加新用户，没有覆写已有目标用户。迁移后源/目标 email、密码哈希、Proxy UUID 合约一致；除新目标内部 UUID 外，全部 users 字段摘要也一致。
+- 重新预览并应用一次：全部用户字段保持不变，用户同步幂等性 PASS。其他 public/finance 业务表前后内容与行数摘要不变，checkpoint 仍为 `2026102002:false`，源隔离库始终只读。
+- r103 的既有写入静止确认参数依据用户无流量声明和活跃事务为 0 的运行核验使用；不将其描述为“进程已停止”。可选的事务前移锁/取消进程暂停前提代码没有发布或用于本次执行。
+- 迁移后固定 owner 的 8 项组件/数据库/可信 HTTPS 探测全部 PASS，Doco-CD 保持 GitOps r5 精确 SHA；`business_acceptance=false`、`cutover=false`。
+- 迁移后完整加密备份与独立恢复验证均 PASS：2026-10-24 01:06:01 至 01:07:12（Asia/Shanghai），owner `86c6a3c39c30df079e047eb77194ea670514a6c2`，exit 0；归档 `/data/backups/web-saas/prod-v5/post-users-r103/20261024010528/account.dump.enc`，SHA256 `ad881ff8881215c8b3b6309a9b833b449bd8df5acf79be34e5ee40eba46ec884`，独立恢复库 `release_verify_20261024010528` 保留，users=33，schema/data/sequence 核验通过。
+- subscriptions 仍为 0：此恢复证明当前 users-only 状态可恢复，不能冒充完整订阅/账务 G3 验收。真实凭据登录、OAuth、支付、Agent、订阅和账务验收不因这次 users-only 成功而自动通过。
+
+公共流量、DNS 与写入权仍在 V4，验收前不切换 DNS。
 
 ## 历史样本：Singapore r101 预检与早期部署阻断
 
