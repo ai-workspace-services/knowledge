@@ -1,10 +1,10 @@
 # PROD V5 运行基线与快照清单
 
-核验日期：2026-10-23，Asia/Shanghai。直接复制 [V4 原版模板](../prod-v3-v4-20261020/prod-v4-runtime-and-snapshot-baseline-20261021.zh.md) 的标题、表格列与章节顺序；V5 尚无运行回执的格位明确留为 NOT_RUN，后续持续按实际回执更新。[已合并 #191](https://github.com/ai-workspace-services/knowledge/pull/191)；[部署复盘](prod-v5-deployment-postmortem-20261023.zh.md)。
+核验日期：2026-10-24，Asia/Shanghai。直接复制 [V4 原版模板](../prod-v3-v4-20261020/prod-v4-runtime-and-snapshot-baseline-20261021.zh.md) 的标题、表格列与章节顺序；V5 尚无运行回执的格位明确留为 NOT_RUN，后续持续按实际回执更新。[已合并 #191](https://github.com/ai-workspace-services/knowledge/pull/191)；[部署复盘](prod-v5-deployment-postmortem-20261023.zh.md)。
 
 ## 当前交付：Tokyo 3 重建与控制器依赖修复
 
-本节为 2026-10-23 本轮实时核验；后续旧表保留历史样本，不作为当前主机或执行状态。
+本节为 2026-10-23 至 24 本轮实时核验；后续旧表保留历史样本，不作为当前主机或执行状态。
 
 | 项目 | 当前回执 |
 | --- | --- |
@@ -13,12 +13,12 @@
 | 资源保护 | 防火墙 `219186285` 保留；独立 V5 后端 state 已保留前后恢复点；恢复 `prevent_destroy` 后 plan 无变更 |
 | SSH | Vault `kv/CICD/prod` 的部署公私钥匹配，公钥与本地 `id_ed25519` 一致；通过 TLS 验证的 Akamai LISH 启动日志核验新主机身份后，严格 hostkey 下本地私钥登录 PASS |
 | 版本 DNS | 四个 `*-selfhost-prod-v5.svc.plus` A 记录通过固定 IaC owner 更新为 `172.237.1.202`，复查均为 noop；公共别名未修改 |
-| 固定执行版本 | GitOps [#512](https://github.com/ai-workspace-infra/gitops/pull/512)，`bca8c715e4236fbd6049d00a24e9943b9d2e1844`；Playbooks [#739](https://github.com/ai-workspace-infra/playbooks/pull/739)，`926897038be85df0cfb20e5e1b17fae848193d3a`；安装器 [#42](https://github.com/ai-workspace-services/.github/pull/42)，`2042cfe1e6d6ac66985c4f3e4a44eea15ae7d014` |
-| 不可变标识 | 三个执行/声明仓库新增 `v2026.10.23-v5-r2`，未移动旧 r1；五个业务镜像仍为原 r101 digest |
+| 固定执行版本 | GitOps [#515](https://github.com/ai-workspace-infra/gitops/pull/515)，`bf5fab96ee7b7b54066727bb6a03d53c337de36e`；Playbooks [#742](https://github.com/ai-workspace-infra/playbooks/pull/742)，`86c6a3c39c30df079e047eb77194ea670514a6c2`；安装器 [#42](https://github.com/ai-workspace-services/.github/pull/42)，`2042cfe1e6d6ac66985c4f3e4a44eea15ae7d014` |
+| 不可变标识 | GitOps/Playbooks 当前固定 `v2026.10.23-v5-r5`；安装器保持 r2；未移动旧标签；五个业务镜像仍为原 r101 digest |
 | 解析根因及修复 | Docker 之后动态解析主机配置需要 `community.hashi_vault.vault_kv2_get`；跳过 Vault 读取不等于无解析依赖。common 统一持有 `ansible.posix 2.1.0` / `community.hashi_vault 7.1.0`；安装器在解析前调用固定 common 入口，并隔离 collection 路径 |
 | 验证范围 | 缺依赖解析 exit 4 可复现，完整静态角色预检转为 exit 0；本地 45 项 owner 测试及 30 项安装器测试通过；三个 PR 的适用 CI 全部完成通过；新固定引用的真实 `--check` exit 0 |
-| 实际安装 | 本轮 `run-controller-repair-20261023T1456Z` 已结束，退出码 2；控制器 collection 安装和角色解析通过，应用部署尚未通过。PostgreSQL 与 Doco-CD 健康；stunnel 私钥权限、Caddy 重复 host matcher、Accounts 连接身份摘要阻塞后续启动。修复见 [Playbooks #740](https://github.com/ai-workspace-infra/playbooks/pull/740)，重验待执行 |
-| 迁移和切换 | 尚未执行本轮 V4→V5 迁移、业务恢复演练及观察验收；V4 继续服务和写入，Accounts readyz / Console 只读探测均为 HTTP 200；切换仍需独立明确确认 |
+| 实际安装 | r2/r3/r4 各次失败保留历史回执；r5 完整部署与相同输入重跑均 exit 0、owner_completed、8 项探测 PASS；数据库、配置和容器运行身份不变，幂等性 PASS |
+| 迁移和切换 | users-only 源快照与隔离恢复、V5 空目标回滚备份和独立恢复 PASS；用户应用仍待预构建工具修复后执行。真实登录及全业务验收未通过；V4 保持公共服务、DNS 和写入，切换仍需独立明确确认 |
 
 ### 三处运行故障修复重验（独立回合）
 
@@ -30,9 +30,60 @@
 - 预检查 exit 0；实际部署 exit 2。原三项启动故障已解除：私钥 0640/GID101、Caddy 加载成功、连接身份校验通过。新的就绪阻塞为 stunnel `unable to get issuer certificate`：Vault 中间链未含最终受信任根，Accounts/Billing 数据库连接重置。后续修复见 [Playbooks #741](https://github.com/ai-workspace-infra/playbooks/pull/741)。数据迁移、恢复演练、业务验收与切换均未因此取得通过回执。
 - 脱敏安装日志 SHA256 `a2eac5e280e3ee26e8445c3364c9f09be5fe0909822cbaf55c618cd730478cf3`。原始回执保留于受控本地证据目录；仅归档经脱敏的事实，不提交 state、私钥、令牌或含凭据连接串。
 
+### stunnel 完整信任链重验（r4，独立回合）
+
+- 执行标识：`run-trust-repair-20261023T1532Z`，2026-10-23 23:35:18 至 23:44:44（Asia/Shanghai）；run_id 是目录建立时间。
+- GitOps `8c70106f0a51a9cdfa2f9a7626e946422f3ab06e`，Playbooks `a898ffc7b304512f2e012a58e0f8ee52089765c4`，两仓不可变标签 `v2026.10.23-v5-r4`；入口和 r101 镜像/schema pins 未变。
+- [Playbooks #741](https://github.com/ai-workspace-infra/playbooks/pull/741) 与 [GitOps #514](https://github.com/ai-workspace-infra/gitops/pull/514) 的适用检查全部通过后合并，无阻塞审查。
+- 操作：仅候选 owner 启用主机受管理根证书与 Vault 中间链组合，发布前 OpenSSL 验链及域名校验，stunnel 保持 `verifyChain=yes` 并设置 `checkHost`；既有角色调用默认行为保留。
+- 本地 47 项 owner 测试通过（2 个条件集成项本地跳过），完整 CI 39978958737 通过；新 fixture 验证缺根失败、完整链通过、错误主机名失败。GitOps CI 39979404123 的 8 项检查通过。
+- 实际部署 exit 2；运行故障及 Content 鉴权探针问题见后续纠正节。数据迁移、恢复演练、业务验收、切换仍无通过回执。
+
+### Fresh 目标误用只读策略的纠正
+
+用户确认：只读保护用于迁移上游数据源或启动迁移时的源端，全新目标不应全局阻断业务写请求。
+此前 `candidate ingress is read-only` 403 是部署逻辑错误，不是目标正常验收状态。
+源头为 `vhosts/web_saas_host_config` 模板将 candidate_mode 与全局写方法拒绝绑定；
+另一个 fresh 入口按 runtime_mode 自动传入 recovery_read_only，也一并删除。
+修复见 [Playbooks #742](https://github.com/ai-workspace-infra/playbooks/pull/742)，最终部署和幂等重跑均已通过，详见 r5 回执。
+迁移源端只读限制保持；公共流量切换仍需独立验收。
+
+r4 在运行配置已更新后仍由旧 stunnel 客户端缓存 CA 上下文。仅重载 V5 客户端后，
+Accounts/Billing `/readyz` 均 HTTP 200，Console HTTP 200。原始安装仍保留 exit 2：
+随后发现 Content 探针使用 Bearer，而固定源码要求 `X-Service-Token`，属于探测协议错误。
+校正后的只读诊断通过全部组件、数据库和可信 HTTPS 探测；不将诊断替代固定版本部署回执。
+#742 同时把按配置更新时间重载已有读取进程和正确 Content header 固化到 owner。
+
+### 正常目标入口与幂等部署（r5）
+
+- [Playbooks #742](https://github.com/ai-workspace-infra/playbooks/pull/742) 已合入 `86c6a3c39c30df079e047eb77194ea670514a6c2`；[GitOps #515](https://github.com/ai-workspace-infra/gitops/pull/515) 已合入 `bf5fab96ee7b7b54066727bb6a03d53c337de36e`。
+- 两仓固定标签 `v2026.10.23-v5-r5`；入口仍为既有 .github 固定 SHA，五服务 r101 镜像/schema pin 未变。
+- 全新入口不再有全局写方法拦截。旧 recovery_read_only 变量、全部调用参数、公共入口兼容模板分支和推导模式字段已删除，不保留兼容开关；迁移源端保护仍由源端所有者控制。
+- 完整 CI 39981745433 包含 owner/Ansible/PostgreSQL/Caddy 与入口回归；GitOps CI 39982209929 全部通过。
+- `run-normal-ingress-20261023T1554Z`：2026-10-23 23:55:09 至 2026-10-24 00:01:09（Asia/Shanghai），完整部署 exit 0、owner_completed，8 项组件/数据库/可信 HTTPS 探测全部通过；脱敏日志 SHA256 `cdef35d2992f1febfb21b14cacbc4d5f2aab00ddeb01964fc21f3552507c38c5`。
+- `run-idempotence-r5-20261023T1602Z`：2026-10-24 00:02:03 至 00:08:05，同一固定输入完整重跑 exit 0、owner_completed、8 项探测全部通过；日志 SHA256 `08a2314271e07b490bf63376b82557b79b2b350f87f8ac6f95b7e706797e809d`。
+- 两次部署之间数据库身份和 clean checkpoint `2026102002`、配置校验和、容器集合均不变；全部被采样容器 ID、StartedAt、RestartCount 无变化。部署幂等验证 PASS。
+- 空凭据登录 POST 返回应用 `400 missing_credentials`，不再被入口全局 403 拦截；无 identifier 的 MFA 返回应用 401。真实凭据登录尚未验收，后续用户缺失 404 转入 users 同步。
+- 用户真实账号标识、密码、令牌及会话数据不用于日志或归档。
+
 控制器依赖归 Playbooks common；GitOps 仅引用执行版本和非敏感业务配置；凭据继续由 Vault KV 运行时提供；资源、DNS、state 和 CMDB 由 IaC 维护。私钥和凭据值未写入知识库。
 
 迁移兼容性另行阻断：r101 的旧 `copy-full-business` 清单包含会话/临时状态，Billing 常量也不同于本轮候选；不得拿该旧路径直接执行本轮迁移或声称全范围覆盖。后续必须使用经核验的安全迁移模块及真实范围回执，源保持只读快照读取。
+
+### SSH 用户迁移准备与预构建工具
+
+用户明确指定 SSH 执行最新预构建 `migratectl`，目标机不编译工具。迁移仅覆盖 `public.users`；不扩大为 identities、恢复码、会话、订阅或财务表复制。
+
+- V4 原数据源保持在线。专用只读角色导出完整 users 列，管理员与只读角色计数均 33；列名/类型与 native users 合约一致。
+- 初次全范围只读 dump 因 RLS 可见性失败，dump exit 1；其加密部分文件仅保留为失败证据，未用于恢复或迁移，未改源端权限。
+- 正确的 users-only 备份使用启用 RLS 的只读 dump，AES-256-CBC/PBKDF2 310000 次加密；归档 SHA256 `5f999cbd16900a1d003193bf567de272746e4dcdaba15979b64c4969b5bad7ca`，7616 字节。运行密钥仅引用 Vault，值不归档；每任务独立键保留至所有依赖归档退役。
+- V5 迁移前全库回滚点由既有 Playbooks backup/restore roles 执行：归档 `/data/backups/web-saas/prod-v5/pre-users-r102/20261024003101/account.dump.enc`，SHA256 `0ea137137a1c7011c4393b71207754ce95b0bfb3cbffc145ac7eb88c9c40ea93`；备份和独立恢复均 PASS。该点 users=0、subscriptions=0，是有效空目标回滚点，不能冒充已填充业务恢复验收。
+- users 归档在 V5 隔离数据库 `v4_restore_20261024003301` 恢复，计数 33；隔离库 `default_transaction_read_only=on`，checkpoint `2026102002:false`，主目标 users 仍为 0。
+- [Accounts #269](https://github.com/ai-workspace-services/accounts/pull/269) 已合并 `740a59592bad2d91a8f4be11d3e3455c3cab7528`，拆除 users-only 对 Billing DDL 的错误依赖；预览默认只读，应用绑定精确计划摘要，摘要覆盖两端所有 users 字段并在写锁下重验。
+- CI [39986687337](https://github.com/ai-workspace-services/accounts/actions/runs/39986687337) 发布预构建 `daily-build-2026.10.24-r102`；linux-amd64 二进制 SHA256 `af3220defa05cf051501fbeb1d392deb62c7f642622316e7895633b55cd7f0e9`，已与 release manifest 的提交、大小、SHA256SUMS 和实际文件复核。
+- r102 首次真实预览失败：空目标被共享 source digest 的非空条件错误拒绝；没有目标数据写入，V5 暂停的服务均已恢复。修复见 [Accounts #270](https://github.com/ai-workspace-services/accounts/pull/270)，新增真实 PostgreSQL 17 空目标预览→精确计划应用→比较回归测试，本地已通过；等待 CI 后发布新的预构建版本，不在目标编译绕过。
+
+公共流量、DNS 与写入权仍在 V4；当前尚无用户同步成功或真实登录验收回执。
 
 ## 历史样本：Singapore r101 预检与早期部署阻断
 
