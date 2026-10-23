@@ -1,6 +1,6 @@
 ---
 title: 参考资料总索引与 PDF 合订编排 / Reference index and PDF compilation plan
-description: 45 项多云白皮书、总体架构、容灾、四仓契约、共用规范、数据库安全操作、三档权限、CMDB、AI Workspace 与性能调优规范及验收归档来源索引。
+description: 46 项多云白皮书、总体架构、容灾、四仓契约、共用规范、数据库安全操作、三档权限、CMDB、AI Workspace、9 大核心服务 OrbStack 验证与性能调优规范及验收归档来源索引。
 slug: index
 lang: zh
 tags:
@@ -12,7 +12,7 @@ tags:
 
 # 参考资料总索引与 PDF 合订编排
 
-本页是 45 项资料的可编辑索引，服务于多云平台工程白皮书、总体架构评审和后续 PDF 合订准备。条目按主题分组，优先链接到本仓库真实文件；跨仓库条目使用固定 `origin/main` SHA 的 GitHub 链接，便于复核来源版本。实施规划条目不代表功能或运行验收已完成。
+本页是 46 项资料的可编辑索引，服务于多云平台工程白皮书、总体架构评审和后续 PDF 合订准备。条目按主题分组，优先链接到本仓库真实文件；跨仓库条目使用固定 `origin/main` SHA 的 GitHub 链接，便于复核来源版本。实施规划条目不代表功能或运行验收已完成。
 
 GitHub 组织入口：[ai-workspace-infra](https://github.com/ai-workspace-infra)。
 
@@ -132,6 +132,12 @@ GitHub 组织入口：[ai-workspace-infra](https://github.com/ai-workspace-infra
 | 43 | jp-xconnect 内存与日志优化分析报告（2026-10-10） | zh | knowledge working tree · reported-results-pending-follow-up | [docs/performance-optimization/jp-xconnect-memory-log-optimization-20261010.zh.md](../performance-optimization/jp-xconnect-memory-log-optimization-20261010.zh.md) |
 | 44 | JP XConnect 稳定性增量配置验证报告（2026-10-14） | zh | knowledge working tree · v0.1 · prod-partial-validated | [docs/reference/performance-optimization-jp-xconnect-stability-20261014.zh.md](performance-optimization-jp-xconnect-stability-20261014.zh.md) |
 | 45 | XConnect Free 节点大文件上传实测与优化验收（2026-10-18） | zh | knowledge working tree · v1.1 · partial-acceptance · Linux 58/60 & MacOS 27/60 | [docs/performance-optimization/xconnect-free-proxy-upload-acceptance-20261018.zh.md](../performance-optimization/xconnect-free-proxy-upload-acceptance-20261018.zh.md) |
+
+## 九、平台工程单机验证与本地基座
+
+| # | 标题 | 语言 | 来源版本 | 文件或入口 |
+| ---: | --- | --- | --- | --- |
+| 46 | 9 大核心服务类别 macOS OrbStack 单机部署与健康验收矩阵 | zh | knowledge working tree · v1.0-release · approved | [docs/reference/platform-core-services-orbstack-acceptance-matrix.zh.md](platform-core-services-orbstack-acceptance-matrix.zh.md) |
 
 ## 使用与维护约束
 
