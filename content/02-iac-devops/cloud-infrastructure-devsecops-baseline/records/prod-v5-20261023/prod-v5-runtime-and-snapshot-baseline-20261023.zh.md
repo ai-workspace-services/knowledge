@@ -4,8 +4,9 @@
 
 ## 后续应用发布：r101，预检通过、实际部署仍受阻
 
-最新状态（2026-10-23，用户主线核验）：目标 `104.64.208.209` 仅 22 端口监听，Docker 未安装，
-owner journal 已存在；exit 4 后已实证控制端动态角色解析缺少 `ansible.posix`。安装 `ansible.posix 2.1.0`
+最新状态（2026-10-23，用户主线 SSH 样本）：目标 `104.64.208.209` 已安装 Docker `29.9.2`，
+`dockerd` 已启动、`/etc/docker` 存在，但无容器、仍仅 22 端口监听；owner journal 已存在。
+此前 exit 4 已实证控制端动态角色解析缺少 `ansible.posix`。安装 `ansible.posix 2.1.0`
 后同一最小 syntax-check 从 exit 4 转为 exit 0；固定 ref 的公共入口 apply `60471` 运行中，尚未部署成功或 ready。该次不能沿用早期“主机写入前”的阶段结论，
 也不能凭 journal 存在推断安装完成。四个版本 A 记录已更新，TTL 60、DNS only；公共 DNS 未改。
 PG r101 已发布并通过隔离 smoke；目标 V5 的服务健康、运行镜像匹配与业务验收仍未通过。
@@ -270,6 +271,23 @@ exit code；缺失 collection 应在主机操作前失败，安装后应复测�
 collection 缺失；旧 SSH timeout 和 launcher binding 保留为各自历史尝试，不能替代此次根因。
 主线 owner 继续实际安装；知识库只补充
 脱敏事实。公共流量、写入和最终切换仍由 V4 保持，切换须验收后独立人工授权。
+
+### 后续 SSH 样本与控制端依赖漂移（2026-10-23）
+
+以下为最新主线交接，覆盖此前“Docker 未安装”的旧主机样本；保留各次样本的时间边界。
+
+| 项目 | 实际观察 | 验收边界 |
+| --- | --- | --- |
+| Docker 安装进展 | Docker `29.9.2` 已安装；`dockerd` 已启动，`/etc/docker` 存在 | 说明本次执行已越过此前 collection 解析阻断及 Docker 安装步骤；不代表应用部署成功 |
+| 容器与监听 | 最新 SSH 样本无容器，只有 22 监听 | 服务尚待 verify，未标 ready |
+| actual apply `60471` | 仍执行中 | 无最终退出码及 runtime 验收回执 |
+| [Playbooks #736](https://github.com/ai-workspace-infra/playbooks/pull/736) | 已合并 `fe6fdc16453bea8d718e9844a523da364d9ee54d`；动态 role 依赖前置并固定 `ansible.posix 2.1.0` | 代码合同的固定版本不等于本轮实际执行环境全程固定 |
+| 控制端实际 collection | 当前 `ansible-galaxy` 显示 `ansible.posix 2.2.0`；主线确认由 worker 全局安装造成 | 存在执行环境漂移；不能声称本轮 apply 全程使用 2.1.0 |
+| 最小解析 case | 在 `ansible.posix 2.1.0` 下由 exit 4 转 exit 0 的实证仍有效 | 只证明该固定版本下的 case；下次须使用隔离 collection 路径固定版本，核验实际解析来源后重验，当前 PENDING |
+
+#736 曾在 owner CI 完成前因 worker 使用 `--auto` 而合并，后续最终检查通过（主线交接）。
+后续合并须先等待全部检查结束、确认通过并完成审查，再直接合并；不使用 `--auto`。
+此流程纠正及最终绿灯均不替代 V5 运行验收。V4 公共服务与写入保持，迁移及切换未执行。
 
 ## 历代记录（V4 → V3 → V2 → V1 初始记录）
 
