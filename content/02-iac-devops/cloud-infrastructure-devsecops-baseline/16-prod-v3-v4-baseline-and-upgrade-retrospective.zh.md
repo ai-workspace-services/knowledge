@@ -16,6 +16,7 @@ V4 已承接 Console、Accounts、Billing 三个公共服务域名；正式 Cadd
 | 上一轮升级及事故来源 | [V2→V3 历史索引](15-prod-v2-v3-snapshots-and-upgrade-retrospective.zh.md) |
 | V4 保持服务时的 V5 部署中断、证据边界与恢复门禁 | [V5 部署复盘](records/prod-v5-20261023/prod-v5-deployment-postmortem-20261023.zh.md) |
 | 可复用记录格式 | [代际快照与恢复模板](records/prod-v2-v3-20261019/web-saas-generation-snapshot-recovery-template.zh.md) |
+| V5 最新主机样本、r101 制品、Vault 字段及尚未创建的快照 | [V5 运行基线与快照清单](records/prod-v5-20261023/prod-v5-runtime-and-snapshot-baseline-20261023.zh.md) |
 
 ## 本次核验得到的关键事实
 
