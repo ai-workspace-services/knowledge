@@ -20,6 +20,16 @@
 | 实际安装 | 本轮 `run-controller-repair-20261023T1456Z` 已结束，退出码 2；控制器 collection 安装和角色解析通过，应用部署尚未通过。PostgreSQL 与 Doco-CD 健康；stunnel 私钥权限、Caddy 重复 host matcher、Accounts 连接身份摘要阻塞后续启动。修复见 [Playbooks #740](https://github.com/ai-workspace-infra/playbooks/pull/740)，重验待执行 |
 | 迁移和切换 | 尚未执行本轮 V4→V5 迁移、业务恢复演练及观察验收；V4 继续服务和写入，Accounts readyz / Console 只读探测均为 HTTP 200；切换仍需独立明确确认 |
 
+### 三处运行故障修复重验（独立回合）
+
+- 执行标识：`run-runtime-repair-20261023T1517Z`；2026-10-23 23:21:06 至 23:28:43（Asia/Shanghai），run_id 中时间是证据目录建立时间。
+- 固定声明：GitOps `fdd6dd743acb13f3e7a9150f9c3cbecb58c2cab0`；执行：Playbooks `f9cd01538e5dba4674f8d3b41d09579e0e092f2d`；两仓新增不可变 `v2026.10.23-v5-r3`。
+- 安装入口保持 `.github` `2042cfe1e6d6ac66985c4f3e4a44eea15ae7d014`；五服务仍用上文 r101 digest，数据库 migration/schema pin 未变。
+- [Playbooks #740](https://github.com/ai-workspace-infra/playbooks/pull/740) 和 [GitOps #513](https://github.com/ai-workspace-infra/gitops/pull/513) 已在适用检查全部通过、无阻塞审查后合并。
+- 修复：从固定镜像解析 stunnel UID/GID（本次为 100/101），由主机角色配置私钥组读；Caddy host matcher 去重；GitOps 声明非敏感数据库连接身份摘要。
+- 预检查 exit 0；实际部署 exit 2。原三项启动故障已解除：私钥 0640/GID101、Caddy 加载成功、连接身份校验通过。新的就绪阻塞为 stunnel `unable to get issuer certificate`：Vault 中间链未含最终受信任根，Accounts/Billing 数据库连接重置。后续修复见 [Playbooks #741](https://github.com/ai-workspace-infra/playbooks/pull/741)。数据迁移、恢复演练、业务验收与切换均未因此取得通过回执。
+- 脱敏安装日志 SHA256 `a2eac5e280e3ee26e8445c3364c9f09be5fe0909822cbaf55c618cd730478cf3`。原始回执保留于受控本地证据目录；仅归档经脱敏的事实，不提交 state、私钥、令牌或含凭据连接串。
+
 控制器依赖归 Playbooks common；GitOps 仅引用执行版本和非敏感业务配置；凭据继续由 Vault KV 运行时提供；资源、DNS、state 和 CMDB 由 IaC 维护。私钥和凭据值未写入知识库。
 
 迁移兼容性另行阻断：r101 的旧 `copy-full-business` 清单包含会话/临时状态，Billing 常量也不同于本轮候选；不得拿该旧路径直接执行本轮迁移或声称全范围覆盖。后续必须使用经核验的安全迁移模块及真实范围回执，源保持只读快照读取。
