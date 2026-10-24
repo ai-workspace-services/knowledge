@@ -4,6 +4,10 @@
 
 统一流程：[Selfhost 控制面部署与核心数据迁移](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md)。前序记录：[V3→V4 快照与升级复盘](16-prod-v3-v4-baseline-and-upgrade-retrospective.zh.md)；[V2→V3 快照与升级复盘](15-prod-v2-v3-snapshots-and-upgrade-retrospective.zh.md)。
 
+## 最新入口与环境修订（2026-10-24 12:18 +08）
+
+[V5 当前环境总表](records/prod-v5-20261023/prod-v5-runtime-and-snapshot-baseline-20261023.zh.md)现按服务、固定来源、数据库链路、代理状态及验收范围汇总。[公共 Console 白屏回执](records/prod-v5-20261023/20261024-prod-v5-public-console-route-repair.zh.md)纠正“DNS 到达即页面通过”的遗漏：三业务别名已交接，但 Console 的 host matcher 后补修复才完成页面验收。公共 PostgreSQL 别名仍指 V2；V5 服务内部已连接本机数据库，两者不能混淆。11:21 快照早于本次路由修复，恢复后必须按最新固定配置收敛。
+
 ## 修复后业务与快照结论（2026-10-24 后续回执）
 
 [在线业务追加与实时流量回归](records/prod-v5-20261023/20261024-prod-v5-business-append-and-traffic-regression.zh.md)记录追加 152,353 行、r106 三轮真实无写入重放、JP Plus 两周期真实入库及页面核验；[修复后环境快照](records/prod-v5-20261023/20261024-prod-v5-post-repair-environment-snapshot.zh.md)补齐含套餐/订阅/账务的 76 表独立恢复和异机验证。users-only 不再代表最新业务恢复范围。默认 Sandbox 的单一代理 UUID 差异经明确接受保留目标值；策略快照源端也为空。其他节点的空闲/未验收状态、角色登录恢复和整机演练仍分别记录，不能据此宣称最终切换完成。

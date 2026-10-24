@@ -4,6 +4,56 @@
 
 [统一部署与迁移流程](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md) · [V4→V5 基线与升级复盘](../../17-prod-v4-v5-baseline-and-upgrade-retrospective.zh.md) · [V5 部署流程复盘](prod-v5-deployment-postmortem-20261023.zh.md)
 
+## 当前运行结论（2026-10-24 12:18 +08）
+
+本节为最新现场采样；下方净室、快照与故障段落保留各自时点。三个公共业务入口已承接到 V5，但公共入口交接、数据库入口交接、后台写入权及全业务验收是不同状态，不合并成“整代切换完成”。本库公开，实际节点域名/地址清单和完整运行元数据仍存于受控回执。
+
+| 范围 | 当前事实 | 状态边界 |
+| --- | --- | --- |
+| Console 公共入口 | DNS 指向 V5；Caddy 公共别名遗漏已修复；首页/登录 HTML、脚本和浏览器均通过 | PASS；已有登录会话可识别，不替代重新输入凭据/MFA 验收 |
+| Accounts 公共入口 | DNS 指向 V5，readiness、真实登录会话的用量接口及数据库汇总一致 | PASS（已执行项） |
+| Billing 公共入口 | DNS 指向 V5；受认证的快照 POST 和健康检查使用最小路由；两个真实采集周期已入库 | PASS（实际有流量节点）；不是所有代理端到端通过 |
+| PostgreSQL 公共别名 | DNS 仍指向 V2，未切到 V5；不能列为第四条已交接别名 | NOT_SWITCHED；本次不修改 |
+| V5 内部数据库 | Accounts/Billing → stunnel-client:15432 → stunnel-server:15433 → postgres:5432；链路在本机 Compose 网络内 | 已连接 V5；不依赖上述公共 PostgreSQL 别名 |
+| 数据与结构 | 33 users、18 plans、7 subscriptions、0 policy snapshots；schema `2026102002` clean | 策略源端本就为空；不制造策略数据 |
+| 最新流量样本 | 12:18:09 只读统计：76,359 分钟桶、76,361 条账本，最新桶 12:17:00 | 与更早快照计数不同属正常在线增量，不改写旧回执 |
+| 目标运行角色 | `DATABASE_RUNTIME_ROLE=primary`、`DATABASE_BACKGROUND_WRITERS=false`、`BILLING_INGEST_MODE=push` | 正常业务请求允许；财务后台执行保持关闭，V4 仍在线写入 |
+| 数据迁移幂等 | r106 业务追加三轮真实 no-op，零追加/写入/序列推进 | PASS（15 表追加范围）；不把迁移 CLI 版本当服务镜像版本 |
+| 逻辑环境快照 | 11:19–11:21 捕获与恢复、异机验证通过 | 早于公共 Console 路由修复；恢复后须按最新固定配置收敛 |
+| 其他验收 | OAuth/MFA 重新登录、支付、未验收节点正流量、整机/Vault 恢复、最终追齐和写入交接 | NOT_RUN / BLOCKED，不能由 DNS 或探针升级为 PASS |
+
+本轮实际 Accounts/Billing 进程未包含 `DEFAULT_REGION`，不从历史环境变量推断部署地域。旧段落中的 `DATABASE_BACKGROUND_WRITERS=true` 等源环境样本不覆盖本节的 false；Console 实际运行 hostname 仍是候选专属身份，公共别名由 Caddy 承接。完整运行值和资源地域以受控 manifest/CMDB 为准，未修改或补造配置。
+
+### 当前固定来源与服务配置
+
+部署声明为 GitOps `01461922e2c91da946c68626d88d5ffc9472d3a7`，Playbooks owner 为 `a675ce0bd049834c4668b36bba10fa2b80871dbc`；Doco-CD 已选择并回读同一 GitOps commit。Caddy 规范模板应用后重放无变更，控制器选择重放 changed=0。[本次入口执行回执](20261024-prod-v5-public-console-route-repair.zh.md)记录实际阶段时间及配置摘要。
+
+| 服务 | 固定构件身份 | 声明、主机配置与内部端口 |
+| --- | --- | --- |
+| Console | r101 协调基线上的 Portal r106 维护；image index `06775cfa5582fb83bae336c4c4befe1fbd4f7747d526653b80736e3e4862e666` | `compose/web-saas/.env.prod-v5-candidate` / `docker-compose.prod-v5-candidate.yml`；内部 3000；认证 BFF 和静态资源仍交 Console |
+| Accounts | digest `39716c2941b6f8ebbc0602589a59711d846234cb8313ae21254a91ba6073def7` | 同一 Compose；`/etc/xcontrol/web-saas/config/account.yaml`；内部 8080；数据库走本地隧道 |
+| Billing | digest `14bbaee5ba37d85ddf243272ee2c3bed25603ee26ffd5c0b8d685cfe0e7a85a0` | 同一 Compose；内部 8081；push 接收后实际形成分钟桶/账本 |
+| PostgreSQL | digest `56f4179bafafa52061ac21003dc80c1a0b7ceb63fffb2c7bd05f29237b62b85e` | 同一 Compose；内部 5432；活跃 account 数据库，不与隔离恢复/scratch 库混用 |
+| Content | digest `e6e791437bd3b57a4dec0bc9dc2527b681dd52960b6f692be6ff16322018788e` | 同一 Compose；内部 8084；服务配置归对应 owner |
+| Caddy / 隧道 / Doco-CD | 沿用已固定基础构件；本次只更新 Caddy 内容和控制器选择 | Caddy `/etc/xcontrol/web-saas/Caddyfile`；隧道配置同目录；控制器 `/opt/doco-cd/docker-compose.yml`；不把 secrets 文件内容公开 |
+
+### 代理节点采样（2026-10-24 12:10–12:18 +08）
+
+| 逻辑节点 | V5 注册/心跳 | DNS / 本轮结论 |
+| --- | --- | --- |
+| JP Free | healthy=true，新鲜心跳 | 域名可解析；空闲采集，不冒称正流量已验证 |
+| JP01 | healthy=true，新鲜心跳 | 域名可解析；凭据修复及重放通过，正流量仍按实际样本判断 |
+| JP Plus | healthy=true，新鲜心跳 | 域名可解析；已通过连续两个真实正流量周期 |
+| PH Plus | healthy=true，新鲜心跳 | 域名可解析；本轮未完成独立正流量端到端验收 |
+| JP Team | 有新鲜心跳但 healthy=false | 对应注册域名查询 NXDOMAIN；不得标健康或可用 |
+| SG / US | 未出现在当前 V5 注册表 | 域名可解析不等于已接入 V5；本轮未修复或验收 |
+
+代理节点域名继续属于各自边缘资源；“节点名称带旧代际”不等于它仍使用旧控制面。完整域名清单与心跳时间在受控运行回执中保存，公开版本使用逻辑节点名。V4 的写入及现有资源保持不变。
+
+## 公共 Console 入口后续修复（2026-10-24 中午）
+
+[公共 Console 白屏回执](20261024-prod-v5-public-console-route-repair.zh.md)：CNAME 指向 V5 时，实际 Caddy 漏掉公共 Console host，导致 HTTP 200 空响应。现场补齐路由后首页、登录页及脚本资源恢复，浏览器页面通过。DNS 正确与实际入口通过分开记录；11:21 快照早于本次路由修复，恢复后需按最新固定声明收敛。
+
 ## 修复后环境快照（2026-10-24 11:21 +08）
 
 [完整快照与恢复回执](20261024-prod-v5-post-repair-environment-snapshot.zh.md)：run_id `20261024031956`，活跃数据库 76 张表、33 users、7 subscriptions、18 plans、76,131 个分钟桶和 76,133 条账本；完整字段/序列/schema（含所有权与权限）一致。加密配置、globals、容器元数据和固定构件引用已保存，独立数据库恢复 11.13 秒、异机密文校验及解密可读性均 PASS，业务重启 0。此为后续最新恢复点；下方旧 NOT_CREATED/空业务或 users-only 恢复仅描述各自历史采样，不能继续作为当前结论。云磁盘、共享 Vault 与完整环境恢复未执行。
@@ -15,7 +65,7 @@
 原三轮部署/users-only 幂等结论保留其范围；本轮全业务在线追加另以 r106 完成三轮真实无写入重验（3/3）；恢复后连续两个采集周期新增 8 个分钟桶、8 条账本和 39,184,393 字节，仅覆盖 JP Plus 实际流量。JP Free/JP01 当前空闲，其余节点不宣称通过；不能沿用旧三轮结论。后续已有用户明确授权的公共入口交接；本次修复不新增 DNS 动作，V4 继续在线写入。下方“未授权切换/公共 DNS 未变”仅描述其历史采样时点。
 
 <!-- BEGIN CLEANROOM 20261024 -->
-## 当前净室验证周期（更新至 2026-10-24 09:02:49 +08）
+## 净室验证周期历史回执（更新至 2026-10-24 09:02:49 +08）
 
 本节及[本轮完整回执](prod-v5-cleanroom-deployment-migration-validation-20261024.zh.md)取代下方 01:07 样本作为新周期事实；原 r5/r103、Docker 未安装、旧 apply 运行中及各次失败仍按采样背景保留。
 
