@@ -1,4 +1,4 @@
-"""Contract tests for 10 core platform services OrbStack deployment and acceptance matrix."""
+"""Contract tests for 11 core platform services OrbStack deployment and acceptance matrix."""
 import os
 from pathlib import Path
 import re
@@ -12,23 +12,26 @@ VERIFY_DIR = REPO_ROOT / "scripts" / "orbstack-verification"
 VERIFY_SCRIPT = VERIFY_DIR / "verify-orbstack-all-services.sh"
 
 
-class TestOrbStack10CoreServicesMatrix(unittest.TestCase):
+class TestOrbStack11CoreServicesMatrix(unittest.TestCase):
     def test_acceptance_matrix_document_exists(self):
         self.assertTrue(DOC_PATH.exists(), f"Missing acceptance document: {DOC_PATH}")
         content = DOC_PATH.read_text(encoding="utf-8")
-        self.assertIn("title: 10 大核心服务类别 macOS OrbStack 单机部署与健康验收矩阵", content)
+        self.assertIn("title: 11 大核心服务类别 macOS OrbStack 单机部署与健康验收矩阵", content)
         self.assertIn("slug: platform-core-services-orbstack-acceptance-matrix", content)
         self.assertIn("status: approved", content)
         self.assertIn("open-platform Umbrella Chart", content)
+        self.assertIn("observability-stack", content)
+        self.assertIn("observability-agent", content)
         self.assertIn("ai-workspace-infra/artifacts/oci/charts/open-platform", content)
 
-    def test_all_10_service_categories_in_matrix(self):
+    def test_all_11_service_categories_in_matrix(self):
         content = DOC_PATH.read_text(encoding="utf-8")
         expected_projects = [
             "platform-gitea",
             "platform-harbor",
             "platform-silo",
             "platform-cmdb",
+            "platform-observability",
             "platform-vault-zitadel",
             "platform-doco-cd",
             "platform-k3s-pgvector",
@@ -43,6 +46,12 @@ class TestOrbStack10CoreServicesMatrix(unittest.TestCase):
             "gitea/gitea:1.22.6",
             "goharbor/harbor-portal:v2.15.4",
             "pgsty/silo:RELEASE.2026-10-18T00-00-00Z",
+            "victoriametrics/victoria-metrics:v1.101.0",
+            "victoriametrics/victoria-logs:v1.52.0",
+            "victoriametrics/victoria-traces:v0.1.0",
+            "grafana/grafana:11.3.0",
+            "prom/node-exporter:v1.8.2",
+            "timberio/vector:0.41.1-alpine",
             "hashicorp/vault:1.17.6",
             "ghcr.io/kimdre/doco-cd:0.1.28",
             "pgvector/pgvector:pg16",
@@ -62,12 +71,13 @@ class TestOrbStack10CoreServicesMatrix(unittest.TestCase):
             "02-artifact-harbor",
             "03-s3-storage-silo",
             "04-cmdb-inventory",
-            "05-identity-vault-zitadel",
-            "06-gitops-doco-cd",
-            "07-container-vector-node",
-            "08-pg-backup-drill",
-            "09-ai-gateway",
-            "10-mcp-server",
+            "05-observability",
+            "06-identity-vault-zitadel",
+            "07-gitops-doco-cd",
+            "08-container-vector-node",
+            "09-pg-backup-drill",
+            "10-ai-gateway",
+            "11-mcp-server",
         ]
         assigned_ports = set()
         for d in expected_dirs:
@@ -82,17 +92,23 @@ class TestOrbStack10CoreServicesMatrix(unittest.TestCase):
                 assigned_ports.add(p)
 
         # Ensure all key platform ports are assigned
-        critical_ports = {"13000", "13001", "14000", "15434", "15435", "15436", "18000", "18080", "18200", "18888", "19000", "19001", "19088", "19128"}
+        critical_ports = {
+            "13000", "13001", "13030", "14000",
+            "15434", "15435", "15436",
+            "18000", "18080", "18200", "18686", "18888",
+            "19000", "19001", "19088", "19090", "19100", "19128", "19428",
+            "10428"
+        }
         self.assertTrue(critical_ports.issubset(assigned_ports), f"Missing critical ports: {critical_ports - assigned_ports}")
 
     def test_index_and_overview_cross_references(self):
         index_content = INDEX_PATH.read_text(encoding="utf-8")
         self.assertIn("platform-core-services-orbstack-acceptance-matrix.zh.md", index_content)
-        self.assertIn("10 大核心服务类别 macOS OrbStack 单机部署与健康验收矩阵", index_content)
+        self.assertIn("11 大核心服务类别 macOS OrbStack 单机部署与健康验收矩阵", index_content)
 
         overview_content = OVERVIEW_PATH.read_text(encoding="utf-8")
         self.assertIn("platform-core-services-orbstack-acceptance-matrix.zh.md", overview_content)
-        self.assertIn("10 大核心服务类别", overview_content)
+        self.assertIn("11 大核心服务类别", overview_content)
 
 
 if __name__ == "__main__":
