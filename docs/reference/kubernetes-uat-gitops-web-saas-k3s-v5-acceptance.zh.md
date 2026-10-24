@@ -78,4 +78,40 @@
 | **`iac_modules`** | [PR #468](https://github.com/ai-workspace-infra/iac_modules/pull/468)<br>[PR #469](https://github.com/ai-workspace-infra/iac_modules/pull/469) | `3f049e5` | 引入保留 UAT 命名空间 `web-saas-k3s-v5`，建立独立环境目录 `envs/uat/web-saas-k3s-v5`，18 项单测全绿 |
 | **`gitops`** | [PR #525](https://github.com/ai-workspace-infra/gitops/pull/525)<br>[PR #526](https://github.com/ai-workspace-infra/gitops/pull/526) | `f242781` | 声明 Target、2C4G 节点、7 个独立域名；装配 Flux 集群目录与 fullstack:0.2.0 HelmRelease，锁定不可变 digest |
 | **`playbooks`** | [PR #758](https://github.com/ai-workspace-infra/playbooks/pull/758) | `6e9bc7c2` | 实现 `roles/vhosts/k3s-cluster-server/tasks/bootstrap.yml` 幂等装配；交付 `verify-web-saas-k3s-gitops.sh` 冒烟套件 |
-| **`platform-ops-toolkit`** | [PR #1436](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1436) | `a40b7a6a` | 派生 `.github/workflows/web-saas-k3s-orchestrator.yml`，解耦纯编排的 5 阶段串行流水线 |
+| **`platform-ops-toolkit`** | [PR #1436](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1436)<br>[PR #1437](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1437)<br>[PR #1438](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1438)<br>[PR #1439](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1439) | `0f8dc5ad` | 派生 `.github/workflows/web-saas-k3s-orchestrator.yml`，解耦纯编排的 5 阶段流水线；打通 Vault Akamai OIDC 与 CICD 角色授权；集成远程 S3 状态后端与仅新增安全校验 |
+
+---
+
+## 6. Akamai Cloud VPS 实机部署与 GitHub Actions 流水线验证
+
+- **调度工作流**：`.github/workflows/web-saas-k3s-orchestrator.yml`
+- **运行记录**：[Actions Run 40086294084](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/40086294084)（状态：**SUCCESS**）
+- **Target 命名空间**：`web-saas-k3s-v5`（权威状态路径：`terraform/uat/svc.plus/akamai-cloud/manbuzhe2026/web-saas-k3s-v5/terraform.tfstate`）
+- **凭据隔离授权**：通过 Vault JWT OIDC 动态获取 `LINODE_TOKEN` 与 `TF_STATE_*`（凭据不落盘、不进日志）
+- **安全检查结果**：
+  ```text
+  Terraform will perform the following actions:
+  Plan: 2 to add, 0 to change, 0 to destroy.
+  Additive-only safety check PASSED: zero deletions detected.
+  ```
+- **资源规划确认**：
+  1. `module.compute_web_saas_k3s_v5.linode_instance.this[0]`：Tokyo 3 (`jp-tyo-3`), 2 vCPU / 4 GB (`g6-standard-2`), Debian 13 (`linode/debian13`)
+  2. `linode_firewall.fw_web_saas_k3s_v5`：入站放通 22, 80, 443, 6443
+
+### 对外与对内域名测试矩阵
+
+| 域名 | 解析与暴露范围 | 验证动作与状态 |
+| :--- | :--- | :--- |
+| **`console-k3s-v5.svc.plus`** | **对外** | **开放 DNS 解析测试**（由 Cloudflare DNS Upsert 自动配置 A 记录至主机公网 IP） |
+| **`accounts-k3s-v5.svc.plus`** | **对外** | **开放 DNS 解析测试**（由 Cloudflare DNS Upsert 自动配置 A 记录至主机公网 IP） |
+| **`billing-k3s-v5.svc.plus`** | **对外** | **开放 DNS 解析测试**（由 Cloudflare DNS Upsert 自动配置 A 记录至主机公网 IP） |
+| **`content-k3s-v5.svc.plus`** | 对内 | 集群内部服务拓扑路由保留 |
+| **`gateway-k3s-v5.svc.plus`** | 对内 | 集群内部服务拓扑路由保留 |
+| **`postgresql-k3s-v5.svc.plus`** | 对内 | 独立 StatefulSet 数据库服务保留 |
+| **`k3s-v5.svc.plus`** | 对内 | K3s 集群控制面内部访问标识保留 |
+
+### 生产安全红线验证确认
+- **现有 V5 主机与业务数据**：全量保留，零修改，零删除
+- **现有生产域名公共 DNS**：未做任何改动
+- **生产流量切换（Cutover）**：明确标注为 **`NOT_RUN`**
+
