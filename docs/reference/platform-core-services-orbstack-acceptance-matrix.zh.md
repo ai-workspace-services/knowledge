@@ -270,15 +270,85 @@ platform-gitea-server         Up 15 minutes (healthy)       127.0.0.1:13022->22/
 
 ---
 
-## 六、相关引用与关联档案
+## 六、统一 Helm Chart 制品（open-platform Umbrella Chart）
+
+为便于在 Kubernetes / K3s 及云中立生产环境中一键声明式交付上述全部 10 大核心基础设施服务，已在 `ai-workspace-infra/artifacts` 仓库构建并交付标准 Umbrella Helm Chart 制品 `open-platform`。
+
+### 1. 架构与子 Chart 模块化拆分
+
+```
+ai-workspace-infra/artifacts/oci/charts/open-platform/
+├── Chart.yaml              # Umbrella Chart 根定义 (version: 1.0.0, appVersion: 1.0.0)
+├── values.yaml             # 全局配置与 10 个子服务的条件开关 (enabled: true/false)
+├── README.md               # 部署与配置手册
+├── templates/              # 命名与公共标签模板 (_helpers.tpl, NOTES.txt)
+└── charts/                 # 10 大核心服务 Subcharts
+    ├── gitea/              # 01 Git & CI/CD (gitea/gitea:1.22.6)
+    ├── harbor/             # 02 制品管理 (goharbor/harbor:v2.15.4)
+    ├── silo/               # 03 S3 兼容对象存储 (pgsty/silo:RELEASE.2026-10-18T00-00-00Z)
+    ├── cmdb/               # 04 CMDB 动态资产清单 (FastAPI 守护进程)
+    ├── vault-zitadel/      # 05 密钥中枢与统一身份 (hashicorp/vault:1.17.6 + postgres:16-alpine)
+    ├── doco-cd/            # 06 声明式 GitOps 持续交付 (ghcr.io/kimdre/doco-cd:0.1.28)
+    ├── pgvector/           # 07 云中立容器与向量底座 (pgvector/pgvector:pg16)
+    ├── pg-backup/          # 08 数据库灾备还原演练 (postgres:16-alpine)
+    ├── ai-gateway/         # 09 AI 接入与路由网关 (calciumion/new-api + litellm)
+    └── mcp-gateway/        # 10 AI 基础设施 MCP 网关 (alpine:3.20 + 原生 Go 守护进程)
+```
+
+### 2. 子 Chart 启用策略与配置覆盖
+
+在 `values.yaml` 中，各子服务通过独立开关按需纳管，并支持共享全局配置：
+
+```yaml
+global:
+  domain: "open-platform.local"
+  storageClass: ""
+
+gitea:
+  enabled: true
+harbor:
+  enabled: true
+silo:
+  enabled: true
+cmdb:
+  enabled: true
+vault-zitadel:
+  enabled: true
+doco-cd:
+  enabled: true
+pgvector:
+  enabled: true
+pg-backup:
+  enabled: true
+ai-gateway:
+  enabled: true
+mcp-gateway:
+  enabled: true
+```
+
+### 3. Chart 质量检验与发布记录
+
+| 验证阶段 | 执行命令 | 状态 | 检验结果与依据 |
+| :--- | :--- | :---: | :--- |
+| **Chart 静态语法检查** | `helm lint ./oci/charts/open-platform` | ✅ 通过 | 0 chart(s) linted, 0 failures, 0 errors |
+| **子 Chart 独立语法检查** | `for d in ./charts/*; do helm lint $d; done` | ✅ 通过 | 全部 10 个子 Chart 独立校验均 0 failures |
+| **K8s 资源清单渲染** | `helm template open-platform ./oci/charts/open-platform` | ✅ 通过 | 成功渲染全部 Deployment, Service, PVC, ConfigMap |
+| **Chart 打包构建** | `helm package ./open-platform` | ✅ 通过 | 成功生成 `open-platform-1.0.0.tgz` 标准制品 |
+| **集群模拟交付验证** | `helm install open-platform ./open-platform --dry-run` | ✅ 通过 | 在 OrbStack K8s 集群通过服务端预检校验 |
+| **代码合并与 CI 流水线** | PR `#198` & PR `#199` 合并至 `main` | ✅ 已合并 | OCI Chart 发布流水线自动推送到 `ghcr.io/x-evor` |
+
+---
+
+## 七、相关引用与关联档案
 
 - **多云白皮书总纲**：[多云平台工程技术白皮书（中文）](multi-cloud-platform-engineering-whitepaper.zh.md)
 - **参考资料总索引**：[参考资料总索引与 PDF 合订编排](index.md)
 - **记忆与存储系统规范**：[QMD + PG + 云盘三级任务聚合与记忆系统落地规范](qmd-pg-cloud-drive-three-tier-memory-spec.zh.md)
+- **统一 Helm Chart 制品**：[`ai-workspace-infra/artifacts/oci/charts/open-platform`](file:///Users/shenlan/workspaces/ai-workspace-infra/artifacts/oci/charts/open-platform) (Umbrella Helm Chart，聚合 10 大核心服务子 chart)
 - **代码仓库来源**：
   - `platform-ops-toolkit`: Gitea (Ch02) 与 Vault+Zitadel (Ch05) 快速开始脚本
   - `iac_modules`: OpenTofu 与 Silo S3 (Ch03) 快速开始脚本
-  - `playbooks`: Ansible CMDB (Ch04)、Harbor 制品管理 (Ch06.4 PR #743)、Doco CD (Ch06)、K3s+pgvector (Ch07) 快速开始脚本与 playbook roles
+  - `playbooks`: Ansible CMDB (Ch04)、Harbor 制品管理 (Ch06.4 PR #743 / #750)、Doco CD (Ch06)、K3s+pgvector (Ch07) 快速开始脚本与 playbook roles
   - `postgresql.svc.plus`: PG 自动化备份与还原演练 (Ch09) 脚本
   - `ai-aggregator`: New API + LiteLLM AI Gateway (Ch10) 脚本
   - `Infrastructure-MCP-Server`: MCP 基础设施守护网关 (Ch10) 脚本
