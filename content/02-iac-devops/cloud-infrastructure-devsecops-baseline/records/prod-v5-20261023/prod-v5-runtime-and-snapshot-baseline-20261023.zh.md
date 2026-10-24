@@ -2,18 +2,18 @@
 
 核验时间：2026-10-24，Asia/Shanghai。本文是有时间边界的运行回执，配置权威仍归 GitOps、Playbooks、IaC 与控制入口各自 owner。公开版本仅保留逻辑代际、公开代码引用和脱敏摘要；主机标识、地址、秘密存储路径、私有备份位置及原始证据留在受控位置。
 
-[统一部署与迁移流程](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md) · [V4→V5 基线与升级复盘](../../17-prod-v4-v5-baseline-and-upgrade-retrospective.zh.md) · [V5 部署流程复盘](prod-v5-deployment-postmortem-20261023.zh.md)
+[统一部署与迁移流程](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md) · [多云平台工程技术白皮书（含 PostgreSQL DNS 案例）](../../../../../docs/reference/multi-cloud-platform-engineering-whitepaper.zh.md#1113-v5-postgresql-公共入口-dns-交接) · [V4→V5 基线与升级复盘](../../17-prod-v4-v5-baseline-and-upgrade-retrospective.zh.md) · [V5 部署流程复盘](prod-v5-deployment-postmortem-20261023.zh.md)
 
 ## 当前运行结论（2026-10-24 12:18 +08）
 
-本节为最新现场采样；下方净室、快照与故障段落保留各自时点。三个公共业务入口已承接到 V5，但公共入口交接、数据库入口交接、后台写入权及全业务验收是不同状态，不合并成“整代切换完成”。本库公开，实际节点域名/地址清单和完整运行元数据仍存于受控回执。
+本节为 2026-10-24 12:18 +08 现场采样；PostgreSQL 公共 DNS 的后续状态见下方 15:42 追加回执；下方净室、快照与故障段落保留各自时点。三个公共业务入口已承接到 V5，但公共入口交接、数据库入口交接、后台写入权及全业务验收是不同状态，不合并成“整代切换完成”。本库公开，实际节点域名/地址清单和完整运行元数据仍存于受控回执。
 
 | 范围 | 当前事实 | 状态边界 |
 | --- | --- | --- |
 | Console 公共入口 | DNS 指向 V5；Caddy 公共别名遗漏已修复；首页/登录 HTML、脚本和浏览器均通过 | PASS；已有登录会话可识别，不替代重新输入凭据/MFA 验收 |
 | Accounts 公共入口 | DNS 指向 V5，readiness、真实登录会话的用量接口及数据库汇总一致 | PASS（已执行项） |
 | Billing 公共入口 | DNS 指向 V5；受认证的快照 POST 和健康检查使用最小路由；两个真实采集周期已入库 | PASS（实际有流量节点）；不是所有代理端到端通过 |
-| PostgreSQL 公共别名 | DNS 仍指向 V2，未切到 V5；不能列为第四条已交接别名 | NOT_SWITCHED；本次不修改 |
+| PostgreSQL 公共别名 | 截至 12:18 的历史采样仍指向 V2；15:42 后续核验已观察到指向 V5，见下方追加回执 | 后续 DNS 已切换；端到端数据库连接未验收 |
 | V5 内部数据库 | Accounts/Billing → stunnel-client:15432 → stunnel-server:15433 → postgres:5432；链路在本机 Compose 网络内 | 已连接 V5；不依赖上述公共 PostgreSQL 别名 |
 | 数据与结构 | 33 users、18 plans、7 subscriptions、0 policy snapshots；schema `2026102002` clean | 策略源端本就为空；不制造策略数据 |
 | 最新流量样本 | 12:18:09 只读统计：76,359 分钟桶、76,361 条账本，最新桶 12:17:00 | 与更早快照计数不同属正常在线增量，不改写旧回执 |
@@ -23,6 +23,20 @@
 | 其他验收 | OAuth/MFA 重新登录、支付、未验收节点正流量、整机/Vault 恢复、最终追齐和写入交接 | NOT_RUN / BLOCKED，不能由 DNS 或探针升级为 PASS |
 
 本轮实际 Accounts/Billing 进程未包含 `DEFAULT_REGION`，不从历史环境变量推断部署地域。旧段落中的 `DATABASE_BACKGROUND_WRITERS=true` 等源环境样本不覆盖本节的 false；Console 实际运行 hostname 仍是候选专属身份，公共别名由 Caddy 承接。完整运行值和资源地域以受控 manifest/CMDB 为准，未修改或补造配置。
+
+## PostgreSQL 公共别名更新回执（2026-10-24 15:42 +08）
+
+用户手动将 `postgresql.svc.plus` 的 CNAME 更新为 `postgresql-selfhost-prod-v5.svc.plus`。本次文档任务没有写入 DNS，也没有对主机、数据库或服务执行变更。
+
+| 检查项 | 观察结果 | 边界 |
+| --- | --- | --- |
+| Cloudflare 两台权威 DNS、1.1.1.1、8.8.8.8 | 均返回 `postgresql-selfhost-prod-v5.svc.plus` | DNS 解析一致；仅代表采样时查询结果 |
+| 目标主机记录 | 存在 A 记录；本公开记录不披露地址；未观察到 AAAA | 不代表传输层或数据库健康 |
+| TCP 15433 | 连接探测成功 | 只证明端口可达，不证明 TLS、身份认证或 SQL 可用 |
+| Auditor 只读探测 | 受保护的本机只读事务确认 `db_readonly`、`account`、只读事务开启，`users` 与 `subscriptions` 表存在；以事务回滚结束 | 该检查走主机本地数据库路径，并未经新的公共 CNAME 建立数据库会话 |
+| 公共端点 TLS 与认证数据库会话 | 未执行 | NOT_RUN；不能宣称公共 PostgreSQL 业务链路验收通过 |
+
+Playbooks [#752](https://github.com/ai-workspace-infra/playbooks/pull/752) 与 GitOps [#524](https://github.com/ai-workspace-infra/gitops/pull/524) 已在此次 DNS 采样前合并，提供相关源代码/声明更新；本次没有在 V5 上执行部署或 reconcile，合并不等于线上配置已收敛。此回执只更新 PostgreSQL 公共 DNS 观察，不改变 12:18 时点的其他服务、数据、写入权或业务验收结论。
 
 ### 当前固定来源与服务配置
 
