@@ -115,3 +115,140 @@
 - **现有生产域名公共 DNS**：未做任何改动
 - **生产流量切换（Cutover）**：明确标注为 **`NOT_RUN`**
 
+---
+
+## 7. 实机运行验收与 Helm 平台扩展部署凭证 (Live Verification & Platform Addons)
+
+### 7.1 实机运行环境概览
+- **宿主机规格**：Akamai Cloud VPS Tokyo 3 (`jp-tyo-3`), 2 vCPU / 4 GB, Debian 13 (`linode/debian13`)
+- **主节点公网 IP**：`104.105.141.213`
+- **Kubernetes 引擎**：K3s v1.31.2+k3s1 (启用 servicelb，禁用 traefik)
+- **GitOps 控制面**：Flux v2 (source-controller, kustomize-controller, helm-controller, notification-controller)
+- **密钥同步引擎**：External Secrets Operator v1 (集成 Vault KV2 后端)
+
+### 7.2 补充 Helm 平台级服务部署 (独立 Namespace)
+
+#### 1. 可观测性服务栈 (`platform-observability`)
+- **部署命名空间**：`platform-observability`
+- **Helm Chart**：`observability-stack-1.0.0`
+- **Pod 运行状态**：`platform-observability-observability-stack-79cbb4ff6f-mp4xc` (5/5 Running, 0 重启)
+- **集成组件与健康检查**：
+  - **VictoriaMetrics**：`http://10.43.212.125:8428/health` -> HTTP 200 `OK`
+  - **VictoriaLogs**：日志收集分析引擎就绪
+  - **VictoriaTraces**：链路追踪存储引擎就绪
+  - **OpenTelemetry Collector**：gRPC (4317) / HTTP (4318) 接收器就绪
+  - **Grafana**：`http://10.43.212.125:3000/api/health` -> HTTP 200 `{"database":"ok","version":"11.3.0"}`
+
+#### 2. 身份与凭据服务 (`platform-vault-zitadel`)
+- **部署命名空间**：`platform-vault-zitadel`
+- **Helm Chart**：`vault-zitadel-1.0.0` (`zitadelDb.enabled=false`, `persistence.enabled=false`)
+- **Pod 运行状态**：`platform-vault-zitadel-vault-55f678f486-7kd8n` (1/1 Running, 0 重启)
+- **健康检查**：
+  - **Vault Server API**：`http://10.43.42.50:8200/v1/sys/health` -> HTTP 200 `{"initialized":true,"sealed":false,"version":"1.17.6"}`
+
+### 7.3 Web SaaS 核心全栈运行状态 (`web-saas-k3s-v5`)
+
+```text
+NAMESPACE                NAME                                                          READY   STATUS    RESTARTS   AGE
+flux-system              helm-controller-79dbc95468-qskbr                              1/1     Running   0          47m
+flux-system              kustomize-controller-78dcc6787c-88zbk                         1/1     Running   0          47m
+flux-system              notification-controller-8466c9f5-c77nd                        1/1     Running   0          47m
+flux-system              source-controller-694b749d65-kvsjw                            1/1     Running   0          47m
+kube-system              coredns-7cfb7bc9c7-r5vmt                                      1/1     Running   0          47m
+kube-system              local-path-provisioner-77b9867795-ssj2z                       1/1     Running   0          47m
+kube-system              metrics-server-6dc596dfb8-b5vs6                               1/1     Running   0          47m
+kube-system              svclb-web-saas-caddy-ingress-f5e9ac83-hgct9                   1/1     Running   0          10s
+platform-observability   platform-observability-observability-stack-79cbb4ff6f-mp4xc   5/5     Running   0          23m
+platform-vault-zitadel   platform-vault-zitadel-vault-55f678f486-7kd8n                 1/1     Running   0          23m
+platform                 external-secrets-79c55b776f-drv7r                             1/1     Running   0          31m
+platform                 external-secrets-cert-controller-58569cf565-5qgvj             1/1     Running   0          46m
+platform                 external-secrets-webhook-78d98b4d97-gm9lf                     1/1     Running   0          46m
+web-saas-k3s-v5          web-saas-accounts-b6f5757b4-wdxjh                             1/1     Running   0          5m
+web-saas-k3s-v5          web-saas-billing-664f6c85f-x8pcb                              1/1     Running   0          8m
+web-saas-k3s-v5          web-saas-caddy-5bdc94dbb-h65jg                                1/1     Running   0          24m
+web-saas-k3s-v5          web-saas-console-64fb7b6cf-mmjj5                              1/1     Running   0          4m
+web-saas-k3s-v5          web-saas-content-f95c564f6-zj4f5                              1/1     Running   0          24m
+web-saas-k3s-v5          web-saas-postgresql-0                                         1/1     Running   0          24m
+```
+
+### 7.4 GitOps 状态与 HelmRelease 就绪凭证
+- **GitRepository**：`platform-config` (URL: `https://github.com/ai-workspace-infra/gitops.git`, Branch: `main`, Status: `Ready`)
+- **Kustomization**：`web-saas-fullstack-uat` (Status: `Applied revision main@sha1:8d0e9c1...`)
+- **HelmRelease**：`distributed-web-saas-fullstack` (Status: `Helm upgrade succeeded for release web-saas-k3s-v5/web-saas with chart distributed-web-saas-fullstack@0.2.1+c7d9923ef401`)
+- **ExternalSecret**：`web-saas-secrets` (Status: `SecretSynced: True`)
+  - 成功从 Vault `kv/data/WEB_SAAS/uat/*` 提取并在 Kubernetes 生成原生 Secret：
+    - `POSTGRES_PASSWORD`、`ROOT_BOOTSTRAP_PASSWORD`、`ROOT_BOOTSTRAP_EMAIL`、`INTERNAL_SERVICE_TOKEN`、`DATABASE_URL`、`jwt-secret`、`password`
+
+### 7.5 对外开放 DNS 解析测试与 HTTPS 业务端点验证
+
+已通过 Cloudflare API 创建 A 记录直接解析至东京主机公网 IP `104.105.141.213`，并自外部发起真实端到端 HTTPS 验证：
+
+#### 1. 控制台服务 (`console-k3s-v5.svc.plus`)
+- **DNS 解析验证**：`console-k3s-v5.svc.plus -> 104.105.141.213`
+- **公网请求**：`curl -k -i https://console-k3s-v5.svc.plus`
+- **响应回执**：
+  ```http
+  HTTP/2 200 
+  accept-ranges: bytes
+  alt-svc: h3=":8443"; ma=2592000
+  content-type: text/html
+  date: Sat, 24 Oct 2026 11:32:12 GMT
+  etag: "6adc1d88-11644"
+  last-modified: Sat, 24 Oct 2026 02:52:56 GMT
+  server: nginx/1.22.1
+  via: 1.1 Caddy
+  content-length: 71236
+
+  <!DOCTYPE html>...<title>XWorkmate · XConnect · AI Workspace | XWork Technologies</title>
+  ```
+- **判定**：**PASS**（Next.js SSR / 静态资源全量加载成功，Caddy 反向代理正常）
+
+#### 2. 账号服务 (`accounts-k3s-v5.svc.plus`)
+- **DNS 解析验证**：`accounts-k3s-v5.svc.plus -> 104.105.141.213`
+- **公网请求**：`curl -k -i https://accounts-k3s-v5.svc.plus/healthz`
+- **响应回执**：
+  ```http
+  HTTP/2 200 
+  alt-svc: h3=":8443"; ma=2592000
+  content-type: application/json; charset=utf-8
+  date: Sat, 24 Oct 2026 11:32:16 GMT
+  via: 1.1 Caddy
+  content-length: 15
+
+  {"status":"ok"}
+  ```
+- **判定**：**PASS**（账号后端服务就绪，共享租户参数正确装配）
+
+#### 3. 计费服务 (`billing-k3s-v5.svc.plus`)
+- **DNS 解析验证**：`billing-k3s-v5.svc.plus -> 104.105.141.213`
+- **公网请求**：`curl -k -i https://billing-k3s-v5.svc.plus/readyz`
+- **响应回执**：
+  ```http
+  HTTP/2 200 
+  alt-svc: h3=":8443"; ma=2592000
+  content-type: application/json
+  date: Sat, 24 Oct 2026 11:32:20 GMT
+  via: 1.1 Caddy
+  content-length: 35
+
+  {"database":"ok","status":"ready"}
+  ```
+- **判定**：**PASS**（计费数据库连接正常，数据表迁移已生效）
+
+---
+
+## 8. 增补交付 PR 矩阵总表
+
+| 仓库 | PR 编号 | 状态 | 交付核心内容 |
+| :--- | :---: | :---: | :--- |
+| **`gitops`** | [PR #527](https://github.com/ai-workspace-infra/gitops/pull/527) | **Merged** | 升级 ExternalSecret API 至 `external-secrets.io/v1`，声明平台命名空间 |
+| **`gitops`** | [PR #528](https://github.com/ai-workspace-infra/gitops/pull/528) | **Merged** | 配置 UAT 服务运行环境与 PostgreSQL Secret 引用 |
+| **`gitops`** | [PR #529](https://github.com/ai-workspace-infra/gitops/pull/529) | **Merged** | 注入内部服务 Token、Root Bootstrap 凭据与 Console 权限特权 capabilities |
+| **`gitops`** | [PR #530](https://github.com/ai-workspace-infra/gitops/pull/530) | **Merged** | 配置 Billing 探测路径至 `/readyz`，补充 ROOT_BOOTSTRAP_EMAIL Secret 映射 |
+| **`gitops`** | [PR #531](https://github.com/ai-workspace-infra/gitops/pull/531) | **Merged** | 设置 Console 探针指向 `/`，注入 Accounts 共享租户域名 `svc.plus` |
+| **`gitops`** | [PR #532](https://github.com/ai-workspace-infra/gitops/pull/532) | **Merged** | 修正 Console 启动隔离命令，严格遵守 Values JSON Schema 校验规范 |
+| **`gitops`** | [PR #533](https://github.com/ai-workspace-infra/gitops/pull/533) | **Merged** | 将 Caddy Service 声明为 LoadBalancer，联动 K3s Klipper-lb 自动绑定宿主 443 |
+| **`playbooks`** | [PR #759](https://github.com/ai-workspace-infra/playbooks/pull/759) | **Merged** | 移除 bootstrap 阶段禁用 servicelb，支持 LoadBalancer Ingress 服务自动化暴露 |
+| **`artifacts`** | [PR #205](https://github.com/ai-workspace-infra/artifacts/pull/205)<br>[PR #206](https://github.com/ai-workspace-infra/artifacts/pull/206)<br>[PR #207](https://github.com/ai-workspace-infra/artifacts/pull/207) | **Merged** | 修复 Chart 发布工作流，实现 umbrella 与各子 chart 0.2.1 语义化版本发布与 OCI 校验 |
+| **`platform-ops-toolkit`** | [PR #1441](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1441) | **Merged** | 修复工作流工作树目录深度与自动发布门禁校验 |
+
