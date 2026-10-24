@@ -27,12 +27,12 @@ tags:
 
 ## 平台工程单机验证与本地基座
 
-[10 大核心服务类别 macOS OrbStack 单机部署与健康验收矩阵](platform-core-services-orbstack-acceptance-matrix.zh.md)规范了在 macOS 本机 OrbStack 环境下，对 Git/CI、Harbor 制品管理、Silo S3 存储、CMDB 动态清单、Vault/Zitadel 身份中枢、Doco CD GitOps、K3s 容器与 pgvector 向量底座、PG 灾备演练、New API + LiteLLM AI 网关及 MCP Server 守护网关这 10 大类别的 Compose 单机拓扑编组、非冲突回环端口分配及自动化健康探测验收标准。
+[11 大核心服务类别 macOS OrbStack 单机部署与健康验收矩阵](platform-core-services-orbstack-acceptance-matrix.zh.md)规范了在 macOS 本机 OrbStack 环境下，对 Git/CI、Harbor 制品管理、Silo S3 存储、CMDB 动态清单、全栈可观测性与遥测中枢、Vault/Zitadel 身份中枢、Doco CD GitOps、K3s 容器与 pgvector 向量底座、PG 灾备演练、New API + LiteLLM AI 网关及 MCP Server 守护网关这 11 大类别的 Compose 单机拓扑编组、非冲突回环端口分配及自动化健康探测验收标准。
 
 ## 相关引用
 
 - [参考资料总索引与 PDF 合订编排](index.md)
-- [10 大核心服务类别 macOS OrbStack 单机部署与健康验收矩阵](platform-core-services-orbstack-acceptance-matrix.zh.md)
+- [11 大核心服务类别 macOS OrbStack 单机部署与健康验收矩阵](platform-core-services-orbstack-acceptance-matrix.zh.md)
 - [多云平台工程技术白皮书——英文版](multi-cloud-platform-engineering-whitepaper.en.md)
 - [Toolkit Daily Main Snapshot 实施规划与表格审计](platform-ops-toolkit-daily-main-snapshot-plan.zh.md)
 - [内容规范](content-schema.zh.md)

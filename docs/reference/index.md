@@ -146,7 +146,7 @@ GitHub 组织入口：[ai-workspace-infra](https://github.com/ai-workspace-infra
 
 | # | 标题 | 语言 | 来源版本 | 文件或入口 |
 | ---: | --- | --- | --- | --- |
-| 46 | 10 大核心服务类别 macOS OrbStack 单机部署与健康验收矩阵 | zh | knowledge working tree · v1.0-release · approved | [docs/reference/platform-core-services-orbstack-acceptance-matrix.zh.md](platform-core-services-orbstack-acceptance-matrix.zh.md) |
+| 46 | 11 大核心服务类别 macOS OrbStack 单机部署与健康验收矩阵 | zh | knowledge working tree · v1.1-release · approved | [docs/reference/platform-core-services-orbstack-acceptance-matrix.zh.md](platform-core-services-orbstack-acceptance-matrix.zh.md) |
 
 ## 使用与维护约束
 
