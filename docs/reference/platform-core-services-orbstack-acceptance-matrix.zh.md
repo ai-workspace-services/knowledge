@@ -195,7 +195,33 @@ Host Network (127.0.0.1) Loopback Port Layout:
 
 ## 五、自动化端到端验证执行实录
 
-自动化测试与本地 OrbStack 验证套件统一托管于平台基础设施仓库 `ai-workspace-infra/playbooks/scripts/orbstack-verification/`。通过执行其主控脚本 `scripts/orbstack-verification/verify-orbstack-all-services.sh`，以下为 11 大核心服务类别完整通过的自动化测试快照：
+自动化测试与本地 OrbStack 验证套件统一托管于平台基础设施仓库 `ai-workspace-infra/playbooks/scripts/orbstack-verification/`。通过执行其主控脚本 `scripts/orbstack-verification/verify-orbstack-all-services.sh`，以下为 11 大核心服务类别完整通过的自动化测试记录与健康快照。
+
+### 1. 🖥️ macOS OrbStack 真机端到端验收记录矩阵 (Real-host Acceptance Records)
+
+#### 测试环境规格
+- **宿主机环境**：Apple Silicon Mac (macOS Darwin arm64)
+- **底层运行时**：OrbStack v2.2.3 (2020300) / Docker Engine 29.4.0 / Docker Compose v5.1.2
+- **计算与内存资源**：14 vCPUs / 11.73 GiB RAM / SSD 空间充裕
+- **测试时间**：2026-10-24 17:09 (UTC+8)
+
+#### 验收矩阵表格
+
+| 阶段 | 核心服务类别 | Compose 工程名 | 验收端点 / 探针操作 | 状态 | 耗时 | 结果与判定依据 |
+| :---: | :--- | :--- | :--- | :---: | :---: | :--- |
+| **01** | Git 与 CI/CD 引擎 | `platform-gitea` | `curl -fsS http://127.0.0.1:13000/api/v1/version` | ✅ 通过 | <1s | 返回 `{"version":"1.22.6"}`，HTTP 200 |
+| **02** | 云原生企业级制品仓库 | `platform-harbor` | `curl -fsS http://127.0.0.1:18080/` | ✅ 通过 | <1s | HTTP 200 OK，Harbor Portal 正常渲染 |
+| **03** | S3 兼容对象存储 | `platform-silo` | `curl -fsS http://127.0.0.1:19000/minio/health/live` | ✅ 通过 | <1s | HTTP 200 OK，S3 API 存活探针正常 |
+| **04** | 配置管理与 CMDB 动态清单 | `platform-cmdb` | `curl -fsS http://127.0.0.1:18000/healthz`<br>`curl -fsS http://127.0.0.1:18000/api/v1/inventory` | ✅ 通过 | ~1s | `status: ok`，动态输出 `hosts=platform-node-01...` |
+| **05** | 全栈可观测性与遥测中枢 | `platform-observability` | `curl -fsS http://127.0.0.1:19090/health`<br>`curl -fsS http://127.0.0.1:19428/health`<br>`curl -fsS http://127.0.0.1:13030/api/health`<br>`curl -fsS http://127.0.0.1:19100/metrics` | ✅ 通过 | ~2s | VM/VL 响应 `OK`，Grafana 返回 `database: ok`，Node Exporter 输出度量流，Vector 采集日志与指标 |
+| **06** | 密钥中枢与统一身份认证 | `platform-vault-zitadel` | `curl -s http://127.0.0.1:18200/v1/sys/health`<br>`docker exec platform-zitadel-db pg_isready` | ✅ 通过 | <1s | Vault 响应 `initialized: true`，PostgreSQL 16 接受连接 |
+| **07** | 声明式 GitOps 持续交付 | `platform-doco-cd` | `curl -fsS http://127.0.0.1:19128/metrics` | ✅ 通过 | <1s | Doco CD 9120 控制器 Prometheus 指标流响应正常 |
+| **08** | 云中立容器与向量底座 | `platform-k3s-pgvector` | `docker exec platform-k3s-pgvector psql -c "SELECT extname FROM pg_extension;"` | ✅ 通过 | <1s | 确认 `vector` 扩展加载就绪，支持向量高维检索 |
+| **09** | 数据库灾备演练与还原沙箱 | `platform-pg-backup` | `docker exec platform-pg-backup-source pg_isready -d test_backup_db` | ✅ 通过 | <1s | 演练源库监听 15436 端口正常接受连接 |
+| **10** | AI 模型接入与路由网关 | `platform-ai-gateway` | `curl -fsS http://127.0.0.1:13001/api/status`<br>`curl -fsS http://127.0.0.1:14000/health/liveliness` | ✅ 通过 | <1s | New API 返回系统状态 `success: true`，LiteLLM 返回存活 |
+| **11** | AI 基础设施 MCP 工具网关 | `platform-mcp-server` | `curl -fsS http://127.0.0.1:18888` | ✅ 通过 | <1s | 返回 `{"status":"ok","service":"infrastructure-mcp-server","version":"0.1.0"}` |
+
+### 2. 终端自动化巡检与容器状态快照
 
 ```text
 ==============================================================================
