@@ -58,3 +58,7 @@
 - 回归/切换：历史 case 逐条实际执行；登录、外部 OAuth/支付、Agent 和业务账务未通过前不得称业务验收完成。此页不授权 DNS 切换或写入权转移。
 
 结果只在实际运行后追加到[V5 运行基线](records/prod-v5-20261023/prod-v5-runtime-and-snapshot-baseline-20261023.zh.md)；任何失败保留在原时间线上，并以新 run/revision 记录修复与重验。
+
+## 系统与业务巡检权限补全（2026-10-24 13:14 +08）
+
+[V5 权限回执](records/prod-v5-20261023/20261024-prod-v5-inspection-access.zh.md)记录 OS `auditor`、DB `db_readonly` 与固定 sudo 查看入口。76 张业务表只读授权、读写反向验证及零变更复跑通过；[真实回归 case](https://github.com/ai-workspace-infra/playbooks/blob/93fb9b95a752fb5d06a1c56c69e274e17164402b/tests/test_inspection_access.py)与已合并 [Playbooks #747](https://github.com/ai-workspace-infra/playbooks/pull/747)双向关联。旧逻辑快照早于权限修复，恢复后必须重新收敛与重验，不能将本次巡检权限 PASS 扩大为整机恢复或全部业务验收 PASS。
