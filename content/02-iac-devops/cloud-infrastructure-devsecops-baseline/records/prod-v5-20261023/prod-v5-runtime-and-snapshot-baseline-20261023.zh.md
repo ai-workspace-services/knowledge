@@ -4,6 +4,12 @@
 
 [统一部署与迁移流程](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md) · [V4→V5 基线与升级复盘](../../17-prod-v4-v5-baseline-and-upgrade-retrospective.zh.md) · [V5 部署流程复盘](prod-v5-deployment-postmortem-20261023.zh.md)
 
+## 在线业务补齐与实时采集重验（2026-10-24 后续采样）
+
+[在线业务追加与实时流量回归回执](20261024-prod-v5-business-append-and-traffic-regression.zh.md)承接下方 09:02:49 的 users-only 周期。后续真实追加已迁入套餐、订阅、额度及历史账务共 152,353 行；源端也没有策略快照，目标不编造策略。默认 Sandbox 的单一代理 UUID 差异由用户明确接受并保留目标值，其他身份检查继续执行。
+
+原三轮部署/users-only 幂等结论保留其范围；本轮全业务在线追加另以 r106 完成三轮真实无写入重验（3/3）；恢复后连续两个采集周期新增 8 个分钟桶、8 条账本和 39,184,393 字节，仅覆盖 JP Plus 实际流量。JP Free/JP01 当前空闲，其余节点不宣称通过；不能沿用旧三轮结论。后续已有用户明确授权的公共入口交接；本次修复不新增 DNS 动作，V4 继续在线写入。下方“未授权切换/公共 DNS 未变”仅描述其历史采样时点。
+
 <!-- BEGIN CLEANROOM 20261024 -->
 ## 当前净室验证周期（更新至 2026-10-24 09:02:49 +08）
 
