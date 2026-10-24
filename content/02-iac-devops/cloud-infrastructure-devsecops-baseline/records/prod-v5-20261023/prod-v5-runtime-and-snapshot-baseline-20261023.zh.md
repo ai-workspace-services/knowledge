@@ -142,18 +142,18 @@ public install wrapper `59b603a` precheck PASS、exit 0；真实 CMDB 108977826�
 
 以下第 1–7 节及其追加记录按原时间背景保留。其中“当前”“本次”“最新”均指各自旧采样，不代表 2026-10-24 净室主机；Docker、运行镜像、schema、33 users 与备份恢复的当前结论见本文首节。
 
-## 1. 环境与实际部署
+### 1. 环境与实际部署
 
 历史 V5 证据（2026-10-23 早期采样，已取代）：
 
-项目；现场结果
-
-主机；Akamai Singapore，2 vCPU / 4 GiB / 80 GiB；替换后实例 108977826，目标地址 104.64.208.209（用户明确要求记录）
-SSH / 初始化；最新交接 SSH 可连接、cloud-init 完成；最后样本仅 22 监听，无 Docker、Caddy、运行应用
-部署路径；主线 owner 继续 SSH → Playbook → 固定 GitOps → Doco-CD 安装；本知识库任务未执行
-GitOps；[#507](https://github.com/ai-workspace-infra/gitops/pull/507)，precheck 来源 `59b603a`，固定 Playbooks owner `975693`；public install wrapper 真实 precheck PASS、exit 0，真实 CMDB 108977826、五项 refs 和 policy valid。主线已合并 #507（`4af219e9486bdcd1c7cdb053795fa55e692efb29`；head `08ecf3`，用户最新回执）；installer owner 独占 actual apply；首次实际执行已在主机写入前失败，修复后重试待回执
-Playbooks；[#732](https://github.com/ai-workspace-infra/playbooks/pull/732)、[#733](https://github.com/ai-workspace-infra/playbooks/pull/733) 已合并（最新交接）；不替代安装与 runtime 结果
-服务与写入；V5 尚无运行验收；V4 继续承接公共服务和业务写入，公共 DNS 切换待验收及人工授权
+| 项目 | 现场结果 |
+| --- | --- |
+| 主机 | Akamai Singapore，2 vCPU / 4 GiB / 80 GiB；替换后实例 108977826，目标地址 104.64.208.209（用户明确要求记录） |
+| SSH / 初始化 | 最新交接 SSH 可连接、cloud-init 完成；最后样本仅 22 监听，无 Docker、Caddy、运行应用 |
+| 部署路径 | 主线 owner 继续 SSH → Playbook → 固定 GitOps → Doco-CD 安装；本知识库任务未执行 |
+| GitOps | [#507](https://github.com/ai-workspace-infra/gitops/pull/507)，precheck 来源 `59b603a`，固定 Playbooks owner `975693`；public install wrapper 真实 precheck PASS、exit 0，真实 CMDB 108977826、五项 refs 和 policy valid。主线已合并 #507（`4af219e9486bdcd1c7cdb053795fa55e692efb29`；head `08ecf3`，用户最新回执）；installer owner 独占 actual apply；首次实际执行已在主机写入前失败，修复后重试待回执 |
+| Playbooks | [#732](https://github.com/ai-workspace-infra/playbooks/pull/732)、[#733](https://github.com/ai-workspace-infra/playbooks/pull/733) 已合并（最新交接）；不替代安装与 runtime 结果 |
+| 服务与写入 | V5 尚无运行验收；V4 继续承接公共服务和业务写入，公共 DNS 切换待验收及人工授权 |
 
 | 项目 | 现场结果 |
 | --- | --- |
@@ -169,19 +169,19 @@ Playbooks；[#732](https://github.com/ai-workspace-infra/playbooks/pull/732)、[
 | Caddy 主机配置 | NOT_RUN；实际状态及已有证据见本节 V5 更新，声明不代表运行值 |
 | Caddy 激活模式 | NOT_RUN；实际状态及已有证据见本节 V5 更新，声明不代表运行值 |
 | 入口配置 SHA-256 | NOT_RUN；实际状态及已有证据见本节 V5 更新，声明不代表运行值 |
-## 2. 容器构件
+### 2. 容器构件
 
 历史 V5 证据（2026-10-23 早期采样，已取代）：
 
 以下五项是已发布 r101 候选 pin，**不是运行容器清单**。来源为 GitOps V5 proposal 与用户制品交接；统一 tag `daily-build-2026.10.23-r101`。
 
-服务；tag / source SHA；完整 digest
-
-Accounts / ghcr.io/ai-workspace-services/accounts；b423432dc5f993e5261423e27373703aaff48f2d；39716c2941b6f8ebbc0602589a59711d846234cb8313ae21254a91ba6073def7
-Billing / ghcr.io/ai-workspace-services/billing-service；77557d796a66dcd3373d7731125890bd91ebc5d3；14bbaee5ba37d85ddf243272ee2c3bed25603ee26ffd5c0b8d685cfe0e7a85a0
-Console / ghcr.io/ai-workspace-services/console；02607cf315570097606d90a8ba514fe37dcbe9e6；cc9b85339d82cefd264455c3d28c4e25dcd9e293378675855e23822730d5d0c5
-Content / ghcr.io/ai-workspace-services/docs；94e722c913a8c6e8adbb5b0bd363b20c9d3b4d08；e6e791437bd3b57a4dec0bc9dc2527b681dd52960b6f692be6ff16322018788e
-PostgreSQL / ghcr.io/ai-workspace-services/postgresql；253d69a3ad19558a4bd272dee0509a498e091e24；56f4179bafafa52061ac21003dc80c1a0b7ceb63fffb2c7bd05f29237b62b85e
+| 服务 | tag / source SHA | 完整 digest |
+| --- | --- | --- |
+| Accounts / ghcr.io/ai-workspace-services/accounts | b423432dc5f993e5261423e27373703aaff48f2d | 39716c2941b6f8ebbc0602589a59711d846234cb8313ae21254a91ba6073def7 |
+| Billing / ghcr.io/ai-workspace-services/billing-service | 77557d796a66dcd3373d7731125890bd91ebc5d3 | 14bbaee5ba37d85ddf243272ee2c3bed25603ee26ffd5c0b8d685cfe0e7a85a0 |
+| Console / ghcr.io/ai-workspace-services/console | 02607cf315570097606d90a8ba514fe37dcbe9e6 | cc9b85339d82cefd264455c3d28c4e25dcd9e293378675855e23822730d5d0c5 |
+| Content / ghcr.io/ai-workspace-services/docs | 94e722c913a8c6e8adbb5b0bd363b20c9d3b4d08 | e6e791437bd3b57a4dec0bc9dc2527b681dd52960b6f692be6ff16322018788e |
+| PostgreSQL / ghcr.io/ai-workspace-services/postgresql | 253d69a3ad19558a4bd272dee0509a498e091e24 | 56f4179bafafa52061ac21003dc80c1a0b7ceb63fffb2c7bd05f29237b62b85e |
 
 PostgreSQL registry OCI index 已验证，child manifest 前缀 `7f643d59`；chart 来源前缀 `9417`，release 已发布（用户交接，完整 child/chart SHA 待归档）。index、child manifest、image config 是不同层级；不将本地 image ID 作为 registry pin。较早 GHCR 代理推送失败属于历史尝试。五项联合 provenance、目标拉取和运行镜像匹配仍需新鲜回执；CI run ID 未提供，不填推测值。
 
@@ -193,18 +193,18 @@ PostgreSQL registry OCI index 已验证，child manifest 前缀 `7f643d59`；cha
 | PostgreSQL | r101 / 253d69a3ad19558a4bd272dee0509a498e091e24 | sha256:56f4179bafafa52061ac21003dc80c1a0b7ceb63fffb2c7bd05f29237b62b85e（已发布；运行匹配 NOT_RUN） |
 | Caddy | NOT_RUN；实际状态及已有证据见本节 V5 更新，声明不代表运行值 | NOT_RUN；实际状态及已有证据见本节 V5 更新，声明不代表运行值 |
 | Doco-CD | NOT_RUN；最后样本无 Docker/Caddy | NOT_RUN；无运行镜像回执 |
-## 3. 域名、SNI 与路由
+### 3. 域名、SNI 与路由
 
 历史 V5 证据（2026-10-23 早期采样，已取代）：
 
 [IaC #461](https://github.com/ai-workspace-infra/iac_modules/pull/461) 修复 `8a0bb444` 的实际 apply 创建四条 A → `104.64.208.209`；Cloudflare API 已确认，重复 preview 四条均 `noop`，provider 幂等性 PASS，`public_aliases_modified=false`。
 
-域名；当前解析归属；本轮 HTTPS/SNI 结果
-
-console-selfhost-prod-v5.svc.plus；Google DoH A 已验证目标；早期回执 TTL 60、status 0；HTTPS/SNI、登录及 runtime NOT_RUN
-accounts-selfhost-prod-v5.svc.plus；provider 已确认；独立查询超时/待补；NOT_RUN
-billing-selfhost-prod-v5.svc.plus；provider 已确认；独立查询超时/待补；NOT_RUN
-postgresql-selfhost-prod-v5.svc.plus；Google DoH A 已验证目标；DB 连接、隧道/TLS NOT_RUN；不是普通 HTTPS 页面
+| 域名 | 当前解析归属 | 本轮 HTTPS/SNI 结果 |
+| --- | --- | --- |
+| console-selfhost-prod-v5.svc.plus | Google DoH A 已验证目标 | 早期回执 TTL 60、status 0；HTTPS/SNI、登录及 runtime NOT_RUN |
+| accounts-selfhost-prod-v5.svc.plus | provider 已确认 | 独立查询超时/待补；NOT_RUN |
+| billing-selfhost-prod-v5.svc.plus | provider 已确认 | 独立查询超时/待补；NOT_RUN |
+| postgresql-selfhost-prod-v5.svc.plus | Google DoH A 已验证目标 | DB 连接、隧道/TLS NOT_RUN；不是普通 HTTPS 页面 |
 
 早期四域 NXDOMAIN 为 apply 前历史状态。本地 resolver 负缓存/代理路径仍可能返回 NXDOMAIN；其他查询超时不能当作记录不存在。尚不能声称所有 resolver 或全球传播均通过。公共别名仍指向 V4，后续人工切换单独留证。
 
@@ -219,17 +219,17 @@ postgresql-selfhost-prod-v5.svc.plus；Google DoH A 已验证目标；DB 连接�
 | `accounts-selfhost-prod-v4.svc.plus` | NOT_RUN；实际状态及已有证据见本节 V5 更新，声明不代表运行值 | NOT_RUN；实际状态及已有证据见本节 V5 更新，声明不代表运行值 |
 | `billing-selfhost-prod-v4.svc.plus` | NOT_RUN；实际状态及已有证据见本节 V5 更新，声明不代表运行值 | NOT_RUN；实际状态及已有证据见本节 V5 更新，声明不代表运行值 |
 | `postgresql-selfhost-prod-v4.svc.plus` | NOT_RUN；实际状态及已有证据见本节 V5 更新，声明不代表运行值 | NOT_RUN；实际状态及已有证据见本节 V5 更新，声明不代表运行值 |
-## 4. 运行配置、身份与权威引用
+### 4. 运行配置、身份与权威引用
 
 历史 V5 证据（2026-10-23 早期采样，已取代）：
 
 只记录路径、字段和状态，不记录任何值。以下路径由用户明确要求写入本白皮书。
 
-用途；Vault KV v2 API 路径；CLI 路径 / 字段
-
-Cloudflare serverless API；`kv/data/prod/serverless/cloudflare`；`kv/prod/serverless/cloudflare`：`ACCOUNT_ID`、`API_TOKEN`
-既有 Selfhost DNS；`kv/data/CICD`；`kv/CICD`：`DNS_API_TOKEN`；与上行用途分开
-PROD SSH deploy key；`kv/data/CICD/prod`；`kv/CICD/prod`：`SSH_PRIVATE_DEPLOY_KEY_B64`、`SSH_PUBLIC_DEPLOY_KEY_B64`
+| 用途 | Vault KV v2 API 路径 | CLI 路径 / 字段 |
+| --- | --- | --- |
+| Cloudflare serverless API | `kv/data/prod/serverless/cloudflare` | `kv/prod/serverless/cloudflare`：`ACCOUNT_ID`、`API_TOKEN` |
+| 既有 Selfhost DNS | `kv/data/CICD` | `kv/CICD`：`DNS_API_TOKEN`；与上行用途分开 |
+| PROD SSH deploy key | `kv/data/CICD/prod` | `kv/CICD/prod`：`SSH_PRIVATE_DEPLOY_KEY_B64`、`SSH_PUBLIC_DEPLOY_KEY_B64` |
 
 [写入脚本（固定提交）](https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/86366b2c/scripts/vault/write-prod-ssh-deploy-key.sh)：`scripts/vault/write-prod-ssh-deploy-key.sh`，Toolkit commit `86366b2c`，branch `feature/vault-prod-ssh-key-writer-20261023`。脚本已创建并完成语法检查；[Toolkit PR #1428](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1428) 本次远端复核为 MERGED，merge commit `ae917b221b61845fca8af4e9f63696c63d80d82f`。本任务未执行，不能据此声称生产凭据已更新。链接使用仓库路径，不包含操作员本机 home。
 
@@ -261,7 +261,7 @@ VAULT_ADDR=https://vault.svc.plus bash scripts/vault/write-prod-ssh-deploy-key.s
 | Webhook URL | NOT_RUN；实际状态及已有证据见本节 V5 更新，声明不代表运行值 | NOT_RUN；实际状态及已有证据见本节 V5 更新，声明不代表运行值 | NOT_RUN；实际状态及已有证据见本节 V5 更新，声明不代表运行值 |
 | API secret key | NOT_RUN；实际状态及已有证据见本节 V5 更新，声明不代表运行值 | NOT_RUN；实际状态及已有证据见本节 V5 更新，声明不代表运行值 | NOT_RUN；实际状态及已有证据见本节 V5 更新，声明不代表运行值 |
 | Webhook signing secret | NOT_RUN；实际状态及已有证据见本节 V5 更新，声明不代表运行值 | NOT_RUN；实际状态及已有证据见本节 V5 更新，声明不代表运行值 | NOT_RUN；实际状态及已有证据见本节 V5 更新，声明不代表运行值 |
-## 5. 数据与 schema 基线
+### 5. 数据与 schema 基线
 
 历史 V5 证据（2026-10-23 早期采样，已取代）：
 
@@ -276,18 +276,18 @@ V5 数据目录在最后主机样本中不存在。没有当前业务库、schem
 | `account_quota_states` | NOT_RUN；实际状态及已有证据见本节 V5 更新，声明不代表运行值 |
 | `traffic_minute_buckets` | NOT_RUN；实际状态及已有证据见本节 V5 更新，声明不代表运行值 |
 | `billing_ledger` | NOT_RUN；实际状态及已有证据见本节 V5 更新，声明不代表运行值 |
-## 6. 快照清单：完成状态必须分开
+### 6. 快照清单：完成状态必须分开
 
 历史 V5 证据（2026-10-23 早期采样，已取代）：
 
-项目；状态；实际位置 / 校验 / run ID
-
-V5 DB / globals 加密备份；NOT_CREATED；无
-V5 配置及镜像 manifest；NOT_CREATED；无
-V5 Vault 加密快照；NOT_CREATED；无；共享 Vault 恢复须独立范围
-V5 SHA256SUMS 与主机外副本；NOT_CREATED；无
-V5 隔离恢复与应用连接验收；NOT_RUN；无
-V4 历史备份；仅引用 V4 基线第 6 节；不扩大为最新 V5 快照
+| 项目 | 状态 | 实际位置 / 校验 / run ID |
+| --- | --- | --- |
+| V5 DB / globals 加密备份 | NOT_CREATED | 无 |
+| V5 配置及镜像 manifest | NOT_CREATED | 无 |
+| V5 Vault 加密快照 | NOT_CREATED | 无；共享 Vault 恢复须独立范围 |
+| V5 SHA256SUMS 与主机外副本 | NOT_CREATED | 无 |
+| V5 隔离恢复与应用连接验收 | NOT_RUN | 无 |
+| V4 历史备份 | 仅引用 V4 基线第 6 节 | 不扩大为最新 V5 快照 |
 
 实际 V5 快照尚未创建；不生成看似真实的目录、文件名、时间戳或 run ID。后续应归档一致性边界、schema/行指纹、加密文件与校验、独立恢复、实际应用连接和主机外副本回执。
 
@@ -316,27 +316,27 @@ V4 历史备份；仅引用 V4 基线第 6 节；不扩大为最新 V5 快照
 | V5 归档（尚未创建） | NOT_CREATED / NOT_RUN；无 V5 实际文件或校验；历史 V2/V3/V4 仅引用原记录 |
 | V5 归档（尚未创建） | NOT_CREATED / NOT_RUN；无 V5 实际文件或校验；历史 V2/V3/V4 仅引用原记录 |
 | V5 归档（尚未创建） | NOT_CREATED / NOT_RUN；无 V5 实际文件或校验；历史 V2/V3/V4 仅引用原记录 |
-## 7. 历史采样的证据限制
+### 7. 历史采样的证据限制
 
 历史 V5 证据（2026-10-23 早期采样，已取代）：
 
-case / action；状态；run ID / 证明
-
-DNS provider apply + repeat preview；PASS（主线交接）；run ID 未提供；CF 四记录及四 noop 回执
-Google DoH Console + PostgreSQL；PASS（限定两域）；run ID 未提供；其余域独立验证 PENDING
-SSH key 字段可见；OBSERVED；public key 字段存在；pair-match NOT_RUN
-SSH 写入脚本；SYNTAX_CHECKED / NOT_EXECUTED_BY_THIS_TASK；无 Vault 写入回执
-GitOps #507 public install wrapper precheck；PASS，exit 0；`59b603a`；真实 CMDB 108977826、五项 refs、policy valid；run ID 未提供
-#507 main merge / 固定引用安装；已合并 `4af219e9486bdcd1c7cdb053795fa55e692efb29`，head `08ecf3`；actual apply FAIL（主机写入前）；installer owner 独占执行，修复重试 PENDING
-一次性实际部署后立即 runtime tests；部署尝试 FAIL，runtime tests NOT_RUN；无 run ID；不以离线 manifest PASS 代替
-DB 初始化、迁移、权限与数据对账；NOT_RUN；无运行回执
-登录、账务、采集、恢复与稳定观察；NOT_RUN；无运行回执
-公共 DNS / 写入切换；NOT_RUN；验收后人工授权
+| case / action | 状态 | run ID / 证明 |
+| --- | --- | --- |
+| DNS provider apply + repeat preview | PASS（主线交接） | run ID 未提供；CF 四记录及四 noop 回执 |
+| Google DoH Console + PostgreSQL | PASS（限定两域） | run ID 未提供；其余域独立验证 PENDING |
+| SSH key 字段可见 | OBSERVED | public key 字段存在；pair-match NOT_RUN |
+| SSH 写入脚本 | SYNTAX_CHECKED / NOT_EXECUTED_BY_THIS_TASK | 无 Vault 写入回执 |
+| GitOps #507 public install wrapper precheck | PASS，exit 0 | `59b603a`；真实 CMDB 108977826、五项 refs、policy valid；run ID 未提供 |
+| #507 main merge / 固定引用安装 | 已合并 `4af219e9486bdcd1c7cdb053795fa55e692efb29`，head `08ecf3` | actual apply FAIL（主机写入前）；installer owner 独占执行，修复重试 PENDING |
+| 一次性实际部署后立即 runtime tests | 部署尝试 FAIL，runtime tests NOT_RUN | 无 run ID；不以离线 manifest PASS 代替 |
+| DB 初始化、迁移、权限与数据对账 | NOT_RUN | 无运行回执 |
+| 登录、账务、采集、恢复与稳定观察 | NOT_RUN | 无运行回执 |
+| 公共 DNS / 写入切换 | NOT_RUN | 验收后人工授权 |
 
 后续 case 结果绑定固定 source SHA、镜像 digest、owner SHA、目标、执行时间与真实 run ID。未获结果继续保留 NOT_RUN/PENDING；本轮知识库变更不执行 installer，不创建快照或迁移。
 
 
-## 追加执行回执：合并版预检与 SSH 连接阶段失败
+### 追加执行回执：合并版预检与 SSH 连接阶段失败
 
 2026-10-23 主线最新确认；以下更新覆盖前文旧采样中的待执行状态，不改写旧回执的来源。
 
@@ -352,7 +352,7 @@ DB 初始化、迁移、权限与数据对账；NOT_RUN；无运行回执
 
 最后主机样本仍无 Docker/Caddy。实际迁移、runtime 回归和 V5 快照仍未执行/创建；V4 公共服务和业务写入保持原状态。主线 installer owner 独占生产执行，本知识库 PR 仅更新回执。
 
-## 历史追加执行回执：旧固定版本与 exit 4 阻断
+### 历史追加执行回执：旧固定版本与 exit 4 阻断
 
 2026-10-23 更新。PR/tag 状态由本次远端查询确认；主机、DNS provider 与 smoke 事实来自用户主线核验，
 本知识库任务没有再次执行 installer、SSH 或 Vault 读取。新结果不能反向改写早期失败尝试。
