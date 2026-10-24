@@ -471,20 +471,46 @@ V4 的 2026-10-21 采样记录为 Accounts/Billing 后台写入 `false`、Consol
 
 ### 敏感信息 KV 路径清单
 
-Vault 保存实际敏感信息；**文档仅保存路径和字段清单，不输出值**。用户交接称当时共发现 104 个 KV 路径；枚举时间及完整受控索引本次未提供，当前总数未重新核验。以下仅为相关引用子集，不声称每条都由 V4 或 V5 当前进程使用，也不创建带部署代际后缀的新权威路径：
+Vault 保存实际敏感信息；**文档仅保存 Vault CLI 路径、字段名及用途，不包含秘密值**。用户历史交接称当时共发现 104 个 KV 路径；该数字的枚举时间及完整受控索引未提供，本次未重新枚举，不能作为当前路径总数。
 
-- `kv/prod-v2/web-saas`（历史代际路径，保留引用背景）
-- `kv/prod/accounts/runtime`
-- `kv/prod/accounts/oauth/github`
-- `kv/prod/accounts/oauth/google`
-- `kv/prod/billing-service`
-- `kv/prod/database-upgrade`
-- `kv/prod/platform/smtp/google`
-- `kv/CICD/domains/svc.plus`
-- `kv/CICD/prod/gcp-bootstrap/xworktech`
-- `kv/CICD/prod/iac_state`
-- `kv/prod/XConnect/PH/PH-XConnect.svc.plus`
-- `kv/prod/ulighthost-xconnect/observability.svc.plus`
+以下汇总 V5 业务、基础设施与部署控制面的相关引用。数据库、内部 Token、TLS 和 Akamai 路径有当前声明支撑；其余业务路径来自既有基线归档。**路径存在、字段名已核对和声明引用，不等同于 V5 每个当前进程都在消费该路径，也不单独证明凭据有效或业务验收通过。**
+
+| 用途 | Vault CLI 路径 |
+| --- | --- |
+| Accounts 内部服务 Token、共享运行凭据 | `kv/prod/accounts/runtime` |
+| PostgreSQL／业务数据库账号密码 | `kv/prod/databases` |
+| GitHub OAuth | `kv/prod/accounts/oauth/github` |
+| Google OAuth | `kv/prod/accounts/oauth/google` |
+| Billing／Stripe Sandbox、Live | `kv/prod/billing-service` |
+| SMTP 邮件凭据 | `kv/prod/platform/smtp/google` |
+| 数据库升级／迁移相关凭据 | `kv/prod/database-upgrade` |
+| `svc.plus` TLS 证书及私钥 | `kv/CICD/domains/svc.plus` |
+| `xworktech.com` TLS 证书及私钥 | `kv/CICD/domains/xworktech.com` |
+| PROD SSH 部署密钥 | `kv/CICD/prod` |
+| Akamai Cloud API 凭据 | `kv/CICD/prod/akamai-cloud/manbuzhe2026` |
+| Terraform 远程 state 后端凭据 | `kv/CICD/prod/iac_state` |
+| 共享 CI/CD、Doco-CD、DNS、备份加密等凭据 | `kv/CICD` |
+
+关键字段与合同：
+
+- SSH：`SSH_PRIVATE_DEPLOY_KEY_B64`、`SSH_PUBLIC_DEPLOY_KEY_B64`；现有写入入口及其历史执行边界见下节。
+- 内部调用：`kv/prod/accounts/runtime` 的 `INTERNAL_SERVICE_TOKEN`。
+- 业务数据库：`kv/prod/databases` 的 `account_pg_password`；不把应用运行账号与数据库管理账号混用。
+- Akamai：`kv/CICD/prod/akamai-cloud/manbuzhe2026` 的 `LINODE_TOKEN`。2026-10-24 字段名称核对结果为该路径仅有此 key；字段核对未输出值，不代替 API 有效性或权限范围验证。
+- Stripe：`SANDBOX_STRIPE_*`、`PROD_STRIPE_*`，统一留在 `kv/prod/billing-service`，不增加 V3/V4/V5 后缀；具体字段见下方 Stripe 配置合同。
+
+以上使用 **Vault CLI 路径**。KV v2 HTTP API 路径需插入 `/data/`，例如 `kv/prod/databases` 对应 `kv/data/prod/databases`；不要混用 CLI 与 API 路径。
+
+声明依据：[业务运行凭据合同](https://github.com/ai-workspace-infra/gitops/blob/f9d42a6980cf3e14f488e786ec8a29404513f76c/compose/web-saas/runtime/prod.yaml)、[公共入口 TLS 合同](https://github.com/ai-workspace-infra/gitops/blob/f9d42a6980cf3e14f488e786ec8a29404513f76c/compose/web-saas/ingress/prod.yaml)、[V5 Akamai IaC 目标](https://github.com/ai-workspace-infra/gitops/blob/f9d42a6980cf3e14f488e786ec8a29404513f76c/iac/targets/prod-akamai-web-saas-prod-v5.yaml)。此处汇总引用，不记录 Terraform state 内容、数据库备份或凭据值。
+
+#### 历史或外围关联引用
+
+以下保留原交接背景，**不能直接当作 V5 当前进程依赖**，也不因本次整理创建新的代际凭据副本：
+
+- `kv/prod-v2/web-saas`（历史代际路径）。
+- `kv/CICD/prod/gcp-bootstrap/xworktech`（GCP bootstrap 关联；V5 当前 IaC provider 为 Akamai）。
+- `kv/prod/XConnect/PH/PH-XConnect.svc.plus`（外围代理节点关联）。
+- `kv/prod/ulighthost-xconnect/observability.svc.plus`（外围代理／观测关联）。
 
 ### 历史部署密钥引用与写入入口
 
