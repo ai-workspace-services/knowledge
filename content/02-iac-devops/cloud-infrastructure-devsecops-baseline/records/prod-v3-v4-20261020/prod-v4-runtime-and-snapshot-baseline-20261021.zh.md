@@ -199,3 +199,64 @@ V4 主机保留 `prod-v3-online-full-2026.10.20-r2/1792496457/restore-verify-rec
 ## 7. 当前证据限制
 
 本轮未读取或改变 V3 的写入端状态，无法据此确认当前全局单写入者；未完整验证登录/MFA、OAuth、Stripe Sandbox、所有 Agent/Vector 节点、实时配额扣减与退款状态机。具体收尾项见[回归清单](regression-and-closure-checklist-20261021.zh.md)。
+
+## 配置与敏感引用补充（2026-10-24 用户交接）
+
+本节为用户提供的配置及引用清单，V4、V5 共同归档；本次只修改文档，没有读取秘密值、重新枚举 Vault、修改运行配置或执行密钥写入。下列非敏感值不代表两个环境均已现场核验；已有带时间的运行采样继续保留，差异须通过对应环境的固定声明及实际进程独立复核。
+
+### 核心运行配置与 checksum 边界
+
+用户交接说明核心运行配置已保存 checksum、未保存 secret value。此次未提供对应 checksum、采样时间或证据编号，故不补造摘要，也不把此说明代替本文件已有的受控文件比较证据。
+
+| 非敏感配置项 | 用户补充值 | 本次核验边界 |
+| --- | --- | --- |
+| `DATABASE_BACKGROUND_WRITERS` | `true` | 须分别核对 Accounts、Billing 实际进程；不由文档直接启用 |
+| `BILLING_INGEST_MODE` | `push` | 保留 push 模式配置口径；不推导完整采集周期已验收 |
+| `DEFAULT_REGION` | `jp` | 非敏感业务配置 |
+| `XWORKMATE_SHARED_TENANT_DOMAIN` | `svc.plus` | 非敏感租户域配置 |
+| `RUNTIME_HOSTNAME` | `console.svc.plus` | 公共域名配置口径，不代表 V5 已承接公共流量 |
+
+V4 的 2026-10-21 采样记录为 Accounts/Billing 后台写入 `false`、Console 主机名为版本域名；本次补充值与该采样不同，标记 **待现场复核**，不追改历史。V5 的部署/幂等 PASS 证明其固定输入及运行状态稳定，不单独证明本表每项均为其实际生效值。V4 公共服务、公共 DNS 及写入权不因本节改变。
+
+### 敏感信息 KV 路径清单
+
+Vault 保存实际敏感信息；**文档仅保存路径和字段清单，不输出值**。用户交接称当时共发现 104 个 KV 路径；枚举时间及完整受控索引本次未提供，当前总数未重新核验。以下仅为相关引用子集，不声称每条都由 V4 或 V5 当前进程使用，也不创建带部署代际后缀的新权威路径：
+
+- `kv/prod-v2/web-saas`（历史代际路径，保留引用背景）
+- `kv/prod/accounts/runtime`
+- `kv/prod/accounts/oauth/github`
+- `kv/prod/accounts/oauth/google`
+- `kv/prod/billing-service`
+- `kv/prod/database-upgrade`
+- `kv/prod/platform/smtp/google`
+- `kv/CICD/domains/svc.plus`
+- `kv/CICD/prod/gcp-bootstrap/xworktech`
+- `kv/CICD/prod/iac_state`
+- `kv/prod/XConnect/PH/PH-XConnect.svc.plus`
+- `kv/prod/ulighthost-xconnect/observability.svc.plus`
+
+### 历史部署密钥引用与写入入口
+
+统一引用 `kv/CICD/prod`，字段为 `SSH_PRIVATE_DEPLOY_KEY_B64`、`SSH_PUBLIC_DEPLOY_KEY_B64`。不重复登记，不把 B64 编码视为加密。密钥内容不得提交到 Git、文档或日志。
+
+复用已合并的 [Toolkit 写入脚本](https://github.com/ai-workspace-infra/platform-ops-toolkit/blob/ae917b221b61845fca8af4e9f63696c63d80d82f/scripts/vault/write-prod-ssh-deploy-key.sh)，不在 Knowledge 复制第二份执行实现。授权操作员在对应 Toolkit checkout 中运行：
+
+```bash
+bash scripts/vault/write-prod-ssh-deploy-key.sh
+```
+
+脚本读取当前操作员的 `~/.ssh/id_ed25519` 与 `~/.ssh/id_ed25519.pub`，核对文件归属、私钥权限、Ed25519 类型与密钥配对，通过标准输入向 Vault patch 这两个字段，保留同路径其他字段，失败时隐藏秘密输出。需已有 Vault 认证及该路径 patch 权限；本次仅核对已合并脚本和语法，**未执行写入、未验证 Vault 中现存密钥配对**。更新 Vault 不自动更新主机 authorized_keys，也不自动轮换运行中的连接身份。
+
+### Stripe Sandbox / Live 共用配置合同
+
+统一在 `kv/prod/billing-service` 管理，按 Stripe 环境区分，不添加 V3/V4/V5 部署代际后缀；Live 沿用既有 `PROD_` 命名。
+
+| 配置项 | Sandbox / Test | Live |
+| --- | --- | --- |
+| Webhook URL | `SANDBOX_STRIPE_WEBHOOK_URL` | `PROD_STRIPE_WEBHOOK_URL` |
+| API secret key | `SANDBOX_STRIPE_SECRET_KEY`，预期前缀 `sk_test_…` | `PROD_STRIPE_SECRET_KEY`，预期前缀 `sk_live_…` |
+| Webhook signing secret | `SANDBOX_STRIPE_WEBHOOK_SECRET`，预期前缀 `whsec_…` | `PROD_STRIPE_WEBHOOK_SECRET`，预期前缀 `whsec_…` |
+
+用户交接的 Sandbox 端点为 [Accounts Stripe webhook](https://accounts.svc.plus/api/billing/stripe/webhook)：Vault URL 字段当时为空，实际路由来自 GitOps，验签正常属于来源交接的历史结论，本次未重新验证。Live 交接只提供到 `https://accounts-serverless-prod.svc.plus/api/billing/`，路径不完整，标记 **待补**，不猜测后缀、不发送测试付款或重投事件。本合同用于两个环境查阅，不意味着 V5 的支付、回调或业务验收已完成。
+
+对应代际记录：[V5 运行基线与快照清单](../prod-v5-20261023/prod-v5-runtime-and-snapshot-baseline-20261023.zh.md)。
