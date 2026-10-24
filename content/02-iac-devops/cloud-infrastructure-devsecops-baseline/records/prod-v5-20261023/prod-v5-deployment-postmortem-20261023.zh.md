@@ -1,5 +1,9 @@
 # PROD V4→V5 部署流程复盘
 
+## 公共 Console 后续故障（2026-10-24 12:18 +08 更新）
+
+DNS 校验正确仍发生白屏：实际 Caddy 缺少公共 Console site/matcher，返回空 HTTP 200。已由 [Playbooks #746](https://github.com/ai-workspace-infra/playbooks/pull/746) 与 [GitOps #521](https://github.com/ai-workspace-infra/gitops/pull/521)修复，增加真实 HTML 的可信 HTTPS 门禁；规范配置和控制器选择重放均无变更。详见[完整回执](20261024-prod-v5-public-console-route-repair.zh.md)。本次修订把当前环境与旧时间线分开，保留先前仅检查 DNS 的证据范围。
+
 ## 后续复盘与闭环（2026-10-24）
 
 [业务追加与真实流量回执](20261024-prod-v5-business-append-and-traffic-regression.zh.md)和[修复后环境快照](20261024-prod-v5-post-repair-environment-snapshot.zh.md)补充以下结论；原有失败时间线保留，不被后续成功覆盖。
