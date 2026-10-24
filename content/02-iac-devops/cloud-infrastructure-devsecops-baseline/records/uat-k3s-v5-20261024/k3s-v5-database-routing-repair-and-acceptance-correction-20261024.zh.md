@@ -64,3 +64,8 @@ ESO 的 SecretStore 当前仍指向源端生产 Vault，并非目标本地 Vault
 ## 后续规划与重新认证补充
 
 用户已完成 GCP 重新认证，SSH 与受控恢复材料入口已核实，故此前认证阻断仅保留为历史状态。独立 Raft 目标声明已合并，但尚未完成恢复。应用启动后再次核对出现内置 sandbox/review 账号更新，其中包含 review 密码及组变化，不能扩大既有例外自动放行。[用户与核心身份及 Vault 平滑迁移规划](k3s-v5-core-identity-and-vault-smooth-migration-plan-20261024.zh.md)列出初始化整改、同输入三轮幂等、完整 Raft 恢复和 ESO 影子切换门槛。
+
+
+## PROD 后续执行回执
+
+历史采样保留；当前进展见[数据库重建与身份重验回执](k3s-v5-prod-rebuild-and-identity-revalidation-20261024.zh.md)。真实登录与完整遥测验收分开报告。

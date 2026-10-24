@@ -253,3 +253,8 @@ DENIED PATH  kv/data/prod/something        status: 403 (Expected Forbidden)
 ## 后续实测更正：应用连接库与验收边界（2026-10-24）
 
 [接手修复与验收更正回执](k3s-v5-database-routing-repair-and-acceptance-correction-20261024.zh.md)发现业务服务曾连接初始化库，并已通过 GitOps 修复；源/目标 33 用户全部字段一致。Vault 完整恢复、ESO 本地接入及观测全链路存在证据缺口，相关整体成功结论不能作为当前放行依据。保留本文历史采样，最新阶段状态见更正回执。
+
+
+## PROD 后续执行回执
+
+历史采样保留；当前进展见[数据库重建与身份重验回执](k3s-v5-prod-rebuild-and-identity-revalidation-20261024.zh.md)。真实登录与完整遥测验收分开报告。
