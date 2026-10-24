@@ -111,3 +111,5 @@
 ### Kubernetes UAT 后续方案归档
 
 - [业务数据迁移、Vault 隔离恢复及观测对接方案（2026-10-24）](records/uat-k3s-v5-20261024/k3s-v5-data-vault-observability-plan-20261024.zh.md)：用户材料脱敏归档，保留待决项与阶段状态，未执行项不作为验收成功。
+
+- [Kubernetes UAT 增强安全与严格准入方案（2026-10-24）](records/uat-k3s-v5-20261024/k3s-v5-migration-enhanced-guardrails-20261024.zh.md)：追加计划标识、期望状态和证据缺口；不代表迁移完成。
