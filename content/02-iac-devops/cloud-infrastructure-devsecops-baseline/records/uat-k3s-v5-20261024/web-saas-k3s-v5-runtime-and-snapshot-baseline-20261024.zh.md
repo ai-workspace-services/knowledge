@@ -248,3 +248,8 @@ DENIED PATH  kv/data/prod/something        status: 403 (Expected Forbidden)
 ### 增强准入方案追加（2026-10-24）
 
 [增强安全与严格准入版](k3s-v5-migration-enhanced-guardrails-20261024.zh.md)补充本轮 run_id、计划窗口、逐类对账、种子身份条件、Vault 与观测验收门槛。该记录为方案，实际执行及切流状态仍需各自凭证，不覆盖已有历史采样。
+
+
+## 后续实测更正：应用连接库与验收边界（2026-10-24）
+
+[接手修复与验收更正回执](k3s-v5-database-routing-repair-and-acceptance-correction-20261024.zh.md)发现业务服务曾连接初始化库，并已通过 GitOps 修复；源/目标 33 用户全部字段一致。Vault 完整恢复、ESO 本地接入及观测全链路存在证据缺口，相关整体成功结论不能作为当前放行依据。保留本文历史采样，最新阶段状态见更正回执。
