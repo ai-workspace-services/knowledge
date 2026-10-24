@@ -92,6 +92,17 @@
 
 ---
 
+## 7. Kubernetes UAT (`web-saas-k3s-v5`) 运行基线与快照清单
+
+记录 2026-10-24 Akamai Cloud VPS (Tokyo 3, Debian 13) 上基于 K3s + Flux v2 + ESO 的全新 Kubernetes UAT 交付收尾、7 项实测验收与全量基线快照。
+
+| 编号 | 文档名称 / 标题 | 相对路径与链接 | 文档类型 | 核心范围与说明 |
+| :---: | :--- | :--- | :---: | :--- |
+| **01** | **Kubernetes UAT (`web-saas-k3s-v5`) 运行基线与快照清单** | [`records/uat-k3s-v5-20261024/web-saas-k3s-v5-runtime-and-snapshot-baseline-20261024.zh.md`](records/uat-k3s-v5-20261024/web-saas-k3s-v5-runtime-and-snapshot-baseline-20261024.zh.md) | 权威基线 | Akamai VPS 实机全栈工作负载、不可变构件 Digest、公网 HTTPS 验证与快照矩阵 |
+| **02** | **Kubernetes UAT GitOps web-saas-k3s-v5 验收与验证回执** | [`../../docs/reference/kubernetes-uat-gitops-web-saas-k3s-v5-acceptance.zh.md`](../../docs/reference/kubernetes-uat-gitops-web-saas-k3s-v5-acceptance.zh.md) | 验收回执 | 跨仓库 PR 追踪、流水线 Run 40086294084 证据与 7 阶段全流程验收 |
+
+---
+
 > [!NOTE]
 > **版本演进阅读建议**：
 > - 查找**通用标准与多云身份**：参考 [第 2 节 通用架构基线与跨代际契约规范]（09-12 篇）；
