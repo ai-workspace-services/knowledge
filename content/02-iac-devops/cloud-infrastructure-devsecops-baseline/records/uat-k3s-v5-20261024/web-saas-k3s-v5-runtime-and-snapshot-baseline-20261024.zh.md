@@ -238,3 +238,8 @@ DENIED PATH  kv/data/prod/something        status: 403 (Expected Forbidden)
 | **`platform-ops-toolkit`** | [PR #1441](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1441) | `0f8dc5ad` | 修复工作流工作树目录深度与自动发布门禁校验 |
 | **`iac_modules`** | [PR #468](https://github.com/ai-workspace-infra/iac_modules/pull/468) | `3f049e5` | 引入保留 UAT 命名空间 `web-saas-k3s-v5`，排除自动清理 |
 | **`knowledge`** | [PR #218](https://github.com/ai-workspace-services/knowledge/pull/218) | `596a5d7` | 沉淀实机运行验收凭证、Helm 平台服务部署矩阵与公网 HTTPS 验证记录 |
+
+
+## 追加记录：迁移与持久化恢复方案（2026-10-24）
+
+[业务数据迁移、Vault 隔离恢复及观测对接方案](k3s-v5-data-vault-observability-plan-20261024.zh.md)归档了后续计划、方案报告的数据量与校验和，以及实施前待决项。该方案不改变本文 19:40 采样的历史背景；完整业务迁移、Vault 恢复与真实账号验收尚不能据此标记通过。

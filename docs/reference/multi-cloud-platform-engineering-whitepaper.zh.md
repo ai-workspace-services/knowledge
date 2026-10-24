@@ -1181,3 +1181,8 @@ GitOps 保存域名/模式/上游声明，IaC 执行 DNS、Worker domain 等云�
 [S17]: https://developer.hashicorp.com/vault/docs/secrets/kv/kv-v2/setup
 [S18]: https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2
 [S19]: https://developer.hashicorp.com/vault/docs/concepts/lease
+
+
+## 案例补充：Kubernetes UAT 数据迁移与隔离恢复
+
+[2026-10-24 方案归档](../../content/02-iac-devops/cloud-infrastructure-devsecops-baseline/records/uat-k3s-v5-20261024/k3s-v5-data-vault-observability-plan-20261024.zh.md)连接已有运行基线、数据范围、固定摘要和待执行验收。案例强调既有自动建表与正式迁移的衔接、跨 PostgreSQL 大版本兼容、在线源的一致性窗口、Vault 完整恢复及权限收敛、真实遥测与业务验收分阶段取证。方案和健康检查不作为迁移完成证明，后续回执追加保留历史。
