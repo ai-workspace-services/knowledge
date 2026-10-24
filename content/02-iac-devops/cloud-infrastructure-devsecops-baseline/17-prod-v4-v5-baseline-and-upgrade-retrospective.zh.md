@@ -4,6 +4,10 @@
 
 统一流程：[Selfhost 控制面部署与核心数据迁移](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md)。前序记录：[V3→V4 快照与升级复盘](16-prod-v3-v4-baseline-and-upgrade-retrospective.zh.md)；[V2→V3 快照与升级复盘](15-prod-v2-v3-snapshots-and-upgrade-retrospective.zh.md)。
 
+## 修复后业务与快照结论（2026-10-24 后续回执）
+
+[在线业务追加与实时流量回归](records/prod-v5-20261023/20261024-prod-v5-business-append-and-traffic-regression.zh.md)记录追加 152,353 行、r106 三轮真实无写入重放、JP Plus 两周期真实入库及页面核验；[修复后环境快照](records/prod-v5-20261023/20261024-prod-v5-post-repair-environment-snapshot.zh.md)补齐含套餐/订阅/账务的 76 表独立恢复和异机验证。users-only 不再代表最新业务恢复范围。默认 Sandbox 的单一代理 UUID 差异经明确接受保留目标值；策略快照源端也为空。其他节点的空闲/未验收状态、角色登录恢复和整机演练仍分别记录，不能据此宣称最终切换完成。
+
 <!-- BEGIN CLEANROOM 20261024 -->
 ## 净室执行与三轮重验（2026-10-24 03:09 +08）
 
@@ -35,8 +39,8 @@
 | 共享 Token 来源与进程注入 | [V3 canonical service token](records/prod-v2-v3-20261019/20261019-prod-v3-canonical-service-token.zh.md)、[V3→V4 P0 case](records/prod-v2-v3-20261019/20261021-prod-v3-v4-p0-regression-record.zh.md) | 历史 PASS 不替代当前代际新鲜值核验；绝不公开 Token 或 Vault 路径 |
 | 公共 SNI/证书链 | [公共 SNI 修复](records/prod-v2-v3-20261019/20261019-prod-v3-public-sni-repair.zh.md)、[Playbooks #741](https://github.com/ai-workspace-infra/playbooks/pull/741) | r4 首次部署仍失败；后续 r5 信任探测通过，不改写 r4 失败 |
 | VLESS 路径 | [VLESS P0 发布记录](records/prod-v2-v3-20261019/20261019-prod-v3-vless-path-p0-release.zh.md) | 历史版本的真实回归；未作为本轮 V5 用户迁移验收 |
-| Billing/Vector | [Billing/Vector 入库 P0](records/prod-v2-v3-20261019/20261020-billing-vector-ingest-p0.zh.md)、[V4 网络与流量回归计划](records/prod-v3-v4-20261020/network-and-traffic-otel-plan-20261021.zh.md) | V5 本轮探针不证明真实采集/计费周期，当前业务链 NOT_RUN |
-| 数据恢复权限 | [新代际恢复 runbook](records/prod-v2-v3-20261019/new-generation-recovery-runbook.zh.md)、[V4 恢复记录](records/prod-v3-v4-20261020/prod-v4-runtime-and-snapshot-baseline-20261021.zh.md) | users-only V5 restore PASS；完整财务/订阅 G3 不在范围 |
+| Billing/Vector | [Billing/Vector 入库 P0](records/prod-v2-v3-20261019/20261020-billing-vector-ingest-p0.zh.md)、[V4 网络与流量回归计划](records/prod-v3-v4-20261020/network-and-traffic-otel-plan-20261021.zh.md) | 旧采样仅有探针；后续 JP Plus 两周期正向入库及未验收节点见上方新回执 |
+| 数据恢复权限 | [新代际恢复 runbook](records/prod-v2-v3-20261019/new-generation-recovery-runbook.zh.md)、[V4 恢复记录](records/prod-v3-v4-20261020/prod-v4-runtime-and-snapshot-baseline-20261021.zh.md) | 旧 users-only 恢复保留；后续含业务数据的全表/schema/sequence 独立恢复 PASS，生产角色登录与应用权限恢复仍未验收 |
 | 域名交接 | [品牌域名交接回执](records/prod-v3-v4-20261020/brand-dns-handoff-20261021.zh.md) | 历史 V3→V4 交接；本轮 V4→V5 不改公共 DNS |
 | 回归清单 | [V4 regression and closure checklist](records/prod-v3-v4-20261020/regression-and-closure-checklist-20261021.zh.md) | 每个 case 绑定源码/测试/结果；未覆盖项保持 BLOCKED/NOT_RUN |
 

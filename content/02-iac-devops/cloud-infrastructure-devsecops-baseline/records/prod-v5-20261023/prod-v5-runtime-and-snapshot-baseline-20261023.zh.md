@@ -4,6 +4,10 @@
 
 [统一部署与迁移流程](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md) · [V4→V5 基线与升级复盘](../../17-prod-v4-v5-baseline-and-upgrade-retrospective.zh.md) · [V5 部署流程复盘](prod-v5-deployment-postmortem-20261023.zh.md)
 
+## 修复后环境快照（2026-10-24 11:21 +08）
+
+[完整快照与恢复回执](20261024-prod-v5-post-repair-environment-snapshot.zh.md)：run_id `20261024031956`，活跃数据库 76 张表、33 users、7 subscriptions、18 plans、76,131 个分钟桶和 76,133 条账本；完整字段/序列/schema（含所有权与权限）一致。加密配置、globals、容器元数据和固定构件引用已保存，独立数据库恢复 11.13 秒、异机密文校验及解密可读性均 PASS，业务重启 0。此为后续最新恢复点；下方旧 NOT_CREATED/空业务或 users-only 恢复仅描述各自历史采样，不能继续作为当前结论。云磁盘、共享 Vault 与完整环境恢复未执行。
+
 ## 在线业务补齐与实时采集重验（2026-10-24 后续采样）
 
 [在线业务追加与实时流量回归回执](20261024-prod-v5-business-append-and-traffic-regression.zh.md)承接下方 09:02:49 的 users-only 周期。后续真实追加已迁入套餐、订阅、额度及历史账务共 152,353 行；源端也没有策略快照，目标不编造策略。默认 Sandbox 的单一代理 UUID 差异由用户明确接受并保留目标值，其他身份检查继续执行。
