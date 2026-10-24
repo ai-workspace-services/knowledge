@@ -19,6 +19,8 @@ class TestOrbStack10CoreServicesMatrix(unittest.TestCase):
         self.assertIn("title: 10 大核心服务类别 macOS OrbStack 单机部署与健康验收矩阵", content)
         self.assertIn("slug: platform-core-services-orbstack-acceptance-matrix", content)
         self.assertIn("status: approved", content)
+        self.assertIn("open-platform Umbrella Chart", content)
+        self.assertIn("ai-workspace-infra/artifacts/oci/charts/open-platform", content)
 
     def test_all_10_service_categories_in_matrix(self):
         content = DOC_PATH.read_text(encoding="utf-8")
