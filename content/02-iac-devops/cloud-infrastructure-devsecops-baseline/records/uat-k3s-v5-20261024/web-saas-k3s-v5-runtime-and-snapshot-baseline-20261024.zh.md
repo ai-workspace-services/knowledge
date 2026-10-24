@@ -243,3 +243,8 @@ DENIED PATH  kv/data/prod/something        status: 403 (Expected Forbidden)
 ## 追加记录：迁移与持久化恢复方案（2026-10-24）
 
 [业务数据迁移、Vault 隔离恢复及观测对接方案](k3s-v5-data-vault-observability-plan-20261024.zh.md)归档了后续计划、方案报告的数据量与校验和，以及实施前待决项。该方案不改变本文 19:40 采样的历史背景；完整业务迁移、Vault 恢复与真实账号验收尚不能据此标记通过。
+
+
+### 增强准入方案追加（2026-10-24）
+
+[增强安全与严格准入版](k3s-v5-migration-enhanced-guardrails-20261024.zh.md)补充本轮 run_id、计划窗口、逐类对账、种子身份条件、Vault 与观测验收门槛。该记录为方案，实际执行及切流状态仍需各自凭证，不覆盖已有历史采样。
