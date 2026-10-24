@@ -4,6 +4,12 @@
 
 [统一部署与迁移流程](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md) · [V4→V5 基线与升级复盘](../../17-prod-v4-v5-baseline-and-upgrade-retrospective.zh.md) · [V5 部署流程复盘](prod-v5-deployment-postmortem-20261023.zh.md)
 
+## 巡检权限补充（2026-10-24 13:14:58 +08）
+
+新增 OS `auditor`（密钥登录、无特权组）与 DB `db_readonly`。受限 sudo 可查看容器、系统/容器日志、服务、进程及业务数据，不提供通用 sudo 或 Docker 管理权。真实验证：业务库 76 张表全部可读、全部不可写；users 计数 33；主动开启读写事务仍无法 DELETE；最终 Ansible 复跑 changed=0、failed=0。
+
+[权限执行与回归回执](20261024-prod-v5-inspection-access.zh.md)包含固定执行 SHA、已合并的 Playbooks #747、正反向验证及恢复边界。原 `readonly_release` 保留历史迁移用途。本次未重新创建环境快照；早于本次修复的快照不视为已包含这些权限。下方 12:18 运行采样及历史失败记录保持原时点。
+
 ## 当前运行结论（2026-10-24 12:18 +08）
 
 本节为最新现场采样；下方净室、快照与故障段落保留各自时点。三个公共业务入口已承接到 V5，但公共入口交接、数据库入口交接、后台写入权及全业务验收是不同状态，不合并成“整代切换完成”。本库公开，实际节点域名/地址清单和完整运行元数据仍存于受控回执。
