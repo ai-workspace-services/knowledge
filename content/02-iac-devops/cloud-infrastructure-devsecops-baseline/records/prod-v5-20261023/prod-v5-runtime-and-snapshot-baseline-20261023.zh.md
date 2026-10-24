@@ -5,7 +5,7 @@
 [统一部署与迁移流程](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md) · [V4→V5 基线与升级复盘](../../17-prod-v4-v5-baseline-and-upgrade-retrospective.zh.md) · [V5 部署流程复盘](prod-v5-deployment-postmortem-20261023.zh.md)
 
 <!-- BEGIN CLEANROOM 20261024 -->
-## 当前净室验证周期（2026-10-24 03:09 +08）
+## 当前净室验证周期（更新至 2026-10-24 09:02:49 +08）
 
 本节及[本轮完整回执](prod-v5-cleanroom-deployment-migration-validation-20261024.zh.md)取代下方 01:07 样本作为新周期事实；原 r5/r103、Docker 未安装、旧 apply 运行中及各次失败仍按采样背景保留。
 
@@ -13,14 +13,38 @@
 | --- | --- | --- |
 | 安全替换 | 源/目标真实 state 和云资源隔离；删除前可恢复备份及原证据异机保留；只删除 1 个 V5 计算实例，保留防火墙与源 state；新机严格 SSH 通过 | PASS |
 | 净室资源与首次部署 | 固定 main：IaC `9a5ff9a139509ca18759191370d9788df49b221c`、GitOps `615beaab59330fec1b595fa462138d4f05ebbe9b`、Playbooks `ff984bce9ebddef3e93f1dde7a98b1987245b143`、installer `d35ce6f5457e3d2ecebbc0b3fdbfa1cb410e074e`；8 项运行与 HTTPS/SNI 探测通过 | PASS |
-| 用户同步 | 预构建 r104，精确 commit/二进制/schema/计划摘要见本轮回执；迁移应用前 V4 的 33 users 与只读快照全部字段一致；目标 0→33，原 UUID 依目标语义重新生成，其他字段一致；其余业务表不变，服务未停止 | PASS（users-only） |
+| 用户同步 | 预构建 r104，精确 commit/二进制/schema/计划摘要见本轮回执；迁移应用前 V4 的 33 users 与只读快照全部字段一致；目标 0→33，目标内部 UUID 依目标语义重新生成（用户已明确接受，不作为阻断项），其他字段一致；其余业务表不变，服务未停止 | PASS（users-only） |
 | 备份恢复 | 新目标 0 users 迁移前及 33 users 迁移后，完整数据库加密备份、独立恢复与异机校验均通过 | PASS（本轮目标实际数据范围） |
-| 带数据完整重放 | 每轮 IaC 0 变更、真实部署、fresh preview/精确计划 apply/只读复核；13 配置文件、255 静态文件、76 业务表、数据库/checkpoint 与常驻容器状态比较；用户 tuple 版本不得变化 | PASS（3/3） |
+| 带数据完整重放 | 每轮 IaC 0 变更、真实部署、fresh preview/精确计划 apply/只读复核；13 配置文件、255 静态文件、76 业务表、数据库/checkpoint 与常驻容器状态比较；用户 tuple 版本不得变化 | PASS（原三轮 3/3；追加一轮亦通过） |
 | 登录路由回归 | 合成不存在身份 POST 为业务 `user_not_found`，MFA status 200，非 403/405/503 | PASS（不代表真实凭据登录） |
 | 终点上游鲜度 | V4 仍为 33 users，但 Proxy UUID、版本与有效期等字段摘要相对固定快照出现增量；只读比较 exit 1，最终追齐尚未执行 | BLOCKED（切换前门禁；不否定同输入三轮幂等） |
 | 全业务及切换 | OAuth/MFA 关联表、完整账务/订阅、Agent/VLESS 与真实支付/采集周期未纳入 users-only；公共 DNS 和 V4 写入权不变 | NOT_RUN / BLOCKED；切换未授权 |
 
 每轮起止、run_id、退出码、故障、修复 PR、真实回归 case 与受控证据索引均在[完整回执](prod-v5-cleanroom-deployment-migration-validation-20261024.zh.md)。配置路径沿用下方服务汇总：本周期角色精确 ref 为 `ff984bce9ebddef3e93f1dde7a98b1987245b143`、声明 ref 为 `615beaab59330fec1b595fa462138d4f05ebbe9b`；下方固定到 r5 的旧源码链接保留其历史版本含义。
+
+### 追加一轮真实重放（08:56–09:02 +08）
+
+2026-10-24T08:56:31.266899+08:00 → 2026-10-24T09:02:49.149597+08:00，`extra-data-bearing-round-3-20261024T085631+0800`，完整执行 exit 0 / PASS。沿用上述固定版本和已核验的不可变 V4 快照；不是重新采集当前 V4，也没有再次删除主机。IaC 0 create/update/delete；完整部署 8 项运行就绪探测通过；migratectl r104 users-only 新预览、精确计划 apply 与复核均成功，目标仍为 33 users。76 张业务表、13 个文件、255 个静态文件、数据库/checkpoint 和常驻容器状态均与迁移后基线相同，用户 tuple 版本不变。详细阶段回执见[完整回执的追加轮](prod-v5-cleanroom-deployment-migration-validation-20261024.zh.md#additional-replay-20261024)。
+
+目标内部 UUID 的重新生成已被接受；它与源端 `proxy_uuid`、版本及有效期的后续业务增量不同。此次重放不消除 03:07 源鲜度比较发现的差异，也未重新验证实时源一致性。真实凭据业务验收与最终追齐、切换仍保持原有未完成状态。
+
+### 当前服务配置入口（本净室周期固定版本）
+
+本表列出本周期实际使用的配置来源与路径约定，供当前运维查阅。下方 r5 服务表和第 1–7 节均为历史样本，不是当前清单。文件内容、凭据及其派生摘要不公开。
+
+| 范围 / 服务 | 当前固定配置来源 | 目标运行路径 / 本轮状态 |
+| --- | --- | --- |
+| IaC / CMDB | IaC `9a5ff9a139509ca18759191370d9788df49b221c`；资源身份以受控 CMDB 为准 | JP Tokyo 3 独立候选；本追加轮 0 变更 |
+| Doco-CD / 全部业务容器 | [GitOps Compose](https://github.com/ai-workspace-infra/gitops/blob/615beaab59330fec1b595fa462138d4f05ebbe9b/compose/web-saas/docker-compose.yml)及[候选覆盖](https://github.com/ai-workspace-infra/gitops/blob/615beaab59330fec1b595fa462138d4f05ebbe9b/compose/web-saas/docker-compose.prod-v5-candidate.yml) | `/opt/doco-cd/docker-compose.yml`；五项业务镜像实际引用与固定 digest 一致 |
+| PostgreSQL | Playbooks `ff984bce9ebddef3e93f1dde7a98b1987245b143` 的 `roles/vhosts/web_saas_host_config/templates/postgresql.conf.j2` | `/etc/xcontrol/web-saas/config/postgresql.conf`；checkpoint `2026102002 / dirty=false` |
+| Accounts | 同一固定 role 的 `account.yaml.j2` | `/etc/xcontrol/web-saas/config/account.yaml`；readiness PASS，真实凭据登录 NOT_RUN |
+| stunnel server / client | 同一固定 role 的 `stunnel-server.conf.j2`、`stunnel-client.conf.j2` | `/etc/xcontrol/web-saas/config/stunnel-server.conf`、`stunnel-client.conf`；数据库隧道就绪 |
+| Caddy | [当前固定模板](https://github.com/ai-workspace-infra/playbooks/blob/ff984bce9ebddef3e93f1dde7a98b1987245b143/roles/vhosts/web_saas_host_config/templates/Caddyfile.j2) | `/etc/xcontrol/web-saas/Caddyfile`；可信 HTTPS/SNI PASS，公共 DNS 未切换 |
+| Billing / Content | 上述固定 Compose 和受管运行时配置 | readiness PASS；Content 服务合同探测 PASS；真实账务/采集周期 NOT_RUN |
+| Console | 上述固定 Compose 的静态资源任务与 Caddy | 255 个静态文件内容不变；一次性任务正常退出，不计作常驻服务 |
+| OpenTelemetry Collector | 同一固定 role 的 `otel-collector.yaml.j2` | `/etc/xcontrol/web-saas/config/otel-collector.yaml` 存在；未作为运行服务验收 |
+
+13 个文件比较对象包含一份历史 Compose 备份文件，并非 13 项生效配置。实际盘点为 9 个运行容器及 1 个成功退出的一次性资源任务；不表述为“10 个运行容器”。
 
 <!-- END CLEANROOM 20261024 -->
 
@@ -96,7 +120,7 @@ PG r101 已发布并通过隔离 smoke；目标 V5 的服务健康、运行镜�
 
 本次文档基于最新 main `2dbd9d62869af1096d3f89e30800c2aa92450fde`，即已合并的
 [#193](https://github.com/ai-workspace-services/knowledge/pull/193)。后续旧表保留各次样本来源；
-当前交付引用与阻断以本文首节“当前交付：Tokyo 3 重建与控制器依赖修复”为准。
+当前交付引用与阻断以本文首节“当前净室验证周期”为准。
 
 public install wrapper `59b603a` precheck PASS、exit 0；真实 CMDB 108977826、五项 refs、policy valid。#507 已合并 `4af219e9486bdcd1c7cdb053795fa55e692efb29`（head `08ecf3`，用户最新回执），installer owner 独占 actual apply；首次实际执行已在主机写入前失败，修复后重试待回执。
 
@@ -114,9 +138,13 @@ public install wrapper `59b603a` precheck PASS、exit 0；真实 CMDB 108977826�
 | 未更新的服务 | V5 尚无运行应用；V4 保持服务和写入 |
 | 数据核验 | NOT_RUN；无 V5 业务行数/指纹 |
 | 配置核验 | precheck policy valid；运行时配置 hash 尚无回执 |
+## 历史明细（2026-10-23 早期 Singapore 样本，已被当前净室周期取代）
+
+以下第 1–7 节及其追加记录按原时间背景保留。其中“当前”“本次”“最新”均指各自旧采样，不代表 2026-10-24 净室主机；Docker、运行镜像、schema、33 users 与备份恢复的当前结论见本文首节。
+
 ## 1. 环境与实际部署
 
-本次 V5 证据（逐项更新）：
+历史 V5 证据（2026-10-23 早期采样，已取代）：
 
 项目；现场结果
 
@@ -143,7 +171,7 @@ Playbooks；[#732](https://github.com/ai-workspace-infra/playbooks/pull/732)、[
 | 入口配置 SHA-256 | NOT_RUN；实际状态及已有证据见本节 V5 更新，声明不代表运行值 |
 ## 2. 容器构件
 
-本次 V5 证据（逐项更新）：
+历史 V5 证据（2026-10-23 早期采样，已取代）：
 
 以下五项是已发布 r101 候选 pin，**不是运行容器清单**。来源为 GitOps V5 proposal 与用户制品交接；统一 tag `daily-build-2026.10.23-r101`。
 
@@ -167,7 +195,7 @@ PostgreSQL registry OCI index 已验证，child manifest 前缀 `7f643d59`；cha
 | Doco-CD | NOT_RUN；最后样本无 Docker/Caddy | NOT_RUN；无运行镜像回执 |
 ## 3. 域名、SNI 与路由
 
-本次 V5 证据（逐项更新）：
+历史 V5 证据（2026-10-23 早期采样，已取代）：
 
 [IaC #461](https://github.com/ai-workspace-infra/iac_modules/pull/461) 修复 `8a0bb444` 的实际 apply 创建四条 A → `104.64.208.209`；Cloudflare API 已确认，重复 preview 四条均 `noop`，provider 幂等性 PASS，`public_aliases_modified=false`。
 
@@ -193,7 +221,7 @@ postgresql-selfhost-prod-v5.svc.plus；Google DoH A 已验证目标；DB 连接�
 | `postgresql-selfhost-prod-v4.svc.plus` | NOT_RUN；实际状态及已有证据见本节 V5 更新，声明不代表运行值 | NOT_RUN；实际状态及已有证据见本节 V5 更新，声明不代表运行值 |
 ## 4. 运行配置、身份与权威引用
 
-本次 V5 证据（逐项更新）：
+历史 V5 证据（2026-10-23 早期采样，已取代）：
 
 只记录路径、字段和状态，不记录任何值。以下路径由用户明确要求写入本白皮书。
 
@@ -235,7 +263,7 @@ VAULT_ADDR=https://vault.svc.plus bash scripts/vault/write-prod-ssh-deploy-key.s
 | Webhook signing secret | NOT_RUN；实际状态及已有证据见本节 V5 更新，声明不代表运行值 | NOT_RUN；实际状态及已有证据见本节 V5 更新，声明不代表运行值 | NOT_RUN；实际状态及已有证据见本节 V5 更新，声明不代表运行值 |
 ## 5. 数据与 schema 基线
 
-本次 V5 证据（逐项更新）：
+历史 V5 证据（2026-10-23 早期采样，已取代）：
 
 V5 数据目录在最后主机样本中不存在。没有当前业务库、schema dirty 状态、行数、指纹或迁移 run ID。proposal 所含 schema `2026102002` 是声明输入，不能写成目标实际 schema。源 V4 计数继续保留原采样时间，不复制为 V5 数据事实。迁移及目标对账 **NOT_RUN**。
 
@@ -250,7 +278,7 @@ V5 数据目录在最后主机样本中不存在。没有当前业务库、schem
 | `billing_ledger` | NOT_RUN；实际状态及已有证据见本节 V5 更新，声明不代表运行值 |
 ## 6. 快照清单：完成状态必须分开
 
-本次 V5 证据（逐项更新）：
+历史 V5 证据（2026-10-23 早期采样，已取代）：
 
 项目；状态；实际位置 / 校验 / run ID
 
@@ -280,7 +308,7 @@ V4 历史备份；仅引用 V4 基线第 6 节；不扩大为最新 V5 快照
 | V5 恢复 schema 指纹 | NOT_CREATED / NOT_RUN；无 V5 实际文件或校验；历史 V2/V3/V4 仅引用原记录 |
 | V5 权限指纹 | NOT_CREATED / NOT_RUN；无 V5 实际文件或校验；历史 V2/V3/V4 仅引用原记录 |
 | V5 业务验收边界 | NOT_CREATED / NOT_RUN；无 V5 实际文件或校验；历史 V2/V3/V4 仅引用原记录 |
-### 最新发现的 V5 全量快照候选
+### 历史占位：当时尚未创建的 V5 全量快照
 
 | 文件 | 本轮重新计算的 SHA-256 |
 | --- | --- |
@@ -288,9 +316,9 @@ V4 历史备份；仅引用 V4 基线第 6 节；不扩大为最新 V5 快照
 | V5 归档（尚未创建） | NOT_CREATED / NOT_RUN；无 V5 实际文件或校验；历史 V2/V3/V4 仅引用原记录 |
 | V5 归档（尚未创建） | NOT_CREATED / NOT_RUN；无 V5 实际文件或校验；历史 V2/V3/V4 仅引用原记录 |
 | V5 归档（尚未创建） | NOT_CREATED / NOT_RUN；无 V5 实际文件或校验；历史 V2/V3/V4 仅引用原记录 |
-## 7. 当前证据限制
+## 7. 历史采样的证据限制
 
-本次 V5 证据（逐项更新）：
+历史 V5 证据（2026-10-23 早期采样，已取代）：
 
 case / action；状态；run ID / 证明
 
