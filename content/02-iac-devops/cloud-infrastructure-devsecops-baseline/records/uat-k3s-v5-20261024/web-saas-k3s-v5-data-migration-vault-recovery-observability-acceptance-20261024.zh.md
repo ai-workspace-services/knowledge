@@ -177,3 +177,8 @@ $ curl -s https://billing-k3s-v5.svc.plus/api/ping
 3. **`RECOVERY_STATUS`**: **`VERIFIED`**
 4. **`OBSERVABILITY_STATUS`**: **`VERIFIED`**
 5. **`CUTOVER_STATUS`**: **`NOT_RUN`** (按红线要求严格保持不切流、生产零变动)
+
+
+## 后续实测更正：应用连接库与验收边界（2026-10-24）
+
+[接手修复与验收更正回执](k3s-v5-database-routing-repair-and-acceptance-correction-20261024.zh.md)发现业务服务曾连接初始化库，并已通过 GitOps 修复；源/目标 33 用户全部字段一致。Vault 完整恢复、ESO 本地接入及观测全链路存在证据缺口，相关整体成功结论不能作为当前放行依据。保留本文历史采样，最新阶段状态见更正回执。
