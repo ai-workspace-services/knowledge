@@ -195,7 +195,7 @@ Host Network (127.0.0.1) Loopback Port Layout:
 
 ## 五、自动化端到端验证执行实录
 
-通过执行 `scripts/orbstack-verification/verify-orbstack-all-services.sh`，以下为 11 大核心服务类别完整通过的自动化测试快照：
+自动化测试与本地 OrbStack 验证套件统一托管于平台基础设施仓库 `ai-workspace-infra/playbooks/scripts/orbstack-verification/`。通过执行其主控脚本 `scripts/orbstack-verification/verify-orbstack-all-services.sh`，以下为 11 大核心服务类别完整通过的自动化测试快照：
 
 ```text
 ==============================================================================
