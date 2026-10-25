@@ -990,6 +990,12 @@ GitOps 保存域名/模式/上游声明，IaC 执行 DNS、Worker domain 等云�
 
 现场另发现 Selfhost 专属 Console/Accounts/Billing 域名解析到旧地址 `35.229.255.120`，而 VM 当前 NAT 地址为 `34.81.173.44`；主机内 Caddy 可按专属 Host 路由，外部到该 VM 的 TLS 握手失败。故域名规划和内部路由检查已完成，公网 DNS、TLS/防火墙路径及受限数据库隧道仍未验收。本节记录的是故障与目标合同，不声称主机已修复或发布成功。修复顺序为：确认目标 GitOps/不可变镜像及 UAT 环境变量 → 由 Playbooks 在该主机切换 Doco-CD 到 UAT 专属 target → 验证服务运行时不再读取 PROD 端点 → 由 IaC/DNS owner 更新并验证记录 → 从外部复测 HTTPS/API；数据库端口仅在来源限制通过后单独验收。任何一步失败均停止，不转用公共别名或 PROD 服务。
 
+### 11.13 2026-10-26 Observability Chart 与 Flux 恢复补充
+
+本次将新观测实现入口收敛到独立 `observability-agent` / `observability-stack` Chart 与 HelmRelease，保留仍有消费者的旧 composition。部署、普通升级及显式祖先回退均通过不可变 producer、GitOps snapshot/tag、最小 Source owner 和 Flux 协调形成证据链。main 合并不等于固定 tag Source 已晋级。
+
+详细版本、26.2 插件包 50 MB reader 故障与 26.3 恢复证据统一维护在 [Observability 多模式兼容与平滑演进指南的 K3s 运行记录](../zh/observability-flexible-deployment-modes.md)。当前操作者回执证明基础恢复、指定实时指标和 18 UID/StarsL 模型检查；30 分钟连续性及全量 Panel 仍待验。Vector 关闭、journald 未迁、CMDB/其他主机未完成，不将这些缺口写成已闭环。本节为有日期的补充，不改写本白皮书早期源码盘点基线，也不替代仍独立评审的 [Knowledge #230](https://github.com/ai-workspace-services/knowledge/pull/230) Proxy Server 形态归档。
+
 ## 12. 差异登记与实施路线
 
 ### 12.1 原盘点的七项差异
