@@ -2,6 +2,10 @@
 
 本表是[统一流程](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md)的执行附件，不创建第二套权威流程。每轮复制到独立记录，用实际证据更新；不得把模板勾选当成执行。
 
+## 本轮可选实例背景
+
+V5 K3s all-in-one：将 Web-SaaS、Vault Server、Grafana/观测栈汇聚到一台 Linode 2C4G VPS，以核心控制面资源整合进一步降本。复用到其他环境时填写实际规格、组件范围与账单基线；不要把部署形态或容量样本当作费用节省证明。
+
 ## 执行信息
 
 | 字段 | 本轮填写 |

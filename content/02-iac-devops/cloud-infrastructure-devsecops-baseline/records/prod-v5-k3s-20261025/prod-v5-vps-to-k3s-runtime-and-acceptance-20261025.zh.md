@@ -1,10 +1,34 @@
-# V5 VPS → V5 K3s：容器化部署环境快照与验收待办
+# V5 VPS → V5 K3s all-in-one：核心控制面汇聚、降本与验收待办
 
 > 记录日期：2026-10-25，Asia/Shanghai。本文是配置与验收状态快照，不代表本轮新建了云快照或数据库备份。历史采样保留；全文 PASS 才能关闭验收，部分通过、BLOCKED 和 NOT_RUN 不放行。
 >
 > 最终承载目标：PROD K3s V5。旧 V5 VPS 为本次迁移来源，不再把早期 V4→V5 VPS 的通过次数当作 K3s 的本轮证据。旧主机、旧 Vault、备份及数据的删除不属于本文操作范围。
 
 [统一部署迁移流程](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md) · [V4→V5 复盘](../../17-prod-v4-v5-baseline-and-upgrade-retrospective.zh.md) · [V5 VPS 基线](../prod-v5-20261023/prod-v5-runtime-and-snapshot-baseline-20261023.zh.md) · [K3s 初始 UAT 历史基线](../uat-k3s-v5-20261024/web-saas-k3s-v5-runtime-and-snapshot-baseline-20261024.zh.md) · [可复用检查表](deployment-migration-acceptance-checklist.template.zh.md)
+
+
+## 部署背景：一台 Linode 2C4G 承载核心控制面
+
+本轮的目标是进一步压缩核心控制面成本：将原先分散部署的 **Web-SaaS、Vault Server、Grafana/观测栈** 汇聚到 **一台 Linode（Akamai Cloud）2 vCPU / 4 GB VPS**，采用 **V5 K3s 容器化 all-in-one** 运行形态。
+
+这里的 all-in-one 指同一台 VPS 承载核心控制面。Web-SaaS、Vault、观测栈仍分别使用命名空间、工作负载、服务身份和持久卷，应用 Chart 与平台组件保持独立交付。它不表示把所有服务塞入同一个容器或 Pod，也不把旧源和外部代理节点一起合并进该主机。
+
+```mermaid
+flowchart TB
+  entry[公共业务与平台入口] --> caddy
+  subgraph vps[Linode 2C4G VPS · V5 K3s all-in-one 核心控制面]
+    caddy[Caddy TLS 入口] --> web[Web-SaaS：Console / Accounts / Billing / Content]
+    web --> pg[PostgreSQL · 持久卷]
+    caddy --> vault[Vault Server · Raft 持久卷]
+    caddy --> obs[Grafana / VictoriaMetrics / Logs / Traces / OTel]
+    flux[Flux 固定版本协调] --> web
+    flux --> obs
+    eso[ESO · 独立集群身份] --> vault
+    eso --> web
+  end
+```
+
+降本路径是减少独立主机与重复控制面资源，继续以不可变交付、密钥隔离、真实业务验收和恢复能力维持运行边界。实际节省金额仍取决于旧资源回收及账单结果；本记录不将“已整合运行”写成“所有旧资源已删除或费用已降低”。
 
 ## 1. 本轮边界与固定版本
 
