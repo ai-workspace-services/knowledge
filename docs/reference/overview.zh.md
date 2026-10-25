@@ -16,6 +16,10 @@ tags:
 
 [多云平台工程技术白皮书](multi-cloud-platform-engineering-whitepaper.zh.md)完整整理四仓职责、40 个 workflow、GitOps/state/CMDB、Vault 路径与权限、升级验收和迁移路线，固定基线为 2026-10-05，并明确区分已实现、规划目标及待验收事项。
 
+## Proxy Server 部署形态归档（2026-10-25）
+
+[Proxy Server 三种部署形态与控制面边界](proxy-server-deployment-profiles.zh.md)记录 GitOps PR #428 的三种部署形态、声明与控制面边界及固定原文来源。此项是文档归档补充，不改变本白皮书原有源码基线，也不代表运行验收。
+
 ## 性能调优与容量规划
 
 [XWorkTech 性能调优技术白皮书与工程规范](performance-optimization-whitepaper.zh.md)定义 Open Platform、XConnect、XWorkmate 与 AI Workspace 的观测、诊断、优化、验证和容量规划流程，包含指标契约、证据分类、变更与回滚边界、成本评估及九节诊断报告模板。当前为 v1.0 规范评审稿，不代表实际环境已完成调优或验收。

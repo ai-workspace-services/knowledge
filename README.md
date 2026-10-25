@@ -72,6 +72,8 @@
 - [多云资源三档权限、IAM 与 Vault 安全集成及 Shared CMDB 技术规范白皮书](docs/reference/multi-cloud-iam-vault-cmdb-security-whitepaper.zh.md)（proposed-not-applied）
 - [App Hub、Cloud Hub、FinOps 统一数据模型](docs/reference/unified-hub-data-model.zh.md)（draft，待评审）
 
+- [Proxy Server 三种部署形态与控制面边界](docs/reference/proxy-server-deployment-profiles.zh.md) · [English](docs/reference/proxy-server-deployment-profiles.en.md)（GitOps #428 设计归档，非运行验收）
+
 ### CMDB
 
 - [多云与 Serverless 动态 CMDB：独立 PostgreSQL 与 Grafana 落地规划](docs/reference/multi-cloud-cmdb-postgresql-grafana-plan.zh.md)（implementation-plan）

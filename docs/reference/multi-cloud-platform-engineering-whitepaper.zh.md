@@ -40,6 +40,10 @@ category: reference
 - 第 10～12 章：发布、数据升级、验收与迁移路线。
 - 附录 A：全部 40 个 workflow；附录 B：术语；附录 C：来源。
 
+## Proxy Server 部署形态归档（2026-10-25）
+
+[Proxy Server 三种部署形态与控制面边界](proxy-server-deployment-profiles.zh.md)记录 GitOps PR #428 的三种部署形态、声明与控制面边界及固定原文来源。此项是文档归档补充，不改变本白皮书原有源码基线，也不代表运行验收。
+
 ## 1. 范围、基线与证据等级
 
 ### 1.1 适用范围
