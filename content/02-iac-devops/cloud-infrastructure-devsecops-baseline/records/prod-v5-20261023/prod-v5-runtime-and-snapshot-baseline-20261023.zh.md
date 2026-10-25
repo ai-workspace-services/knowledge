@@ -537,3 +537,7 @@ bash scripts/vault/write-prod-ssh-deploy-key.sh
 用户交接的 Sandbox 端点为 [Accounts Stripe webhook](https://accounts.svc.plus/api/billing/stripe/webhook)：Vault URL 字段当时为空，实际路由来自 GitOps，验签正常属于来源交接的历史结论，本次未重新验证。Live 交接只提供到 `https://accounts-serverless-prod.svc.plus/api/billing/`，路径不完整，标记 **待补**，不猜测后缀、不发送测试付款或重投事件。本合同用于两个环境查阅，不意味着 V5 的支付、回调或业务验收已完成。
 
 对应代际记录：[V4 运行基线与快照清单](../prod-v3-v4-20261020/prod-v4-runtime-and-snapshot-baseline-20261021.zh.md)。
+
+## 追加索引：2026-10-25 PROD K3s 承载与验收
+
+本文件保留其原有时间背景。后续 PROD K3s 的固定生产标签、品牌 TLS、共享 Token 修复、真实登录与用量对账、Vault/Grafana、DNS 及未完成项，见[新运行快照与检查表](../prod-v5-k3s-20261025/prod-v5-vps-to-k3s-runtime-and-acceptance-20261025.zh.md)。该追加不把本文件历史 FAIL/BLOCKED 覆盖成 PASS。

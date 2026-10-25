@@ -248,3 +248,8 @@ DENIED PATH  kv/data/prod/something        status: 403 (Expected Forbidden)
 ### 增强准入方案追加（2026-10-24）
 
 [增强安全与严格准入版](k3s-v5-migration-enhanced-guardrails-20261024.zh.md)补充本轮 run_id、计划窗口、逐类对账、种子身份条件、Vault 与观测验收门槛。该记录为方案，实际执行及切流状态仍需各自凭证，不覆盖已有历史采样。
+
+
+## 追加索引：2026-10-25 PROD K3s 承载与验收
+
+本文件保留其原有时间背景。后续 PROD K3s 的固定生产标签、品牌 TLS、共享 Token 修复、真实登录与用量对账、Vault/Grafana、DNS 及未完成项，见[新运行快照与检查表](../prod-v5-k3s-20261025/prod-v5-vps-to-k3s-runtime-and-acceptance-20261025.zh.md)。该追加不把本文件历史 FAIL/BLOCKED 覆盖成 PASS。
