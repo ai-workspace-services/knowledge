@@ -215,7 +215,7 @@ Owner：[Playbooks #776](https://github.com/ai-workspace-infra/playbooks/pull/77
 
 回退到含同一旧 reader 的 Chart 不能仅凭 tag 已变就称为健康恢复；必须检查新 Pod、用户边界与数据查询。新 patch 版本和已知健康配置分别核实，不挪动原发布 tag。
 
-### 5.4 26.3 恢复的固定版本与实际验收状态
+### 5.4 26.3 恢复基线与后续 26.5 部署状态
 
 恢复 tag：`v2026.10.26.3` → `f7b0b35bcf53184094d821e678212fd3811b86f1`。
 
@@ -238,6 +238,10 @@ Owner：[Playbooks #776](https://github.com/ai-workspace-infra/playbooks/pull/77
 | journald 日志迁移 | **NOT_RUN** | 后续 #227；未借本次指标修复扩大日志读取权限 |
 | CMDB / 其他主机 / 历史数据 | **未完成 / 未在本轮验收** | 不把本目标 exporter 就绪写成多云资源对账、全量主机部署或历史 metrics/logs/traces 迁入 |
 
-本次文档补充时，`26.4` 仅在准备 Dashboard scope 与实际 full-query 定位修复，尚未创建不可变 tag。准备中的变更不是已部署版本，不覆盖上表 `26.3` 的固定回执；最终 30 分钟结果和全 Panel 结论仍须等待新证据后更新。
+后续不可变发布 `v2026.10.26.5` → `6a63055e84e220ad9ad8d4780a9ad35043fcc0ec`，来自 [GitOps #591 发布 snapshot](https://github.com/ai-workspace-infra/gitops/pull/591)，包含 [#590 的两条 Node exporter 自身 FD 查询 job 约束修复](https://github.com/ai-workspace-infra/gitops/pull/590)。[主干 Source 对齐 #592](https://github.com/ai-workspace-infra/gitops/pull/592) 已合并；Stack/Agent 版本与上表相同。[26.5 固定 Source 声明](https://github.com/ai-workspace-infra/gitops/blob/6a63055e84e220ad9ad8d4780a9ad35043fcc0ec/environments/clusters/prod-web-saas-k3s-v5/source.yaml) 与实际受控晋级回执分别留证，主干合并本身不代表部署。
+
+受控操作者最新回执：2026-10-25 17:18:22 UTC（2026-10-26 01:18:22 Asia/Shanghai）核实 Source/root 指向该 26.5 SHA，子声明也协调至相同 revision；HelmRelease 配置 revision 14 于 17:23:16 UTC 完成最新部署。新 Pod 五容器 Ready、零重启，原 20 GiB PVC 保留；部署 bundle checksum 为 `3874615d42d7565bcf0dff1c83bc4fab5f77434282477450c0ae0c47c3807cfd`。ConfigMap 与 HelmRelease 的正常周期协调存在先后，不能仅凭声明已更新就认为新 Pod 已接收配置。
+
+此回执只补充 26.5 部署状态，不将上表历史 26.3 查询结果挪作新版本验收。26.5 最终 301 条 Viewer 查询、修复后的 Node family/query 覆盖，以及 30 分钟连续性仍 **PENDING**；须以本版本实际查询与完整时间窗口回执更新，不能预写全量 PASS。
 
 上述 PENDING/NOT_RUN 项未完成前，不关闭 [#570](https://github.com/ai-workspace-infra/gitops/issues/570)，也不把此次恢复称为全平台业务验收。后续新增数据证据应更新本节相应行及受控回执，保留本次故障、固定版本和时间边界。

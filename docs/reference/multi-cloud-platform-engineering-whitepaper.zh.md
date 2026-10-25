@@ -994,7 +994,7 @@ GitOps 保存域名/模式/上游声明，IaC 执行 DNS、Worker domain 等云�
 
 本次将新观测实现入口收敛到独立 `observability-agent` / `observability-stack` Chart 与 HelmRelease，保留仍有消费者的旧 composition。部署、普通升级及互斥的显式祖先回退/前向修复恢复均通过不可变 producer、GitOps snapshot/tag、最小 Source owner 和 Flux 协调形成证据链。main 合并不等于固定 tag Source 已晋级。
 
-详细版本、26.2 插件包 50 MB reader 故障与 26.3 恢复证据统一维护在 [Observability 多模式兼容与平滑演进指南的 K3s 运行记录](../zh/observability-flexible-deployment-modes.md)。当前操作者回执证明基础恢复、指定实时指标和 18 UID/StarsL 模型检查；30 分钟连续性及全量 Panel 仍待验。Vector 关闭、journald 未迁、CMDB/其他主机未完成，不将这些缺口写成已闭环。本节为有日期的补充，不改写本白皮书早期源码盘点基线，也不替代仍独立评审的 [Knowledge #230](https://github.com/ai-workspace-services/knowledge/pull/230) Proxy Server 形态归档。
+详细版本、26.2 插件包 50 MB reader 故障与 26.3 恢复及 26.5 部署证据统一维护在 [Observability 多模式兼容与平滑演进指南的 K3s 运行记录](../zh/observability-flexible-deployment-modes.md)。当前操作者回执证明基础恢复、指定实时指标和 18 UID/StarsL 模型检查；30 分钟连续性及全量 Panel 仍待验。Vector 关闭、journald 未迁、CMDB/其他主机未完成，不将这些缺口写成已闭环。本节为有日期的补充，不改写本白皮书早期源码盘点基线，也不替代仍独立评审的 [Knowledge #230](https://github.com/ai-workspace-services/knowledge/pull/230) Proxy Server 形态归档。
 
 ## 12. 差异登记与实施路线
 
