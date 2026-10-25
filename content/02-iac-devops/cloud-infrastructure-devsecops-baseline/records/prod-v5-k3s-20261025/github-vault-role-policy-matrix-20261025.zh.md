@@ -6,14 +6,27 @@
 
 ## 1. 固定来源及验证边界
 
-- Toolkit 声明：`ccc5b992e4a23b59f2edeb27d045ed069e9d7c02`（PR #1443/#1444）。
-- Playbooks 协调 owner：`447ac6270e6482c53506d9d6e76e4a8193f81046`（PR #765）。
+- Toolkit 声明：`ccc5b992e4a23b59f2edeb27d045ed069e9d7c02`（[PR #1443](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1443) / [PR #1444](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1444)，均已合并）。
+- Playbooks 协调 owner：`447ac6270e6482c53506d9d6e76e4a8193f81046`（[PR #765](https://github.com/ai-workspace-infra/playbooks/pull/765)，已合并）。
 - GitHub issuer/discovery：`https://token.actions.githubusercontent.com`；audience=`vault`；user claim=`sub`。
 - 全部角色保留精确 repository、workflow allowlist、ref 约束；batch Token TTL/max TTL=`1h`；`token_no_default_policy=true`。
 - 17:58:02–17:58:19 完成最后 3 个角色对齐，exit 0；17:58:20–17:58:39 同输入重跑，exit 0、changed=0。后续独立读回 30/30 角色匹配声明。
 - GitOps PR 的真实 CI 登录已通过：[运行回执](https://github.com/ai-workspace-infra/gitops/actions/runs/40180407033)。未取得其他角色逐仓、逐环境真实登录回执，不把配置匹配当作流水线完成。
 - 六个访问边界单元测试通过，覆盖错误生产 ref、通配仓库/工作流、无关策略写入和默认策略授权。这不是用真实其他仓库 JWT 执行的越权请求。
 - 不恢复 bootstrap、Raft operator、旧主机恢复等专项高权限角色，不派发部署/迁移/云资源操作。
+
+## 变更与归档 PR
+
+| 仓库 | PR | 内容与状态 |
+| --- | --- | --- |
+| `platform-ops-toolkit` | [#1443](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1443) | 将恢复的 Vault 身份绑定到精确构建工作流；已合并 |
+| `platform-ops-toolkit` | [#1444](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1444) | 补齐 Docs 工作流 allowlist；已合并 |
+| `playbooks` | [#765](https://github.com/ai-workspace-infra/playbooks/pull/765) | 受限 GitHub OIDC 角色协调入口；已合并 |
+| `knowledge` | [#225](https://github.com/ai-workspace-services/knowledge/pull/225) | 本矩阵及复用待办归档；已合并 |
+| `knowledge` | [#224](https://github.com/ai-workspace-services/knowledge/pull/224) | 配套运行快照与验收 TODO 归档；已合并 |
+| `.github` | [#48](https://github.com/ai-workspace-services/.github/pull/48) | 组织级流程与归档索引；已合并 |
+
+配套入口：[运行快照](prod-v5-vps-to-k3s-runtime-and-acceptance-20261025.zh.md) · [复用检查表](deployment-migration-acceptance-checklist.template.zh.md) · [统一流程白皮书](../../17-prod-v4-v5-baseline-and-upgrade-retrospective.zh.md)。
 
 ## 2. 30 个角色矩阵
 
