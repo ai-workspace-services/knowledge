@@ -9,6 +9,10 @@
 [统一部署迁移流程](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md) · [V4→V5 复盘](../../17-prod-v4-v5-baseline-and-upgrade-retrospective.zh.md) · [V5 VPS 基线](../prod-v5-20261023/prod-v5-runtime-and-snapshot-baseline-20261023.zh.md) · [K3s 初始 UAT 历史基线](../uat-k3s-v5-20261024/web-saas-k3s-v5-runtime-and-snapshot-baseline-20261024.zh.md) · [可复用检查表](deployment-migration-acceptance-checklist.template.zh.md)
 
 
+## 2026-10-26 Observability 恢复记录入口
+
+下文保留 2026-10-25 的历史版本与采样，不把它改写为后续运行态。Observability 后续 Chart 拆分、26.2 冷启动故障、26.3 固定版本恢复、26.5 后续部署及核心数据/约 30 分钟源样本连续覆盖验收（overall 仍 NOT_RUN，全 Panel 等限制保留）统一记录在 [现有 Observability 运行指南](../../../../../docs/zh/observability-flexible-deployment-modes.md)。该记录只证明明确目标与窗口内的结果；CMDB、其他主机、跨集群 Vector 和 journald 迁移不能据此自动通过。
+
 ## 部署背景：一台 Linode 2C4G 承载核心控制面
 
 本轮的目标是进一步压缩核心控制面成本：将原先分散部署的 **Web-SaaS、Vault Server、Grafana/观测栈** 汇聚到 **一台 Linode（Akamai Cloud）2 vCPU / 4 GB VPS**，采用 **V5 K3s 容器化 all-in-one** 运行形态。
