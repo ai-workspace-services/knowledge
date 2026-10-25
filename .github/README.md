@@ -6,3 +6,5 @@
 - [统一流程（组织仓库）](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md)
 
 本仓库归档脱敏知识与证据索引，不执行部署、切流或恢复。
+
+- [GitHub ↔ 新 Vault：30 角色 / 11 策略矩阵](../content/02-iac-devops/cloud-infrastructure-devsecops-baseline/records/prod-v5-k3s-20261025/github-vault-role-policy-matrix-20261025.zh.md)

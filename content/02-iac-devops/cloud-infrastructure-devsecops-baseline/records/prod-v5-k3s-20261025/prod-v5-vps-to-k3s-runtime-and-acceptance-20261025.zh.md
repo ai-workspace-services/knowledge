@@ -128,7 +128,7 @@ flowchart TB
 | [x] | C16 / S2/S4 | Flux/ESO 正式接管 | PASS | `v2026.10.25.3` Ready；品牌 ExternalSecret SecretSynced；移除不用的临时 TLS mount | 禁止退回浮动 main |
 | [ ] | C17 / S2/S7 | Vault Raft 与恢复演练 | 健康 PASS / 恢复未关闭 | 1.21.4、initialized/unsealed、Raft；10Gi PVC | 本轮独立恢复、重新解封与重启持久化回执仍需补齐 |
 | [ ] | C18 / S2/S3 | Vault KV 双端一致性 | BLOCKED | 当前实例健康不能替代 path/key/value 对照 | 使用受限双端审计身份核对；只归档计数和差异 |
-| [ ] | C19 / S2/S4 | GitHub ↔ 新 Vault | 配置恢复 PASS / 分仓实测部分通过 | 30 个普通环境角色、11 个既有策略已恢复；精确 workflow allowlist；重跑 changed=0；GitOps SIT/UAT 实际 CI 成功 | 其他仓库逐项真实登录验证；不因角色存在判所有流水线通过 |
+| [ ] | C19 / S2/S4 | GitHub ↔ 新 Vault | 配置恢复 PASS / 分仓实测部分通过 | 30 个普通环境角色、11 个既有策略已恢复；精确 workflow allowlist；重跑 changed=0；GitOps SIT 实际 CI 成功 | 其他仓库逐项真实登录验证；不因角色存在判所有流水线通过 |
 | [ ] | C20 / S4/S6 | Grafana/遥测/告警闭环 | 部分通过 | 13.2.4；3 数据源健康；17 仪表盘；3,900 条 PROD 标签指标序列 | 日志、trace、变量查询、内部测试告警回执；不启用生产通知 |
 | [x] | C21 / S6 | 真实登录及页面对账 | PASS（已登录账号） | 用户手动登录确认；本月 1,179,786,283 字节、近期 0，与数据库一致 | 不推广为所有账号逐一登录 |
 | [ ] | C22 / S7 | 三轮幂等及故障恢复 | 协调 3/3 PASS / 其余 NOT_RUN | 同版 Flux+Helm 三轮 exit 0，spec、Pod UID/restart 无变化 | 不是 IaC 三次重建、迁移重放或备份恢复证明 |
@@ -153,7 +153,7 @@ flowchart TB
 - 10 个常规仓库/消费者的 SIT/UAT/PROD 共 30 个角色、11 个既有策略已恢复；不恢复 bootstrap、Raft operator、旧主机恢复等专项高权限角色。
 - 工作流文件名从通配符收紧为已核实清单，生产仅接受稳定 v* 或 release/v*；保留 repository、audience、batch、1h TTL 和无默认策略约束。
 - 17:58:02–17:58:19 完成最终 3 个角色对齐，exit 0；17:58:20–17:58:39 同输入重跑，exit 0、changed=0。
-- 六个访问边界单元测试通过；GitOps 实际 CI 已成功，其余每仓登录/构建不是本次角色配置操作的自动结论。
+- 六个访问边界单元测试通过；GitOps SIT 实际 CI 已成功；UAT/PROD 及其余每仓登录/构建未取得逐项回执，不能由角色配置操作推导通过。
 
 ## 7. 资源整合与成本口径
 
@@ -182,3 +182,8 @@ flowchart TB
 2. [V3 快照与升级历史索引](../../15-prod-v2-v3-snapshots-and-upgrade-retrospective.zh.md)；独立 V3 runtime 基线文件在本轮未定位，不编造路径。
 3. [V2 冷备/恢复历史](../prod-v2-v3-20261019/web-saas-prod-v2-cold-backup-disaster-recovery-whitepaper.zh.md)。
 4. V1 独立运行基线尚未定位：保持缺口，不编造链接。
+
+
+## GitHub / Vault 身份矩阵
+
+[30 个角色、11 个既有策略及分环境验证 TODO](github-vault-role-policy-matrix-20261025.zh.md)列出精确角色、策略消费者、权限动作、workflow/ref 限制、回读与未执行项。

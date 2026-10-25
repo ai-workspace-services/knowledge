@@ -59,3 +59,8 @@ V5 K3s all-in-one：将 Web-SaaS、Vault Server、Grafana/观测栈汇聚到一�
 - 所有必需项完整 PASS 后才关闭。证据不足保持 BLOCKED/NOT_RUN；不为提高通过率删除必测项。
 
 [本轮 V5 VPS → K3s 实例](prod-v5-vps-to-k3s-runtime-and-acceptance-20261025.zh.md)
+
+
+## C19 GitHub / Vault 子检查表
+
+C19 使用[30 角色 / 11 策略矩阵及可复用分环境表](github-vault-role-policy-matrix-20261025.zh.md)。区分配置恢复、读回、幂等、真实允许登录与真实拒绝验证；没有对应 run 的环境保持 NOT_RUN。
