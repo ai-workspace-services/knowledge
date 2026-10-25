@@ -12,6 +12,8 @@ tags:
 
 本页是[既有统一部署迁移流程](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md)的证据附件。需求：[Knowledge #227](https://github.com/ai-workspace-services/knowledge/issues/227)。文档核对基线为 Knowledge `87ae34a6aca3aaaae72c6ff85202bfd084f9e2ff`、组织流程 `d179da5b3ec7c0cc83e4fbb1bac92719934730b6`；这是归档版本，不能当成部署版本。
 
+归档变更：[Knowledge #228](https://github.com/ai-workspace-services/knowledge/pull/228)（基线/专项/回执回链与模板） ↔ [组织 .github #49](https://github.com/ai-workspace-services/.github/pull/49)（既有双语统一流程及索引）；先合并 Knowledge，再合并其索引消费者。各 PR 状态可独立回查，文档合并不授予部署或切换权限。
+
 本次没有重新执行部署、迁移、恢复、业务登录、DNS 或写入权交接。下列结果来自各自标注时间的原回执；2026-10-25 K3s 的最近已归档运行采样，也不能自动延伸为持续健康证明。原始证据继续留在受控位置。
 
 ## 1. 按代际导航
