@@ -99,7 +99,7 @@
 | 编号 | 文档名称 / 标题 | 相对路径与链接 | 文档类型 | 核心范围与说明 |
 | :---: | :--- | :--- | :---: | :--- |
 | **01** | **Kubernetes UAT (`web-saas-k3s-v5`) 运行基线与快照清单** | [`records/uat-k3s-v5-20261024/web-saas-k3s-v5-runtime-and-snapshot-baseline-20261024.zh.md`](records/uat-k3s-v5-20261024/web-saas-k3s-v5-runtime-and-snapshot-baseline-20261024.zh.md) | 权威基线 | Akamai VPS 实机全栈工作负载、不可变构件 Digest、公网 HTTPS 验证与快照矩阵 |
-| **02** | **Kubernetes UAT GitOps web-saas-k3s-v5 验收与验证回执** | [`../../docs/reference/kubernetes-uat-gitops-web-saas-k3s-v5-acceptance.zh.md`](../../docs/reference/kubernetes-uat-gitops-web-saas-k3s-v5-acceptance.zh.md) | 验收回执 | 跨仓库 PR 追踪、流水线 Run 40086294084 证据与 7 阶段全流程验收 |
+| **02** | **Kubernetes UAT GitOps web-saas-k3s-v5 验收与验证回执** | [`../../../docs/reference/kubernetes-uat-gitops-web-saas-k3s-v5-acceptance.zh.md`](../../../docs/reference/kubernetes-uat-gitops-web-saas-k3s-v5-acceptance.zh.md) | 验收回执 | 跨仓库 PR 追踪、流水线 Run 40086294084 证据与 7 阶段全流程验收 |
 
 ---
 
@@ -121,6 +121,9 @@
 
 - [V5 VPS → V5 K3s 运行快照、服务配置路径与验收 TODO](records/prod-v5-k3s-20261025/prod-v5-vps-to-k3s-runtime-and-acceptance-20261025.zh.md)
 - [可复用 Markdown 验收检查表](records/prod-v5-k3s-20261025/deployment-migration-acceptance-checklist.template.zh.md)
+- [GitHub ↔ 新 Vault：30 角色 / 11 策略矩阵与复用待办](records/prod-v5-k3s-20261025/github-vault-role-policy-matrix-20261025.zh.md)（实现：[Toolkit #1443](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1443)、[#1444](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1444)；[Playbooks #765](https://github.com/ai-workspace-infra/playbooks/pull/765)；归档：[Knowledge #225](https://github.com/ai-workspace-services/knowledge/pull/225)）
+
+本组快照与检查表归档于 [Knowledge #224](https://github.com/ai-workspace-services/knowledge/pull/224)，组织流程入口见 [.github #48](https://github.com/ai-workspace-services/.github/pull/48)。
 
 本轮采用 V5 K3s all-in-one，将 Web-SaaS、Vault Server 与 Grafana/观测栈这一核心控制面汇聚到一台 Linode 2C4G VPS，以资源整合进一步降本；当前固定构件、DNS、数据范围、批准例外及待办见新回执。资源整合不等于已完成旧资源回收或已实现账单节省。
 

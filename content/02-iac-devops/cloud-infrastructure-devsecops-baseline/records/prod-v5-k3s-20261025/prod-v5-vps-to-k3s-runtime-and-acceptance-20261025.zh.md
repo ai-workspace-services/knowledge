@@ -169,10 +169,12 @@ flowchart TB
 | --- | --- | --- |
 | Artifacts | [#220](https://github.com/ai-workspace-infra/artifacts/pull/220) | 品牌 Console serviceRole 与独立 TLS；Chart 发布 |
 | GitOps | [#554](https://github.com/ai-workspace-infra/gitops/pull/554)、[#555](https://github.com/ai-workspace-infra/gitops/pull/555) | 品牌声明、固定生产标签、GitHub issuer 受限 HTTPS egress |
-| GitOps | [#556](https://github.com/ai-workspace-infra/gitops/pull/556) | PostgreSQL/观测 DNS 当前目标声明；检查全部通过后合并 |
+| GitOps | [#556](https://github.com/ai-workspace-infra/gitops/pull/556) | PostgreSQL/观测 DNS 当前目标声明；检查通过并已合并 |
 | Playbooks | [#763](https://github.com/ai-workspace-infra/playbooks/pull/763) | 运行字段同步与 CAS；已合并 |
 | Playbooks | [#765](https://github.com/ai-workspace-infra/playbooks/pull/765) | 受限 GitHub OIDC 角色协调；已合并 `447ac6270e6482c53506d9d6e76e4a8193f81046` |
-| Toolkit | [#1443](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1443)、[#1444](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1444) | 普通角色精确工作流身份与稳定生产 ref；分仓 CI 登录不借用 GitOps 成功 |
+| Toolkit | [#1443](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1443)、[#1444](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1444) | 普通角色精确工作流身份与稳定生产 ref；分仓 CI 登录不借用 GitOps 成功；均已合并 |
+| Knowledge | [#224](https://github.com/ai-workspace-services/knowledge/pull/224)、[#225](https://github.com/ai-workspace-services/knowledge/pull/225) | 本运行快照/TODO 与 GitHub↔Vault 角色策略矩阵归档；均已合并 |
+| .github | [#48](https://github.com/ai-workspace-services/.github/pull/48) | 组织级流程索引与本次快照、矩阵、检查表导航；已合并 |
 
 原始 provider 检查点、三轮回执、只读内容比对与资源采样留在受控证据目录。本文不提交 Token、密码、密钥、Cookie、个人身份、原始 SQL 导出、Terraform state、数据库备份或完整 Vault 快照。日志/trace/历史监控数据不因配置迁移而搬运。
 

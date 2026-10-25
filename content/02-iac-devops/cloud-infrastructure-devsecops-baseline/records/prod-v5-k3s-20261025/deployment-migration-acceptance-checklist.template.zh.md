@@ -2,6 +2,8 @@
 
 本表是[统一流程](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md)的执行附件，不创建第二套权威流程。每轮复制到独立记录，用实际证据更新；不得把模板勾选当成执行。
 
+**本次归档关联**：运行快照与本检查表见 [Knowledge PR #224](https://github.com/ai-workspace-services/knowledge/pull/224)；GitHub↔新 Vault 角色/策略矩阵见 [Knowledge PR #225](https://github.com/ai-workspace-services/knowledge/pull/225)，实现来源为 [Toolkit PR #1443](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1443)、[#1444](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1444) 与 [Playbooks PR #765](https://github.com/ai-workspace-infra/playbooks/pull/765)。这些链接表示变更来源，不替代本轮各验收项的执行证据。
+
 ## 本轮可选实例背景
 
 V5 K3s all-in-one：将 Web-SaaS、Vault Server、Grafana/观测栈汇聚到一台 Linode 2C4G VPS，以核心控制面资源整合进一步降本。复用到其他环境时填写实际规格、组件范围与账单基线；不要把部署形态或容量样本当作费用节省证明。
