@@ -68,3 +68,6 @@
 - [可复用 Markdown 验收检查表](records/prod-v5-k3s-20261025/deployment-migration-acceptance-checklist.template.zh.md)
 
 本轮采用 V5 K3s all-in-one，将 Web-SaaS、Vault Server 与 Grafana/观测栈这一核心控制面汇聚到一台 Linode 2C4G VPS，以资源整合进一步降本；当前固定构件、DNS、数据范围、批准例外及待办见新回执。资源整合不等于已完成旧资源回收或已实现账单节省。
+
+
+GitHub 与新 Vault 的[30 角色 / 11 策略矩阵及复用待办](records/prod-v5-k3s-20261025/github-vault-role-policy-matrix-20261025.zh.md)：按仓库与环境列出工作流/ref、权限类型、回读、幂等和实际 CI 证据。
