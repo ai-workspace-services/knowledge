@@ -242,6 +242,18 @@ Owner：[Playbooks #776](https://github.com/ai-workspace-infra/playbooks/pull/77
 
 受控操作者最新回执：2026-10-25 17:18:22 UTC（2026-10-26 01:18:22 Asia/Shanghai）核实 Source/root 指向该 26.5 SHA，子声明也协调至相同 revision；HelmRelease 配置 revision 14 于 17:23:16 UTC 完成最新部署。新 Pod 五容器 Ready、零重启，原 20 GiB PVC 保留；部署 bundle checksum 为 `3874615d42d7565bcf0dff1c83bc4fab5f77434282477450c0ae0c47c3807cfd`。ConfigMap 与 HelmRelease 的正常周期协调存在先后，不能仅凭声明已更新就认为新 Pod 已接收配置。
 
-此回执只补充 26.5 部署状态，不将上表历史 26.3 查询结果挪作新版本验收。26.5 最终 301 条 Viewer 查询、修复后的 Node family/query 覆盖，以及 30 分钟连续性仍 **PENDING**；须以本版本实际查询与完整时间窗口回执更新，不能预写全量 PASS。
+#### 26.5 最终限定数据验收回执
 
-上述 PENDING/NOT_RUN 项未完成前，不关闭 [#570](https://github.com/ai-workspace-infra/gitops/issues/570)，也不把此次恢复称为全平台业务验收。后续新增数据证据应更新本节相应行及受控回执，保留本次故障、固定版本和时间边界。
+最终受控回执已归档：management、Viewer、权限边界和临时身份清理均 **PASS**；301 条实际查询无 FAIL，核心数据 profile 为 **PASS**。辅助验收器顶层 `overall_status` 仍为 **NOT_RUN**，不得改写为 overall PASS 或全 Panel 验收完成。Source/root/子声明均 Ready 于上述 26.5 SHA，observed generation 一致；配置 revision 14、新 Pod 五容器 Ready/零重启和原 PVC 保留已核实。
+
+| 查询范围 | 实际结果 | 保留限制 |
+| --- | --- | --- |
+| Node | 9 个变量、45 个指标 family、80 条 active 查询全部 PASS；7 条 hidden | 不把未采集的 fd/io 指标或隐藏查询视为通过 |
+| Process | 3 个变量、7 个 family、10 条查询 PASS | 2 条 PSS 查询 NOT_RUN |
+| StarsL | 6 个变量、21 个 family、110 条 active 查询 PASS；7 条 conditional empty、9 条 hidden | taint family NOT_RUN；条件空集与隐藏查询均不计为真实数据 PASS |
+
+四路源样本连续覆盖均 PASS，expected node 为 1 且无缺失：cAdvisor 覆盖 1799.999 秒、最大间隔 60 秒；KSM 覆盖 1800.001 秒、最大间隔 75.001 秒；Node 覆盖 1799.999 秒、最大间隔 60 秒；Process 覆盖 1799.998 秒、最大间隔 75.001 秒。该结果证明约 30 分钟的实际源样本连续性，期间发生配置更新；**不证明 17:23:16 UTC 最新部署后的新 Pod 已稳定运行 30 分钟**。
+
+2026-10-25 17:24:03 UTC 的独立管理配置复核中，org 1 告警规则为 0，配置检查 PASS；这不证明 Viewer 能全局查看所有规则范围。完整 profile 仍受 PSS、未采集 fd/io、未提供 per-container filesystem、未验 PVC stats 和 Viewer 全局告警范围限制；全栈 rootless 尚未达成。以上限制与 Vector OFF、journald 未迁、CMDB/其他主机/历史数据未完成的既有边界一并保留。
+
+上述完整 profile 限制与 NOT_RUN 项未完成前，不关闭 [#570](https://github.com/ai-workspace-infra/gitops/issues/570)，也不把此次恢复称为全平台业务验收。后续新增数据证据应更新本节相应行及受控回执，保留本次故障、固定版本和时间边界。

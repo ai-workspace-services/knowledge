@@ -11,7 +11,7 @@
 
 ## 2026-10-26 Observability 恢复记录入口
 
-下文保留 2026-10-25 的历史版本与采样，不把它改写为后续运行态。Observability 后续 Chart 拆分、26.2 冷启动故障、26.3 固定版本恢复、26.5 后续部署与尚未完成的 30 分钟/全 Panel 验收统一记录在 [现有 Observability 运行指南](../../../../../docs/zh/observability-flexible-deployment-modes.md)。该记录只证明明确目标与窗口内的结果；CMDB、其他主机、跨集群 Vector 和 journald 迁移不能据此自动通过。
+下文保留 2026-10-25 的历史版本与采样，不把它改写为后续运行态。Observability 后续 Chart 拆分、26.2 冷启动故障、26.3 固定版本恢复、26.5 后续部署及核心数据/约 30 分钟源样本连续覆盖验收（overall 仍 NOT_RUN，全 Panel 等限制保留）统一记录在 [现有 Observability 运行指南](../../../../../docs/zh/observability-flexible-deployment-modes.md)。该记录只证明明确目标与窗口内的结果；CMDB、其他主机、跨集群 Vector 和 journald 迁移不能据此自动通过。
 
 ## 部署背景：一台 Linode 2C4G 承载核心控制面
 
