@@ -255,6 +255,8 @@
 
 ## 11. 研究报告
 
+- [轻量全栈系统的特性环境、全链路泳道与渐进发布技术调研白皮书](docs/reference/feature-environments-traffic-lanes-k3s-whitepaper.zh.md)（Next.js / Go / PostgreSQL，架构建议与成本评估，未实施）
+
 - [从对话到工作流的认知跃迁：AI Agent 分层记忆系统与三大纯开源落地架构](research/ai-workspace-and-agent-systems.zh.md) · [English](research/ai-workspace-and-agent-systems.en.md)
 - [海外“小而美” Micro-SaaS 深度解构](research/micro-saas-analysis.zh.md) · [English](research/micro-saas-analysis.en.md)
 - [国内外电商平台“开放性与垄断性”对比研究](research/e-commerce-openness-vs-monopoly.md)

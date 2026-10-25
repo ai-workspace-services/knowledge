@@ -47,6 +47,10 @@ GitHub 组织入口：[ai-workspace-infra](https://github.com/ai-workspace-infra
 - **playbooks**：`origin/main@bde23b1f96668b850e1bcfaac1064bf029e6191a`。
 - **xworkspace-core-skills**：`origin/main@0ece30c9aca907323b6bfbdf7d9995afe75d7916`。
 
+## 技术调研白皮书
+
+- [轻量全栈系统的特性环境、全链路泳道与渐进发布](feature-environments-traffic-lanes-k3s-whitepaper.zh.md)：环境边界 × 版本泳道 × 发布策略，涵盖成本、集群数量和 V5 Selfhost 演进；状态为研究建议。
+
 ## 一、白皮书与总体架构
 
 | # | 标题 | 语言 | 来源版本 | 文件或入口 |
