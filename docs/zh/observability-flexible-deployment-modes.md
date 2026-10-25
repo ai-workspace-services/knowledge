@@ -226,6 +226,8 @@ Owner：[Playbooks #776](https://github.com/ai-workspace-infra/playbooks/pull/77
 
 固定声明：[Stack](https://github.com/ai-workspace-infra/gitops/blob/f7b0b35bcf53184094d821e678212fd3811b86f1/services/platform-observability/prod/release.yaml)、[Agent](https://github.com/ai-workspace-infra/gitops/blob/f7b0b35bcf53184094d821e678212fd3811b86f1/services/platform-observability/prod/agent-release.yaml)、[Source](https://github.com/ai-workspace-infra/gitops/blob/f7b0b35bcf53184094d821e678212fd3811b86f1/environments/clusters/prod-web-saas-k3s-v5/source.yaml)。这些文件证明版本选择；下表运行事实来自本轮受控操作者回执，原始状态/查询证据留在受控验收记录，不把生产原始数据写入知识库。
 
+下表为 26.3 恢复时的历史阶段快照，PENDING 仅指该时点；26.5 最终状态见下文。
+
 | 验收层 | 本轮记录 | 能证明的范围 |
 | --- | --- | --- |
 | Source/root/子声明协调 | **PASS**，2026-10-26 00:52:35 Asia/Shanghai（2026-10-25 16:52:35 UTC）记录 verified | 固定 Source 与各级 Flux 协调一致，不等于所有 Panel 正确 |
@@ -244,11 +246,11 @@ Owner：[Playbooks #776](https://github.com/ai-workspace-infra/playbooks/pull/77
 
 #### 26.5 最终限定数据验收回执
 
-最终受控回执已归档：management、Viewer、权限边界和临时身份清理均 **PASS**；301 条实际查询无 FAIL，核心数据 profile 为 **PASS**。辅助验收器顶层 `overall_status` 仍为 **NOT_RUN**，不得改写为 overall PASS 或全 Panel 验收完成。Source/root/子声明均 Ready 于上述 26.5 SHA，observed generation 一致；配置 revision 14、新 Pod 五容器 Ready/零重启和原 PVC 保留已核实。
+最终受控回执已归档，公开摘要见 [GitOps #570 最终限定验收证据](https://github.com/ai-workspace-infra/gitops/issues/570#issuecomment-6400821340)：management、Viewer 和临时身份清理均 **PASS**；权限自省 **PASS**（未执行生产写入/越权拒绝试验，不等于完整隔离）；301 条实际查询无 FAIL，核心数据 profile 为 **PASS**。辅助验收器顶层 `overall_status` 仍为 **NOT_RUN**，不得改写为 overall PASS 或全 Panel 验收完成。Source/root/子声明均 Ready 于上述 26.5 SHA，observed generation 一致；配置 revision 14、新 Pod 五容器 Ready/零重启和原 PVC 保留已核实。
 
 | 查询范围 | 实际结果 | 保留限制 |
 | --- | --- | --- |
-| Node | 9 个变量、45 个指标 family、80 条 active 查询全部 PASS；7 条 hidden | 不把未采集的 fd/io 指标或隐藏查询视为通过 |
+| Node | 9 个变量、45 个指标 family、80 条 active 查询全部 PASS；7 条 hidden | 7 条 hidden 未执行；Node exporter 自身 fd 指标不代替整机所有进程 fd/IO 覆盖 |
 | Process | 3 个变量、7 个 family、10 条查询 PASS | 2 条 PSS 查询 NOT_RUN |
 | StarsL | 6 个变量、21 个 family、110 条 active 查询 PASS；7 条 conditional empty、9 条 hidden | taint family NOT_RUN；条件空集与隐藏查询均不计为真实数据 PASS |
 
