@@ -1,6 +1,11 @@
 # 部署记录与验收文档索引
 
 - [白皮书部署与代际升级索引](../content/02-iac-devops/cloud-infrastructure-devsecops-baseline/README.md)
+- [V2→V5 逐轮回执、专项故障、真实 case 与重验双向索引](../content/02-iac-devops/cloud-infrastructure-devsecops-baseline/records/generation-deployment-evidence-index-20261025.zh.md)
+- [V2→V3 快照与升级复盘](../content/02-iac-devops/cloud-infrastructure-devsecops-baseline/15-prod-v2-v3-snapshots-and-upgrade-retrospective.zh.md)
+- [V3→V4 基线与升级复盘](../content/02-iac-devops/cloud-infrastructure-devsecops-baseline/16-prod-v3-v4-baseline-and-upgrade-retrospective.zh.md)
+- [V4 运行基线与快照清单](../content/02-iac-devops/cloud-infrastructure-devsecops-baseline/records/prod-v3-v4-20261020/prod-v4-runtime-and-snapshot-baseline-20261021.zh.md)
+- [V5 VPS 运行基线](../content/02-iac-devops/cloud-infrastructure-devsecops-baseline/records/prod-v5-20261023/prod-v5-runtime-and-snapshot-baseline-20261023.zh.md) · [V4→V5 部署复盘](../content/02-iac-devops/cloud-infrastructure-devsecops-baseline/records/prod-v5-20261023/prod-v5-deployment-postmortem-20261023.zh.md)
 - [V5 VPS → K3s 运行快照与 TODO](../content/02-iac-devops/cloud-infrastructure-devsecops-baseline/records/prod-v5-k3s-20261025/prod-v5-vps-to-k3s-runtime-and-acceptance-20261025.zh.md)
 - [可复用 Markdown 验收表](../content/02-iac-devops/cloud-infrastructure-devsecops-baseline/records/prod-v5-k3s-20261025/deployment-migration-acceptance-checklist.template.zh.md)
 - [GitHub ↔ 新 Vault 30 角色 / 11 策略矩阵](../content/02-iac-devops/cloud-infrastructure-devsecops-baseline/records/prod-v5-k3s-20261025/github-vault-role-policy-matrix-20261025.zh.md)

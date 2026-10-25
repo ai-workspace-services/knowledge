@@ -79,3 +79,7 @@ Role 增加默认关闭的 `web_saas_public_ingress_activate`。显式激活时�
 Vn→Vn+1 的放行须同时验证：公共 SNI、采集 POST 鉴权、真实 Vector 投递、目标库 checkpoint/分钟桶/账本连续增长及关键节点覆盖。Agent 心跳与 API 健康不能替代。稳定后才把目标代际作为下一轮来源。
 
 关联：[历史总索引](../../15-prod-v2-v3-snapshots-and-upgrade-retrospective.zh.md)、[快照与升级复盘](20261019-prod-v2-v3-snapshot-and-upgrade-retrospective.zh.md)、[共享令牌修复](20261019-prod-v3-canonical-service-token.zh.md)、[VLESS 路径 P0](20261019-prod-v3-vless-path-p0-release.zh.md)、[V2→V3 数据恢复](v2-to-v3-snapshot-refresh-20261019.zh.md)。
+
+## 跨代归档回链
+
+[统一流程](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md) → [跨代基线、逐轮回执、真实 case 与重验](../generation-deployment-evidence-index-20261025.zh.md)。本页保留原采样、固定构件和结果；后续成功不覆盖历史失败，源码/PR 状态不代替本页的真实运行回执。

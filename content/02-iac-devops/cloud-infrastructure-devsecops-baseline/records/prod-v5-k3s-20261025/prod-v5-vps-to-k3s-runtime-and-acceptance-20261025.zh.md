@@ -4,6 +4,8 @@
 >
 > 最终承载目标：PROD K3s V5。旧 V5 VPS 为本次迁移来源，不再把早期 V4→V5 VPS 的通过次数当作 K3s 的本轮证据。旧主机、旧 Vault、备份及数据的删除不属于本文操作范围。
 
+跨代回链：[基线 → 每轮回执 → 故障 → 固定源码 case → 重验](../generation-deployment-evidence-index-20261025.zh.md)。该索引补充三轮原始回执的精确起止，并显式标记未归档的 attempt/native checksum；本次没有重新执行协调、数据迁移或恢复。
+
 [统一部署迁移流程](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md) · [V4→V5 复盘](../../17-prod-v4-v5-baseline-and-upgrade-retrospective.zh.md) · [V5 VPS 基线](../prod-v5-20261023/prod-v5-runtime-and-snapshot-baseline-20261023.zh.md) · [K3s 初始 UAT 历史基线](../uat-k3s-v5-20261024/web-saas-k3s-v5-runtime-and-snapshot-baseline-20261024.zh.md) · [可复用检查表](deployment-migration-acceptance-checklist.template.zh.md)
 
 
@@ -178,14 +180,14 @@ flowchart TB
 
 原始 provider 检查点、三轮回执、只读内容比对与资源采样留在受控证据目录。本文不提交 Token、密码、密钥、Cookie、个人身份、原始 SQL 导出、Terraform state、数据库备份或完整 Vault 快照。日志/trace/历史监控数据不因配置迁移而搬运。
 
-## 历史基线（按 V4、V3、V2、V1）
-
-1. [V4 运行基线](../prod-v3-v4-20261020/prod-v4-runtime-and-snapshot-baseline-20261021.zh.md)。
-2. [V3 快照与升级历史索引](../../15-prod-v2-v3-snapshots-and-upgrade-retrospective.zh.md)；独立 V3 runtime 基线文件在本轮未定位，不编造路径。
-3. [V2 冷备/恢复历史](../prod-v2-v3-20261019/web-saas-prod-v2-cold-backup-disaster-recovery-whitepaper.zh.md)。
-4. V1 独立运行基线尚未定位：保持缺口，不编造链接。
-
 
 ## GitHub / Vault 身份矩阵
 
 [30 个角色、11 个既有策略及分环境验证 TODO](github-vault-role-policy-matrix-20261025.zh.md)列出精确角色、策略消费者、权限动作、workflow/ref 限制、回读与未执行项。
+
+## 历代记录（V4 → V3 → V2 → V1）
+
+1. **V4**：[运行基线与快照清单](../prod-v3-v4-20261020/prod-v4-runtime-and-snapshot-baseline-20261021.zh.md)，配套 [V3→V4 复盘](../../16-prod-v3-v4-baseline-and-upgrade-retrospective.zh.md)。
+2. **V3**：[实际快照与升级复盘](../prod-v2-v3-20261019/20261019-prod-v2-v3-snapshot-and-upgrade-retrospective.zh.md)、[快照刷新与恢复](../prod-v2-v3-20261019/v2-to-v3-snapshot-refresh-20261019.zh.md)；独立命名的 V3 运行基线文件仍未定位，不编造路径。
+3. **V2**：[冷备、容灾与跨机恢复记录](../prod-v2-v3-20261019/web-saas-prod-v2-cold-backup-disaster-recovery-whitepaper.zh.md)。
+4. **V1**：[组织仓库 V1→V2 真实历史交接](https://github.com/ai-workspace-services/.github/blob/main/docs/prod-v2-upgrade-cutover-20261016.md)可查；Knowledge 中独立 V1 原始运行基线仍缺失，不把交接记录冒充完整基线。

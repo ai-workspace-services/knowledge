@@ -4,6 +4,8 @@
 
 代际索引：[V4→V5 基线与升级复盘](../../17-prod-v4-v5-baseline-and-upgrade-retrospective.zh.md) · [统一部署与迁移流程](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md)。
 
+跨代回链：[逐轮回执、专项故障、真实 case 与重验](../generation-deployment-evidence-index-20261025.zh.md) · [上一代 V3 快照/恢复](../prod-v2-v3-20261019/20261019-prod-v2-v3-snapshot-and-upgrade-retrospective.zh.md) · [后续 V5 VPS 基线](../prod-v5-20261023/prod-v5-runtime-and-snapshot-baseline-20261023.zh.md) · [后续 V5 K3s 基线](../prod-v5-k3s-20261025/prod-v5-vps-to-k3s-runtime-and-acceptance-20261025.zh.md)。本页“当前”只指其各自采样时点；本轮归档没有新执行 V4 发布、迁移或恢复。
+
 
 ## 后续应用发布：r8，13:23–13:24
 

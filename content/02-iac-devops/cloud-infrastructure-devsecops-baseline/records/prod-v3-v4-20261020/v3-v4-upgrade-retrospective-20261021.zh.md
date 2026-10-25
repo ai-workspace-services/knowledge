@@ -74,3 +74,7 @@
 固定各仓库 main SHA/唯一 tag/digest/SQL → 读取源和目标实际状态 → Vnext 全新部署（独立于恢复演练）→ 目标可恢复保护 → 核心只读预览及受控单向合并 → 含业务数据备份与隔离恢复 → 历史问题真实 case → 同版本重跑及中断恢复 → 稳定观察和报告 → 人工确认单写入者/最终追齐/切流量 → 正式稳定验收后登记下一轮来源。
 
 代际只是部署身份；业务角色、共享令牌和证书的权威来源不随 vN 自动生成。修复必须进入所属仓库并绑定新构件，不能依赖主机热修和旧回执拼接。
+
+## 跨代归档回链
+
+[统一流程](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md) → [跨代基线、逐轮回执、真实 case 与重验](../generation-deployment-evidence-index-20261025.zh.md)。本页保留原采样、固定构件和结果；后续成功不覆盖历史失败，源码/PR 状态不代替本页的真实运行回执。
