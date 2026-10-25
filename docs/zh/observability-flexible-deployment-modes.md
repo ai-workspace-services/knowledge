@@ -169,11 +169,13 @@ address = "{{ observability_server_ip | default('127.0.0.1') }}:9428"
 
 Node Exporter 的只读宿主 proc/sys/root 和 host-network 例外必须明确验证；process exporter 使用非 root、只读 proc，不以 hostPID 或管理员 API token 作为默认方案；KSM 不为面板统计开放 Secret/ConfigMap 读取。以上不等于整个集群或宿主机已完成 rootless 改造。
 
+本轮实际运行身份另作分层记录，不用安全配置声明替代现场事实：三个 exporter 的 UID 为 `65534`；Stack 中 Grafana 为 `472`、OTel 为 `10001`，VictoriaMetrics / VictoriaLogs / VictoriaTraces 仍沿用既有 UID `0`。因此当前**不是全栈 rootless**。本次保留既有卷与权限，不为补齐标签而递归扩大卷权限，也不将服务降权、数据卷所有权或整个集群迁移捆绑到观测修复。
+
 Vector 的可选 federation → remote-write 是独立参数化能力，不是本轮已启用的跨集群通路，也不承诺历史逐样本重放。旧 journald → VictoriaLogs 迁移仍在 [Artifacts #227](https://github.com/ai-workspace-infra/artifacts/issues/227) 跟踪；服务端具备 OTLP 日志接收不能替代节点日志采集与真实权限验证。
 
 实现与迁移边界：[Artifacts #229](https://github.com/ai-workspace-infra/artifacts/pull/229)、[Chart 收敛预检与运行手册 #228](https://github.com/ai-workspace-infra/artifacts/pull/228)。旧消费者、PVC 身份及日志迁移未全部验收前，不关闭旧实现退役事项。
 
-### 5.2 Flux 驱动部署、普通升级与受约束回退
+### 5.2 Flux 驱动部署、普通升级与受约束恢复
 
 正常交付顺序：
 
@@ -185,9 +187,18 @@ Vector 的可选 federation → remote-write 是独立参数化能力，不是�
 
 Source 选择的是固定 GitOps tag。**合并 main 后等待一个五分钟周期，不会自动把该 Source 晋级到 main。** 本轮主干 pin 对齐另由 [GitOps #580](https://github.com/ai-workspace-infra/gitops/pull/580) 跟踪；这类声明同步不能代替实际 promotion 或运行证据。
 
-回退是另一份显式 plan：已验证旧/新 tag 和 SHA、同一目标、同一观测差异范围、目标为当前 commit 的已知祖先；`rollback: true`、回退原因、CLI `--rollback` 必须同时存在，实际变更仍需 `--apply`。仅此路径允许 root 因 health check 未通过而非 Ready，且 last-applied 必须属于已知 expected/desired 版本；Source 本身的 Ready/generation/artifact SHA 与并发 ref 测试不放宽。默认 forward 继续拒绝不健康基线。失败或丢失 patch 响应时保留未知/已变更失败证据，不自动伪装成成功。
+默认 forward 继续拒绝不健康的 expected 基线。发生已知失败时，可选择两种**互斥且必须显式授权**的恢复计划；不能把恢复选项用于普通发布的健康门禁旁路：
 
-Owner：[Playbooks #776](https://github.com/ai-workspace-infra/playbooks/pull/776)；失败健康基线下的明确祖先回退：[Playbooks #785](https://github.com/ai-workspace-infra/playbooks/pull/785)。这里选择的是配置，不是数据库历史回放、存储格式降级或数据恢复授权。
+| 路径 | CLI 与 plan 标记必须一致 | 不可变提交关系与原因 |
+| --- | --- | --- |
+| 祖先回退 | `--rollback` 与 `rollback: true` | desired 是 expected 的已验证、不同的祖先；必须提供 `rollback_reason` |
+| 前向修复恢复 | `--recover-forward` 与 `recover_forward: true` | expected 是 desired 的已验证、不同的祖先，即 **expected → desired**；必须提供有界、非空的 `recovery_reason` |
+
+两者不能同时开启；缺 CLI、缺对应布尔标记、缺原因或祖先方向不符均拒绝。默认仍是只读 plan，实际变更另需 `--apply`。本地和远端 tag/SHA、同一目标 machine/SSH 身份、固定 owner SHA、观测专属 diff 与精确 Source 绑定全部保留。仅显式恢复允许 root 因 health check 未通过而非 Ready，且 last-applied 必须是已知 expected/desired 版本；Source 自身的 Ready、observed generation 和选中版本的 artifact SHA 仍须准确。JSON Patch 仍测试 resourceVersion 与旧 ref，只替换同一 Source 的 ref，不修改 workload 或扩大权限。
+
+成功仍要求最终 Source/root 在 desired 版本 Ready，运行/数据验收另行执行。失败、超时或丢失 patch 响应时保留恢复方向、原因、祖先关系和已知/未知变更证据，不自动伪装成成功，也不自动挑选另一个版本。
+
+Owner：[Playbooks #776](https://github.com/ai-workspace-infra/playbooks/pull/776)；明确祖先回退：[Playbooks #785](https://github.com/ai-workspace-infra/playbooks/pull/785)；失败基线上的受约束前向修复：[Playbooks #792](https://github.com/ai-workspace-infra/playbooks/pull/792)，固定实现 commit `a933bcaceb7bcd8949dd2f9632052fe4ea069ac8`。这里选择的是配置，不是数据库历史回放、存储格式降级或数据恢复授权。
 
 ### 5.3 26.2 的真实故障：合法插件包被 50 MB reader 截断
 
@@ -226,5 +237,7 @@ Owner：[Playbooks #776](https://github.com/ai-workspace-infra/playbooks/pull/77
 | 跨集群 Vector | **OFF / NOT_RUN** | 未选远端、未启用生产转发，不宣称多集群闭环 |
 | journald 日志迁移 | **NOT_RUN** | 后续 #227；未借本次指标修复扩大日志读取权限 |
 | CMDB / 其他主机 / 历史数据 | **未完成 / 未在本轮验收** | 不把本目标 exporter 就绪写成多云资源对账、全量主机部署或历史 metrics/logs/traces 迁入 |
+
+本次文档补充时，`26.4` 仅在准备 Dashboard scope 与实际 full-query 定位修复，尚未创建不可变 tag。准备中的变更不是已部署版本，不覆盖上表 `26.3` 的固定回执；最终 30 分钟结果和全 Panel 结论仍须等待新证据后更新。
 
 上述 PENDING/NOT_RUN 项未完成前，不关闭 [#570](https://github.com/ai-workspace-infra/gitops/issues/570)，也不把此次恢复称为全平台业务验收。后续新增数据证据应更新本节相应行及受控回执，保留本次故障、固定版本和时间边界。
