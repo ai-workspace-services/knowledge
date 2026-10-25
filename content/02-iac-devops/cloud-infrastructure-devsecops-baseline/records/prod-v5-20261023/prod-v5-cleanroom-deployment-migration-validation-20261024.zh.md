@@ -110,3 +110,7 @@ Accounts、Billing、Content、Console 的 readiness，以及可信 HTTPS/SNI �
 | E07 | 合成身份的可信 direct HTTPS 请求与响应 | `user_not_found` / MFA 200、非 403/405/503，不含真实用户状态 |
 
 历史 01:07 的 r5/r103 成功与早期 Docker/exit 4 失败均在原[运行基线](prod-v5-runtime-and-snapshot-baseline-20261023.zh.md)保留。Knowledge [#196](https://github.com/ai-workspace-services/knowledge/pull/196) 仍是较早 Docker/collection 漂移样本的待审 PR；本轮不重复提交该样本，不以其“旧 apply 运行中”替代新回执，也不擅自关闭。服务级配置路径继续由运行基线汇总，本文件仅记录本轮实际执行。
+
+## 跨代归档回链
+
+[统一流程](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md) → [跨代基线、逐轮回执、真实 case 与重验](../generation-deployment-evidence-index-20261025.zh.md)。本页保留原采样、固定构件和结果；后续成功不覆盖历史失败，源码/PR 状态不代替本页的真实运行回执。

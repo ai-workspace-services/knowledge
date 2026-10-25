@@ -1,5 +1,7 @@
 # 云基础设施 DevSecOps 基线与代际演进目录索引 (PROD V2 - V5)
 
+部署记录完整链路：[既有统一流程](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md) → [跨代基线、逐轮回执、专项故障、固定源码 case 与重验](records/generation-deployment-evidence-index-20261025.zh.md)。V5 VPS / Compose 与 V5 K3s PROD 独立采样；字段缺失、旧 OPEN PR 与新回执替代关系也在该证据索引中逐项列明。
+
 ## 1. 概述与代际演进规格
 
 本目录归档 `cloud-infrastructure-devsecops-baseline` 系列核心文档，涵盖跨多云环境的 DevSecOps 底层基线、多云编排蓝图、OIDC 身份契约，以及生产环境全生命周期的代际演进（**PROD V2 → V3 → V4 → V5**）运行基线、快照证据、升级复盘与事故修复回执。

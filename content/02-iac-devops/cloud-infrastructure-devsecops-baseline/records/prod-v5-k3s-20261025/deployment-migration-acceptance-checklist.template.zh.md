@@ -2,6 +2,8 @@
 
 本表是[统一流程](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md)的执行附件，不创建第二套权威流程。每轮复制到独立记录，用实际证据更新；不得把模板勾选当成执行。
 
+历史实例与源码：[跨代证据/case/重验索引](../generation-deployment-evidence-index-20261025.zh.md)。每项失败、修复 PR 和后续重验分别留行，缺历史字段 `NOT_RECORDED`，需要该字段准出时 `BLOCKED`。
+
 **本次归档关联**：运行快照与本检查表见 [Knowledge PR #224](https://github.com/ai-workspace-services/knowledge/pull/224)；GitHub↔新 Vault 角色/策略矩阵见 [Knowledge PR #225](https://github.com/ai-workspace-services/knowledge/pull/225)，实现来源为 [Toolkit PR #1443](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1443)、[#1444](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1444) 与 [Playbooks PR #765](https://github.com/ai-workspace-infra/playbooks/pull/765)。这些链接表示变更来源，不替代本轮各验收项的执行证据。
 
 ## 本轮可选实例背景
@@ -21,6 +23,8 @@ V5 K3s all-in-one：将 Web-SaaS、Vault Server、Grafana/观测栈汇聚到一�
 | 允许操作与审批引用 | `<只读、目标写入、DNS、停写、恢复分别填写>` |
 | 数据范围 / 获准例外 | `<集合、时间边界、例外及确认依据>` |
 | 备份 / 隔离恢复 / 单写者证据 | `<受控 evidence_id；缺失写 BLOCKED>` |
+| 阶段状态 / 退出码 / 原因 | `<构建/部署/迁移/恢复/业务/切换逐阶段>` / `<integer-or-null>` / `<failure-or-N/A>` |
+| 修复 PR / 固定源码 case / 重验 / 归档 PR | `<PR-URL>` / `<immutable-code-URL-and-case>` / `<new-run/evidence-id>` / `<archive-PR>` |
 
 ## Markdown TODO 表
 

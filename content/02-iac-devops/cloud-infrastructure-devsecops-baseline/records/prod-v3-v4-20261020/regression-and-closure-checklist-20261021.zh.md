@@ -2,6 +2,8 @@
 
 记录日期：2026-10-21，Asia/Shanghai。状态区分 PASS、FAIL、BLOCKED、NOT_RUN；人工探针结果与脚本 case 回执单列，不互相冒充。当前基线见[运行记录](prod-v4-runtime-and-snapshot-baseline-20261021.zh.md)，问题编号见[复盘](v3-v4-upgrade-retrospective-20261021.zh.md)。
 
+2026-10-25 归档补链：[跨代回执、真实源码和后续重验](../generation-deployment-evidence-index-20261025.zh.md)。下表仍为 10-21 历史结果；[Playbooks #712](https://github.com/ai-workspace-infra/playbooks/pull/712)后已合并 `611cc12b443ea669dc1460e6597320acaed7a418`，不覆盖原“未合并”采样，不据此把待重验 case 改成 PASS。
+
 ## 历史脚本与真实结果
 
 脚本归属 Playbooks：

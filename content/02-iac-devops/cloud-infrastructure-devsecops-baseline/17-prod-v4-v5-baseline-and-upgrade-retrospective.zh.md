@@ -1,5 +1,7 @@
 # PROD V4 → V5：基线与升级复盘索引
 
+2026-10-25 归档补链：[统一流程白皮书](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md) → [V2→V5 双向证据索引](records/generation-deployment-evidence-index-20261025.zh.md) → 各代基线 → 每轮回执 → 故障复盘 → 固定源码 case → 独立重验。索引区分 V5 VPS 与 K3s，标注旧字段缺口；下文 10-24 的“最新”仍指当时采样，后续承载以 K3s 专页为准。
+
 记录更新：2026-10-24（Asia/Shanghai）。本页连接统一流程、V4/V5 运行基线、部署回执、恢复证据与仓库内回归 case；不替代各 owner 的 GitOps、Playbooks 或 IaC 配置。公开副本使用逻辑代际及脱敏摘要，主机身份、地址、凭据、秘密存储路径、原始 state、数据库和备份保留在受控位置。
 
 统一流程：[Selfhost 控制面部署与核心数据迁移](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md)。前序记录：[V3→V4 快照与升级复盘](16-prod-v3-v4-baseline-and-upgrade-retrospective.zh.md)；[V2→V3 快照与升级复盘](15-prod-v2-v3-snapshots-and-upgrade-retrospective.zh.md)。

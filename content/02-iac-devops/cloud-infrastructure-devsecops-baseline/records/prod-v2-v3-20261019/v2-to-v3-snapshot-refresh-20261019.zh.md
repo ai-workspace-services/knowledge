@@ -79,3 +79,7 @@ V3 归档及各阶段 receipt 目录：
 如需将业务连接切回 `account_before_20261019170007`，必须先停止 V3 写入、备份当前活跃库并检查恢复后新增交易；这是新的显式恢复决策，不能自动覆盖本轮之后的数据。
 
 关联 owner PR：[Playbooks #692](https://github.com/ai-workspace-infra/playbooks/pull/692)。
+
+## 跨代归档回链
+
+[统一流程](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md) → [跨代基线、逐轮回执、真实 case 与重验](../generation-deployment-evidence-index-20261025.zh.md)。本页保留原采样、固定构件和结果；后续成功不覆盖历史失败，源码/PR 状态不代替本页的真实运行回执。

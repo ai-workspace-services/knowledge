@@ -54,3 +54,7 @@ Accounts 曾将 `resourceClass` 拼入 XHTTP 路径，产生 `/pool/plus/split`�
 刷新 Portal 重新获取节点、重新生成二维码/链接后，应得到 `path=%2Fsplit`；
 已经复制的链接、下载文件或客户端缓存不会自行替换，需要重新获取受管配置。
 Agent 注册/实时报告及区域入口完整性是独立验收项，本次镜像更新不能替代它们。
+
+## 跨代归档回链
+
+[统一流程](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md) → [跨代基线、逐轮回执、真实 case 与重验](../generation-deployment-evidence-index-20261025.zh.md)。本页保留原采样、固定构件和结果；后续成功不覆盖历史失败，源码/PR 状态不代替本页的真实运行回执。
