@@ -58,3 +58,13 @@
 - 回归/切换：历史 case 逐条实际执行；登录、外部 OAuth/支付、Agent 和业务账务未通过前不得称业务验收完成。此页不授权 DNS 切换或写入权转移。
 
 结果只在实际运行后追加到[V5 运行基线](records/prod-v5-20261023/prod-v5-runtime-and-snapshot-baseline-20261023.zh.md)；任何失败保留在原时间线上，并以新 run/revision 记录修复与重验。
+
+
+## 追加：2026-10-25 V5 VPS → K3s 容器化承载
+
+本节保留上文采样背景，不把旧 VPS/UAT 的成功重写为当前 PROD K3s 全流程通过。
+
+- [V5 VPS → V5 K3s 运行快照、服务配置路径与验收 TODO](records/prod-v5-k3s-20261025/prod-v5-vps-to-k3s-runtime-and-acceptance-20261025.zh.md)
+- [可复用 Markdown 验收检查表](records/prod-v5-k3s-20261025/deployment-migration-acceptance-checklist.template.zh.md)
+
+本轮采用 V5 K3s all-in-one，将 Web-SaaS、Vault Server 与 Grafana/观测栈这一核心控制面汇聚到一台 Linode 2C4G VPS，以资源整合进一步降本；当前固定构件、DNS、数据范围、批准例外及待办见新回执。资源整合不等于已完成旧资源回收或已实现账单节省。

@@ -113,3 +113,13 @@
 - [业务数据迁移、Vault 隔离恢复及观测对接方案（2026-10-24）](records/uat-k3s-v5-20261024/k3s-v5-data-vault-observability-plan-20261024.zh.md)：用户材料脱敏归档，保留待决项与阶段状态，未执行项不作为验收成功。
 
 - [Kubernetes UAT 增强安全与严格准入方案（2026-10-24）](records/uat-k3s-v5-20261024/k3s-v5-migration-enhanced-guardrails-20261024.zh.md)：追加计划标识、期望状态和证据缺口；不代表迁移完成。
+
+
+## 追加：2026-10-25 V5 VPS → K3s 容器化承载
+
+本节保留上文采样背景，不把旧 VPS/UAT 的成功重写为当前 PROD K3s 全流程通过。
+
+- [V5 VPS → V5 K3s 运行快照、服务配置路径与验收 TODO](records/prod-v5-k3s-20261025/prod-v5-vps-to-k3s-runtime-and-acceptance-20261025.zh.md)
+- [可复用 Markdown 验收检查表](records/prod-v5-k3s-20261025/deployment-migration-acceptance-checklist.template.zh.md)
+
+本轮采用 V5 K3s all-in-one，将 Web-SaaS、Vault Server 与 Grafana/观测栈这一核心控制面汇聚到一台 Linode 2C4G VPS，以资源整合进一步降本；当前固定构件、DNS、数据范围、批准例外及待办见新回执。资源整合不等于已完成旧资源回收或已实现账单节省。
