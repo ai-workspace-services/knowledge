@@ -154,3 +154,4 @@ GitHub 组织入口：[ai-workspace-infra](https://github.com/ai-workspace-infra
 - 导出前应重新核对固定 SHA、语言版本、图片/代码块/Mermaid 支持和章节顺序；未提交工作树不得直接作为已发布版本声明。
 - 目录条目是导航，不等于已经把目录下所有文件纳入 PDF；若要合订完整附录，必须明确附录文件清单并将其加入导出输入。
 - 不把不存在的文件、未验证的命令、凭据、内网地址或本机绝对路径写入公开索引。
+- [开发环境工具清单](dev-environment-toolchain.zh.md)
