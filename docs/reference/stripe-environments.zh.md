@@ -59,7 +59,11 @@ Stripe 密钥保存在既有的 Vault KV v2 路径中，**不新建、不重新�
 
 - 读取 `kv/prod/billing-service` 的角色/token 只授予 `read`，范围限定该路径。
 - 非生产注入时只映射 `SANDBOX_*` 字段，不把 `PROD_*` 字段映射或落盘到任何非生产环境。
-- 写权限仅限安全管理员；日常部署与验收不用 root token。
+- 写权限仅限安全管理员。
+- **Rootless 原则**：
+  - 日常部署与验证只使用非 root、最小权限的 Vault 身份：按环境划分的 role 与 policy（如 CI 走 jwt auth、集群内工作负载走 Kubernetes auth role），非生产只能读取 `SANDBOX_*` 字段。
+  - root token 仅作 break-glass：需要时临时生成（如 `vault operator generate-root`），用完立即吊销，不保存、不用于日常操作。
+  - 工作负载本身也以非 root 运行（`runAsNonRoot`、非 0 UID、只读根文件系统等）。
 - 禁止把生产密钥复制到任何非生产路径或环境。
 
 ## 5. 服务启动校验
