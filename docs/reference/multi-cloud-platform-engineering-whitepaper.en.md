@@ -40,6 +40,10 @@ The version 1.1 change added the unified Vault path proposal in section 8.5, exp
 - Chapters 10–12: release, data upgrades, acceptance, and migration sequencing.
 - Appendix A: all 40 workflows; Appendix B: terminology; Appendix C: sources.
 
+## Proxy Server deployment-profile archive (October 25, 2026)
+
+[Proxy Server deployment profiles and control-plane boundaries](proxy-server-deployment-profiles.en.md) preserves the three profiles, declaration/control-plane boundaries, and fixed source from GitOps PR #428. This documentation supplement does not change the existing source-audit baseline or establish runtime acceptance.
+
 ## 1. Scope, baseline, and evidence levels
 
 ### 1.1 Intended use

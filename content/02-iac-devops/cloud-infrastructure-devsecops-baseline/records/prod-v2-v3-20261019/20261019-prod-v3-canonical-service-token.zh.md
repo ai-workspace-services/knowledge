@@ -60,3 +60,7 @@ SQL checksum、迁移前后版本、DB 备份/恢复结果、数据指纹：本�
 上一 release 为 `prod-v3-public-sni-2026.10.19-r1`，但直接回退会重新引入旧令牌及
 Console 缺少令牌的问题；回退应用配置时需保留本次 canonical env 注入，不能宣称
 旧声明可无条件回滚。数据库及历史备份不参与本次应用配置回退。
+
+## 跨代归档回链
+
+[统一流程](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md) → [跨代基线、逐轮回执、真实 case 与重验](../generation-deployment-evidence-index-20261025.zh.md)。本页保留原采样、固定构件和结果；后续成功不覆盖历史失败，源码/PR 状态不代替本页的真实运行回执。

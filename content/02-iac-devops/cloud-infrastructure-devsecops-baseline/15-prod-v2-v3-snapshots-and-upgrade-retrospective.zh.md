@@ -2,6 +2,8 @@
 
 记录日期：2026-10-19（Asia/Shanghai）。本文汇集已执行的代际升级与快照证据，供 V3→V4 等后续变更参考。历史记录保留当时的计数、release 和验收边界，不作为当前在线状态的自动声明。
 
+归档导航：[统一流程](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md) → [跨代基线、逐轮回执、真实 case 与重验索引](records/generation-deployment-evidence-index-20261025.zh.md)。后者补齐历史字段缺口和后续 V5 VPS/K3s 入口，不改写本页 10-19 的快照结果。
+
 ## 按类别阅读
 
 后续代际：[V3→V4 运行基线与完整问题复盘（2026-10-21）](16-prod-v3-v4-baseline-and-upgrade-retrospective.zh.md)。历史 V2/V3 快照数值不回写为 V4 当前状态。

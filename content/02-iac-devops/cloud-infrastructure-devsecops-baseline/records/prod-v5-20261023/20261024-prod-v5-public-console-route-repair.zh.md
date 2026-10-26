@@ -29,3 +29,7 @@
 11:19–11:21 的逻辑快照是本次路由修复之前的恢复点，恢复证明仍有效；恢复后须使用包含公共 Console 别名的最新固定 owner/声明收敛，不把旧 Caddy 配置当作最终入口。
 
 本次不修改 DNS、数据库、V4 或代理服务。同期只读检查发现公共 PostgreSQL 别名仍指向旧代际，不能沿用“所有四个公共别名均已指向 V5”的描述；本次未切换数据库入口。代理节点的最新心跳、DNS 和健康状态按其采样时间分别核对，不由 Console 页面恢复推导全节点健康。
+
+## 跨代归档回链
+
+[统一流程](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md) → [跨代基线、逐轮回执、真实 case 与重验](../generation-deployment-evidence-index-20261025.zh.md)。本页保留原采样、固定构件和结果；后续成功不覆盖历史失败，源码/PR 状态不代替本页的真实运行回执。

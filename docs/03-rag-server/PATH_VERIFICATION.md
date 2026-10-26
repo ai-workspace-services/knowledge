@@ -10,7 +10,7 @@
 
 ### 认证模块 (internal/auth/)
 ```
-~/workspaces/XControl/rag-server/
+/Users/shenlan/workspaces/XControl/rag-server/
 └── internal/
     └── auth/
         ├── client.go                 ✅ 新增：认证客户端
@@ -26,7 +26,7 @@
 
 ### 主程序 (cmd/)
 ```
-~/workspaces/XControl/rag-server/
+/Users/shenlan/workspaces/XControl/rag-server/
 └── cmd/
     └── xcontrol-server/
         └── main.go                   ✅ 修改：启用认证中间件
@@ -34,7 +34,7 @@
 
 ### 配置 (config/)
 ```
-~/workspaces/XControl/rag-server/
+/Users/shenlan/workspaces/XControl/rag-server/
 └── config/
     ├── config.go                     ✅ 修改：添加 AuthCfg
     └── server.yaml                   ✅ 修改：移除私钥，添加认证 URL
@@ -46,7 +46,7 @@
 
 ### 认证模块 (internal/auth/)
 ```
-~/workspaces/XControl/account/
+/Users/shenlan/workspaces/XControl/account/
 └── internal/
     └── auth/
         ├── token_service.go          ✅ 已有：Token 服务实现
@@ -56,14 +56,14 @@
 
 ### API 服务 (api/)
 ```
-~/workspaces/XControl/account/
+/Users/shenlan/workspaces/XControl/account/
 └── api/
     └── api.go                        ✅ 已有：认证接口实现
 ```
 
 ### 配置 (config/)
 ```
-~/workspaces/XControl/account/
+/Users/shenlan/workspaces/XControl/account/
 └── config/
     └── account.yaml                  ✅ 已有：服务配置
 ```
@@ -74,7 +74,7 @@
 
 ### 认证模块 (lib/auth/)
 ```
-~/workspaces/XControl/dashboard-fresh/
+/Users/shenlan/workspaces/XControl/dashboard-fresh/
 └── lib/
     └── auth/
         └── token_service.ts          ✅ 已有：前端 Token 服务
@@ -82,7 +82,7 @@
 
 ### 配置 (config/)
 ```
-~/workspaces/XControl/dashboard-fresh/
+/Users/shenlan/workspaces/XControl/dashboard-fresh/
 └── config/
     ├── runtime-service-config.base.yaml  ✅ 已有：基础配置
     └── runtime-service-config.prod.yaml  ✅ 已有：生产配置
@@ -163,16 +163,16 @@ dashboard-fresh:
 
 ```bash
 # 验证 rag-server 路径
-ls ~/workspaces/XControl/rag-server/internal/auth/*.go    ✅ 所有文件存在
-ls ~/workspaces/XControl/rag-server/cmd/xcontrol-server/main.go    ✅ 存在
+ls /Users/shenlan/workspaces/XControl/rag-server/internal/auth/*.go    ✅ 所有文件存在
+ls /Users/shenlan/workspaces/XControl/rag-server/cmd/xcontrol-server/main.go    ✅ 存在
 
 # 验证 account 路径
-ls ~/workspaces/XControl/account/internal/auth/*.go       ✅ 所有文件存在
-ls ~/workspaces/XControl/account/api/api.go               ✅ 存在
+ls /Users/shenlan/workspaces/XControl/account/internal/auth/*.go       ✅ 所有文件存在
+ls /Users/shenlan/workspaces/XControl/account/api/api.go               ✅ 存在
 
 # 验证 dashboard-fresh 路径
-ls ~/workspaces/XControl/dashboard-fresh/lib/auth/*.ts    ✅ 所有文件存在
-ls ~/workspaces/XControl/dashboard-fresh/config/*.yaml    ✅ 所有文件存在
+ls /Users/shenlan/workspaces/XControl/dashboard-fresh/lib/auth/*.ts    ✅ 所有文件存在
+ls /Users/shenlan/workspaces/XControl/dashboard-fresh/config/*.yaml    ✅ 所有文件存在
 ```
 
 ---
@@ -181,9 +181,9 @@ ls ~/workspaces/XControl/dashboard-fresh/config/*.yaml    ✅ 所有文件存在
 
 ✅ **所有代码均在正确路径**
 
-- rag-server 代码全部位于 `~/workspaces/XControl/rag-server/`
-- account 代码全部位于 `~/workspaces/XControl/account/`
-- dashboard-fresh 代码全部位于 `~/workspaces/XControl/dashboard-fresh/`
+- rag-server 代码全部位于 `/Users/shenlan/workspaces/XControl/rag-server/`
+- account 代码全部位于 `/Users/shenlan/workspaces/XControl/account/`
+- dashboard-fresh 代码全部位于 `/Users/shenlan/workspaces/XControl/dashboard-fresh/`
 
 路径结构清晰，便于维护和管理。
 

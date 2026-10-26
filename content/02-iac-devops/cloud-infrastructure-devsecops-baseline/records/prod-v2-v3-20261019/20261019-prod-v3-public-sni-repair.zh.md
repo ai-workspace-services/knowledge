@@ -57,3 +57,7 @@ PostgreSQL 别名保持预留隧道 TLS 用途，无新增数据库公网监听�
 若回退到上一 GitOps tag（r2），必须先通过受控 Playbook 恢复上述旧 Caddyfile，
 再切换旧 tag，因为旧 Compose 没有证书挂载；不能只切旧 tag 而保留引用新路径的配置。
 保留证书版本、配置备份和独立数据盘，不自动回退数据库。
+
+## 跨代归档回链
+
+[统一流程](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md) → [跨代基线、逐轮回执、真实 case 与重验](../generation-deployment-evidence-index-20261025.zh.md)。本页保留原采样、固定构件和结果；后续成功不覆盖历史失败，源码/PR 状态不代替本页的真实运行回执。

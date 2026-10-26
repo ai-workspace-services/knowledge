@@ -73,3 +73,7 @@
 证据索引：受控库保留 r105 初次 preview/apply、r105 保护拒绝日志、r106 六份完整计划/应用及六份摘要、迁移前加密备份和独立恢复证明、发布 manifest/checksum、两个节点修复回执、节点快照汇总及 `traffic-before-repair` / 四次 `traffic-after-repair` 采样。公开记录只给阶段与脱敏汇总。仓库真实回归 case 为 `internal/migrate/usage_merge_postgres_test.go::TestFullBusinessUsageMergePostgres17`（非同步数据更新与 ANALYZE 不误阻断，业务并发写仍拒绝旧计划、事务回滚、三次无写入、非默认身份差异阻断）；Portal `accountSyncPresentation.test.ts` 覆盖缺策略/缺采样/过期等状态。
 
 历史导入的桶与账本不等于新采集成功，本轮正向采集结论只覆盖上述两个真实周期和实际有流量的节点。源端继续在线写入，源端进行中财务任务仍由源端持有，目标财务后台执行保持关闭；本轮不修改 DNS、不重复触发支付、不宣称整代切换验收完成。
+
+## 跨代归档回链
+
+[统一流程](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md) → [跨代基线、逐轮回执、真实 case 与重验](../generation-deployment-evidence-index-20261025.zh.md)。本页保留原采样、固定构件和结果；后续成功不覆盖历史失败，源码/PR 状态不代替本页的真实运行回执。

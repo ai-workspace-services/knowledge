@@ -5,22 +5,33 @@
 适用范围：`prod-vN` → `prod-vN+1`、冷备、隔离恢复、滚动升级
 安全边界：只记录非敏感事实；不记录密码、Token、私钥、DSN、完整用户标识、备份内容或 unseal/recovery key。
 
+本模板是[既有统一流程](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md)的记录附件；[跨代回执与 case 索引](../generation-deployment-evidence-index-20261025.zh.md)提供实例。每轮复制为独立记录，原失败/原时间保留。历史未取得字段用 `NOT_RECORDED`；依赖该证据的准出为 `BLOCKED`。未执行阶段为 `NOT_RUN`，不适用的 checksum 须写 `N/A` 及原因。
+
 ## 1. 变更身份
 
 | 字段 | 值 |
 | --- | --- |
+| run_id / attempt / 父运行 | `<unique-run-id>` / `<attempt>` / `<parent-or-N/A>`；本地运行不伪装成 Actions URL |
+| 环境、操作范围及授权依据 | `<environment>` / `<read-only-or-approved-action>` / `<issue-or-approval>` |
+| Asia/Shanghai 起止 | `<YYYY-MM-DDTHH:mm:ss+08:00>` → `<YYYY-MM-DDTHH:mm:ss+08:00>` |
 | 源代际 | `prod-vN` |
 | 目标代际 | `prod-vN+1` |
 | 源主机 | `<source-host>` |
 | 目标主机 | `<target-host>` |
-| GCP 项目/区域 | `<project> / <zone>` |
+| Provider / 账号 / 区域 | `<provider>` / `<logical-account>` / `<region>`；真实资源及 state 身份仅在受控证据绑定 |
 | 快照边界（北京时间） | `<timestamp>` |
 | release tag | `<immutable-release-tag>` |
 | GitOps commit | `<full-sha>` |
 | Playbooks/Role commit | `<full-sha>` |
 | 工具 commit | `<tool-sha>` |
 | 工具/镜像 digest | `<sha256>` |
-| SQL checksum | `<sha256>` 或 `N/A` |
+| Chart / OCI digest | `<immutable-chart-version>` / `<sha256-or-N/A-reason>` |
+| schema checkpoint / native checksum | `<version / dirty>` / `<sha256-or-NOT_RECORDED>` |
+| SQL / migration package checksum | `<sha256>` 或 `N/A（本轮无 DDL/迁移包）`，不可混用旧候选摘要 |
+| IaC / installer / 其他 owner commit | `<each-owner-full-sha>`；固定版本缺失则阻断相应操作 |
+| 阶段 / 状态 / 退出码 | `<phase>` / `PASS/FAIL/BLOCKED/NOT_RUN` / `<integer-or-null>` |
+| 原因 / 修复 PR / case / 重验 | `<reason>` / `<PR-URL>` / `<fixed-code-case>` / `<new-run-evidence-id>` |
+| 受控证据索引 / 归档 PR | `<evidence-id>` / `<archive-PR-URL>`；原件继续受控保留 |
 
 ## 2. 源主机只读基线
 
@@ -60,6 +71,17 @@
 7. 稳定验收后，目标代际才成为下一轮来源。
 
 ## 5. 验收结果
+
+| 阶段 | 状态 | run_id/attempt、起止、exit code 与受控证据 |
+| --- | --- | --- |
+| 构建 / 不可变构件发布 | NOT_RUN | `<fields>` |
+| 主机 / 服务部署 | NOT_RUN | `<fields>` |
+| 数据迁移与对账 | NOT_RUN | `<fields>` |
+| 独立恢复与权限登录 | NOT_RUN | `<fields>` |
+| 真实业务 / 节点 / 遥测验收 | NOT_RUN | `<fields>` |
+| DNS / 流量 / 写入权交接 | NOT_RUN | `<separate-authorization-and-receipts>` |
+
+每一轮重跑和每次失败各占独立行；不得把恢复、数据追加 no-op、Flux 协调的成功次数混为完整重建三轮。以下逐项结果仍需对应本轮受控证据。
 
 - 数据：用户/订阅/配额/用量/账务指纹 `PASS/FAIL`。
 - schema：`PASS/FAIL`。
