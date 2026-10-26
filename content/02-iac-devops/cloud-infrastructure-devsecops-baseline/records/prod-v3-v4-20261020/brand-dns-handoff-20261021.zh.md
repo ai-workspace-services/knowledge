@@ -28,3 +28,7 @@
 旧 TTL 缓存期间可能仍有客户端访问 V3。此窗口不代表允许两代同时承接业务写入；单写入者证据仍需独立核实。V4 已有新业务数据，不能自动以 DNS 回退代替数据库恢复。
 
 关联：[运行基线](prod-v4-runtime-and-snapshot-baseline-20261021.zh.md)、[V4-18 问题台账](v3-v4-upgrade-retrospective-20261021.zh.md)、[旧 V2→V3 事件索引](../../15-prod-v2-v3-snapshots-and-upgrade-retrospective.zh.md)。
+
+## 跨代归档回链
+
+[统一流程](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md) → [跨代基线、逐轮回执、真实 case 与重验](../generation-deployment-evidence-index-20261025.zh.md)。本页保留原采样、固定构件和结果；后续成功不覆盖历史失败，源码/PR 状态不代替本页的真实运行回执。

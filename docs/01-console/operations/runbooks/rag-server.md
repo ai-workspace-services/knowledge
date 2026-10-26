@@ -15,7 +15,7 @@
 - **部署平台**: Google Cloud Run
 - **区域**: asia-northeast1
 - **项目 ID**: xzerolab-480008
-- **服务 URL**: https://rag-server-svc-plus-<gcp-project-number-xzerolab>.asia-northeast1.run.app
+- **服务 URL**: https://rag-server-svc-plus-266500572462.asia-northeast1.run.app
 - **代码仓库**: https://github.com/x-evor/rag-server.svc.plus
 
 ### 服务功能
@@ -28,7 +28,7 @@ RAG (Retrieval-Augmented Generation) 服务器提供以下功能：
 - **LLM Provider**: NVIDIA AI (integrate.api.nvidia.com)
 - **向量数据库**: PostgreSQL with pgvector
 - **认证服务**: accounts-svc-plus
-- **前端服务**: console.svc.plus (Vercel)
+- **前端服务**: console.svc.plus (Cloudflare Workers)
 
 ## 🏗️ 架构说明
 
@@ -36,7 +36,7 @@ RAG (Retrieval-Augmented Generation) 服务器提供以下功能：
 ```
 用户 (https://www.svc.plus)
   ↓
-Console Frontend (Vercel)
+Console Frontend (Cloudflare Workers)
   ↓
 Next.js API Routes (/api/askai, /api/rag/query)
   ↓
@@ -275,15 +275,15 @@ gcloud run services describe rag-server-svc-plus \
   --project xzerolab-480008
 
 # 2. 测试健康检查
-curl https://rag-server-svc-plus-<gcp-project-number-xzerolab>.asia-northeast1.run.app/health
+curl https://rag-server-svc-plus-266500572462.asia-northeast1.run.app/health
 
 # 3. 测试 RAG 查询
-curl -X POST https://rag-server-svc-plus-<gcp-project-number-xzerolab>.asia-northeast1.run.app/api/rag/query \
+curl -X POST https://rag-server-svc-plus-266500572462.asia-northeast1.run.app/api/rag/query \
   -H "Content-Type: application/json" \
   -d '{"question": "test"}'
 
 # 4. 测试 AI 问答
-curl -X POST https://rag-server-svc-plus-<gcp-project-number-xzerolab>.asia-northeast1.run.app/api/askai \
+curl -X POST https://rag-server-svc-plus-266500572462.asia-northeast1.run.app/api/askai \
   -H "Content-Type: application/json" \
   -d '{"question": "Hello"}'
 
@@ -320,7 +320,7 @@ gcloud run services update-traffic rag-server-svc-plus \
   --project xzerolab-480008
 
 # 3. 验证回滚成功
-curl https://rag-server-svc-plus-<gcp-project-number-xzerolab>.asia-northeast1.run.app/health
+curl https://rag-server-svc-plus-266500572462.asia-northeast1.run.app/health
 ```
 
 ### Git 回滚

@@ -8,10 +8,10 @@ This document defines the multi-service architecture, database schemas, and fron
 
 | Service / Repository | Path & Link | Language / Stack | Core Responsibility |
 | :--- | :--- | :--- | :--- |
-| **Portal (Frontend)** | [`portal`](https://github.com/ai-workspace-services/portal) | Next.js 16, React 18, Tailwind CSS | **Pure Frontend UI**: Bottom-docked Chat Composer, dynamic Task list reactive state, collapsible sidebars, and API proxy routing (`/api/ai-workspace/[...path]`). |
-| **XWorkmate Bridge** | [`xworkmate-bridge`](https://github.com/ai-workspace-lab/xworkmate-bridge) | Go | **Session & Task Indexing & Gateway**: Maintains lightweight session metadata DB, handles TaskThread execution, and bridges heavy binary artifacts to S3 / Object Storage. |
-| **Accounts Service** | [`accounts`](https://github.com/ai-workspace-services/accounts) | Go, PostgreSQL | **Identity & Device Authority**: Manages user accounts, tenant memberships, and registered terminal devices (`workspace_devices`). |
-| **XWorkmate Desktop (Reference App)** | [`xworkmate-app`](https://github.com/ai-workspace-lab/xworkmate-app) | Flutter (Dart) | **Desktop Client Reference**: Reference implementation for `AppShellDesktop`, `buildWorkbenchProjection`, and dual-sidebar collapse mechanics. |
+| **Portal (Frontend)** | [`portal`](file:///Users/shenlan/workspaces/ai-workspace-service/portal) | Next.js 16, React 18, Tailwind CSS | **Pure Frontend UI**: Bottom-docked Chat Composer, dynamic Task list reactive state, collapsible sidebars, and API proxy routing (`/api/ai-workspace/[...path]`). |
+| **XWorkmate Bridge** | [`xworkmate-bridge`](file:///Users/shenlan/workspaces/ai-workspace-lab/xworkmate-bridge) | Go | **Session & Task Indexing & Gateway**: Maintains lightweight session metadata DB, handles TaskThread execution, and bridges heavy binary artifacts to S3 / Object Storage. |
+| **Accounts Service** | [`accounts`](file:///Users/shenlan/workspaces/ai-workspace-service/accounts) | Go, PostgreSQL | **Identity & Device Authority**: Manages user accounts, tenant memberships, and registered terminal devices (`workspace_devices`). |
+| **XWorkmate Desktop (Reference App)** | [`xworkmate-app`](file:///Users/shenlan/workspaces/ai-workspace-lab/xworkmate-app) | Flutter (Dart) | **Desktop Client Reference**: Reference implementation for `AppShellDesktop`, `buildWorkbenchProjection`, and dual-sidebar collapse mechanics. |
 
 ---
 
@@ -134,7 +134,7 @@ CREATE INDEX idx_message_session ON workspace_message_index(session_key, created
 
 ## 5. API Proxy & Security
 
-All frontend API calls under `/ai-workspace` are routed through Next.js App Router API proxy at [`src/app/api/ai-workspace/[...path]/route.ts`](https://github.com/ai-workspace-services/portal/blob/main/src/app/api/ai-workspace/[...path]/route.ts).
+All frontend API calls under `/ai-workspace` are routed through Next.js App Router API proxy at [`src/app/api/ai-workspace/[...path]/route.ts`](file:///Users/shenlan/workspaces/ai-workspace-service/portal/src/app/api/ai-workspace/[...path]/route.ts).
 
 - **Target Origin**: `https://xworkmate-bridge.svc.plus`
 - **Forwarded Headers**: `cookie`, `authorization`, `x-account-session`, `user-agent`

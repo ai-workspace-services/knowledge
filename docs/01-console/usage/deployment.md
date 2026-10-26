@@ -24,7 +24,7 @@ This is intentionally static-first for the current weak-IO single-node host. Dyn
 
 ## Control Plane & DNS Stage
 
-The control repo (`github-org-x-evor`) tracks `console.svc.plus` through `console.svc.plus.code-workspace` and keeps the `subrepos/accounts.svc.plus` pointer in sync via `skills/cross-repo-upstream-submodule-sync`. Releases resolve metadata with that workspace and the `config/single-node-release` manifests. After `.github/workflows/pipeline.yaml` finishes pushing the new image, the control-plane DNS automation calls `scripts/github-actions/update-release-dns.sh` to update Cloudflare DNS so the new endpoint is reachable through the current production host `jp-xhttp-contabo.svc.plus`.
+The control repo (`github-org-x-evor`) tracks `console.svc.plus` through `console.svc.plus.code-workspace` and keeps the `subrepos/accounts.svc.plus` pointer in sync via `skills/cross-repo-upstream-submodule-sync`. Releases resolve metadata with that workspace and the `config/single-node-release` manifests. After `.github/workflows/ci-pipeline.yml` finishes pushing the new image, the control-plane DNS automation calls `scripts/github-actions/ensure-frontend-dns.sh` to update Cloudflare DNS so the new endpoint is reachable through the current production host `jp-xhttp-contabo.svc.plus`.
 
 ## Runtime Layout
 
@@ -53,7 +53,7 @@ Containers:
 Workflow:
 
 ```text
-.github/workflows/pipeline.yaml
+.github/workflows/ci-pipeline.yml
 ```
 
 Secrets required:
@@ -88,8 +88,27 @@ Repository/environment variables recommended:
 - `NEXT_PUBLIC_GISCUS_*`
 - `NEXT_PUBLIC_STRIPE_*`
 - `NEXT_PUBLIC_PAYPAL_CLIENT_ID`
+- `NEXT_PUBLIC_ANALYTICS_*` (see below)
 - `CLOUDFLARE_ZONE_TAG` if homepage Cloudflare analytics are enabled at runtime
 - `CLOUDFLARE_DNS_ZONE_TAG` only for single-domain manual DNS override; the GitHub Actions DNS stage resolves zones from each domain automatically
+
+### Analytics switches
+
+No analytics vendor is hardcoded in the source any more. Every provider is off unless the
+build environment supplies its id, so GitOps decides what a given environment reports to.
+These are read at **build time** (the public boundary prerenders `layout.tsx`), so they must
+be present in the build environment — putting them in Worker runtime vars alone is too late.
+
+| Variable | Effect |
+| --- | --- |
+| `NEXT_PUBLIC_ANALYTICS_DISABLED` | `1` turns every provider off. Use for preview/self-hosted builds. |
+| `NEXT_PUBLIC_ANALYTICS_GOOGLE_ID` | Google Analytics measurement id. |
+| `NEXT_PUBLIC_ANALYTICS_CLOUDFLARE_TOKEN` | Cloudflare Web Analytics beacon token — map `CLOUDFLARE_WEB_ANALYTICS_SITE_TAG` onto this in the build env. |
+| `NEXT_PUBLIC_ANALYTICS_VERCEL` | `1` enables Vercel Web Analytics. Leave off anywhere that is not Vercel: `/_vercel/insights/script.js` does not exist there, so it only costs a 404 per page load. |
+
+Set a variable to an empty string, `off`, `false`, or `0` to disable that provider explicitly.
+Leaving it unset falls back to the historical default where one exists (see
+`src/lib/siteAnalytics.ts`); those fallbacks can be deleted once GitOps ships every value.
 
 ## Release Flow
 
@@ -107,7 +126,7 @@ Repository/environment variables recommended:
 Local syntax checks:
 
 ```bash
-cd ~/workspaces/cloud-neutral-toolkit/console.svc.plus
+cd /Users/shenlan/workspaces/cloud-neutral-toolkit/console.svc.plus
 bash -n scripts/github-actions/render-frontend-runtime-env.sh
 bash -n scripts/github-actions/deploy-frontend-single-node.sh
 cp deploy/single-node/.env.runtime.example deploy/single-node/.env.runtime
@@ -116,7 +135,7 @@ rm -f deploy/single-node/.env.runtime
 python3 - <<'PY'
 from pathlib import Path
 import yaml
-yaml.safe_load(Path('.github/workflows/pipeline.yaml').read_text())
+yaml.safe_load(Path('.github/workflows/ci-pipeline.yml').read_text())
 print('workflow yaml ok')
 PY
 ```

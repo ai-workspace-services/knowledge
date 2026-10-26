@@ -1,12 +1,14 @@
 # OIDC Authentication Configuration Guide
 
-This guide describes how to configure GitHub and Google OAuth login for the Cloud Neutral Toolkit, enabling any user to sign in with their own GitHub or Google account.
+This guide defines the UAT-to-PROD OAuth release contract for the console and
+Accounts services. Each environment has its own OAuth application, callback
+URLs, GitOps declaration, and Vault secret path.
 
 ## Architecture Overview
 
 ```
 ┌──────────────┐      ┌──────────────────┐      ┌──────────────────┐
-│  Browser     │      │   www.svc.plus   │      │accounts.svc.plus │
+│  Browser     │      │  console host    │      │ accounts host     │
 │  (User)      │      │   (Frontend)     │      │   (Backend)      │
 └──────┬───────┘      └────────┬─────────┘      └────────┬─────────┘
        │  1. Click "Login      │                         │
@@ -40,13 +42,16 @@ This guide describes how to configure GitHub and Google OAuth login for the Clou
 
 - A GitHub account with access to **Settings > Developer Settings**
 - A Google account with access to [Google Cloud Console](https://console.cloud.google.com/)
-- Running `accounts.svc.plus` and the frontend served under `www.svc.plus` / `console.svc.plus`
+- The selected environment's console and Accounts hosts are reachable
+- The matching GitHub/Google OAuth applications have been created
+- Sensitive values are available through Vault at the selected environment path
 
 ---
 
-## 1. GitHub OAuth App
+## 1. GitHub OAuth Apps
 
-### 1.1 Create OAuth App
+Create two separate OAuth Apps. Do not reuse the PROD client ID or secret in
+UAT.
 
 1. Go to [GitHub Developer Settings > OAuth Apps](https://github.com/settings/developers)
 2. Click **"OAuth Apps"** tab, then **"New OAuth App"**
@@ -54,10 +59,16 @@ This guide describes how to configure GitHub and Google OAuth login for the Clou
 
 | Field | Value |
 |---|---|
-| **Application name** | `Cloud Neutral Console` |
-| **Homepage URL** | `https://www.svc.plus` |
-| **Authorization callback URL** | `https://accounts.svc.plus/api/auth/oauth/callback/github` |
-| **Enable Device Flow** | ☐ (unchecked) |
+| Environment | Application name | Homepage URL | Authorization callback URL |
+|---|---|---|---|
+| UAT | `onwalk.net Console (UAT)` | `https://console-cloudflare-uat.onwalk.net` | `https://accounts-cloudflare-uat.onwalk.net/api/auth/oauth/callback/github` |
+| PROD | `svc.plus Console (PROD)` | `https://console.svc.plus` | `https://accounts.svc.plus/api/auth/oauth/callback/github` |
+
+For both applications:
+
+- **Allow wildcard matching**: off
+- **Enable Device Flow**: off
+- **Expire user access tokens**: on
 
 4. Click **"Register application"**
 
@@ -70,9 +81,9 @@ This guide describes how to configure GitHub and Google OAuth login for the Clou
 ### 1.3 Record Credentials
 
 ```
-GitHub Client ID:     Ov23li...
-GitHub Client Secret: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-Callback URL:         https://accounts.svc.plus/api/auth/oauth/callback/github
+GitHub Client ID:     <environment_client_id>
+GitHub Client Secret: <environment_client_secret>
+Callback URL:         <environment_github_callback_url>
 ```
 
 > ⚠️ **Security**: Never commit Client Secret to version control. Store it as an environment variable or in a secret manager.
@@ -86,7 +97,15 @@ No additional GitHub permissions are required.
 
 ---
 
-## 2. Google OAuth Client ID
+## 2. Google OAuth Clients
+
+Create one Web OAuth client for UAT and one for PROD. Use the same environment
+separation as GitHub:
+
+| Environment | Client name | Authorized JavaScript origin | Authorized redirect URI |
+|---|---|---|---|
+| UAT | `onwalk.net Console (UAT)` | `https://console-cloudflare-uat.onwalk.net` | `https://accounts-cloudflare-uat.onwalk.net/api/auth/oauth/callback/google` |
+| PROD | `svc.plus Console (PROD)` | `https://console.svc.plus` | `https://accounts.svc.plus/api/auth/oauth/callback/google` |
 
 ### 2.1 Configure OAuth Consent Screen
 
@@ -100,7 +119,7 @@ No additional GitHub permissions are required.
 
 | Field | Value |
 |---|---|
-| **App name** | `Cloud Neutral Console` |
+| **App name** | `<environment> Console` |
 | **User support email** | your email address |
 | **Developer contact email** | your email address |
 
@@ -118,9 +137,9 @@ No additional GitHub permissions are required.
 | Field | Value |
 |---|---|
 | **Application type** | `Web application` |
-| **Name** | `Cloud Neutral Console` |
-| **Authorized JavaScript origins** | `https://www.svc.plus` |
-| **Authorized redirect URIs** | `https://accounts.svc.plus/api/auth/oauth/callback/google` |
+| **Name** | `<environment> Console` |
+| **Authorized JavaScript origins** | `<environment_console_url>` |
+| **Authorized redirect URIs** | `<environment_google_callback_url>` |
 
 4. Click **"Create"**
 5. Copy the **Client ID** and **Client Secret** from the popup
@@ -128,16 +147,27 @@ No additional GitHub permissions are required.
 ### 2.3 Record Credentials
 
 ```
-Google Client ID:     xxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com
-Google Client Secret: GOCSPX-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-Callback URL:         https://accounts.svc.plus/api/auth/oauth/callback/google
+Google Client ID:     <environment_client_id>
+Google Client Secret: <environment_client_secret>
+Callback URL:         <environment_google_callback_url>
 ```
 
 ---
 
-## 3. Backend Configuration (accounts.svc.plus)
+## 3. Backend Configuration (environment-scoped)
 
-Set the following environment variables for **accounts.svc.plus**:
+Select the environment-specific GitOps declaration first. GitOps stores only
+non-sensitive OAuth configuration; Vault stores provider secrets at the matching
+environment path.
+
+| Environment | Console | Accounts | GitHub callback |
+|---|---|---|---|
+| UAT | `https://console-cloudflare-uat.onwalk.net` | `https://accounts-cloudflare-uat.onwalk.net` | `https://accounts-cloudflare-uat.onwalk.net/api/auth/oauth/callback/github` |
+| PROD | `https://console.svc.plus` | `https://accounts.svc.plus` | `https://accounts.svc.plus/api/auth/oauth/callback/github` |
+| PROD Serverless | `https://console.svc.plus` | `https://accounts.svc.plus` | `https://accounts.svc.plus/api/auth/oauth/callback/github` |
+
+The runtime deployment injects the following variables after resolving the
+matching GitOps and Vault entries:
 
 ```bash
 # ── GitHub OAuth ──
@@ -148,9 +178,10 @@ GITHUB_CLIENT_SECRET=<your_github_client_secret>
 GOOGLE_CLIENT_ID=<your_google_client_id>
 GOOGLE_CLIENT_SECRET=<your_google_client_secret>
 
-# ── General OAuth ──
-OAUTH_REDIRECT_URL=https://accounts.svc.plus/api/auth/oauth/callback
-OAUTH_FRONTEND_URL=https://www.svc.plus
+# ── Environment-specific non-sensitive values from GitOps ──
+OAUTH_FRONTEND_URL=<environment_console_url>
+OAUTH_GITHUB_REDIRECT_URL=<environment_github_callback>
+OAUTH_GOOGLE_REDIRECT_URL=<environment_google_callback>
 ```
 
 These variables are referenced in `config/account.yaml`:
@@ -158,27 +189,29 @@ These variables are referenced in `config/account.yaml`:
 ```yaml
 auth:
   oauth:
-    redirectUrl: "${OAUTH_REDIRECT_URL}"
-    frontendUrl: "${OAUTH_FRONTEND_URL:-https://www.svc.plus}"
+    frontendUrl: "${OAUTH_FRONTEND_URL}"
     github:
       clientId: "${GITHUB_CLIENT_ID}"
       clientSecret: "${GITHUB_CLIENT_SECRET}"
+      redirectUrl: "${OAUTH_GITHUB_REDIRECT_URL}"
     google:
       clientId: "${GOOGLE_CLIENT_ID}"
       clientSecret: "${GOOGLE_CLIENT_SECRET}"
+      redirectUrl: "${OAUTH_GOOGLE_REDIRECT_URL}"
 ```
 
-> **Note**: The backend automatically appends `/{provider}` to `OAUTH_REDIRECT_URL` (e.g. `.../callback/github`) if a provider-specific redirect URL is not set.
+`GITHUB_CLIENT_SECRET` and `GOOGLE_CLIENT_SECRET` are read from Vault only;
+they must not be committed to GitOps or stored in GitHub Variables.
 
 ---
 
-## 4. Frontend Configuration (`www.svc.plus` canonical, `console.svc.plus` secondary)
+## 4. Frontend Configuration (environment-aware)
 
 The frontend resolves the accounts service URL **server-side** via `getAccountServiceBaseUrl()`, which reads:
 
 ```bash
-# Set in accounts.svc.plus deployment environment
-ACCOUNT_SERVICE_URL=https://accounts.svc.plus
+# Set by the environment deployment; do not hardcode the PROD URL in UAT.
+ACCOUNT_SERVICE_URL=<environment_accounts_url>
 ```
 
 If not set, the function falls back to a runtime default. **No `NEXT_PUBLIC_*` env var is needed** — the OAuth login URLs are constructed server-side and passed to the client components as props.
@@ -194,8 +227,10 @@ If not set, the function falls back to a runtime default. **No `NEXT_PUBLIC_*` e
 
 | Provider | Callback URL |
 |---|---|
-| GitHub | `https://accounts.svc.plus/api/auth/oauth/callback/github` |
-| Google | `https://accounts.svc.plus/api/auth/oauth/callback/google` |
+| UAT GitHub | `https://accounts-cloudflare-uat.onwalk.net/api/auth/oauth/callback/github` |
+| UAT Google | `https://accounts-cloudflare-uat.onwalk.net/api/auth/oauth/callback/google` |
+| PROD GitHub | `https://accounts.svc.plus/api/auth/oauth/callback/github` |
+| PROD Google | `https://accounts.svc.plus/api/auth/oauth/callback/google` |
 
 ---
 
@@ -209,21 +244,26 @@ If not set, the function falls back to a runtime default. **No `NEXT_PUBLIC_*` e
 
 ### OAuth login redirects to wrong domain
 
-Check that `OAUTH_FRONTEND_URL` in accounts.svc.plus matches the canonical public domain where users should be redirected after authentication. The current default is `https://www.svc.plus`.
+Check that `OAUTH_FRONTEND_URL` matches the console URL for the selected environment.
+UAT must use `https://console-cloudflare-uat.onwalk.net`; PROD must use the
+current Console origin (`https://console.svc.plus` or
+`https://console-serverless-prod.svc.plus`).
 
 ### Google "Access blocked: This app's request is invalid"
 
-Ensure the **Authorized redirect URI** in Google Cloud Console **exactly** matches:
+Ensure the **Authorized redirect URI** in Google Cloud Console exactly matches the
+selected environment, for example:
 ```
-https://accounts.svc.plus/api/auth/oauth/callback/google
+https://accounts-cloudflare-uat.onwalk.net/api/auth/oauth/callback/google
 ```
 Trailing slashes or mismatched protocols will cause this error.
 
 ### GitHub "The redirect_uri MUST match the registered callback URL"
 
-Ensure the **Authorization callback URL** in GitHub Developer Settings **exactly** matches:
+Ensure the **Authorization callback URL** in GitHub Developer Settings exactly matches
+the selected environment, for example:
 ```
-https://accounts.svc.plus/api/auth/oauth/callback/github
+https://accounts-cloudflare-uat.onwalk.net/api/auth/oauth/callback/github
 ```
 
 ### Google OAuth in "Testing" mode — only test users can sign in
@@ -238,7 +278,10 @@ Go to **OAuth consent screen > Publishing status** and click **"Publish App"** t
 |---|---|
 | GitHub OAuth App Settings | https://github.com/settings/developers |
 | Google Cloud Credentials | https://console.cloud.google.com/apis/credentials |
-| GitHub Callback URL | `https://accounts.svc.plus/api/auth/oauth/callback/github` |
-| Google Callback URL | `https://accounts.svc.plus/api/auth/oauth/callback/google` |
+| UAT GitHub Callback URL | `https://accounts-cloudflare-uat.onwalk.net/api/auth/oauth/callback/github` |
+| PROD GitHub Callback URL | `https://accounts.svc.plus/api/auth/oauth/callback/github` |
+| PROD Serverless Console | `https://console.svc.plus/login` |
+| UAT Google Callback URL | `https://accounts-cloudflare-uat.onwalk.net/api/auth/oauth/callback/google` |
+| PROD Google Callback URL | `https://accounts.svc.plus/api/auth/oauth/callback/google` |
 | Backend Config File | `accounts.svc.plus/config/account.yaml` |
 | Frontend URL Resolution | `getAccountServiceBaseUrl()` in `src/server/serviceConfig.ts` |

@@ -12,6 +12,7 @@ flowchart TB
     HZ["GET /healthz"]
     REG["POST /api/auth/register\nPOST /api/auth/register/send\nPOST /api/auth/register/verify"]
     LOGIN["POST /api/auth/login\nPOST /api/auth/mfa/verify\nPOST /api/auth/token/exchange\nGET /api/auth/oauth/login/:provider\nGET /api/auth/oauth/callback/:provider\nPOST /api/auth/token/refresh\nPOST /api/auth/refresh"]
+    RECOVERY["POST /api/auth/password/forgot*\nPOST /api/auth/password/forgot/confirm*"]
     PUBLIC["GET /api/auth/mfa/status\nGET /api/auth/sync/config\nPOST /api/auth/sync/ack\nGET /api/auth/homepage-video\nGET /api/auth/sandbox/binding"]
     WEBHOOK["POST /api/billing/stripe/webhook"]
   end
@@ -36,6 +37,7 @@ flowchart TB
     USERS[("users")]
     IDS[("identities")]
     SESSIONS[("sessions")]
+    RECOVERYDB[("password_recovery_challenges")]
     SUBS[("subscriptions")]
     SETTINGS[("admin_settings")]
     ROLES[("rbac_roles")]
@@ -49,6 +51,9 @@ flowchart TB
   REG --> USERS
   LOGIN --> USERS
   LOGIN --> IDS
+  RECOVERY --> USERS
+  RECOVERY --> RECOVERYDB
+  RECOVERY --> SESSIONS
   SESSION --> SESSIONS
   MFA --> USERS
   RESET --> USERS
@@ -79,6 +84,7 @@ flowchart TB
 | Register email | `/api/auth/register/send` | Send registration verification email | `users` | none |
 | Register verify | `/api/auth/register/verify` | Confirm registration code / email | `users` | none |
 | Login | `/api/auth/login` | Issue session token or MFA challenge | `users`, `sessions` | none |
+| Password recovery | `/api/auth/password/forgot`, `/forgot/confirm`, `/forgot/send-code`, `/forgot/confirm-code` | Persist expiring single-use challenges; atomically update password and revoke the target user’s sessions | `users`, `password_recovery_challenges`, `sessions` | none |
 | MFA verify | `/api/auth/mfa/verify` | Finish MFA login | `users`, `sessions` | none |
 | OAuth login / callback | `/api/auth/oauth/login/:provider`, `/api/auth/oauth/callback/:provider` | OAuth entry and callback | `users`, `identities`, `sessions` | none |
 | Token exchange | `/api/auth/token/exchange` | One-time OAuth exchange to session token | `sessions` | none |
@@ -112,7 +118,7 @@ flowchart TB
 | Update role | `/api/auth/admin/users/:userId/role` | Change a user role | `users` | session token + admin/operator |
 | Reset role | `DELETE /api/auth/admin/users/:userId/role` | Reset a user role | `users` | session token + admin/operator |
 | Pause / resume | `/api/auth/admin/users/:userId/pause`, `/api/auth/admin/users/:userId/resume` | Disable / re-enable user | `users` | session token + admin/operator |
-| Delete user | `DELETE /api/auth/admin/users/:userId` | Delete user | `users`, `sessions`, `identities` | session token + admin/operator |
+| Archive user | `DELETE /api/auth/admin/users/:userId?reason=...` | Archive an eligible account with an immutable lifecycle event and operator audit; administrators, paid accounts, and repeat archives are rejected | `users`, `account_lifecycle_events`, `audit_logs` | session token + admin/operator |
 | Renew proxy access | `/api/auth/admin/users/:userId/renew-uuid` | Renew expiry metadata; keep `proxy_uuid = users.uuid` | `users` | session token + admin/operator |
 | Tenant bootstrap | `/api/auth/admin/tenants/bootstrap` | Bootstrap tenant records | `tenants`, `tenant_memberships` (migration-backed) | session token + admin/operator |
 | Blacklist | `/api/auth/admin/blacklist`, `/api/auth/admin/blacklist/:email` | Manage blocked email list | `email_blacklist` | session token + admin/operator |
@@ -148,6 +154,11 @@ flowchart TB
 - `agents` stores agent runtime status snapshots.
 - `nodes` stores proxy / node inventory.
 - `email_blacklist` stores blocked addresses.
+- User records and billing/usage history are retained. The admin DELETE route is a
+  soft archive operation with a required reason; it never deletes users or
+  cascaded subscription, payment, refund, or usage-ledger rows. PostgreSQL also
+  rejects user DELETE and TRUNCATE, while import rekeys and conflicting merges
+  abort before writes.
 - The codebase also defines migration-backed tenant / XWorkmate models such as `tenants`, `tenant_domains`, `tenant_memberships`, and `xworkmate_profiles`; those tables are part of the broader account domain even though they are not declared in the checked-in `sql/schema.sql` snapshot.
 
 ## Auth Layers

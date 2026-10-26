@@ -62,7 +62,7 @@ flowchart TB
 
 | API family | Path | Purpose | Upstream target |
 | --- | --- | --- | --- |
-| Auth | `/api/auth/login`, `/api/auth/register`, `/api/auth/register/send`, `/api/auth/register/verify`, `/api/auth/verify-email`, `/api/auth/verify-email/send`, `/api/auth/session`, `/api/auth/token/exchange` | Login, registration, token exchange, session lookup | `accounts.svc.plus/api/auth/*` |
+| Auth | `/api/auth/login`, `/api/auth/register`, `/api/auth/register/send`, `/api/auth/register/verify`, `/api/auth/password/forgot`, `/api/auth/password/forgot/send-code`, `/api/auth/password/forgot/confirm-code`, `/api/auth/verify-email`, `/api/auth/verify-email/send`, `/api/auth/session`, `/api/auth/token/exchange` | Login, registration, password recovery, token exchange, session lookup | `accounts.svc.plus/api/auth/*` |
 | MFA | `/api/auth/mfa/status`, `/api/auth/mfa/setup`, `/api/auth/mfa/verify`, `/api/auth/mfa/disable` | TOTP setup and verification | `accounts.svc.plus/api/auth/*` |
 | OAuth / billing | `/api/auth/oauth/login/[provider]`, `/api/auth/stripe/checkout`, `/api/auth/stripe/portal`, `/api/auth/subscriptions`, `/api/auth/subscriptions/cancel` | OAuth redirects and billing actions | `accounts.svc.plus/api/auth/*` |
 | Admin | `/api/admin/settings`, `/api/admin/homepage-video`, `/api/admin/users/*`, `/api/admin/blacklist/*` | Account admin operations | `accounts.svc.plus/api/*` |
