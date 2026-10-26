@@ -1,6 +1,6 @@
 ---
 title: Stripe 环境隔离规划（dev / SIT / UAT / Prod）
-description: Stripe Sandbox 与 Live 模式按环境隔离的密钥、Webhook、Vault 路径、最小权限与迁移规划。
+description: Stripe Sandbox 与 Live 模式的环境使用规则；当前以 V5 基线的 kv/prod/billing-service 为准，按环境拆路径为以后可选。
 slug: stripe-environments
 lang: zh
 tags:
@@ -12,7 +12,11 @@ tags:
 
 # Stripe 环境隔离规划（dev / SIT / UAT / Prod）
 
-> 更新日期：2026-10-26。状态：**规划**，尚未实施。本文不包含任何真实密钥、账户 ID、主机或地址。
+> 更新日期：2026-10-26。状态：**当前标准以 V5 基线为准**；第 9 节按环境拆分路径为**以后可选，当前不执行**。本文不包含任何真实密钥、账户 ID、主机或地址。
+>
+> 依据：
+> - [V5 运行基线白皮书](../../content/02-iac-devops/cloud-infrastructure-devsecops-baseline/records/prod-v5-20261023/prod-v5-runtime-and-snapshot-baseline-20261023.zh.md)
+> - [Accounts Stripe 恢复 Runbook](https://github.com/ai-workspace-services/accounts/blob/main/docs/Runbook/Stripe-Free-To-Paid-Recovery.md)
 
 ## 1. 目标与原则
 
@@ -31,24 +35,31 @@ tags:
 | UAT | Sandbox「uat」 | `rk_test` / `pk_test` | 固定 UAT 端点，自带 `whsec` |
 | Prod | Live 模式 | `rk_live` / `pk_live` | 只有生产端点，自带 `whsec` |
 
-## 3. Vault 路径与字段
+## 3. Vault 路径与字段（当前标准，V5 基线）
 
-每个环境一条独立路径：`kv/{dev,sit,uat,prod}/billing/stripe`。
+Stripe 密钥保存在既有的 Vault KV v2 路径中，**不新建、不重新创建密钥，不按 V3/V4/V5 分别复制，不加版本后缀**：
 
-| 字段 | 说明 |
+- Vault CLI 路径：`kv/prod/billing-service`
+- KV v2 HTTP API 路径：`kv/data/prod/billing-service`
+
+| 字段 | 用途 |
 |---|---|
-| `STRIPE_SECRET_KEY` | 该环境的受限密钥（`rk_test_…` 或 `rk_live_…`） |
-| `STRIPE_PUBLISHABLE_KEY` | 该环境的 `pk_test_…` / `pk_live_…` |
-| `STRIPE_WEBHOOK_SECRET` | 该环境端点的 `whsec_…` |
-| `STRIPE_ACCOUNT_MODE` | `test` 或 `live`；仅 prod 为 `live` |
+| `SANDBOX_STRIPE_SECRET_KEY` | Sandbox API 密钥 |
+| `SANDBOX_STRIPE_WEBHOOK_SECRET` | Sandbox Webhook 验签密钥 |
+| `PROD_STRIPE_SECRET_KEY` | Live API 密钥 |
+| `PROD_STRIPE_WEBHOOK_SECRET` | Live Webhook 验签密钥 |
 
-功能泳道如需独立 Webhook 端点，可在 dev 路径下按泳道细分（例如 `kv/dev/billing/stripe/<lane>`），只覆盖 `STRIPE_WEBHOOK_SECRET`，其余字段沿用 dev。
+使用规则：
 
-## 4. 最小权限
+- 非生产（dev / 功能泳道 / SIT / UAT）**只读取 `SANDBOX_*` 字段**，任何情况下不得切换为 `PROD_*`。
+- Prod 使用 `PROD_*` 字段。
+- Sandbox 恢复、排障时同样只用 `SANDBOX_*`，不能误切到 `PROD_*`。
 
-- 每个环境一条 Vault policy，只允许 `read` 本环境路径，例如 `sit-billing-stripe-read` 只能读 `kv/sit/billing/stripe`（KV v2 对应 `data/` 与 `metadata/` 前缀）。
-- 非生产的 CI 角色、Kubernetes auth 角色、开发者 token **不能读取** `kv/prod/billing/stripe`。
-- prod 路径只绑定生产集群的服务账户与生产发布流水线；写权限仅限安全管理员。
+## 4. 最小权限（当前）
+
+- 读取 `kv/prod/billing-service` 的角色/token 只授予 `read`，范围限定该路径。
+- 非生产注入时只映射 `SANDBOX_*` 字段，不把 `PROD_*` 字段映射或落盘到任何非生产环境。
+- 写权限仅限安全管理员；日常部署与验收不用 root token。
 - 禁止把生产密钥复制到任何非生产路径或环境。
 
 ## 5. 服务启动校验
@@ -76,19 +87,20 @@ tags:
 - 不授予账户设置、API Keys、Webhook 端点管理等管理类权限；端点由管理员在控制台维护。
 - 每个环境、每个服务各发一把受限密钥，便于独立轮换与吊销。
 
-## 8. 从混合路径迁移
+## 9. 按环境拆分路径（以后可选，当前不执行）
 
-现状：`kv/billing-service` 同时存放 `PROD_` 与 `SANDBOX_` 前缀的 `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET`，非生产与生产凭据混在一条路径里，无法按环境做最小权限。
+> 以下内容仅作未来选项记录，**当前不执行**；当前标准见第 3、4 节。
 
-迁移步骤：
+可选目标：每个环境一条独立路径 `kv/{dev,sit,uat,prod}/billing/stripe`，字段为 `STRIPE_SECRET_KEY`、`STRIPE_PUBLISHABLE_KEY`、`STRIPE_WEBHOOK_SECRET`、`STRIPE_ACCOUNT_MODE`（仅 prod 为 `live`）；功能泳道可在 `kv/dev/billing/stripe/<lane>` 只覆盖 `STRIPE_WEBHOOK_SECRET`。每个环境一条只读 policy，非生产角色不能读取 prod 路径。
 
-1. 在 Stripe 中为 dev / sit / uat 各建 Sandbox，并为各环境签发受限密钥与端点 `whsec`（不复用旧的 Sandbox 密钥到多个环境）。
-2. 写入 `kv/{dev,sit,uat}/billing/stripe`；生产 Live 受限密钥写入 `kv/prod/billing/stripe`。
-3. 创建各环境 policy，并把服务/CI 角色改绑到新路径。
-4. 服务切换读取新路径并上线启动校验（第 5 节），按 dev → SIT → UAT → Prod 顺序推进。
-5. 确认无服务再读取旧路径（审计日志）后，备份并吊销旧密钥，**退役** `kv/billing-service`。
+如未来决定实施，可参考步骤：
 
-## 9. 不在范围内
+1. 在 Stripe 中为 dev / sit / uat 各建 Sandbox，并签发受限密钥与端点 `whsec`。
+2. 写入各环境路径，创建对应 policy，把服务/CI 角色改绑到新路径。
+3. 服务切换读取新路径，按 dev → SIT → UAT → Prod 顺序推进。
+4. 审计确认无服务再读取 `kv/prod/billing-service` 后，再评估是否备份并退役旧字段。
+
+## 10. 不在范围内
 
 - 非生产环境的真实扣款、真实返现付款。
 - 在 Sandbox 中“测试生产”。
