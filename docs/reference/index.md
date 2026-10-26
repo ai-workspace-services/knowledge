@@ -38,6 +38,10 @@ GitHub 组织入口：[ai-workspace-infra](https://github.com/ai-workspace-infra
 
 本仓库当前提供 Markdown 源文件、文档目录和内容服务/Portal 的渲染链路；本次核查未发现专用的 Markdown-to-PDF 脚本、Make 目标或已登记的 PDF 导出命令。因此，完整 PDF 导出方式仍是**待补能力**：需要在确定的导出环境中登记工具、字体、Mermaid/代码块处理和合订顺序后再执行。本文只准备源文件顺序和版本记录，不声称 PDF 已生成或已有可直接运行的导出命令。
 
+## 部署形态专题归档
+
+- [Proxy Server 三种部署形态与控制面边界](proxy-server-deployment-profiles.zh.md) · [English](proxy-server-deployment-profiles.en.md)：GitOps PR #428 原文归档，固定来源 `4c965e657441140c65ae50cfaa52b2c2647571f1`；仅文档归档，不改变主册基线或代表生产验收。
+
 ## 来源版本记录
 
 - **knowledge**：本地工作树 `feat/ai-gateway-home-lab-practical-doc`，基线 `6765f91b39a3911298c41eb694159ad449710611`；本页及部分来源文件存在未提交本地修改，导出前需固定提交或快照。
