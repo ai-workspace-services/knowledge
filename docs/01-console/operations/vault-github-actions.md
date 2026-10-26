@@ -100,3 +100,27 @@ error converting input for field "bound_claims": '' expected a map, got 'string'
 ```
 
 that means `bound_claims` was passed as a string argument. Re-run the command using the JSON stdin body above. The `-` argument reads JSON from stdin; `@-` is not supported because Vault treats it as a local file named `-`.
+
+## Service roles and workflow whitelist
+
+The CI pipeline (`.github/workflows/ci-pipeline.yml`) authenticates to Vault with GitHub Actions OIDC, without static keys.
+To keep least privilege and environment isolation, this repository's CI has its own Vault policy and roles:
+
+1. **Credential scope (path isolation)**
+   - CI has **read-only** access to `kv/data/CICD`.
+   - That path holds only shared service credentials (for example `GHCR_USERNAME` and `GHCR_TOKEN`) used to push images after a build.
+   - CI cannot read environment-specific cloud credentials, Terraform state, or host SSH deploy keys.
+
+2. **Identity minting (tight binding)**
+   - The service has three independent Vault roles, one per environment: `sit`, `uat`, `prod`.
+   - **`job_workflow_ref` allow-list**: Vault checks the calling workflow file. Only the allow-listed workflow in this repository (`ci-pipeline.yml`) can exchange its token.
+   - Adding or renaming a workflow file without authorization cannot be used to obtain credentials.
+
+### Troubleshooting: 403 Forbidden
+
+If the `Fetch Vault Secrets` step fails with `403`, check:
+
+1. Whether the requested secret path is outside the `kv/data/CICD` scope.
+2. Whether the workflow file name or the repository name has changed.
+
+If the workflow must be renamed, an administrator has to update the allow-list in `docs/tasks/vault_service_repo_roles.sh` of the `platform-ops-toolkit` repository and re-run that script against the Vault server.

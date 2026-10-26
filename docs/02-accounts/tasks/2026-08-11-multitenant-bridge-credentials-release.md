@@ -70,7 +70,7 @@ Accounts response fails closed.
 ### Removed static configuration
 
 The service code no longer uses `accounts.svc.plus` as an endpoint fallback or
-`<admin-email>` as a root bootstrap email. Deployment must provide
+`admin@svc.plus` as a root bootstrap email. Deployment must provide
 `ROOT_BOOTSTRAP_EMAIL` and `XWORKMATE_BRIDGE_SERVER_URL`. Caddy and Bridge no
 longer consume `BRIDGE_AUTH_TOKEN`, `BRIDGE_REVIEW_AUTH_TOKEN`, or
 `AI_WORKSPACE_AUTH_TOKEN` as public ingress credentials.
