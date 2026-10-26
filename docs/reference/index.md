@@ -163,3 +163,4 @@ GitHub 组织入口：[ai-workspace-infra](https://github.com/ai-workspace-infra
 - 目录条目是导航，不等于已经把目录下所有文件纳入 PDF；若要合订完整附录，必须明确附录文件清单并将其加入导出输入。
 - 不把不存在的文件、未验证的命令、凭据、内网地址或本机绝对路径写入公开索引。
 - [开发环境工具清单](dev-environment-toolchain.zh.md)
+- [Stripe 环境隔离规划](stripe-environments.zh.md)
