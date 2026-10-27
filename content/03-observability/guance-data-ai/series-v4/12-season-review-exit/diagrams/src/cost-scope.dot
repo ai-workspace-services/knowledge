@@ -1,0 +1,11 @@
+digraph G { rankdir=TB; graph [bgcolor="white", fontname="Noto Sans CJK SC", pad=0.4, nodesep=0.45, ranksep=0.55];
+node [shape=box, style="rounded,filled", fillcolor="#F5F7FA", color="#9AA5B1", fontname="Noto Sans CJK SC", fontsize=18, margin="0.25,0.14", penwidth=1.4];
+edge [color="#52606D", fontname="Noto Sans CJK SC", fontsize=15, penwidth=1.4, arrowsize=0.8];
+
+c [label="成本口径", fillcolor="#FFFFFF"];
+a [label="订阅计划\n不能按单次 API 价格折算", fillcolor="#FFFBEA", color="#C99A06"];
+b [label="按量 API\n按调用计费", fillcolor="#EAF2FF", color="#4C7BD9"];
+w [label="观测数据费用\n按真实工作空间记录", fillcolor="#EAF2FF", color="#4C7BD9"];
+e [label="无账单时的估算\n写明假设", fillcolor="#FFF4F4", color="#D64545", fontcolor="#9B2C2C"];
+c -> a; c -> b; c -> w; w -> e [style=dashed];
+}

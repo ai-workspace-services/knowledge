@@ -1,0 +1,12 @@
+digraph G { rankdir=TB; graph [bgcolor="white", fontname="Noto Sans CJK SC", pad=0.4, nodesep=0.45, ranksep=0.55];
+node [shape=box, style="rounded,filled", fillcolor="#F5F7FA", color="#9AA5B1", fontname="Noto Sans CJK SC", fontsize=18, margin="0.25,0.14", penwidth=1.4];
+edge [color="#52606D", fontname="Noto Sans CJK SC", fontsize=15, penwidth=1.4, arrowsize=0.8];
+
+ai [label="AI 草拟告警规则\n含触发条件与处置动作", shape=ellipse, fillcolor="#FFFFFF"];
+g [label="GitOps 监控声明", fillcolor="#EAF2FF", color="#4C7BD9"];
+pr [label="PR 审查\n是否值得打断", fillcolor="#FFFBEA", color="#C99A06"];
+r [label="renderer\nguance_monitor HCL", fillcolor="#EAF2FF", color="#4C7BD9"];
+p [label="terraform plan", fillcolor="#FFFBEA", color="#C99A06"];
+blk [label="免费空间 apply 被阻断", style="rounded,filled,dashed", fillcolor="#FFF4F4", color="#D64545", fontcolor="#9B2C2C"];
+ai -> g -> pr -> r -> p -> blk [style=dashed];
+}
