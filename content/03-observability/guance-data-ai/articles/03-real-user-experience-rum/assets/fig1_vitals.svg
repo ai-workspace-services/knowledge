@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 250" width="100%" height="auto" style="max-width: 800px; background: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; margin: 16px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M 0 1 L 10 5 L 0 9 z" fill="#475569"/>
+  </marker>
+  <marker id="arrow-blue" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M 0 1 L 10 5 L 0 9 z" fill="#2563eb"/>
+  </marker>
+  <marker id="arrow-purple" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M 0 1 L 10 5 L 0 9 z" fill="#7c3aed"/>
+  </marker>
+  <marker id="arrow-emerald" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M 0 1 L 10 5 L 0 9 z" fill="#059669"/>
+  </marker>
+  <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+    <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.08"/>
+  </filter>
+</defs>
+
+  <rect x="20" y="16" width="760" height="34" rx="6" fill="#f8fafc" stroke="#cbd5e1"/>
+  <text x="35" y="38" font-size="14" font-weight="700" fill="#1e293b">RUM ARCHITECTURE: CORE WEB VITALS & BROWSER EVENT LOOP CAPTURE</text>
+
+  <rect x="40" y="75" width="220" height="150" rx="6" fill="#eff6ff" stroke="#93c5fd" stroke-width="2"/>
+  <text x="55" y="105" font-size="13" font-weight="700" fill="#1e40af">Client Viewport (DOM)</text>
+  <text x="55" y="130" font-size="11" fill="#1d4ed8">• LCP (Largest Contentful Paint)</text>
+  <text x="55" y="150" font-size="11" fill="#1d4ed8">• INP (Interaction to Next Paint)</text>
+  <text x="55" y="170" font-size="11" fill="#1d4ed8">• CLS (Cumulative Layout Shift)</text>
+  <text x="55" y="195" font-size="10" font-weight="600" fill="#2563eb">PerformanceObserver API</text>
+
+  <path d="M 260 150 L 315 150" fill="none" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <rect x="320" y="75" width="220" height="150" rx="6" fill="#fef2f2" stroke="#fca5a5" stroke-width="2"/>
+  <text x="335" y="105" font-size="13" font-weight="700" fill="#991b1b">Main Thread Event Loop</text>
+  <text x="335" y="130" font-size="11" fill="#b91c1c">• Task Queue Scheduling</text>
+  <text x="335" y="150" font-size="11" font-weight="700" fill="#dc2626">• Long Task (&gt; 50ms) Block</text>
+  <text x="335" y="170" font-size="11" fill="#b91c1c">• Input Delay Starvation</text>
+  <text x="335" y="195" font-size="10" font-weight="600" fill="#991b1b">Root Cause of UI Freeze</text>
+
+  <path d="M 540 150 L 595 150" fill="none" stroke="#7c3aed" stroke-width="2" marker-end="url(#arrow-purple)"/>
+
+  <rect x="600" y="75" width="160" height="150" rx="6" fill="#faf5ff" stroke="#d8b4fe" stroke-width="2"/>
+  <text x="615" y="105" font-size="13" font-weight="700" fill="#6b21a8">RUM Collector</text>
+  <text x="615" y="130" font-size="11" fill="#7e22ce">• Batch Beacon</text>
+  <text x="615" y="150" font-size="11" fill="#7e22ce">• Session ID link</text>
+  <text x="615" y="170" font-size="11" fill="#7e22ce">• Quota Guard (&lt;5k PV)</text>
+  <text x="615" y="195" font-size="10" font-weight="600" fill="#6b21a8">Telemetry Sink</text>
+
+</svg>

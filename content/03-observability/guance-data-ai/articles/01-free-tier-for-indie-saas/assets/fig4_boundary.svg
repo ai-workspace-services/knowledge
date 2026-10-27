@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 290" width="100%" height="auto" style="max-width: 800px; background: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; margin: 16px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M 0 1 L 10 5 L 0 9 z" fill="#475569"/>
+  </marker>
+  <marker id="arrow-blue" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M 0 1 L 10 5 L 0 9 z" fill="#2563eb"/>
+  </marker>
+  <marker id="arrow-purple" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M 0 1 L 10 5 L 0 9 z" fill="#7c3aed"/>
+  </marker>
+  <marker id="arrow-emerald" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M 0 1 L 10 5 L 0 9 z" fill="#059669"/>
+  </marker>
+  <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+    <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.08"/>
+  </filter>
+</defs>
+
+  <rect x="20" y="16" width="760" height="34" rx="6" fill="#f8fafc" stroke="#cbd5e1"/>
+  <text x="35" y="38" font-size="14" font-weight="700" fill="#1e293b">RESPONSIBILITY MATRIX: SELF-HOSTED FOUNDATION VS SAAS CAPABILITIES</text>
+
+  <!-- Left: Self-Hosted -->
+  <rect x="40" y="70" width="340" height="200" rx="8" fill="#f8fafc" stroke="#64748b" stroke-width="2"/>
+  <text x="60" y="100" font-size="14" font-weight="700" fill="#1e293b">Keep in Self-Hosted (Data Sovereignty)</text>
+  <rect x="60" y="115" width="300" height="35" rx="4" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="75" y="138" font-size="12" fill="#334155">Base Host Metrics (VictoriaMetrics / VMAlert)</text>
+  <rect x="60" y="160" width="300" height="35" rx="4" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="75" y="183" font-size="12" fill="#334155">Long-term Raw Audit Logs (VictoriaLogs / S3)</text>
+  <rect x="60" y="205" width="300" height="35" rx="4" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="75" y="228" font-size="12" fill="#334155">Hard Fallback Alarm Gateways (Prometheus / Alertmanager)</text>
+
+  <!-- Right: SaaS Outsourced -->
+  <rect x="420" y="70" width="340" height="200" rx="8" fill="#eff6ff" stroke="#3b82f6" stroke-width="2"/>
+  <text x="440" y="100" font-size="14" font-weight="700" fill="#1e40af">Outsource to SaaS (Leverage & Speed)</text>
+  <rect x="440" y="115" width="300" height="35" rx="4" fill="#ffffff" stroke="#bfdbfe"/>
+  <text x="455" y="138" font-size="12" fill="#1d4ed8">Real User Monitoring (RUM) & Session Replay</text>
+  <rect x="440" y="160" width="300" height="35" rx="4" fill="#ffffff" stroke="#bfdbfe"/>
+  <text x="455" y="183" font-size="12" fill="#1d4ed8">Cross-cloud Distributed Trace Correlation</text>
+  <rect x="440" y="205" width="300" height="35" rx="4" fill="#ffffff" stroke="#bfdbfe"/>
+  <text x="455" y="228" font-size="12" fill="#1d4ed8">Global Synthetic HTTP/SSL Monitoring Probes</text>
+
+</svg>

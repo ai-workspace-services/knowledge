@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 220" width="100%" height="auto" style="max-width: 800px; background: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; margin: 16px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M 0 1 L 10 5 L 0 9 z" fill="#475569"/>
+  </marker>
+  <marker id="arrow-blue" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M 0 1 L 10 5 L 0 9 z" fill="#2563eb"/>
+  </marker>
+  <marker id="arrow-purple" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M 0 1 L 10 5 L 0 9 z" fill="#7c3aed"/>
+  </marker>
+  <marker id="arrow-emerald" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M 0 1 L 10 5 L 0 9 z" fill="#059669"/>
+  </marker>
+  <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+    <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.08"/>
+  </filter>
+</defs>
+
+  <rect x="20" y="16" width="760" height="34" rx="6" fill="#f8fafc" stroke="#cbd5e1"/>
+  <text x="35" y="38" font-size="14" font-weight="700" fill="#1e293b">PIPELINE: OTEL COLLECTOR MULTI-CLOUD INGESTION &amp; ROUTING</text>
+
+  <rect x="40" y="80" width="160" height="120" rx="6" fill="#f8fafc" stroke="#94a3b8"/>
+  <text x="55" y="105" font-size="12" font-weight="700" fill="#334155">Inbound Spans</text>
+  <text x="55" y="130" font-size="11" fill="#64748b">• Workers Spans</text>
+  <text x="55" y="150" font-size="11" fill="#64748b">• Cloud Run Spans</text>
+  <text x="55" y="170" font-size="11" fill="#64748b">• DB Client Spans</text>
+
+  <path d="M 200 140 L 245 140" fill="none" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <rect x="250" y="80" width="280" height="120" rx="6" fill="#eff6ff" stroke="#93c5fd" stroke-width="2"/>
+  <text x="265" y="105" font-size="12" font-weight="700" fill="#1e40af">OTel Collector Processing</text>
+  <rect x="265" y="115" width="250" height="24" rx="4" fill="#dbeafe"/>
+  <text x="275" y="131" font-size="10" fill="#1e40af">MemoryLimiter (max 128MiB)</text>
+  <rect x="265" y="145" width="250" height="24" rx="4" fill="#dbeafe"/>
+  <text x="275" y="161" font-size="10" fill="#1e40af">Tail Sampling: 100% Errors + 5% P95</text>
+  <text x="265" y="190" font-size="9" fill="#2563eb">Prevents Free Quota Overflow</text>
+
+  <path d="M 530 140 L 575 140" fill="none" stroke="#7c3aed" stroke-width="2" marker-end="url(#arrow-purple)"/>
+
+  <rect x="580" y="80" width="180" height="120" rx="6" fill="#faf5ff" stroke="#d8b4fe"/>
+  <text x="595" y="105" font-size="12" font-weight="700" fill="#6b21a8">DataKit OTLP Sink</text>
+  <text x="595" y="130" font-size="11" fill="#7e22ce">• Protobuf Over HTTP</text>
+  <text x="595" y="150" font-size="11" fill="#7e22ce">• Auth via Vault Header</text>
+  <text x="595" y="170" font-size="11" fill="#7e22ce">• 20k/day Trace Budget</text>
+
+</svg>
