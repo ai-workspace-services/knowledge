@@ -57,3 +57,7 @@
 受控证据按 run_id 关联：捕获命令回执、数据库组件回执、encrypted account/globals/config/container 归档、固定构件 manifest、恢复角色名称元数据、捕获前进程指纹、`restore-verification`、`SHA256SUMS`、异机复核回执及 age 密钥信封。捕获组件的自检字段不替代独立恢复结论，以恢复及异机回执为准。
 
 **PASS：V5 修复后有业务数据的逻辑环境快照、独立数据库恢复与异机副本校验。** 不推导 OAuth/MFA 重登录、支付、所有代理正流量、完整权限登录恢复、云磁盘恢复、最终追齐或写入权切换通过。V4 继续在线，源端与目标的持续增量不是靠此静态快照自动保持同步。
+
+## 跨代归档回链
+
+[统一流程](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md) → [跨代基线、逐轮回执、真实 case 与重验](../generation-deployment-evidence-index-20261025.zh.md)。本页保留原采样、固定构件和结果；后续成功不覆盖历史失败，源码/PR 状态不代替本页的真实运行回执。

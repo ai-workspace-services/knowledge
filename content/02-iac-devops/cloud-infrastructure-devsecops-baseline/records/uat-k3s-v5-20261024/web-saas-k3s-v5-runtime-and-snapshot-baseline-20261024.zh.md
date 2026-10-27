@@ -258,3 +258,6 @@ DENIED PATH  kv/data/prod/something        status: 403 (Expected Forbidden)
 ## PROD 后续执行回执
 
 历史采样保留；当前进展见[数据库重建与身份重验回执](k3s-v5-prod-rebuild-and-identity-revalidation-20261024.zh.md)。真实登录与完整遥测验收分开报告。
+## 追加索引：2026-10-25 PROD K3s 承载与验收
+
+本文件保留其原有时间背景。后续 PROD K3s 的固定生产标签、品牌 TLS、共享 Token 修复、真实登录与用量对账、Vault/Grafana、DNS 及未完成项，见[新运行快照与检查表](../prod-v5-k3s-20261025/prod-v5-vps-to-k3s-runtime-and-acceptance-20261025.zh.md)。该追加不把本文件历史 FAIL/BLOCKED 覆盖成 PASS。

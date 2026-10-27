@@ -10,7 +10,7 @@
 | Agent 认证采用预共享 token | `agentserver.Registry` 用 credential token 的 SHA-256 digest 做认证 | 适合私网、受控部署和低复杂度 agent 接入 | 没有短期轮换协议，token 管理依赖外部配置治理 |
 | Xray 配置采用“数据库事实 -> 模板渲染 -> 原子写文件” | `xrayconfig.Generator` / `PeriodicSyncer` 每次从源读取 clients 后整体替换 `clients[]` | 简化收敛模型，避免局部 patch 导致配置漂移 | 生成端必须拥有文件和命令执行权限 |
 | XWorkmate secret 不落业务 profile 原文 | profile 中只保存 locator 元数据，真实 secret 通过 Vault 接口读写 | 避免 API 和数据库持久化 raw token | 运行时依赖 Vault 可用性；`/profile/sync` 在 bridge token 缺失时会返回冲突 |
-| Root 账号强约束为 `<admin-email>` | `store.RootAdminEmail`、RBAC schema 和 `ensureRootUser` 共同约束单 root 身份 | 明确唯一 root 身份，防止 legacy admin 扩散 | 迁移旧数据时会触发自动降级 / 归一化逻辑 |
+| Root 账号强约束为 `admin@svc.plus` | `store.RootAdminEmail`、RBAC schema 和 `ensureRootUser` 共同约束单 root 身份 | 明确唯一 root 身份，防止 legacy admin 扩散 | 迁移旧数据时会触发自动降级 / 归一化逻辑 |
 
 ### 设计结论
 
@@ -28,7 +28,7 @@
 | Agent authentication uses pre-shared tokens | `agentserver.Registry` authenticates tokens by SHA-256 digest of configured credentials | This keeps agent onboarding simple for private or controlled deployments | There is no built-in short-lived token rotation protocol |
 | Xray config follows a generated convergence model | `xrayconfig.Generator` / `PeriodicSyncer` always rebuild `clients[]` from the source of truth | Full regeneration is simpler and avoids drift from partial patching | The runtime needs file write access plus validate / restart command permissions |
 | XWorkmate secrets are locator-only in profiles | Profiles keep locator metadata only; raw secret values are read and written through Vault | This prevents raw tokens from being persisted in API payloads or DB rows | Runtime behavior depends on Vault availability; `/profile/sync` conflicts when bridge credentials are missing |
-| Root account is strictly `<admin-email>` | `store.RootAdminEmail`, RBAC schema, and `ensureRootUser` enforce a single canonical root identity | This prevents root-role sprawl and keeps privilege normalization explicit | Legacy admin rows may be demoted or normalized during startup |
+| Root account is strictly `admin@svc.plus` | `store.RootAdminEmail`, RBAC schema, and `ensureRootUser` enforce a single canonical root identity | This prevents root-role sprawl and keeps privilege normalization explicit | Legacy admin rows may be demoted or normalized during startup |
 
 ### Design Summary
 

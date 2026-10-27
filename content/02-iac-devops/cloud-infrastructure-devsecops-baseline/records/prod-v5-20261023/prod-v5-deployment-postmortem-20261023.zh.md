@@ -1,5 +1,9 @@
 # PROD V4→V5 部署流程复盘
 
+> 时间边界：第 1–6 节保留 **2026-10-23** 的失败现场与准入门；10-24 追加说明属于后续 VPS 周期。[V5 VPS 基线](prod-v5-runtime-and-snapshot-baseline-20261023.zh.md)的净室/业务追加/恢复回执已取代旧“Docker 未安装、旧 apply 运行中”的交接结论。10-25 的后续承载与未完成项见 [K3s PROD 基线](../prod-v5-k3s-20261025/prod-v5-vps-to-k3s-runtime-and-acceptance-20261025.zh.md)，不能反向把历史失败改为成功。
+
+归档回链：[统一流程](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md) · [跨代逐轮回执、真实 case 与重验](../generation-deployment-evidence-index-20261025.zh.md) · [V3→V4 历史回归](../prod-v3-v4-20261020/regression-and-closure-checklist-20261021.zh.md)。本次仅整理文档。
+
 ## 公共 Console 后续故障（2026-10-24 12:18 +08 更新）
 
 DNS 校验正确仍发生白屏：实际 Caddy 缺少公共 Console site/matcher，返回空 HTTP 200。已由 [Playbooks #746](https://github.com/ai-workspace-infra/playbooks/pull/746) 与 [GitOps #521](https://github.com/ai-workspace-infra/gitops/pull/521)修复，增加真实 HTML 的可信 HTTPS 门禁；规范配置和控制器选择重放均无变更。详见[完整回执](20261024-prod-v5-public-console-route-repair.zh.md)。本次修订把当前环境与旧时间线分开，保留先前仅检查 DNS 的证据范围。

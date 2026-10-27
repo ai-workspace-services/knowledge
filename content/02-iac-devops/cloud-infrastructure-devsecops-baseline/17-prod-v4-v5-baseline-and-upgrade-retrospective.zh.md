@@ -1,5 +1,7 @@
 # PROD V4 → V5：基线与升级复盘索引
 
+2026-10-25 归档补链：[统一流程白皮书](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md) → [V2→V5 双向证据索引](records/generation-deployment-evidence-index-20261025.zh.md) → 各代基线 → 每轮回执 → 故障复盘 → 固定源码 case → 独立重验。索引区分 V5 VPS 与 K3s，标注旧字段缺口；下文 10-24 的“最新”仍指当时采样，后续承载以 K3s 专页为准。
+
 记录更新：2026-10-24（Asia/Shanghai）。本页连接统一流程、V4/V5 运行基线、部署回执、恢复证据与仓库内回归 case；不替代各 owner 的 GitOps、Playbooks 或 IaC 配置。公开副本使用逻辑代际及脱敏摘要，主机身份、地址、凭据、秘密存储路径、原始 state、数据库和备份保留在受控位置。
 
 统一流程：[Selfhost 控制面部署与核心数据迁移](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md)。前序记录：[V3→V4 快照与升级复盘](16-prod-v3-v4-baseline-and-upgrade-retrospective.zh.md)；[V2→V3 快照与升级复盘](15-prod-v2-v3-snapshots-and-upgrade-retrospective.zh.md)。
@@ -58,3 +60,19 @@
 - 回归/切换：历史 case 逐条实际执行；登录、外部 OAuth/支付、Agent 和业务账务未通过前不得称业务验收完成。此页不授权 DNS 切换或写入权转移。
 
 结果只在实际运行后追加到[V5 运行基线](records/prod-v5-20261023/prod-v5-runtime-and-snapshot-baseline-20261023.zh.md)；任何失败保留在原时间线上，并以新 run/revision 记录修复与重验。
+
+
+## 追加：2026-10-25 V5 VPS → K3s 容器化承载
+
+本节保留上文采样背景，不把旧 VPS/UAT 的成功重写为当前 PROD K3s 全流程通过。
+
+- [V5 VPS → V5 K3s 运行快照、服务配置路径与验收 TODO](records/prod-v5-k3s-20261025/prod-v5-vps-to-k3s-runtime-and-acceptance-20261025.zh.md)
+- [可复用 Markdown 验收检查表](records/prod-v5-k3s-20261025/deployment-migration-acceptance-checklist.template.zh.md)
+- [GitHub ↔ 新 Vault：30 角色 / 11 策略矩阵与复用待办](records/prod-v5-k3s-20261025/github-vault-role-policy-matrix-20261025.zh.md)
+
+归档 PR：Knowledge [#224](https://github.com/ai-workspace-services/knowledge/pull/224)（快照与检查表）、[#225](https://github.com/ai-workspace-services/knowledge/pull/225)（角色/策略矩阵）；实现 PR：Toolkit [#1443](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1443)、[#1444](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1444)，Playbooks [#765](https://github.com/ai-workspace-infra/playbooks/pull/765)；组织流程索引：[.github #48](https://github.com/ai-workspace-services/.github/pull/48)。这些 PR 均已合并；运行及验收状态仍以各自证据为准。
+
+本轮采用 V5 K3s all-in-one，将 Web-SaaS、Vault Server 与 Grafana/观测栈这一核心控制面汇聚到一台 Linode 2C4G VPS，以资源整合进一步降本；当前固定构件、DNS、数据范围、批准例外及待办见新回执。资源整合不等于已完成旧资源回收或已实现账单节省。
+
+
+GitHub 与新 Vault 的[30 角色 / 11 策略矩阵及复用待办](records/prod-v5-k3s-20261025/github-vault-role-policy-matrix-20261025.zh.md)：按仓库与环境列出工作流/ref、权限类型、回读、幂等和实际 CI 证据。

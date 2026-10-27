@@ -39,3 +39,7 @@
 ## 关闭规则
 
 每一个 Case 的正式收据应记录 `case_id`、候选 source SHA、镜像 digest、GitOps SHA、run ID、执行时间、预期、实际、退出码、脱敏证据位置及 `PASS/FAIL/BLOCKED/NOT_RUN`。只有绑定同一候选构件的真实回归通过才可关闭；未运行、环境不具备或只有 PR/CI 通过均不能记 PASS。生产流量切换、真实支付/退款以及 V3 写入状态不在本记录授权范围内。
+
+## 跨代归档回链
+
+[统一流程](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md) → [跨代基线、逐轮回执、真实 case 与重验](../generation-deployment-evidence-index-20261025.zh.md)。本页保留原采样、固定构件和结果；后续成功不覆盖历史失败，源码/PR 状态不代替本页的真实运行回执。

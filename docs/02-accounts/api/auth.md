@@ -185,26 +185,23 @@
 
 ### 密码重置
 
-忘记密码的公开入口使用 `/api/auth/password/forgot[/confirm]`；它们不要求已有 session，并保持未知邮箱统一返回 `202`，避免账号枚举。`/api/auth/password/reset[/confirm]` 继续保留给已登录的修改密码场景。
-
-#### `POST /api/auth/password/forgot`
+#### `POST /api/auth/password/forgot` 与 `POST /api/auth/password/forgot/send-code`
 
 | 项 | 内容 |
 | --- | --- |
-| 请求字段 | `email` |
-| 成功返回 | `202 {"message":"if the account exists a reset email will be sent"}` |
-| 认证 | 公开；不要求 session。 |
-| 失败返回 | `email_in_query`、`invalid_request`、`email_required`、`password_reset_failed`、`read_only_account`。 |
+| 认证 | 公开入口；无需已有 session。 |
+| 请求字段 | token 流程：`email`；验证码流程：`email`。 |
+| 成功返回 | `202`，不泄露账号是否存在。 |
+| 持久化 | `password_recovery_challenges` 保存 token SHA-256 或验证码 bcrypt 哈希、用户及邮箱快照、过期时间和尝试/锁定状态；原始凭据不入库。 |
 
-#### `POST /api/auth/password/forgot/confirm`
+#### `POST /api/auth/password/forgot/confirm` 与 `POST /api/auth/password/forgot/confirm-code`
 
 | 项 | 内容 |
 | --- | --- |
-| 请求字段 | `token`、`password` |
-| 成功返回 | `message`、`token`、`expiresAt`、`user` |
-| 认证 | 公开；使用邮件 reset token。 |
-| 前置条件 | password 长度至少 8；reset token 有效；demo/read-only account 拒绝。 |
-| 失败返回 | `credentials_in_query`、`invalid_request`、`password_too_short`、`invalid_token`、`password_reset_failed`、`read_only_account`、`session_creation_failed`。 |
+| 认证 | 公开入口；依赖有效的一次性恢复挑战。 |
+| 请求字段 | token：`token,password`；验证码：`email,code,password`。 |
+| 成功行为 | 单事务消费挑战、仅更新用户密码哈希并撤销目标用户现有 sessions。token 流程随后签发新的登录 session。 |
+| 保护 | 挑战过期、重复使用或达到验证码错误锁定时均拒绝。 |
 
 #### `POST /api/auth/password/reset`
 
@@ -222,6 +219,7 @@
 | 请求字段 | `token`、`password` |
 | 成功返回 | `message`、`token`、`expiresAt`、`user` |
 | 前置条件 | password 长度至少 8；reset token 有效；若用户是 demo/read-only account 则拒绝。 |
+| 副作用 | 成功后撤销旧 session，再创建新 session；只改密码哈希，不触碰订阅、支付、用量或其他用户属性。 |
 | 失败返回 | `credentials_in_query`、`invalid_request`、`password_too_short`、`invalid_token`、`password_reset_failed`、`read_only_account`、`session_creation_failed`。 |
 
 ### XWorkmate profile 与 Vault-backed secrets
@@ -460,28 +458,13 @@ The following flows mint a new session token:
 
 Alias route with the exact same behavior as `POST /api/auth/token/refresh`.
 
+### Public Password Recovery
+
+`POST /api/auth/password/forgot` and `/forgot/send-code` are public and enumeration-safe. The former emails a random token; the latter emails a six-digit code. `POST /forgot/confirm` and `/forgot/confirm-code` accept those credentials with the new password.
+
+Challenges are persisted in `password_recovery_challenges`. The database stores only a SHA-256 digest of random tokens or a bcrypt hash of email codes, with expiry, failed-attempt, lockout, consumed, and invalidated state. Confirmation atomically consumes the challenge, updates only the password hash, and deletes that user’s existing session rows. Token confirmation then creates a new session. Challenges are one-time and expired credentials are rejected.
+
 ### Password Reset
-
-The public forgot-password flow uses `/api/auth/password/forgot[/confirm]`. It does not require an existing session and returns the same `202` response for unknown email addresses to prevent account enumeration. `/api/auth/password/reset[/confirm]` remains available for the authenticated change-password flow.
-
-#### `POST /api/auth/password/forgot`
-
-| Item | Details |
-| --- | --- |
-| Request fields | `email` |
-| Success | `202 {"message":"if the account exists a reset email will be sent"}` |
-| Authentication | Public; no session required. |
-| Failures | `email_in_query`, `invalid_request`, `email_required`, `password_reset_failed`, `read_only_account`. |
-
-#### `POST /api/auth/password/forgot/confirm`
-
-| Item | Details |
-| --- | --- |
-| Request fields | `token`, `password` |
-| Success | `message`, `token`, `expiresAt`, `user` |
-| Authentication | Public; uses the email reset token. |
-| Preconditions | Password length at least 8; reset token must be valid; demo/read-only users are rejected. |
-| Failures | `credentials_in_query`, `invalid_request`, `password_too_short`, `invalid_token`, `password_reset_failed`, `read_only_account`, `session_creation_failed`. |
 
 #### `POST /api/auth/password/reset`
 
@@ -499,6 +482,7 @@ The public forgot-password flow uses `/api/auth/password/forgot[/confirm]`. It d
 | Request fields | `token`, `password` |
 | Success | `message`, `token`, `expiresAt`, `user` |
 | Preconditions | Password length at least 8; reset token must be valid; demo/read-only users are rejected. |
+| Side effect | Revokes existing sessions before creating a new session; only the password hash changes. |
 | Failures | `credentials_in_query`, `invalid_request`, `password_too_short`, `invalid_token`, `password_reset_failed`, `read_only_account`, `session_creation_failed`. |
 
 ### XWorkmate Profile And Vault-Backed Secrets

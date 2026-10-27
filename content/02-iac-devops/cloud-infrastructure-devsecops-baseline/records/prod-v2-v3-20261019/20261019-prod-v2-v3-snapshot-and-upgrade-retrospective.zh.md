@@ -193,3 +193,7 @@ V2 未停机、未清理、未修改生产业务数据。Vault 只完成快照�
 - [共享令牌修复](20261019-prod-v3-canonical-service-token.zh.md)。
 - [VLESS 路径 P0](20261019-prod-v3-vless-path-p0-release.zh.md)。
 - [可复用证据模板](web-saas-generation-snapshot-recovery-template.zh.md)。
+
+## 跨代归档回链
+
+[统一流程](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md) → [跨代基线、逐轮回执、真实 case 与重验](../generation-deployment-evidence-index-20261025.zh.md)。本页保留原采样、固定构件和结果；后续成功不覆盖历史失败，源码/PR 状态不代替本页的真实运行回执。

@@ -1,5 +1,7 @@
 # 云基础设施 DevSecOps 基线与代际演进目录索引 (PROD V2 - V5)
 
+部署记录完整链路：[既有统一流程](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md) → [跨代基线、逐轮回执、专项故障、固定源码 case 与重验](records/generation-deployment-evidence-index-20261025.zh.md)。V5 VPS / Compose 与 V5 K3s PROD 独立采样；字段缺失、旧 OPEN PR 与新回执替代关系也在该证据索引中逐项列明。
+
 ## 1. 概述与代际演进规格
 
 本目录归档 `cloud-infrastructure-devsecops-baseline` 系列核心文档，涵盖跨多云环境的 DevSecOps 底层基线、多云编排蓝图、OIDC 身份契约，以及生产环境全生命周期的代际演进（**PROD V2 → V3 → V4 → V5**）运行基线、快照证据、升级复盘与事故修复回执。
@@ -99,7 +101,7 @@
 | 编号 | 文档名称 / 标题 | 相对路径与链接 | 文档类型 | 核心范围与说明 |
 | :---: | :--- | :--- | :---: | :--- |
 | **01** | **Kubernetes UAT (`web-saas-k3s-v5`) 运行基线与快照清单** | [`records/uat-k3s-v5-20261024/web-saas-k3s-v5-runtime-and-snapshot-baseline-20261024.zh.md`](records/uat-k3s-v5-20261024/web-saas-k3s-v5-runtime-and-snapshot-baseline-20261024.zh.md) | 权威基线 | Akamai VPS 实机全栈工作负载、不可变构件 Digest、公网 HTTPS 验证与快照矩阵 |
-| **02** | **Kubernetes UAT GitOps web-saas-k3s-v5 验收与验证回执** | [`../../docs/reference/kubernetes-uat-gitops-web-saas-k3s-v5-acceptance.zh.md`](../../docs/reference/kubernetes-uat-gitops-web-saas-k3s-v5-acceptance.zh.md) | 验收回执 | 跨仓库 PR 追踪、流水线 Run 40086294084 证据与 7 阶段全流程验收 |
+| **02** | **Kubernetes UAT GitOps web-saas-k3s-v5 验收与验证回执** | [`../../../docs/reference/kubernetes-uat-gitops-web-saas-k3s-v5-acceptance.zh.md`](../../../docs/reference/kubernetes-uat-gitops-web-saas-k3s-v5-acceptance.zh.md) | 验收回执 | 跨仓库 PR 追踪、流水线 Run 40086294084 证据与 7 阶段全流程验收 |
 
 ---
 
@@ -113,3 +115,23 @@
 - [业务数据迁移、Vault 隔离恢复及观测对接方案（2026-10-24）](records/uat-k3s-v5-20261024/k3s-v5-data-vault-observability-plan-20261024.zh.md)：用户材料脱敏归档，保留待决项与阶段状态，未执行项不作为验收成功。
 
 - [Kubernetes UAT 增强安全与严格准入方案（2026-10-24）](records/uat-k3s-v5-20261024/k3s-v5-migration-enhanced-guardrails-20261024.zh.md)：追加计划标识、期望状态和证据缺口；不代表迁移完成。
+
+
+## 追加：2026-10-25 V5 VPS → K3s 容器化承载
+
+本节保留上文采样背景，不把旧 VPS/UAT 的成功重写为当前 PROD K3s 全流程通过。
+
+- [V5 VPS → V5 K3s 运行快照、服务配置路径与验收 TODO](records/prod-v5-k3s-20261025/prod-v5-vps-to-k3s-runtime-and-acceptance-20261025.zh.md)
+- [可复用 Markdown 验收检查表](records/prod-v5-k3s-20261025/deployment-migration-acceptance-checklist.template.zh.md)
+- [GitHub ↔ 新 Vault：30 角色 / 11 策略矩阵与复用待办](records/prod-v5-k3s-20261025/github-vault-role-policy-matrix-20261025.zh.md)（实现：[Toolkit #1443](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1443)、[#1444](https://github.com/ai-workspace-infra/platform-ops-toolkit/pull/1444)；[Playbooks #765](https://github.com/ai-workspace-infra/playbooks/pull/765)；归档：[Knowledge #225](https://github.com/ai-workspace-services/knowledge/pull/225)）
+
+本组快照与检查表归档于 [Knowledge #224](https://github.com/ai-workspace-services/knowledge/pull/224)，组织流程入口见 [.github #48](https://github.com/ai-workspace-services/.github/pull/48)。
+
+本轮采用 V5 K3s all-in-one，将 Web-SaaS、Vault Server 与 Grafana/观测栈这一核心控制面汇聚到一台 Linode 2C4G VPS，以资源整合进一步降本；当前固定构件、DNS、数据范围、批准例外及待办见新回执。资源整合不等于已完成旧资源回收或已实现账单节省。
+
+
+GitHub 与新 Vault 的[30 角色 / 11 策略矩阵及复用待办](records/prod-v5-k3s-20261025/github-vault-role-policy-matrix-20261025.zh.md)：按仓库与环境列出工作流/ref、权限类型、回读、幂等和实际 CI 证据。
+
+- [Dev K3s V5：SIT / UAT 环境快照与发布缺口（2026-10-27）](records/dev-k3s-v5-20261027/environment-snapshot.zh.md)
+
+- [Dev V5 职责调整：临时 SIT、持久 Serverless UAT、2C4G](records/dev-k3s-v5-20261027/sit-only-serverless-uat-transition.zh.md)

@@ -72,6 +72,8 @@
 - [多云资源三档权限、IAM 与 Vault 安全集成及 Shared CMDB 技术规范白皮书](docs/reference/multi-cloud-iam-vault-cmdb-security-whitepaper.zh.md)（proposed-not-applied）
 - [App Hub、Cloud Hub、FinOps 统一数据模型](docs/reference/unified-hub-data-model.zh.md)（draft，待评审）
 
+- [Proxy Server 三种部署形态与控制面边界](docs/reference/proxy-server-deployment-profiles.zh.md) · [English](docs/reference/proxy-server-deployment-profiles.en.md)（GitOps #428 设计归档，非运行验收）
+
 ### CMDB
 
 - [多云与 Serverless 动态 CMDB：独立 PostgreSQL 与 Grafana 落地规划](docs/reference/multi-cloud-cmdb-postgresql-grafana-plan.zh.md)（implementation-plan）
@@ -254,6 +256,8 @@
 案例 07–10 为预留占位，暂不收录。
 
 ## 11. 研究报告
+
+- [轻量全栈系统的特性环境、全链路泳道与渐进发布技术调研白皮书](docs/reference/feature-environments-traffic-lanes-k3s-whitepaper.zh.md)（Next.js / Go / PostgreSQL，架构建议与成本评估，未实施）
 
 - [从对话到工作流的认知跃迁：AI Agent 分层记忆系统与三大纯开源落地架构](research/ai-workspace-and-agent-systems.zh.md) · [English](research/ai-workspace-and-agent-systems.en.md)
 - [海外“小而美” Micro-SaaS 深度解构](research/micro-saas-analysis.zh.md) · [English](research/micro-saas-analysis.en.md)

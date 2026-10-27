@@ -12,6 +12,9 @@ on:
       - 'scripts/sync-service-docs.sh'
       - '.github/workflows/sync-docs.yml'
 
+permissions:
+  contents: write
+
 jobs:
   sync-docs:
     runs-on: ubuntu-latest

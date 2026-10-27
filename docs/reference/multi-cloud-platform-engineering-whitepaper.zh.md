@@ -40,6 +40,10 @@ category: reference
 - 第 10～12 章：发布、数据升级、验收与迁移路线。
 - 附录 A：全部 40 个 workflow；附录 B：术语；附录 C：来源。
 
+## Proxy Server 部署形态归档（2026-10-25）
+
+[Proxy Server 三种部署形态与控制面边界](proxy-server-deployment-profiles.zh.md)记录 GitOps PR #428 的三种部署形态、声明与控制面边界及固定原文来源。此项是文档归档补充，不改变本白皮书原有源码基线，也不代表运行验收。
+
 ## 1. 范围、基线与证据等级
 
 ### 1.1 适用范围
@@ -989,6 +993,12 @@ GitOps 保存域名/模式/上游声明，IaC 执行 DNS、Worker domain 等云�
 `console-uat.onwalk.net`、`accounts-uat.onwalk.net` 等未带模式的别名只用于明确选定当前模式的兼容入口；应用间调用、回调、健康检查和环境配置必须优先使用带 `selfhost-uat` 或 `serverless-uat` 的专属名称。Selfhost 与 Serverless 的数据库、凭据、应用 URL 和发布版本分别管理，禁止通过别名或缺省值回退到 PROD。
 
 现场另发现 Selfhost 专属 Console/Accounts/Billing 域名解析到旧地址 `35.229.255.120`，而 VM 当前 NAT 地址为 `34.81.173.44`；主机内 Caddy 可按专属 Host 路由，外部到该 VM 的 TLS 握手失败。故域名规划和内部路由检查已完成，公网 DNS、TLS/防火墙路径及受限数据库隧道仍未验收。本节记录的是故障与目标合同，不声称主机已修复或发布成功。修复顺序为：确认目标 GitOps/不可变镜像及 UAT 环境变量 → 由 Playbooks 在该主机切换 Doco-CD 到 UAT 专属 target → 验证服务运行时不再读取 PROD 端点 → 由 IaC/DNS owner 更新并验证记录 → 从外部复测 HTTPS/API；数据库端口仅在来源限制通过后单独验收。任何一步失败均停止，不转用公共别名或 PROD 服务。
+
+### 11.13 2026-10-26 Observability Chart 与 Flux 恢复补充
+
+本次将新观测实现入口收敛到独立 `observability-agent` / `observability-stack` Chart 与 HelmRelease，保留仍有消费者的旧 composition。部署、普通升级及互斥的显式祖先回退/前向修复恢复均通过不可变 producer、GitOps snapshot/tag、最小 Source owner 和 Flux 协调形成证据链。main 合并不等于固定 tag Source 已晋级。
+
+详细版本、26.2 插件包 50 MB reader 故障与 26.3 恢复及 26.5 部署证据统一维护在 [Observability 多模式兼容与平滑演进指南的 K3s 运行记录](../zh/observability-flexible-deployment-modes.md)。26.5 最终回执证明核心数据 profile PASS、301 条实际查询无 FAIL，以及四路约 30 分钟源样本连续覆盖；这不是最新 Pod 部署后稳定 30 分钟。验收器 overall 仍 NOT_RUN，全 Panel、PSS/PVC stats、Viewer 全局告警范围和全栈 rootless 等限制仍保留。Vector 关闭、journald 未迁、CMDB/其他主机未完成，不将这些缺口写成已闭环。本节为有日期的补充，不改写本白皮书早期源码盘点基线，也不替代仍独立评审的 [Knowledge #230](https://github.com/ai-workspace-services/knowledge/pull/230) Proxy Server 形态归档。
 
 ## 12. 差异登记与实施路线
 
