@@ -45,3 +45,7 @@ UAT 权威声明沿用 `topology/uat/serverless/runtime-topology.yaml` 和 `iac/
 用户删除旧 Dev 实例后，GitOps #604、#608 已合入 main，2C4G / 80、443 的最终声明 SHA 为 `f861be448ea495905ec614d82dedc45ab1197149`。Dev 专用 [IaC 计划](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/40438938089) 记录创建 1、更新 0、删除 0；[创建 run](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/40439068564) 的资源回执为 applied_verified，创建 1、更新 0、删除 0。云 API 确认新实例 `109324752`、`g6-standard-2`、running，当前动态 IP `172.237.5.48`，Dev 防火墙已绑定 HTTP/HTTPS 规则。
 
 该 run 的 bootstrap job 失败，日志只显示 `ValueError`，具体原因尚未确定。旧 Dev SSH 绑定与新实例身份不一致，需要独立核验新服务器 host key 并更新既有 Dev SSH 记录，再仅重试该失败 job；新主机、K3s、SIT 与业务验收尚无 PASS 回执。此回执取代上文“实例仍为 4C8G、降配需缩盘”的当前状态，上文保留为操作前历史。
+
+### Bootstrap 重试回执
+
+用户确认新实例 host key 后，Dev 专用 SSH 记录仅更新实例身份与服务器公钥；原 run 仅重试失败作业。attempt 2 正式结果为 PASS，实例 `109324752`、node UID `8b6a7af4-a011-43f5-bb6e-b4d7bb1b6dc0`、cluster UID `163f9544-8fe8-423d-8d1c-e2e064412210`，Flux source/applied revision 均为 `f861be448ea495905ec614d82dedc45ab1197149`。独立现场观测节点 Ready，四个 Flux 控制器 Running，platform-root Ready。SIT 业务栈与业务验收仍待完成。
