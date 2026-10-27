@@ -1,0 +1,10 @@
+digraph G { rankdir=TB; graph [bgcolor="white", fontname="Noto Sans CJK SC", pad=0.4, nodesep=0.45, ranksep=0.55];
+node [shape=box, style="rounded,filled", fillcolor="#F5F7FA", color="#9AA5B1", fontname="Noto Sans CJK SC", fontsize=18, margin="0.25,0.14", penwidth=1.4];
+edge [color="#52606D", fontname="Noto Sans CJK SC", fontsize=15, penwidth=1.4, arrowsize=0.8];
+
+l [label="一行 JSON 日志", fillcolor="#FFFFFF"];
+q [label="json_as_fields", shape=diamond, style=filled, fillcolor="#FFFBEA", color="#C99A06", margin="0.05,0.05"];
+a [label="false（默认）\n整行进入 message", fillcolor="#FFF4F4", color="#D64545", fontcolor="#9B2C2C"];
+b [label="true\nJSON 根对象转为字段", fillcolor="#EEF8F0", color="#3E8E5A"];
+l -> q; q -> a; q -> b;
+}

@@ -1,0 +1,11 @@
+digraph G { rankdir=LR; graph [bgcolor="white", fontname="Noto Sans CJK SC", pad=0.4, nodesep=0.45, ranksep=0.55];
+node [shape=box, style="rounded,filled", fillcolor="#F5F7FA", color="#9AA5B1", fontname="Noto Sans CJK SC", fontsize=18, margin="0.25,0.14", penwidth=1.4];
+edge [color="#52606D", fontname="Noto Sans CJK SC", fontsize=15, penwidth=1.4, arrowsize=0.8];
+
+s [label="Grafana 面板", fillcolor="#FFFFFF"];
+a [label="A 转换脚本\n→ 观测云 JSON → 声明", fillcolor="#EAF2FF", color="#4C7BD9"];
+b [label="B AI 直出声明\n重写查询", fillcolor="#EAF2FF", color="#4C7BD9"];
+c [label="C 暂保留\n跨层总览 · 自监控", fillcolor="#EEF8F0", color="#3E8E5A"];
+h [label="renderer → HCL → plan", fillcolor="#FFFBEA", color="#C99A06"];
+s -> a -> h; s -> b -> h; s -> c;
+}

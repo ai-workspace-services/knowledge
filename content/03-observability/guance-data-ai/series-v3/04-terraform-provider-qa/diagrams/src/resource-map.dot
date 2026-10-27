@@ -1,0 +1,12 @@
+digraph G { rankdir=LR; graph [bgcolor="white", fontname="Noto Sans CJK SC", pad=0.4, nodesep=0.45, ranksep=0.55];
+node [shape=box, style="rounded,filled", fillcolor="#F5F7FA", color="#9AA5B1", fontname="Noto Sans CJK SC", fontsize=18, margin="0.25,0.14", penwidth=1.4];
+edge [color="#52606D", fontname="Noto Sans CJK SC", fontsize=15, penwidth=1.4, arrowsize=0.8];
+
+p [label="GuanceCloud/guance\nProvider", fillcolor="#FFFFFF"];
+d [label="guance_dashboard", fillcolor="#EAF2FF", color="#4C7BD9"];
+m [label="guance_monitor", fillcolor="#EAF2FF", color="#4C7BD9"];
+mj [label="guance_monitor_json", fillcolor="#EAF2FF", color="#4C7BD9"];
+i1 [label="import：文档已写明", fillcolor="#EEF8F0", color="#3E8E5A"];
+i2 [label="import：文档未写明", fillcolor="#FFFBEA", color="#C99A06"];
+p -> d; p -> m; p -> mj; mj -> i1; d -> i2 [style=dashed]; m -> i2 [style=dashed];
+}

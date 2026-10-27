@@ -1,0 +1,10 @@
+digraph G { rankdir=TB; graph [bgcolor="white", fontname="Noto Sans CJK SC", pad=0.4, nodesep=0.45, ranksep=0.55];
+node [shape=box, style="rounded,filled", fillcolor="#F5F7FA", color="#9AA5B1", fontname="Noto Sans CJK SC", fontsize=18, margin="0.25,0.14", penwidth=1.4];
+edge [color="#52606D", fontname="Noto Sans CJK SC", fontsize=15, penwidth=1.4, arrowsize=0.8];
+
+r [label="HTTP 响应", fillcolor="#FFFFFF"];
+m1 [label="默认模式\n状态码 · 响应时间 · 请求头\n所有（AND）/ 任意（OR）", fillcolor="#EAF2FF", color="#4C7BD9"];
+m2 [label="脚本模式\nPipeline 解析响应体\n自定义 is_failed", fillcolor="#EEF8F0", color="#3E8E5A"];
+o [label="拨测成功 / 失败", fillcolor="#FFFBEA", color="#C99A06"];
+r -> m1 -> o; r -> m2 -> o;
+}

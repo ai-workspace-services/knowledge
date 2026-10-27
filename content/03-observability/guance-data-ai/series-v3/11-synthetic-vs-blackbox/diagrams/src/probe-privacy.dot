@@ -1,0 +1,9 @@
+digraph G { rankdir=LR; graph [bgcolor="white", fontname="Noto Sans CJK SC", pad=0.4, nodesep=0.45, ranksep=0.55];
+node [shape=box, style="rounded,filled", fillcolor="#F5F7FA", color="#9AA5B1", fontname="Noto Sans CJK SC", fontsize=18, margin="0.25,0.14", penwidth=1.4];
+edge [color="#52606D", fontname="Noto Sans CJK SC", fontsize=15, penwidth=1.4, arrowsize=0.8];
+
+req [label="拨测请求\nHeader · Cookie · 认证", fillcolor="#FFFBEA", color="#C99A06"];
+opt [label="不保存响应内容", fillcolor="#EEF8F0", color="#3E8E5A"];
+res [label="拨测结果\n不含响应体", fillcolor="#EAF2FF", color="#4C7BD9"];
+req -> opt -> res;
+}

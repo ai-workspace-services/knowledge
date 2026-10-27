@@ -1,0 +1,11 @@
+digraph G { rankdir=LR; graph [bgcolor="white", fontname="Noto Sans CJK SC", pad=0.4, nodesep=0.45, ranksep=0.55];
+node [shape=box, style="rounded,filled", fillcolor="#F5F7FA", color="#9AA5B1", fontname="Noto Sans CJK SC", fontsize=18, margin="0.25,0.14", penwidth=1.4];
+edge [color="#52606D", fontname="Noto Sans CJK SC", fontsize=15, penwidth=1.4, arrowsize=0.8];
+
+u [label="logstreaming URL 参数", fillcolor="#FFFFFF"];
+p1 [label="source\n指标集名 · 默认 default", fillcolor="#EAF2FF", color="#4C7BD9"];
+p2 [label="service\nservice 标签 · 默认同 source", fillcolor="#EAF2FF", color="#4C7BD9"];
+p3 [label="pipeline\n指定本地 Pipeline 脚本", fillcolor="#FFFBEA", color="#C99A06"];
+p4 [label="tags\n自定义标签 · 逗号分隔", fillcolor="#EAF2FF", color="#4C7BD9"];
+u -> p1; u -> p2; u -> p3; u -> p4;
+}

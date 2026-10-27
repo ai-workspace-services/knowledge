@@ -1,0 +1,11 @@
+digraph G { rankdir=TB; graph [bgcolor="white", fontname="Noto Sans CJK SC", pad=0.4, nodesep=0.45, ranksep=0.55];
+node [shape=box, style="rounded,filled", fillcolor="#F5F7FA", color="#9AA5B1", fontname="Noto Sans CJK SC", fontsize=18, margin="0.25,0.14", penwidth=1.4];
+edge [color="#52606D", fontname="Noto Sans CJK SC", fontsize=15, penwidth=1.4, arrowsize=0.8];
+
+inv [label="Grafana JSON 盘点\ndatasource · panel · 变量 · 查询\n单位 · 聚合窗口 · 阈值", fillcolor="#F5F7FA"];
+pick [label="首批 3 个面板\n资源健康 · API 流量与错误 · k6 压测延迟", fillcolor="#EAF2FF", color="#4C7BD9"];
+ai [label="AI 映射清单 + 候选声明", fillcolor="#FFFFFF"];
+hu [label="人工核对口径", fillcolor="#FFFBEA", color="#C99A06"];
+o1 [label="可迁移", fillcolor="#EEF8F0", color="#3E8E5A"]; o2 [label="需重写", fillcolor="#FFFBEA", color="#C99A06"]; o3 [label="暂保留在 Grafana", fillcolor="#FFF4F4", color="#D64545", fontcolor="#9B2C2C"];
+inv -> pick -> ai -> hu; hu -> o1; hu -> o2; hu -> o3;
+}

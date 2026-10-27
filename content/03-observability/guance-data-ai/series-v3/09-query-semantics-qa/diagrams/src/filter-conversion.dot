@@ -1,0 +1,13 @@
+digraph G { rankdir=LR; graph [bgcolor="white", fontname="Noto Sans CJK SC", pad=0.4, nodesep=0.45, ranksep=0.55];
+node [shape=box, style="rounded,filled", fillcolor="#F5F7FA", color="#9AA5B1", fontname="Noto Sans CJK SC", fontsize=18, margin="0.25,0.14", penwidth=1.4];
+edge [color="#52606D", fontname="Noto Sans CJK SC", fontsize=15, penwidth=1.4, arrowsize=0.8];
+
+f [label="PromQL 模式筛选条件", fillcolor="#FFFFFF"];
+y1 [label="多个 AND\n→ 逗号连接", fillcolor="#EEF8F0", color="#3E8E5A"];
+y2 [label="同 label 多值 OR\n→ 正则 =~", fillcolor="#EEF8F0", color="#3E8E5A"];
+y3 [label="= != =~ !~\n直接转换", fillcolor="#EEF8F0", color="#3E8E5A"];
+n1 [label="不同 label 之间 OR", fillcolor="#FFF4F4", color="#D64545", fontcolor="#9B2C2C"];
+n2 [label="数值比较", fillcolor="#FFF4F4", color="#D64545", fontcolor="#9B2C2C"];
+n3 [label="函数类筛选", fillcolor="#FFF4F4", color="#D64545", fontcolor="#9B2C2C"];
+f -> y1; f -> y2; f -> y3; f -> n1 [style=dashed, color="#D64545"]; f -> n2 [style=dashed, color="#D64545"]; f -> n3 [style=dashed, color="#D64545"];
+}

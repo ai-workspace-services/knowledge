@@ -1,0 +1,11 @@
+digraph G { rankdir=TB; graph [bgcolor="white", fontname="Noto Sans CJK SC", pad=0.4, nodesep=0.45, ranksep=0.55];
+node [shape=box, style="rounded,filled", fillcolor="#F5F7FA", color="#9AA5B1", fontname="Noto Sans CJK SC", fontsize=18, margin="0.25,0.14", penwidth=1.4];
+edge [color="#52606D", fontname="Noto Sans CJK SC", fontsize=15, penwidth=1.4, arrowsize=0.8];
+
+src [label="主机日志\nsystemd · 应用", fillcolor="#FFFFFF"];
+v [label="Vector", fillcolor="#EEF8F0", color="#3E8E5A"];
+vl [label="VictoriaLogs\nLogsQL 查询", fillcolor="#EEF8F0", color="#3E8E5A"];
+dk [label="DataKit logstreaming\n/v1/write/logstreaming", fillcolor="#EAF2FF", color="#4C7BD9"];
+g [label="观测云日志查看器\nDQL 查询", fillcolor="#EAF2FF", color="#4C7BD9"];
+src -> v; v -> vl [label="原 sink"]; v -> dk [style=dashed, label="第二 sink"]; dk -> g;
+}
