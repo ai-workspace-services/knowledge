@@ -2,6 +2,8 @@
 
 记录日期：2026-10-21，Asia/Shanghai。状态区分 PASS、FAIL、BLOCKED、NOT_RUN；人工探针结果与脚本 case 回执单列，不互相冒充。当前基线见[运行记录](prod-v4-runtime-and-snapshot-baseline-20261021.zh.md)，问题编号见[复盘](v3-v4-upgrade-retrospective-20261021.zh.md)。
 
+2026-10-25 归档补链：[跨代回执、真实源码和后续重验](../generation-deployment-evidence-index-20261025.zh.md)。下表仍为 10-21 历史结果；[Playbooks #712](https://github.com/ai-workspace-infra/playbooks/pull/712)后已合并 `611cc12b443ea669dc1460e6597320acaed7a418`，不覆盖原“未合并”采样，不据此把待重验 case 改成 PASS。
+
 ## 历史脚本与真实结果
 
 脚本归属 Playbooks：
@@ -61,3 +63,7 @@
 | 中 | 回退与异地恢复方案 | 运维 / 数据 owner | 镜像与配置恢复点、写入后数据收敛方向、停止条件、演练及授权点明确 |
 
 稳定观察必须记录实际起止、相关业务周期和失败阈值。旧 180 秒观察只覆盖 Doco-CD 且当时 Billing 失败，不能复用为当前稳定通过。当前这次只读盘点也不是一个完整的稳定观察任务。
+
+## V5 后续重验索引
+
+历史故障按本清单采样背景保留。对应 [V5 在线业务追加与流量重验](../prod-v5-20261023/20261024-prod-v5-business-append-and-traffic-regression.zh.md)区分历史账务导入、公共入口真实转发、Exporter 凭据和新入库周期；未执行项不继承本代结论。

@@ -1,0 +1,19 @@
+digraph G { rankdir=TB; graph [bgcolor="white", fontname="Noto Sans CJK SC", fontsize=22, pad=0.4, nodesep=0.45, ranksep=0.55, labelloc=t];
+node [shape=box, style="rounded,filled", fillcolor="#F5F7FA", color="#9AA5B1", fontname="Noto Sans CJK SC", fontsize=18, margin="0.25,0.14", penwidth=1.4];
+edge [color="#52606D", fontname="Noto Sans CJK SC", fontsize=15, penwidth=1.4, arrowsize=0.8];
+label="同一个观测云，两种权限空间";
+start [label="观测云账号\n（首次开通与授权：人工前置）", fillcolor="#FFFFFF"];
+subgraph cluster_free { label="普通免费空间：免费专区（北京）"; style="rounded"; color="#3E8E5A"; fontsize=18;
+ f1 [label="7 天循环存储 · 最多 10 台主机\n10,000 条时间线 · Trace 每天 20,000 个\nPV 每天 5,000 个 · 监控器 10 个（仅阈值）", fillcolor="#EEF8F0", color="#3E8E5A"];
+ f2 [label="超额不再上报", fillcolor="#FFFBEA", color="#C99A06"];
+ f3 [label="不支持 Open API 获取 / 更新工作空间数据\n不支持敏感数据脱敏 / 扫描", fillcolor="#FFF4F4", color="#D64545", fontcolor="#9B2C2C"];
+ f4 [label="可做：采集端配置 + 部署自动化\nTerraform 只做离线生成", fillcolor="#EEF8F0", color="#3E8E5A"];
+ f1 -> f2 [style=invis]; f2 -> f3 [style=invis]; f3 -> f4;
+}
+subgraph cluster_coop { label="付费 / 授权空间"; style="rounded,dashed"; color="#4C7BD9"; fontsize=18;
+ c1 [label="先确认：实际版本、站点 endpoint\nworkspace、API 权限", fillcolor="#EAF2FF", color="#4C7BD9"];
+ c2 [label="再用 Terraform 验证远端资源\n（Dashboard / Monitor）", fillcolor="#EAF2FF", color="#4C7BD9"];
+ c1 -> c2;
+}
+start -> f1; start -> c1;
+}

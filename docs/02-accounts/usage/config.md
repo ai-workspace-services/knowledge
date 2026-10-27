@@ -87,7 +87,7 @@ auth:
 
 ### Root / RBAC 约束
 
-- 系统仅允许一个 root 账号，固定邮箱：`<admin-email>`。
+- 系统仅允许一个 root 账号，固定邮箱：`admin@svc.plus`。
 - 服务启动会自动执行 root 自检：
   - 若缺失 root 且未设置 `ROOT_BOOTSTRAP_PASSWORD`，服务启动失败；
   - 若存在旧版 `admin` 角色账号，会自动降级为 `operator`。
@@ -107,7 +107,7 @@ smtp:
   port: 587
   username: "apikey"
   p: "s"
-  from: "XControl Account <no-reply@example.com>"
+  from: "XWorkmate <no-reply@example.com>"
   replyTo: ""
   timeout: 10s
   tls:

@@ -1,8 +1,46 @@
-# PROD V5 部署中断复盘：资源替换后未进入可部署状态
+# PROD V4→V5 部署流程复盘
+
+> 时间边界：第 1–6 节保留 **2026-10-23** 的失败现场与准入门；10-24 追加说明属于后续 VPS 周期。[V5 VPS 基线](prod-v5-runtime-and-snapshot-baseline-20261023.zh.md)的净室/业务追加/恢复回执已取代旧“Docker 未安装、旧 apply 运行中”的交接结论。10-25 的后续承载与未完成项见 [K3s PROD 基线](../prod-v5-k3s-20261025/prod-v5-vps-to-k3s-runtime-and-acceptance-20261025.zh.md)，不能反向把历史失败改为成功。
+
+归档回链：[统一流程](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md) · [跨代逐轮回执、真实 case 与重验](../generation-deployment-evidence-index-20261025.zh.md) · [V3→V4 历史回归](../prod-v3-v4-20261020/regression-and-closure-checklist-20261021.zh.md)。本次仅整理文档。
+
+## 公共 Console 后续故障（2026-10-24 12:18 +08 更新）
+
+DNS 校验正确仍发生白屏：实际 Caddy 缺少公共 Console site/matcher，返回空 HTTP 200。已由 [Playbooks #746](https://github.com/ai-workspace-infra/playbooks/pull/746) 与 [GitOps #521](https://github.com/ai-workspace-infra/gitops/pull/521)修复，增加真实 HTML 的可信 HTTPS 门禁；规范配置和控制器选择重放均无变更。详见[完整回执](20261024-prod-v5-public-console-route-repair.zh.md)。本次修订把当前环境与旧时间线分开，保留先前仅检查 DNS 的证据范围。
+
+## 后续复盘与闭环（2026-10-24）
+
+[业务追加与真实流量回执](20261024-prod-v5-business-append-and-traffic-regression.zh.md)和[修复后环境快照](20261024-prod-v5-post-repair-environment-snapshot.zh.md)补充以下结论；原有失败时间线保留，不被后续成功覆盖。
+
+| 问题源头 | 修复与最佳实践 | 回归/实证 |
+| --- | --- | --- |
+| 控制器 collection 未在角色解析前准备 | 安装入口先准备解析依赖；OS/角色执行仍归 Playbooks | 原净室部署回执及固定 installer 引用 |
+| 全新候选误带只读写方法限制 | 新部署正常服务请求不套用迁移源保护；迁移源只读独立实施 | 原登录 403/解析故障与修复链按原时间保留 |
+| 公共 Agent/Billing 域名未匹配实际 upstream | 明确公共别名路由；Billing 只放行快照与健康检查，不能把空 HTTP 200 当成功 | Playbooks #744/#745、GitOps #518/#519；`tests/control_plane/test_owner.py`，真实采集入库 |
+| users-only 被误作完整业务迁移 | 先列数据范围，再追加套餐/订阅/额度/历史账务；关联到目标既有用户 UUID | Accounts #272；实际追加 152,353 行，其他用户身份冲突继续阻断 |
+| 在线计划绑定无关心跳及引擎统计 | 计划绑定被审查业务范围与已验证身份映射；事务内保护所有非同步表，结构校验排除非结构统计 | Accounts #273；`TestFullBusinessUsageMergePostgres17`；V5 三轮零写入重放 |
+| Exporter 进程缺少 canonical 凭据 | 比对 Vault、文件及实际进程；只修复 Exporter，保留 Vector 推送路径 | JP01/JP Plus 修复及三节点零变更复跑；JP Plus 两周期 +8 桶/+8 账本 |
+| 没有策略也显示正常 | 区分未生成、未就绪、过期与空闲；余额和采样不造默认成功值 | Portal #466、GitOps #520；真实登录会话与数据库汇总一致 |
+| 旧恢复点只含用户、不能证明迁移后可恢复 | 完成数据迁移和采集修复后重新取完整快照，再实际隔离恢复与异机校验 | 本次 76 表、33 users、7 subscriptions、18 plans，摘要及序列一致，业务重启 0 |
+
+仍未关闭：源端没有策略快照生产结果、空闲/未验收节点正流量、OAuth/MFA 重新登录、支付及完整环境恢复演练。静态快照不解决 V4/V5 持续并行写入的最终追齐问题；DNS 与写入权变化保持独立人工门禁。
+
+---
+
+原始故障主题：资源替换后未进入可部署状态（2026-10-23 历史样本）。
 
 记录日期：2026-10-23（Asia/Shanghai）；状态更新至 18:29 +08。主机检查是有时间边界的
-样本；DNS 写入与 PR 状态按本次更新分别记录。与[V4 运行基线](prod-v3-v4-20261020/prod-v4-runtime-and-snapshot-baseline-20261021.zh.md)
-及[V3→V4 复盘](prod-v3-v4-20261020/v3-v4-upgrade-retrospective-20261021.zh.md)配套阅读。
+样本；DNS 写入与 PR 状态按本次更新分别记录。本文保留该时点的部署中断事实；2026-10-24 r5 部署、r103 users-only 同步与隔离恢复已由[V5 运行基线](prod-v5-runtime-and-snapshot-baseline-20261023.zh.md)追加，不把旧“Docker 未安装/部署待执行”表述沿用为当前状态。与[V4 运行基线](../prod-v3-v4-20261020/prod-v4-runtime-and-snapshot-baseline-20261021.zh.md)
+及[V3→V4 复盘](../prod-v3-v4-20261020/v3-v4-upgrade-retrospective-20261021.zh.md)配套阅读。
+
+代际索引：[V4→V5 基线与升级复盘](../../17-prod-v4-v5-baseline-and-upgrade-retrospective.zh.md) · [统一部署与迁移流程](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md)。
+
+<!-- BEGIN CLEANROOM 20261024 -->
+## 2026-10-24 净室周期追加（2026-10-24 03:09 +08）
+
+原 10-23 的 Docker/依赖/SSH 采样及 01:07 的 r5/r103 回执保持原时点。最新[净室回执](prod-v5-cleanroom-deployment-migration-validation-20261024.zh.md)已实测 V5 精确删除、重建、部署、在线 users-only 同步与独立恢复。新周期发现并分别修复：源 state 无序校验集合导致删除前误报（[IaC #465](https://github.com/ai-workspace-infra/iac_modules/pull/465)）；创建后 IPv6 `/128` 导致 CMDB 发布失败（[IaC #466](https://github.com/ai-workspace-infra/iac_modules/pull/466)）；新机缺完整可信 SSH 指纹采集路线（[IaC #464](https://github.com/ai-workspace-infra/iac_modules/pull/464)）；users-only 沿用暂停写进程前提（[Accounts #271](https://github.com/ai-workspace-services/accounts/pull/271)，真实使用预构建 r104）。三轮带数据重验为 **PASS（3/3）**。终点只读复核另发现上游 Proxy UUID/版本/有效期字段增量，最终追齐仍 BLOCKED，未改变 V4 写入权。每个失败与重验独立记录，不将资源创建成功改写为当次 owner 全流程成功，也不把候选就绪写成业务或切换通过。
+
+<!-- END CLEANROOM 20261024 -->
 
 ## 1. 结论与影响边界
 
@@ -30,7 +68,7 @@ HTTPS/SNI 复核仍 pending。尚无证据表明服务启动后发生应用或�
 
 | 阶段 | 已观察到的事实 | 证据边界 |
 | --- | --- | --- |
-| V4 基线 | 依照[既有 V4 运行快照](prod-v3-v4-20261020/prod-v4-runtime-and-snapshot-baseline-20261021.zh.md)，V4 仍承接公共入口和业务写入。 | V4 基线有自己的采样时间；不据此推断 V5 状态。 |
+| V4 基线 | 依照[既有 V4 运行快照](../prod-v3-v4-20261020/prod-v4-runtime-and-snapshot-baseline-20261021.zh.md)，V4 仍承接公共入口和业务写入。 | V4 基线有自己的采样时间；不据此推断 V5 状态。 |
 | 云资源替换 | 按明确授权将 V5 实例替换为 2 vCPU、4 GiB 内存、80 GiB 磁盘规格；替换后的 IaC 计划为 0 项变更，既有防火墙保持不变。 | 不在公开记录中保存实例 ID、IP 或防火墙 ID。该步骤只证明资源变更，不证明主机配置管理或应用部署完成。 |
 | 主机采样（10-23） | SSH 主密钥可连接；cloud-init 已完成。采样中只有 22 端口监听，未发现 Docker、`/etc/xcontrol` 或 PostgreSQL 数据目录。 | 这是当日主机状态样本；没有容器、进程或数据库健康证据。 |
 | 不可变构件 | `daily-build-2026.10.23-r101` 的四个应用构件曾发布；PostgreSQL 有干净源码构建，源码提交为 `253d69a3ad19558a4bd272dee0509a498e091e24`。观察到的 OCI index descriptor 摘要前缀为 `56f4179b`，其下 image config digest 前缀为 `6cc…`。 | OCI index 与 image config 是不同层级的摘要；二者不同是预期结构，不是损坏证据。完整 registry manifest 回读仍未完成；本地构建本身不证明制品已部署。 |

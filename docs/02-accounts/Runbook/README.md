@@ -5,6 +5,7 @@
 ## 📚 文档分类
 
 ### 🔧 部署相关
+- [Deploy Email Delivery Bootstrap](./Deploy-Email-Delivery-Bootstrap.md) - 启用 XWorkmate 事务邮件通道（Google Workspace SMTP + 域名 DNS + Vault 凭据）。
 - 部署流程
 - 环境配置
 - 依赖管理
@@ -13,6 +14,9 @@
 - 常见问题
 - 错误诊断
 - 应急处理
+
+### 🔍 开发调试
+- [Stripe MCP Sandbox Debugging](./Stripe-MCP-Sandbox-Debugging.md) - 在 Codex 中使用 Stripe MCP 只读排查 Sandbox 付款。
 
 ### 🔄 运维操作
 - [Security Scrubbing Archive](./Security-Scrubbing-Archive-2026-02-06.md) - 历史敏感信息深度脱敏记录。

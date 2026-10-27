@@ -4,7 +4,7 @@ description: 基于四仓职责边界、40 个工作流与 Vault 路径契约的
 slug: multi-cloud-platform-engineering-whitepaper
 lang: zh
 date: 2026-10-06
-version: "1.4"
+version: "1.5"
 status: review-draft
 tags:
   - platform-engineering
@@ -18,7 +18,7 @@ category: reference
 
 # 多云平台工程技术白皮书
 
-**版本：1.4 · 源码盘点基线：2026-10-05 · 跨仓状态补充：2026-10-07 · UAT Selfhost 环境隔离核查：2026-10-14 · 状态：架构与契约评审稿**
+**版本：1.5 · 源码盘点基线：2026-10-05 · 跨仓状态补充：2026-10-07 · UAT Selfhost 环境隔离核查：2026-10-14 · V5 PostgreSQL DNS 案例：2026-10-24 · 状态：架构与契约评审稿**
 
 [English version](multi-cloud-platform-engineering-whitepaper.en.md) · [参考资料总览](overview.zh.md)
 
@@ -39,6 +39,10 @@ category: reference
 - 第 7～9 章：workflow 调用链、Vault 路径与授权边界。
 - 第 10～12 章：发布、数据升级、验收与迁移路线。
 - 附录 A：全部 40 个 workflow；附录 B：术语；附录 C：来源。
+
+## Proxy Server 部署形态归档（2026-10-25）
+
+[Proxy Server 三种部署形态与控制面边界](proxy-server-deployment-profiles.zh.md)记录 GitOps PR #428 的三种部署形态、声明与控制面边界及固定原文来源。此项是文档归档补充，不改变本白皮书原有源码基线，也不代表运行验收。
 
 ## 1. 范围、基线与证据等级
 
@@ -990,6 +994,19 @@ GitOps 保存域名/模式/上游声明，IaC 执行 DNS、Worker domain 等云�
 
 现场另发现 Selfhost 专属 Console/Accounts/Billing 域名解析到旧地址 `35.229.255.120`，而 VM 当前 NAT 地址为 `34.81.173.44`；主机内 Caddy 可按专属 Host 路由，外部到该 VM 的 TLS 握手失败。故域名规划和内部路由检查已完成，公网 DNS、TLS/防火墙路径及受限数据库隧道仍未验收。本节记录的是故障与目标合同，不声称主机已修复或发布成功。修复顺序为：确认目标 GitOps/不可变镜像及 UAT 环境变量 → 由 Playbooks 在该主机切换 Doco-CD 到 UAT 专属 target → 验证服务运行时不再读取 PROD 端点 → 由 IaC/DNS owner 更新并验证记录 → 从外部复测 HTTPS/API；数据库端口仅在来源限制通过后单独验收。任何一步失败均停止，不转用公共别名或 PROD 服务。
 
+### 11.13 V5 PostgreSQL 公共入口 DNS 交接 (2026-10-24）
+
+
+这次运行案例显示，Console、Accounts、Billing 三个业务 CNAME 与 PostgreSQL 公共别名是独立的 DNS 记录和验收边界。此前 V5 运行基线在 12:18 +08 采样时，前三者指向 V5，`postgresql.svc.plus` 仍指向 V2；该历史状态保留在[V5 运行基线](../../content/02-iac-devops/cloud-infrastructure-devsecops-baseline/records/prod-v5-20261023/prod-v5-runtime-and-snapshot-baseline-20261023.zh.md)，后续于 15:42 +08 追加 DNS 更新回执。
+DNS 由用户手动改为 `postgresql.svc.plus` CNAME → `postgresql-selfhost-prod-v5.svc.plus`。随后 Cloudflare 两台权威服务器、1.1.1.1 与 8.8.8.8 返回相同目标，TCP 15433 探测成功。同期 `auditor` 通过主机本地受保护只读事务确认 `db_readonly`、`account`、事务只读及 `users`/`subscriptions` 表存在；这并非经公共 CNAME 建立的数据库会话。公共端点 TLS 握手和数据库身份认证均为 **NOT_RUN**，因此不能声称外部数据库访问、应用链路或数据验收通过。
+相关的 Playbooks [#752](https://github.com/ai-workspace-infra/playbooks/pull/752) 与 GitOps [#524](https://github.com/ai-workspace-infra/gitops/pull/524) 已合并，但没有对应的本次 V5 部署/reconcile 回执。该案例说明需分别记录：期望配置与代码合并、DNS 实际解析、端口可达、TLS/数据库认证、应用数据与业务验收。前一阶段通过不能代替后一阶段；更不能将 DNS 切换写成主库切换或整代迁移完成。
+
+### 11.13 Observability Chart 与 Flux 恢复补充(2026-10-26)
+
+本次将新观测实现入口收敛到独立 `observability-agent` / `observability-stack` Chart 与 HelmRelease，保留仍有消费者的旧 composition。部署、普通升级及互斥的显式祖先回退/前向修复恢复均通过不可变 producer、GitOps snapshot/tag、最小 Source owner 和 Flux 协调形成证据链。main 合并不等于固定 tag Source 已晋级。
+
+详细版本、26.2 插件包 50 MB reader 故障与 26.3 恢复及 26.5 部署证据统一维护在 [Observability 多模式兼容与平滑演进指南的 K3s 运行记录](../zh/observability-flexible-deployment-modes.md)。26.5 最终回执证明核心数据 profile PASS、301 条实际查询无 FAIL，以及四路约 30 分钟源样本连续覆盖；这不是最新 Pod 部署后稳定 30 分钟。验收器 overall 仍 NOT_RUN，全 Panel、PSS/PVC stats、Viewer 全局告警范围和全栈 rootless 等限制仍保留。Vector 关闭、journald 未迁、CMDB/其他主机未完成，不将这些缺口写成已闭环。本节为有日期的补充，不改写本白皮书早期源码盘点基线，也不替代仍独立评审的 [Knowledge #230](https://github.com/ai-workspace-services/knowledge/pull/230) Proxy Server 形态归档。
+
 ## 12. 差异登记与实施路线
 
 ### 12.1 原盘点的七项差异
@@ -1181,3 +1198,10 @@ GitOps 保存域名/模式/上游声明，IaC 执行 DNS、Worker domain 等云�
 [S17]: https://developer.hashicorp.com/vault/docs/secrets/kv/kv-v2/setup
 [S18]: https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2
 [S19]: https://developer.hashicorp.com/vault/docs/concepts/lease
+
+
+## 案例补充：Kubernetes UAT 数据迁移与隔离恢复
+
+[2026-10-24 方案归档](../../content/02-iac-devops/cloud-infrastructure-devsecops-baseline/records/uat-k3s-v5-20261024/k3s-v5-data-vault-observability-plan-20261024.zh.md)连接已有运行基线、数据范围、固定摘要和待执行验收。案例强调既有自动建表与正式迁移的衔接、跨 PostgreSQL 大版本兼容、在线源的一致性窗口、Vault 完整恢复及权限收敛、真实遥测与业务验收分阶段取证。方案和健康检查不作为迁移完成证明，后续回执追加保留历史。
+
+增强版案例补充：[Kubernetes UAT 严格准入方案](../../content/02-iac-devops/cloud-infrastructure-devsecops-baseline/records/uat-k3s-v5-20261024/k3s-v5-migration-enhanced-guardrails-20261024.zh.md)。保留计划与实际执行的区分，覆盖在线源的一致性、身份合并例外、恢复后权限及观测告警取证。

@@ -4,7 +4,7 @@ description: Architecture, delivery governance, and migration contracts grounded
 slug: multi-cloud-platform-engineering-whitepaper
 lang: en
 date: 2026-10-05
-version: "1.4"
+version: "1.5"
 status: review-draft
 tags:
   - platform-engineering
@@ -18,7 +18,7 @@ category: reference
 
 # Multi-Cloud Platform Engineering Technical White Paper
 
-**Version 1.4 · Source audit baseline: October 5, 2026 · Cross-repository status supplement: October 7, 2026 · UAT Selfhost isolation review: October 14, 2026 · Status: architecture and contract review draft**
+**Version 1.5 · Source audit baseline: October 5, 2026 · Cross-repository status supplement: October 7, 2026 · UAT Selfhost isolation review: October 14, 2026 · V5 PostgreSQL DNS case: October 24, 2026 · Status: architecture and contract review draft**
 
 [中文版](multi-cloud-platform-engineering-whitepaper.zh.md) · [Reference overview](overview.en.md)
 
@@ -39,6 +39,10 @@ The version 1.1 change added the unified Vault path proposal in section 8.5, exp
 - Chapters 7–9: workflow routes, Vault fields, and authorization boundaries.
 - Chapters 10–12: release, data upgrades, acceptance, and migration sequencing.
 - Appendix A: all 40 workflows; Appendix B: terminology; Appendix C: sources.
+
+## Proxy Server deployment-profile archive (October 25, 2026)
+
+[Proxy Server deployment profiles and control-plane boundaries](proxy-server-deployment-profiles.en.md) preserves the three profiles, declaration/control-plane boundaries, and fixed source from GitOps PR #428. This documentation supplement does not change the existing source-audit baseline or establish runtime acceptance.
 
 ## 1. Scope, baseline, and evidence levels
 
@@ -679,6 +683,14 @@ These are target naming contracts, not a description of every current route. The
 Unqualified aliases such as `console-uat.onwalk.net` and `accounts-uat.onwalk.net` are compatibility entry points only when a runtime mode is explicitly selected. Service calls, callbacks, health checks, and environment configuration should use mode-qualified names. Selfhost and Serverless databases, credentials, application URLs, and release versions remain isolated; aliases or defaults must never fall back to PROD.
 
 The Selfhost Console/Accounts/Billing names currently resolve to stale address `35.229.255.120`, while the VM NAT address is `34.81.173.44`. Host-local Caddy routes by the dedicated Host values, but external TLS to the VM fails. Domain planning and local route checks are complete; public DNS, TLS/firewall reachability, and the restricted database tunnel remain unaccepted. This section records the observed fault and target contract, not a successful host repair or release. Repair order: pin the GitOps target and immutable images with UAT variables; switch Doco-CD on this host to the UAT-only target through Playbooks; verify runtime values no longer reference PROD; update and verify DNS through the IaC/DNS owner; then retest HTTPS/API externally. Check the database port separately only after source restrictions pass. Stop on any failed stage; do not fall back to public aliases or PROD services.
+
+### 11.10 October 24, 2026: V5 PostgreSQL public DNS handoff
+
+This operational case shows that the Console, Accounts, and Billing CNAMEs and the public PostgreSQL alias are separate DNS records and acceptance boundaries. At the V5 baseline's 12:18 +08 sample, the three business aliases pointed to V5 while `postgresql.svc.plus` still pointed to V2. That historical observation remains in the [V5 runtime baseline](../../content/02-iac-devops/cloud-infrastructure-devsecops-baseline/records/prod-v5-20261023/prod-v5-runtime-and-snapshot-baseline-20261023.zh.md), with a later DNS receipt appended at 15:42 +08.
+
+The user manually changed `postgresql.svc.plus` to CNAME to `postgresql-selfhost-prod-v5.svc.plus`. Cloudflare's two authoritative nameservers, 1.1.1.1, and 8.8.8.8 then returned the same target, and a TCP probe to port 15433 succeeded. A contemporaneous protected read-only transaction by `auditor` confirmed `db_readonly`, database `account`, read-only transaction mode, and the presence of `users` and `subscriptions`; this used the host-local database path and was not a database session through the public CNAME. Public-endpoint TLS and database authentication were **NOT_RUN**, so external database access, the application path, and data acceptance remain unproven.
+
+Playbooks [#752](https://github.com/ai-workspace-infra/playbooks/pull/752) and GitOps [#524](https://github.com/ai-workspace-infra/gitops/pull/524) had merged, but no V5 deploy/reconcile receipt was produced for this event. Record desired configuration and code merge, live DNS resolution, port reachability, TLS/database authentication, application data, and business acceptance separately. Passing one stage does not prove the next; a DNS change is not a primary-database cutover or completion of the generation migration.
 
 ## 12. Gap register and implementation roadmap
 

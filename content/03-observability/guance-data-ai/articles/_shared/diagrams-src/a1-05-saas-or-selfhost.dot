@@ -1,0 +1,13 @@
+digraph G { rankdir=TB; graph [bgcolor="white", fontname="Noto Sans CJK SC", fontsize=22, pad=0.4, nodesep=0.45, ranksep=0.55, labelloc=t];
+node [shape=box, style="rounded,filled", fillcolor="#F5F7FA", color="#9AA5B1", fontname="Noto Sans CJK SC", fontsize=18, margin="0.25,0.14", penwidth=1.4];
+edge [color="#52606D", fontname="Noto Sans CJK SC", fontsize=15, penwidth=1.4, arrowsize=0.8];
+label="哪些交给 SaaS，哪些继续自建";
+q [label="这项能力是否需要\n跨信号关联或真实用户视角？", shape=diamond, style="filled", fillcolor="#FFFBEA", color="#C99A06", margin="0.1,0.05"];
+q2 [label="一个人长期维护\n成本是否过高？", shape=diamond, style="filled", fillcolor="#FFFBEA", color="#C99A06", margin="0.1,0.05"];
+saas [label="值得用 SaaS 验证\nRUM · Trace 关联 · 拨测 · 告警协同", fillcolor="#EAF2FF", color="#4C7BD9"];
+self [label="继续自建\n基础指标 · 长期数据 · 故障兜底\n（Grafana / VictoriaMetrics）", fillcolor="#EEF8F0", color="#3E8E5A"];
+gate [label="前提：额度够用、授权清楚\n可随时关闭新采集链", fillcolor="#F5F7FA"];
+next [label="下一篇：选 3 个 Grafana 面板做迁移验证", fillcolor="#FFFFFF", style="rounded,dashed"];
+q -> saas [label="是"]; q -> q2 [label="否"]; q2 -> saas [label="是"]; q2 -> self [label="否"];
+saas -> gate; gate -> next; self -> next [style=dotted];
+}

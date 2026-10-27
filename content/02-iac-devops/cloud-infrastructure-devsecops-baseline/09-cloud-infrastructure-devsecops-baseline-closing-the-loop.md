@@ -225,3 +225,8 @@ IaC → 身份 → 凭证 → 运维入口 → 审计 → 持续验证
 - 告别 AccessKey：EKS OIDC / IRSA 构建 Pod 级无密钥运行时权限  
 - 当交付已经安全：DevSecOps 必须继续下沉  
 - CloudNeutral 多云 IaC 实践：安全、合理地管理云资源
+
+
+## 代际升级证据导航
+
+本文继续作为 DevSecOps 方法论；具体部署/迁移阶段以组织级[Selfhost 控制面部署与核心数据迁移白皮书](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md)为唯一流程入口。V2→V3、V3→V4、V4→V5 的运行基线、部署回执、历史故障、恢复演练和真实回归 case 汇总见 [V4→V5 基线与升级复盘](17-prod-v4-v5-baseline-and-upgrade-retrospective.zh.md)；该索引链接至逐轮事实，不复制流程或充当配置源。

@@ -1,32 +1,24 @@
 # Stripe Billing Integration
 
-This console now routes all purchase entry points through Stripe:
+This console routes all purchase entry points through Accounts-managed Stripe Checkout:
 
 - `/prices`
 - product detail pages
 - `/panel/subscription`
 
-The browser only needs public Stripe `price_id` values. Secret keys stay in `accounts.svc.plus`.
+The browser reads public plan and `price_id` data from the Accounts billing catalog. It never
+stores Stripe keys or calls Stripe directly.
 
-## Required Environment Variables
+## Configuration ownership
 
-Set these in `console.svc.plus`:
-
-```bash
-NEXT_PUBLIC_STRIPE_PRICE_XSTREAM_PAYGO=price_xxx
-NEXT_PUBLIC_STRIPE_PRICE_XSTREAM_SUBSCRIPTION=price_xxx
-NEXT_PUBLIC_STRIPE_PRICE_XSCOPEHUB_PAYGO=price_xxx
-NEXT_PUBLIC_STRIPE_PRICE_XSCOPEHUB_SUBSCRIPTION=price_xxx
-NEXT_PUBLIC_STRIPE_PRICE_XCLOUDFLOW_PAYGO=price_xxx
-NEXT_PUBLIC_STRIPE_PRICE_XCLOUDFLOW_SUBSCRIPTION=price_xxx
-```
-
-If a value is missing, the related purchase button stays visible but reports that Stripe pricing is not configured.
+- Accounts billing catalog owns active plan IDs, Price IDs, price, currency and billing cadence.
+- Vault injects `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` into Accounts only.
+- Portal has no Stripe environment variables and forwards only an allowlisted checkout payload.
 
 ## Local Integration Checklist
 
-1. Configure all `NEXT_PUBLIC_STRIPE_PRICE_*` values with Stripe test-mode `price_...` ids.
-2. Start `accounts.svc.plus` with Stripe server-side settings.
+1. Publish the active Stripe Test Mode Price IDs in the Accounts billing catalog.
+2. Start `accounts.svc.plus` with Vault-provided server-side Stripe settings.
 3. Start this console with `yarn dev`.
 4. Sign in with a normal user account.
 5. Open `/prices` or `/panel/subscription` and start checkout.

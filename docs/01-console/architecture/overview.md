@@ -6,4 +6,4 @@
 
 ## Notes
 
-- TODO: Link to related documents in this section.
+- [Quota and plan API contract](./quota-plan-api-contract.md)

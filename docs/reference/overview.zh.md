@@ -16,6 +16,10 @@ tags:
 
 [多云平台工程技术白皮书](multi-cloud-platform-engineering-whitepaper.zh.md)完整整理四仓职责、40 个 workflow、GitOps/state/CMDB、Vault 路径与权限、升级验收和迁移路线，固定基线为 2026-10-05，并明确区分已实现、规划目标及待验收事项。
 
+## Proxy Server 部署形态归档（2026-10-25）
+
+[Proxy Server 三种部署形态与控制面边界](proxy-server-deployment-profiles.zh.md)记录 GitOps PR #428 的三种部署形态、声明与控制面边界及固定原文来源。此项是文档归档补充，不改变本白皮书原有源码基线，也不代表运行验收。
+
 ## 性能调优与容量规划
 
 [XWorkTech 性能调优技术白皮书与工程规范](performance-optimization-whitepaper.zh.md)定义 Open Platform、XConnect、XWorkmate 与 AI Workspace 的观测、诊断、优化、验证和容量规划流程，包含指标契约、证据分类、变更与回滚边界、成本评估及九节诊断报告模板。当前为 v1.0 规范评审稿，不代表实际环境已完成调优或验收。
@@ -27,12 +31,12 @@ tags:
 
 ## 平台工程单机验证与本地基座
 
-[9 大核心服务类别 macOS OrbStack 单机部署与健康验收矩阵](platform-core-services-orbstack-acceptance-matrix.zh.md)规范了在 macOS 本机 OrbStack 环境下，对 Git/CI、Silo S3 存储、CMDB 动态清单、Vault/Zitadel 身份中枢、Doco CD GitOps、K3s 容器与 pgvector 向量底座、PG 灾备演练、New API + LiteLLM AI 网关及 MCP Server 守护网关这 9 大类别的 Compose 单机拓扑编组、非冲突回环端口分配及自动化健康探测验收标准。
+[11 大核心服务类别 macOS OrbStack 单机部署与健康验收矩阵](platform-core-services-orbstack-acceptance-matrix.zh.md)规范了在 macOS 本机 OrbStack 环境下，对 Git/CI、Harbor 制品管理、Silo S3 存储、CMDB 动态清单、全栈可观测性与遥测中枢、Vault/Zitadel 身份中枢、Doco CD GitOps、K3s 容器与 pgvector 向量底座、PG 灾备演练、New API + LiteLLM AI 网关及 MCP Server 守护网关这 11 大类别的 Compose 单机拓扑编组、非冲突回环端口分配及自动化健康探测验收标准。
 
 ## 相关引用
 
 - [参考资料总索引与 PDF 合订编排](index.md)
-- [9 大核心服务类别 macOS OrbStack 单机部署与健康验收矩阵](platform-core-services-orbstack-acceptance-matrix.zh.md)
+- [11 大核心服务类别 macOS OrbStack 单机部署与健康验收矩阵](platform-core-services-orbstack-acceptance-matrix.zh.md)
 - [多云平台工程技术白皮书——英文版](multi-cloud-platform-engineering-whitepaper.en.md)
 - [Toolkit Daily Main Snapshot 实施规划与表格审计](platform-ops-toolkit-daily-main-snapshot-plan.zh.md)
 - [内容规范](content-schema.zh.md)

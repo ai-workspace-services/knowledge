@@ -1,6 +1,6 @@
 ---
 title: 参考资料总索引与 PDF 合订编排 / Reference index and PDF compilation plan
-description:多云白皮书、总体架构、容灾、四仓契约、共用规范、数据库安全操作、三档权限、CMDB、AI Workspace、9 大核心服务 OrbStack 验证与性能调优规范及验收归档来源索引。
+description:多云白皮书、总体架构、容灾、四仓契约、共用规范、数据库安全操作、三档权限、CMDB、AI Workspace、10 大核心服务 OrbStack 验证与性能调优规范及验收归档来源索引。
 slug: index
 lang: zh
 tags:
@@ -38,6 +38,10 @@ GitHub 组织入口：[ai-workspace-infra](https://github.com/ai-workspace-infra
 
 本仓库当前提供 Markdown 源文件、文档目录和内容服务/Portal 的渲染链路；本次核查未发现专用的 Markdown-to-PDF 脚本、Make 目标或已登记的 PDF 导出命令。因此，完整 PDF 导出方式仍是**待补能力**：需要在确定的导出环境中登记工具、字体、Mermaid/代码块处理和合订顺序后再执行。本文只准备源文件顺序和版本记录，不声称 PDF 已生成或已有可直接运行的导出命令。
 
+## 部署形态专题归档
+
+- [Proxy Server 三种部署形态与控制面边界](proxy-server-deployment-profiles.zh.md) · [English](proxy-server-deployment-profiles.en.md)：GitOps PR #428 原文归档，固定来源 `4c965e657441140c65ae50cfaa52b2c2647571f1`；仅文档归档，不改变主册基线或代表生产验收。
+
 ## 来源版本记录
 
 - **knowledge**：本地工作树 `feat/ai-gateway-home-lab-practical-doc`，基线 `6765f91b39a3911298c41eb694159ad449710611`；本页及部分来源文件存在未提交本地修改，导出前需固定提交或快照。
@@ -46,6 +50,10 @@ GitHub 组织入口：[ai-workspace-infra](https://github.com/ai-workspace-infra
 - **iac_modules**：`origin/main@50ae2e67811cf54acedd47450f96dd02991be6b3`。
 - **playbooks**：`origin/main@bde23b1f96668b850e1bcfaac1064bf029e6191a`。
 - **xworkspace-core-skills**：`origin/main@0ece30c9aca907323b6bfbdf7d9995afe75d7916`。
+
+## 技术调研白皮书
+
+- [轻量全栈系统的特性环境、全链路泳道与渐进发布](feature-environments-traffic-lanes-k3s-whitepaper.zh.md)：环境边界 × 版本泳道 × 发布策略，涵盖成本、集群数量和 V5 Selfhost 演进；状态为研究建议。
 
 ## 一、白皮书与总体架构
 
@@ -146,7 +154,7 @@ GitHub 组织入口：[ai-workspace-infra](https://github.com/ai-workspace-infra
 
 | # | 标题 | 语言 | 来源版本 | 文件或入口 |
 | ---: | --- | --- | --- | --- |
-| 46 | 9 大核心服务类别 macOS OrbStack 单机部署与健康验收矩阵 | zh | knowledge working tree · v1.0-release · approved | [docs/reference/platform-core-services-orbstack-acceptance-matrix.zh.md](platform-core-services-orbstack-acceptance-matrix.zh.md) |
+| 46 | 11 大核心服务类别 macOS OrbStack 单机部署与健康验收矩阵 | zh | knowledge working tree · v1.1-release · approved | [docs/reference/platform-core-services-orbstack-acceptance-matrix.zh.md](platform-core-services-orbstack-acceptance-matrix.zh.md) |
 
 ## 使用与维护约束
 
@@ -154,3 +162,5 @@ GitHub 组织入口：[ai-workspace-infra](https://github.com/ai-workspace-infra
 - 导出前应重新核对固定 SHA、语言版本、图片/代码块/Mermaid 支持和章节顺序；未提交工作树不得直接作为已发布版本声明。
 - 目录条目是导航，不等于已经把目录下所有文件纳入 PDF；若要合订完整附录，必须明确附录文件清单并将其加入导出输入。
 - 不把不存在的文件、未验证的命令、凭据、内网地址或本机绝对路径写入公开索引。
+- [开发环境工具清单](dev-environment-toolchain.zh.md)
+- [Stripe 环境隔离规划](stripe-environments.zh.md)
