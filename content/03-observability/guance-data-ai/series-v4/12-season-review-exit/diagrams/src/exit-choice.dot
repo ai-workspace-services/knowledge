@@ -1,0 +1,11 @@
+digraph G { rankdir=TB; graph [bgcolor="white", fontname="Noto Sans CJK SC", pad=0.4, nodesep=0.45, ranksep=0.55];
+node [shape=box, style="rounded,filled", fillcolor="#F5F7FA", color="#9AA5B1", fontname="Noto Sans CJK SC", fontsize=18, margin="0.25,0.14", penwidth=1.4];
+edge [color="#52606D", fontname="Noto Sans CJK SC", fontsize=15, penwidth=1.4, arrowsize=0.8];
+
+s [label="一季结束", fillcolor="#FFFFFF"];
+a [label="继续免费空间\nPOC 范围", fillcolor="#EEF8F0", color="#3E8E5A"];
+b [label="升级商业版\n按量付费", fillcolor="#EAF2FF", color="#4C7BD9"];
+c [label="退出\n回到自建", fillcolor="#FFFBEA", color="#C99A06"];
+r [label="依据\n用量 · 账单 · 定位收益 · 维护工时", fillcolor="#EAF2FF", color="#4C7BD9"];
+s -> r; r -> a; r -> b; r -> c;
+}

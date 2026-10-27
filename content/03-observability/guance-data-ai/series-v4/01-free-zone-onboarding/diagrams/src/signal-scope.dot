@@ -1,0 +1,11 @@
+digraph G { rankdir=LR; graph [bgcolor="white", fontname="Noto Sans CJK SC", pad=0.4, nodesep=0.45, ranksep=0.55];
+node [shape=box, style="rounded,filled", fillcolor="#F5F7FA", color="#9AA5B1", fontname="Noto Sans CJK SC", fontsize=18, margin="0.25,0.14", penwidth=1.4];
+edge [color="#52606D", fontname="Noto Sans CJK SC", fontsize=15, penwidth=1.4, arrowsize=0.8];
+
+s [label="首批接入范围", fillcolor="#FFFFFF"];
+a [label="DataKit\n主机 · Trace 接收", fillcolor="#EAF2FF", color="#4C7BD9"];
+b [label="RUM\n浏览器 SDK · 隐私遮罩", fillcolor="#EAF2FF", color="#4C7BD9"];
+c [label="拨测\nHTTP · SSL", fillcolor="#EAF2FF", color="#4C7BD9"];
+w [label="观测云免费空间\nUAT 数据", fillcolor="#EEF8F0", color="#3E8E5A"];
+s -> a -> w; s -> b -> w; s -> c -> w;
+}

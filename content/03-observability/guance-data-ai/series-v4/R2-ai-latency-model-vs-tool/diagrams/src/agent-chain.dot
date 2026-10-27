@@ -1,0 +1,11 @@
+digraph G { rankdir=LR; graph [bgcolor="white", fontname="Noto Sans CJK SC", pad=0.4, nodesep=0.45, ranksep=0.55];
+node [shape=box, style="rounded,filled", fillcolor="#F5F7FA", color="#9AA5B1", fontname="Noto Sans CJK SC", fontsize=18, margin="0.25,0.14", penwidth=1.4];
+edge [color="#52606D", fontname="Noto Sans CJK SC", fontsize=15, penwidth=1.4, arrowsize=0.8];
+
+t [label="一次 Codex 任务", fillcolor="#FFFFFF"];
+s [label="Session", fillcolor="#EAF2FF", color="#4C7BD9"];
+c1 [label="模型调用", fillcolor="#EAF2FF", color="#4C7BD9"];
+c2 [label="工具调用", fillcolor="#EAF2FF", color="#4C7BD9"];
+o [label="交付结果\nPR · 提交 · 失败", fillcolor="#EEF8F0", color="#3E8E5A"];
+t -> s; s -> c1; s -> c2; c1 -> o; c2 -> o;
+}

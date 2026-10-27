@@ -1,0 +1,11 @@
+digraph G { rankdir=TB; graph [bgcolor="white", fontname="Noto Sans CJK SC", pad=0.4, nodesep=0.45, ranksep=0.55];
+node [shape=box, style="rounded,filled", fillcolor="#F5F7FA", color="#9AA5B1", fontname="Noto Sans CJK SC", fontsize=18, margin="0.25,0.14", penwidth=1.4];
+edge [color="#52606D", fontname="Noto Sans CJK SC", fontsize=15, penwidth=1.4, arrowsize=0.8];
+
+s [label="Agent Session", fillcolor="#FFFFFF"];
+r [label="重复工具调用 · 重试", fillcolor="#FFFBEA", color="#C99A06"];
+m [label="按 Session 聚合\n调用次数 · 时长", fillcolor="#EAF2FF", color="#4C7BD9"];
+a [label="阈值检测\n避免高基数分组", fillcolor="#EAF2FF", color="#4C7BD9"];
+h [label="人判断\n终止或改提示", fillcolor="#EEF8F0", color="#3E8E5A"];
+s -> r -> m -> a -> h;
+}

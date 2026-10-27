@@ -1,0 +1,22 @@
+# Fact sheet｜Cloudflare + Cloud Run + Supabase 之后，我给个人 SaaS 补上了观测云免费专区
+
+| 项 | 内容 |
+| --- | --- |
+| 状态 | 全文稿｜模板：成本账本型 |
+| 时间范围 | 官方文档核验：2026-10-27；实测窗口：【待实测】（起止日期实测时填写） |
+| 环境 / 版本 | Cloudflare Pages/Workers、Cloud Run、Supabase Free、观测云免费专区（北京）；DataKit 版本【待实测】；Provider 0.1.0（community） |
+| 数据范围 | UAT 一条登录 / 内容读取链路：DataKit 主机与 Trace、RUM、拨测；UAT 与生产严格分离，生产数据不进入本篇 |
+| 证据来源 | 见 sources.md；实测截图：【待实测截图】（脱敏后才可使用） |
+| 隐私 | 不采凭据、Token 原文、完整 Prompt、邮箱、Cookie、IP；截图打码 workspace token、URL 参数、用户 ID |
+| 合作披露 | 正文按要求不含署名与合作披露行；是否属于合作内容、免费版商业用途书面授权（协议 4.7）状态：【待确认】 |
+| 权益 | 免费专区 Open API 受限；公开 Terraform Provider 不代表免费空间有控制面 API；Copilot、Agent Monitoring、AgentMeter、OWL/MCP 为独立权益，逐项核验 |
+| 成本口径 | 观测云免费版 0 元；Cloudflare / Cloud Run / Supabase 按各自免费条件；超出部分按真实账单【待实测】 |
+| 可迁移性 | 遥测到达不等于数据可迁移；原始数据以自建存储为准，声明保存在 Git |
+| 篇幅 | 默认公众号 ≤1500 字、小红书 600–800 字；最终篇幅与版式以合作方确认为准 |
+
+## 发布后反馈（发布后填写）
+
+- 发布日期 / 渠道：
+- 读者问题与更正：
+- 数据更新（实测替换【待实测】项）：
+- 合作方意见：

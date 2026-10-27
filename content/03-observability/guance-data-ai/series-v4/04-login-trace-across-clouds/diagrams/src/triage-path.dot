@@ -1,0 +1,12 @@
+digraph G { rankdir=TB; graph [bgcolor="white", fontname="Noto Sans CJK SC", pad=0.4, nodesep=0.45, ranksep=0.55];
+node [shape=box, style="rounded,filled", fillcolor="#F5F7FA", color="#9AA5B1", fontname="Noto Sans CJK SC", fontsize=18, margin="0.25,0.14", penwidth=1.4];
+edge [color="#52606D", fontname="Noto Sans CJK SC", fontsize=15, penwidth=1.4, arrowsize=0.8];
+
+s [label="现象\n用户登录失败", fillcolor="#FFFFFF"];
+a [label="查边缘\nWorkers 日志", fillcolor="#EAF2FF", color="#4C7BD9"];
+b [label="查后端\nCloud Run 日志 / 指标", fillcolor="#EAF2FF", color="#4C7BD9"];
+c [label="查数据库\nSupabase 日志\nAPI / DB 日志留 1 天", fillcolor="#EAF2FF", color="#4C7BD9"];
+x [label="断点\n三处时间线无共同 ID\n无前端视角", style="rounded,filled,dashed", fillcolor="#FFF4F4", color="#D64545", fontcolor="#9B2C2C"];
+s -> a -> b -> c -> x;
+a -> x [style=dashed, color="#D64545"]; b -> x [style=dashed, color="#D64545"];
+}

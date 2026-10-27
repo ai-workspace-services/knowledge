@@ -1,0 +1,12 @@
+digraph G { rankdir=TB; graph [bgcolor="white", fontname="Noto Sans CJK SC", pad=0.4, nodesep=0.45, ranksep=0.55];
+node [shape=box, style="rounded,filled", fillcolor="#F5F7FA", color="#9AA5B1", fontname="Noto Sans CJK SC", fontsize=18, margin="0.25,0.14", penwidth=1.4];
+edge [color="#52606D", fontname="Noto Sans CJK SC", fontsize=15, penwidth=1.4, arrowsize=0.8];
+
+f [label="检测频率", fillcolor="#EAF2FF", color="#4C7BD9"];
+w [label="检测区间\n≥ 检测频率", fillcolor="#EAF2FF", color="#4C7BD9"];
+m [label="检测指标\nDQL / PromQL", fillcolor="#EAF2FF", color="#4C7BD9"];
+t [label="触发条件\n致命 · 严重 · 重要 · 警告", fillcolor="#FFFBEA", color="#C99A06"];
+n [label="恢复条件\n连续 N 次正常", fillcolor="#EEF8F0", color="#3E8E5A"];
+gap [label="数据断档策略\n优先于触发条件", fillcolor="#FFF4F4", color="#D64545", fontcolor="#9B2C2C"];
+f -> w -> m -> t -> n; m -> gap [style=dashed];
+}
