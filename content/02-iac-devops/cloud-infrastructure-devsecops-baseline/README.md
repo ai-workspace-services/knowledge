@@ -131,3 +131,5 @@
 
 
 GitHub 与新 Vault 的[30 角色 / 11 策略矩阵及复用待办](records/prod-v5-k3s-20261025/github-vault-role-policy-matrix-20261025.zh.md)：按仓库与环境列出工作流/ref、权限类型、回读、幂等和实际 CI 证据。
+
+- [Dev K3s V5：SIT / UAT 环境快照与发布缺口（2026-10-27）](records/dev-k3s-v5-20261027/environment-snapshot.zh.md)
