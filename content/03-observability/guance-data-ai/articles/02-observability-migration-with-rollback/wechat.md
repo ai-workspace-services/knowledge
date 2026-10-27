@@ -1,6 +1,5 @@
 # AI 辅助 Grafana 面板搬家：从 JSON 到观测云配置，保留回退
 
-作者：Haitao Pan ｜ XWork Technologies LLC 服务支持
 
 > 披露：本文为观测云内容合作。沿用上一篇已核验的同一观测云空间（免费专区，北京）和同一条 UAT 链路；合作授权权益单列，读者不能默认复现。
 
@@ -20,7 +19,7 @@
 
 判定只有三种：可迁移 / 需重写 / 暂保留。对照用同一数据时间窗；历史数据留在原存储，不搬。免费版仪表板上限 10 个（核验日期 2026-10-27，发布前复核）。
 
-![a2-01-migration-funnel](diagrams/a2-01-migration-funnel-wechat.png)
+![a2-01-migration-funnel](diagrams/gif/a2-01-migration-funnel-wechat.gif)
 
 ## 三、AI 出清单，人对口径
 
@@ -35,7 +34,7 @@ AI 读 JSON，输出映射清单和候选配置；我逐条核对：
 
 观测云支持在界面导入 Grafana JSON，但官方提示部分高级特性可能无法显示或需手动重配；图表支持 PromQL 查询。所以本文不承诺 JSON 直接兼容。
 
-![a2-02-query-traps](diagrams/a2-02-query-traps-wechat.png)
+![a2-02-query-traps](diagrams/gif/a2-02-query-traps-wechat.gif)
 
 ## 四、配置即代码：GitOps → renderer → HCL
 
@@ -46,7 +45,7 @@ GitOps 保存监控意图和非敏感模板；IaC-modules 的 renderer 生成显
 
 凭据仍由 Vault 运行时注入，管理 Key、查询 Key、写入 Token 分开授权。
 
-![a2-03-gitops-hcl](diagrams/a2-03-gitops-hcl-wechat.png)
+![a2-03-gitops-hcl](diagrams/gif/a2-03-gitops-hcl-wechat.gif)
 
 ## 五、并排对照，随时能退
 
@@ -58,7 +57,7 @@ GitOps 保存监控意图和非敏感模板；IaC-modules 的 renderer 生成显
 
 切换前至少满足：同窗偏差在门槛内、额度占比可控、测试告警触发、无敏感字段、完成一次回退演练、授权清楚。
 
-![a2-04-side-by-side-rollback](diagrams/a2-04-side-by-side-rollback-wechat.png)
+![a2-04-side-by-side-rollback](diagrams/gif/a2-04-side-by-side-rollback-wechat.gif)
 
 ## 六、结果与剩余盲区
 

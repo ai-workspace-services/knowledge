@@ -8,7 +8,7 @@ h [label="显式 HCL\n可读、可审查", fillcolor="#F5F7FA"];
 pr [label="PR 审查", fillcolor="#FFFBEA", color="#C99A06"];
 dec [label="空间是否有\nAPI 权限？", shape=diamond, style=filled, fillcolor="#FFFBEA", color="#C99A06", margin="0.05,0.05"];
 yes [label="terraform plan\n→ import 已有资源\n→ apply", fillcolor="#EEF8F0", color="#3E8E5A"];
-no [label="普通免费空间\n只展示离线生成结果\n平台导入能力另行核验", fillcolor="#FFF4F4", color="#D64545", fontcolor="#9B2C2C"];
+no [label="普通免费空间\n只展示离线生成结果", fillcolor="#FFF4F4", color="#D64545", fontcolor="#9B2C2C"];
 ban [label="不用浏览器私有接口绕过权限", shape=note, fillcolor="#FFFFFF", color="#D64545", fontcolor="#9B2C2C"];
 g -> r -> h -> pr -> dec; dec -> yes [label="有"]; dec -> no [label="无"]; no -> ban [style=dashed, arrowhead=none];
 }

@@ -2,7 +2,7 @@ from PIL import Image, ImageDraw, ImageFont
 import glob, os
 CAP = {
  "a1-01-stack-blindspots": "图1｜低成本栈各层都有指标，但用户体验、跨层上下文和数据库内部仍是盲区",
- "a1-02-free-boundary": "图2｜免费空间与合作/商业空间的权限边界（核验日期 2026-10-27，发布前复核）",
+ "a1-02-free-boundary": "图2｜免费空间与付费/授权空间的权限边界",
  "a1-03-automation-path": "图3｜GitOps 声明 → PR → Terraform → Playbook，Vault 在运行时分开注入凭据",
  "a1-04-evidence-chain": "图4｜一条 UAT 请求的证据链：未实测关联的环节一律标为盲区",
  "a1-05-saas-or-selfhost": "图5｜按“是否需要跨信号/用户视角”和维护成本，决定交给 SaaS 还是继续自建",

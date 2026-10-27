@@ -1,6 +1,5 @@
 # 低成本 SaaS 拼好了，还差一双眼睛
 
-作者：Haitao Pan ｜ XWork Technologies LLC 服务支持
 （观测云内容合作；“北京”仅指观测云免费专区）
 
 ## P1 低成本栈

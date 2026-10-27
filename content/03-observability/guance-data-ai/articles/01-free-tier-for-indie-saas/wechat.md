@@ -1,6 +1,5 @@
 # Cloudflare + Cloud Run + Supabase 之后，我给个人 SaaS 补上了观测云免费专区
 
-作者：Haitao Pan ｜ XWork Technologies LLC 服务支持
 
 > 披露：本文为观测云内容合作。“北京”仅指观测云免费专区（北京）；合作授权权益单列，读者不能默认复现。
 
@@ -16,7 +15,7 @@
 
 部署地区：Cloudflare 为全球边缘；Cloud Run 在【待实测：实际 region】；Supabase 在【待实测：实际 region】。
 
-![a1-01-stack-blindspots](diagrams/a1-01-stack-blindspots-wechat.png)
+![a1-01-stack-blindspots](diagrams/gif/a1-01-stack-blindspots-wechat.gif)
 
 ## 二、缺口：指标都有，却解释不了一次失败
 
@@ -31,7 +30,7 @@
 - 不支持通过 Open API 获取和更新工作空间数据，不支持敏感数据脱敏。
 - 协议 4.7：未经观测云书面授权，不得用于商业用途或向第三方提供服务。xworktech.com 是商业项目，授权情况：【待确认：书面授权范围】。
 
-![a1-02-free-boundary](diagrams/a1-02-free-boundary-wechat.png)
+![a1-02-free-boundary](diagrams/gif/a1-02-free-boundary-wechat.gif)
 
 ## 四、核心实践：AI 辅助的 IaC / GitOps / Playbook
 
@@ -49,7 +48,7 @@ AI 起草声明、配置和 PR 说明，我审 PR 与 plan。首次开通与授�
 
 隐私：采集前过滤与 RUM SDK 遮罩需独立验证【待实测】。Supabase Free 不含 Log Drain、日志留 1 天，不预设能看全数据库查询。
 
-![a1-03-automation-path](diagrams/a1-03-automation-path-wechat.png)
+![a1-03-automation-path](diagrams/gif/a1-03-automation-path-wechat.gif)
 
 ## 五、最小结果
 
@@ -68,7 +67,7 @@ AI 起草声明、配置和 PR 说明，我审 PR 与 plan。首次开通与授�
 
 只有实际关联上的信号才叫“全链路”；Cloudflare 边缘与 Supabase 内部未关联前标为盲区。现有 3 个监控器放进 IaC 后续批次。
 
-![a1-04-evidence-chain](diagrams/a1-04-evidence-chain-wechat.png)
+![a1-04-evidence-chain](diagrams/gif/a1-04-evidence-chain-wechat.gif)
 
 ## 六、怎么选
 
@@ -76,7 +75,7 @@ AI 起草声明、配置和 PR 说明，我审 PR 与 plan。首次开通与授�
 
 下一篇：用 AI 把 3 个 Grafana 面板搬过去，保留回退。
 
-![a1-05-saas-or-selfhost](diagrams/a1-05-saas-or-selfhost-wechat.png)
+![a1-05-saas-or-selfhost](diagrams/gif/a1-05-saas-or-selfhost-wechat.gif)
 
 ## 来源（核验日期 2026-10-27，发布前复核）
 

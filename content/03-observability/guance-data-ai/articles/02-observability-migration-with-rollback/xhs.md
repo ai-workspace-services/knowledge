@@ -1,6 +1,5 @@
 # 面板搬家，最难的是查询口径对上
 
-作者：Haitao Pan ｜ XWork Technologies LLC 服务支持
 （观测云内容合作；沿用上一篇同一免费专区空间与 UAT 链路）
 
 ## P1 原面板
