@@ -2,9 +2,14 @@
 
 > 本页是 **V5 VPS / Compose** 的历史运行基线。“当前”均受下列采样日期约束。2026-10-25 后续承载见 [V5 K3s PROD 基线](../prod-v5-k3s-20261025/prod-v5-vps-to-k3s-runtime-and-acceptance-20261025.zh.md)；[跨代证据索引](../generation-deployment-evidence-index-20261025.zh.md)串联逐轮回执、复盘、真实 case、重验与缺失字段。旧 Docker/旧 apply 样本已经由 10-24 净室实际执行回执取代，不作为当前线上判断。
 
-核验时间：2026-10-24，Asia/Shanghai。本文是有时间边界的运行回执，配置权威仍归 GitOps、Playbooks、IaC 与控制入口各自 owner。公开版本仅保留逻辑代际、公开代码引用和脱敏摘要；主机标识、地址、秘密存储路径、私有备份位置及原始证据留在受控位置。
 
+最新状态（2026-10-23，用户主线 SSH 样本）：目标 `104.64.208.209` 已安装 Docker `29.9.2`，
+`dockerd` 已启动、`/etc/docker` 存在，但无容器、仍仅 22 端口监听；owner journal 已存在。
+此前 exit 4 已实证控制端动态角色解析缺少 `ansible.posix`。安装 `ansible.posix 2.1.0`
+后同一最小 syntax-check 从 exit 4 转为 exit 0；固定 ref 的公共入口 apply `60471` 运行中，尚未部署成功或 ready。该次不能沿用早期“主机写入前”的阶段结论，
 [统一部署与迁移流程](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md) · [多云平台工程技术白皮书（含 PostgreSQL DNS 案例）](../../../../../docs/reference/multi-cloud-platform-engineering-whitepaper.zh.md#1113-v5-postgresql-公共入口-dns-交接) · [V4→V5 基线与升级复盘](../../17-prod-v4-v5-baseline-and-upgrade-retrospective.zh.md) · [V5 部署流程复盘](prod-v5-deployment-postmortem-20261023.zh.md)
+
+核验时间：2026-10-24，Asia/Shanghai。本文是有时间边界的运行回执，配置权威仍归 GitOps、Playbooks、IaC 与控制入口各自 owner。公开版本仅保留逻辑代际、公开代码引用和脱敏摘要；主机标识、地址、秘密存储路径、私有备份位置及原始证据留在受控位置。
 
 ## 巡检权限补充（2026-10-24 13:14:58 +08）
 
@@ -465,6 +470,24 @@ collection 缺失；旧 SSH timeout 和 launcher binding 保留为各自历史�
 主线 owner 继续实际安装；知识库只补充
 脱敏事实。公共流量、写入和最终切换仍由 V4 保持，切换须验收后独立人工授权。
 
+### 后续 SSH 样本与控制端依赖漂移（2026-10-23）
+
+以下为最新主线交接，覆盖此前“Docker 未安装”的旧主机样本；保留各次样本的时间边界。
+
+| 项目 | 实际观察 | 验收边界 |
+| --- | --- | --- |
+| Docker 安装进展 | Docker `29.9.2` 已安装；`dockerd` 已启动，`/etc/docker` 存在 | 说明本次执行已越过此前 collection 解析阻断及 Docker 安装步骤；不代表应用部署成功 |
+| 容器与监听 | 最新 SSH 样本无容器，只有 22 监听 | 服务尚待 verify，未标 ready |
+| actual apply `60471` | 仍执行中 | 无最终退出码及 runtime 验收回执 |
+| [Playbooks #736](https://github.com/ai-workspace-infra/playbooks/pull/736) | 已合并 `fe6fdc16453bea8d718e9844a523da364d9ee54d`；动态 role 依赖前置并固定 `ansible.posix 2.1.0` | 代码合同的固定版本不等于本轮实际执行环境全程固定 |
+| 控制端实际 collection | 当前 `ansible-galaxy` 显示 `ansible.posix 2.2.0`；主线确认由 worker 全局安装造成 | 存在执行环境漂移；不能声称本轮 apply 全程使用 2.1.0 |
+| 最小解析 case | 在 `ansible.posix 2.1.0` 下由 exit 4 转 exit 0 的实证仍有效 | 只证明该固定版本下的 case；下次须使用隔离 collection 路径固定版本，核验实际解析来源后重验，当前 PENDING |
+
+#736 曾在 owner CI 完成前因 worker 使用 `--auto` 而合并，后续最终检查通过（主线交接）。
+后续合并须先等待全部检查结束、确认通过并完成审查，再直接合并；不使用 `--auto`。
+此流程纠正及最终绿灯均不替代 V5 运行验收。V4 公共服务与写入保持，迁移及切换未执行。
+
+## 历代记录（V4 → V3 → V2 → V1 初始记录）
 
 ## 配置与敏感引用补充（2026-10-24 用户交接）
 
