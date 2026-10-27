@@ -58,6 +58,9 @@
 
 **PASS：V5 修复后有业务数据的逻辑环境快照、独立数据库恢复与异机副本校验。** 不推导 OAuth/MFA 重登录、支付、所有代理正流量、完整权限登录恢复、云磁盘恢复、最终追齐或写入权切换通过。V4 继续在线，源端与目标的持续增量不是靠此静态快照自动保持同步。
 
+## 后续权限变更边界（2026-10-24 13:14 +08）
+
+本快照捕获早于[系统与业务只读巡检权限补全](20261024-prod-v5-inspection-access.zh.md)。新增 OS `auditor`、受限 sudo 网关与 DB `db_readonly` 的 76 表 SELECT 授权已实机验证，最终配置复跑零变更；但本轮未重做快照，不能将这些新权限追记为本次备份已包含的内容。旧快照恢复后须从固定 Playbooks ref 应用 `inspection_access`，重验读取允许和写入拒绝；该恢复后重验当前 NOT_RUN。原捕获时间、校验摘要及当时恢复结果保持不变。
 ## 跨代归档回链
 
 [统一流程](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md) → [跨代基线、逐轮回执、真实 case 与重验](../generation-deployment-evidence-index-20261025.zh.md)。本页保留原采样、固定构件和结果；后续成功不覆盖历史失败，源码/PR 状态不代替本页的真实运行回执。
