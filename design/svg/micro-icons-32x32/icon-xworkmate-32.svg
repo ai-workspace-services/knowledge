@@ -1,0 +1,12 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- XWorkmate Worky-Bot Micro Icon (32x32) -->
+  <rect width="32" height="32" rx="8" fill="#0F172A"/>
+  <!-- Lateral Earcups -->
+  <rect x="4" y="12" width="3" height="7" rx="1.5" fill="#F97316"/>
+  <rect x="25" y="12" width="3" height="7" rx="1.5" fill="#F97316"/>
+  <!-- Robot Head & Face -->
+  <rect x="6" y="8" width="20" height="16" rx="7" fill="#F97316"/>
+  <rect x="9" y="10" width="14" height="10" rx="4" fill="#FFFFFF"/>
+  <circle cx="13" cy="14" r="1.2" fill="#C2410C"/>
+  <circle cx="19" cy="14" r="1.2" fill="#C2410C"/>
+</svg>

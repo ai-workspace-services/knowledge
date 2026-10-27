@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>XWork Technologies · 终极定版产品系列设计规范</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background-color: #0b0f19;
+      color: #f1f5f9;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    }
+    .squircle {
+      border-radius: 26%;
+    }
+  </style>
+</head>
+<body class="p-6 md:p-12 min-h-screen flex flex-col items-center justify-center">
+
+  <div class="w-full max-w-5xl bg-white text-slate-900 rounded-3xl p-8 md:p-14 shadow-2xl space-y-12">
+    
+    <!-- 顶部：母品牌标准横版组合 Lockup -->
+    <div class="flex items-center gap-6 pb-8 border-b border-slate-100">
+      <!-- 4-Tile Master Squircle Icon -->
+      <div class="w-24 h-24 bg-[#0F172A] squircle flex items-center justify-center p-4 shadow-xl">
+        <div class="grid grid-cols-2 gap-2 w-full h-full p-0.5">
+          <div class="bg-[#00A8E8] rounded-md"></div>
+          <div class="bg-white rounded-md"></div>
+          <div class="bg-white rounded-md"></div>
+          <div class="bg-[#00A8E8] rounded-md"></div>
+        </div>
+      </div>
+
+      <!-- Wordmark -->
+      <div>
+        <h1 class="text-4xl md:text-5xl font-black tracking-tight text-slate-950 flex items-baseline gap-3">
+          <span>XWork</span>
+          <span class="text-slate-500 font-normal">Technologies</span>
+        </h1>
+        <p class="text-xs text-slate-400 mt-1 font-medium tracking-wide uppercase">Open AI Workspace Platform · Official Brandmark</p>
+      </div>
+    </div>
+
+    <!-- 中部：四大核心产品矩阵 (已替换 XConnect 飞鳐 + 补齐 AI Workspace 灵动眼睛) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+
+      <!-- 1. XWork Technologies (codename X-Spark) -->
+      <div class="space-y-4">
+        <!-- 亮色 & 暗色 App 图标并列 -->
+        <div class="flex items-center gap-3">
+          <!-- Light Mode Icon -->
+          <div class="w-24 h-24 bg-white border border-slate-200/80 squircle flex items-center justify-center p-4 shadow-md">
+            <div class="grid grid-cols-2 gap-2 w-full h-full p-0.5">
+              <div class="bg-[#00A8E8] rounded-md"></div>
+              <div class="bg-[#0F172A] rounded-md"></div>
+              <div class="bg-[#0F172A] rounded-md"></div>
+              <div class="bg-[#00A8E8] rounded-md"></div>
+            </div>
+          </div>
+          <!-- Dark Mode Icon -->
+          <div class="w-24 h-24 bg-[#0F172A] squircle flex items-center justify-center p-4 shadow-md">
+            <div class="grid grid-cols-2 gap-2 w-full h-full p-0.5">
+              <div class="bg-[#00A8E8] rounded-md"></div>
+              <div class="bg-white rounded-md"></div>
+              <div class="bg-white rounded-md"></div>
+              <div class="bg-[#00A8E8] rounded-md"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 32x32 极限微图标测试 -->
+        <div class="flex items-center gap-12 pl-2">
+          <div class="w-5 h-5 bg-white border border-slate-300 rounded-[5px] p-0.5 grid grid-cols-2 gap-0.5">
+            <div class="bg-[#00A8E8] rounded-[1px]"></div>
+            <div class="bg-[#0F172A] rounded-[1px]"></div>
+            <div class="bg-[#0F172A] rounded-[1px]"></div>
+            <div class="bg-[#00A8E8] rounded-[1px]"></div>
+          </div>
+          <div class="w-5 h-5 bg-[#0F172A] rounded-[5px] p-0.5 grid grid-cols-2 gap-0.5">
+            <div class="bg-[#00A8E8] rounded-[1px]"></div>
+            <div class="bg-white rounded-[1px]"></div>
+            <div class="bg-white rounded-[1px]"></div>
+            <div class="bg-[#00A8E8] rounded-[1px]"></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="font-bold text-slate-900 text-sm">XWork Technologies</div>
+          <div class="text-[11px] text-slate-400 font-mono">codename X-Spark</div>
+        </div>
+      </div>
+
+      <!-- 2. XConnect (codename Swift-Ray) -->
+      <div class="space-y-4">
+        <div class="flex items-center gap-3">
+          <!-- Light Mode Icon (带右下角品牌印章) -->
+          <div class="w-24 h-24 bg-[#E0F2FE]/60 border border-sky-100 squircle flex items-center justify-center relative p-3 shadow-md overflow-hidden">
+            <svg viewBox="0 0 200 200" class="w-16 h-16" fill="none">
+              <path d="M100 46 C136 46 178 86 172 118 C168 132 152 130 134 122 L108 144 C104 148 96 148 92 144 L66 122 C48 130 32 132 28 118 C22 86 64 46 100 46 Z" fill="#0EA5E9"/>
+              <path d="M64 116 C78 130 122 130 136 116 L100 150 Z" fill="#1E1B4B"/>
+              <circle cx="100" cy="164" r="10" fill="#0EA5E9"/>
+              <ellipse cx="84" cy="80" rx="7" ry="11" fill="#1E1B4B"/>
+              <ellipse cx="116" cy="80" rx="7" ry="11" fill="#1E1B4B"/>
+            </svg>
+            <div class="absolute bottom-2 right-2 w-3.5 h-3.5 bg-white/90 p-0.5 rounded-[3px] shadow grid grid-cols-2 gap-0.5">
+              <div class="bg-[#00A8E8] rounded-[1px]"></div>
+              <div class="bg-[#0F172A] rounded-[1px]"></div>
+              <div class="bg-[#0F172A] rounded-[1px]"></div>
+              <div class="bg-[#00A8E8] rounded-[1px]"></div>
+            </div>
+          </div>
+
+          <!-- Dark Mode Icon -->
+          <div class="w-24 h-24 bg-[#0F172A] squircle flex items-center justify-center relative p-3 shadow-md overflow-hidden">
+            <svg viewBox="0 0 200 200" class="w-16 h-16" fill="none">
+              <path d="M100 46 C136 46 178 86 172 118 C168 132 152 130 134 122 L108 144 C104 148 96 148 92 144 L66 122 C48 130 32 132 28 118 C22 86 64 46 100 46 Z" fill="#0EA5E9"/>
+              <path d="M64 116 C78 130 122 130 136 116 L100 150 Z" fill="#1E1B4B"/>
+              <circle cx="100" cy="164" r="10" fill="#0EA5E9"/>
+              <ellipse cx="84" cy="80" rx="7" ry="11" fill="#1E1B4B"/>
+              <ellipse cx="116" cy="80" rx="7" ry="11" fill="#1E1B4B"/>
+            </svg>
+            <div class="absolute bottom-2 right-2 w-3.5 h-3.5 bg-slate-900/90 p-0.5 rounded-[3px] shadow border border-slate-700/60 grid grid-cols-2 gap-0.5">
+              <div class="bg-[#00A8E8] rounded-[1px]"></div>
+              <div class="bg-white rounded-[1px]"></div>
+              <div class="bg-white rounded-[1px]"></div>
+              <div class="bg-[#00A8E8] rounded-[1px]"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 32x32 极限微图标测试 -->
+        <div class="flex items-center gap-12 pl-2">
+          <div class="w-5 h-5 bg-[#E0F2FE] border border-sky-200 rounded-[5px] flex items-center justify-center p-0.5">
+            <div class="w-3.5 h-2.5 bg-[#0EA5E9] rounded-t-full"></div>
+          </div>
+          <div class="w-5 h-5 bg-[#0F172A] rounded-[5px] flex items-center justify-center p-0.5">
+            <div class="w-3.5 h-2.5 bg-[#0EA5E9] rounded-t-full"></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="font-bold text-slate-900 text-sm">XConnect</div>
+          <div class="text-[11px] text-slate-400 font-mono">codename Swift-Ray</div>
+        </div>
+      </div>
+
+      <!-- 3. XWorkmate (codename Worky-Bot) -->
+      <div class="space-y-4">
+        <div class="flex items-center gap-3">
+          <!-- Light Mode Icon -->
+          <div class="w-24 h-24 bg-[#FFF7ED] border border-orange-100 squircle flex items-center justify-center relative p-3 shadow-md overflow-hidden">
+            <svg viewBox="0 0 200 200" class="w-16 h-16" fill="none">
+              <rect x="24" y="74" width="20" height="42" rx="10" fill="#F97316"/>
+              <rect x="156" y="74" width="20" height="42" rx="10" fill="#F97316"/>
+              <rect x="38" y="46" width="124" height="104" rx="46" fill="#F97316"/>
+              <rect x="52" y="62" width="96" height="66" rx="26" fill="#FFFFFF"/>
+              <circle cx="80" cy="94" r="7" fill="#C2410C"/>
+              <circle cx="120" cy="94" r="7" fill="#C2410C"/>
+              <rect x="88" y="112" width="24" height="8" rx="4" fill="#FDBA74"/>
+            </svg>
+            <div class="absolute bottom-2 right-2 w-3.5 h-3.5 bg-white/90 p-0.5 rounded-[3px] shadow grid grid-cols-2 gap-0.5">
+              <div class="bg-[#00A8E8] rounded-[1px]"></div>
+              <div class="bg-[#0F172A] rounded-[1px]"></div>
+              <div class="bg-[#0F172A] rounded-[1px]"></div>
+              <div class="bg-[#00A8E8] rounded-[1px]"></div>
+            </div>
+          </div>
+
+          <!-- Dark Mode Icon -->
+          <div class="w-24 h-24 bg-[#0F172A] squircle flex items-center justify-center relative p-3 shadow-md overflow-hidden">
+            <svg viewBox="0 0 200 200" class="w-16 h-16" fill="none">
+              <rect x="24" y="74" width="20" height="42" rx="10" fill="#F97316"/>
+              <rect x="156" y="74" width="20" height="42" rx="10" fill="#F97316"/>
+              <rect x="38" y="46" width="124" height="104" rx="46" fill="#F97316"/>
+              <rect x="52" y="62" width="96" height="66" rx="26" fill="#FFFFFF"/>
+              <circle cx="80" cy="94" r="7" fill="#C2410C"/>
+              <circle cx="120" cy="94" r="7" fill="#C2410C"/>
+              <rect x="88" y="112" width="24" height="8" rx="4" fill="#FDBA74"/>
+            </svg>
+            <div class="absolute bottom-2 right-2 w-3.5 h-3.5 bg-slate-900/90 p-0.5 rounded-[3px] shadow border border-slate-700/60 grid grid-cols-2 gap-0.5">
+              <div class="bg-[#00A8E8] rounded-[1px]"></div>
+              <div class="bg-white rounded-[1px]"></div>
+              <div class="bg-white rounded-[1px]"></div>
+              <div class="bg-[#00A8E8] rounded-[1px]"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 32x32 极限微图标测试 -->
+        <div class="flex items-center gap-12 pl-2">
+          <div class="w-5 h-5 bg-[#FFF7ED] border border-orange-200 rounded-[5px] flex items-center justify-center p-0.5">
+            <div class="w-3.5 h-3.5 bg-[#F97316] rounded-full"></div>
+          </div>
+          <div class="w-5 h-5 bg-[#0F172A] rounded-[5px] flex items-center justify-center p-0.5">
+            <div class="w-3.5 h-3.5 bg-[#F97316] rounded-full"></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="font-bold text-slate-900 text-sm">XWorkmate</div>
+          <div class="text-[11px] text-slate-400 font-mono">codename Worky-Bot</div>
+        </div>
+      </div>
+
+      <!-- 4. AI Workspace (codename Cubo-Dock) ★ 补齐灵动绿色双眼 -->
+      <div class="space-y-4">
+        <div class="flex items-center gap-3">
+          <!-- Light Mode Icon (穹顶内嵌双圆眼) -->
+          <div class="w-24 h-24 bg-[#EEF2FF] border border-indigo-100 squircle flex items-center justify-center relative p-3 shadow-md overflow-hidden">
+            <svg viewBox="0 0 200 200" class="w-16 h-16" fill="none">
+              <!-- 侧边扩展耳钮 -->
+              <rect x="24" y="86" width="16" height="30" rx="8" fill="#6366F1"/>
+              <rect x="160" y="86" width="16" height="30" rx="8" fill="#6366F1"/>
+              <!-- 扎实方圆工作台底座 -->
+              <rect x="36" y="80" width="128" height="66" rx="24" fill="#6366F1"/>
+              <!-- 全景通透深蓝防护穹顶 -->
+              <path d="M54 80 C54 44 80 32 100 32 C120 32 146 44 146 80 Z" fill="#4338CA"/>
+              <!-- 核心智眼 (荧光绿色双圆眼) -->
+              <circle cx="82" cy="60" r="7" fill="#10B981"/>
+              <circle cx="118" cy="60" r="7" fill="#10B981"/>
+              <!-- 基座荧光绿感应屏/嘴巴 -->
+              <rect x="76" y="106" width="48" height="12" rx="6" fill="#10B981"/>
+            </svg>
+            <div class="absolute bottom-2 right-2 w-3.5 h-3.5 bg-white/90 p-0.5 rounded-[3px] shadow grid grid-cols-2 gap-0.5">
+              <div class="bg-[#00A8E8] rounded-[1px]"></div>
+              <div class="bg-[#0F172A] rounded-[1px]"></div>
+              <div class="bg-[#0F172A] rounded-[1px]"></div>
+              <div class="bg-[#00A8E8] rounded-[1px]"></div>
+            </div>
+          </div>
+
+          <!-- Dark Mode Icon (穹顶内嵌发光双圆眼) -->
+          <div class="w-24 h-24 bg-[#0F172A] squircle flex items-center justify-center relative p-3 shadow-md overflow-hidden">
+            <svg viewBox="0 0 200 200" class="w-16 h-16" fill="none">
+              <rect x="24" y="86" width="16" height="30" rx="8" fill="#6366F1"/>
+              <rect x="160" y="86" width="16" height="30" rx="8" fill="#6366F1"/>
+              <rect x="36" y="80" width="128" height="66" rx="24" fill="#6366F1"/>
+              <path d="M54 80 C54 44 80 32 100 32 C120 32 146 44 146 80 Z" fill="#4338CA"/>
+              <!-- 发光双眼 -->
+              <circle cx="82" cy="60" r="7" fill="#10B981"/>
+              <circle cx="118" cy="60" r="7" fill="#10B981"/>
+              <rect x="76" y="106" width="48" height="12" rx="6" fill="#10B981"/>
+            </svg>
+            <div class="absolute bottom-2 right-2 w-3.5 h-3.5 bg-slate-900/90 p-0.5 rounded-[3px] shadow border border-slate-700/60 grid grid-cols-2 gap-0.5">
+              <div class="bg-[#00A8E8] rounded-[1px]"></div>
+              <div class="bg-white rounded-[1px]"></div>
+              <div class="bg-white rounded-[1px]"></div>
+              <div class="bg-[#00A8E8] rounded-[1px]"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 32x32 极限微图标测试 (带双眼微像素点) -->
+        <div class="flex items-center gap-12 pl-2">
+          <div class="w-5 h-5 bg-[#EEF2FF] border border-indigo-200 rounded-[5px] flex items-center justify-center p-0.5 relative">
+            <div class="w-3.5 h-3 bg-[#6366F1] rounded-t-full relative">
+              <div class="absolute top-0.5 left-0.5 w-0.5 h-0.5 bg-[#10B981] rounded-full"></div>
+              <div class="absolute top-0.5 right-0.5 w-0.5 h-0.5 bg-[#10B981] rounded-full"></div>
+            </div>
+          </div>
+          <div class="w-5 h-5 bg-[#0F172A] rounded-[5px] flex items-center justify-center p-0.5 relative">
+            <div class="w-3.5 h-3 bg-[#6366F1] rounded-t-full relative">
+              <div class="absolute top-0.5 left-0.5 w-0.5 h-0.5 bg-[#10B981] rounded-full"></div>
+              <div class="absolute top-0.5 right-0.5 w-0.5 h-0.5 bg-[#10B981] rounded-full"></div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="font-bold text-slate-900 text-sm flex items-center gap-1.5">
+            <span>AI Workspace</span>
+            <span class="text-[9px] px-1.5 py-0.2 bg-emerald-100 text-emerald-700 font-semibold rounded">Eyes Added</span>
+          </div>
+          <div class="text-[11px] text-slate-400 font-mono">codename Cubo-Dock</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 底部：Dark Mode 官网横条 Banner 完整 Lockup 展示 -->
+    <div class="bg-[#0A0E1A] rounded-2xl p-6 md:p-8 flex items-center gap-6 shadow-xl border border-slate-800/80">
+      <div class="w-20 h-20 bg-[#0F172A] squircle flex items-center justify-center p-3.5 shadow-lg border border-slate-700/50">
+        <div class="grid grid-cols-2 gap-1.5 w-full h-full p-0.5">
+          <div class="bg-[#00A8E8] rounded-md"></div>
+          <div class="bg-white rounded-md"></div>
+          <div class="bg-white rounded-md"></div>
+          <div class="bg-[#00A8E8] rounded-md"></div>
+        </div>
+      </div>
+      <div>
+        <div class="text-3xl md:text-4xl font-black tracking-tight text-white flex items-baseline gap-2.5">
+          <span>XWork</span>
+          <span class="text-slate-400 font-normal">Technologies</span>
+        </div>
+        <p class="text-xs text-slate-400 mt-1">Official Dark Header Banner / Navigation Lockup</p>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>
