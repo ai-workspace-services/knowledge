@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200" width="100%" height="auto" style="max-width: 800px; background: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; margin: 16px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M 0 1 L 10 5 L 0 9 z" fill="#475569"/>
+  </marker>
+  <marker id="arrow-blue" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M 0 1 L 10 5 L 0 9 z" fill="#2563eb"/>
+  </marker>
+  <marker id="arrow-purple" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M 0 1 L 10 5 L 0 9 z" fill="#7c3aed"/>
+  </marker>
+  <marker id="arrow-emerald" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M 0 1 L 10 5 L 0 9 z" fill="#059669"/>
+  </marker>
+  <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+    <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.08"/>
+  </filter>
+</defs>
+
+  <rect x="20" y="16" width="760" height="34" rx="6" fill="#f8fafc" stroke="#cbd5e1"/>
+  <text x="35" y="38" font-size="14" font-weight="700" fill="#1e293b">CROSS-LAYER CORRELATION: RUM SESSION TO DISTRIBUTED TRACE</text>
+
+  <rect x="40" y="70" width="220" height="110" rx="6" fill="#eff6ff" stroke="#93c5fd"/>
+  <text x="55" y="95" font-size="12" font-weight="700" fill="#1e40af">RUM Session View</text>
+  <text x="55" y="120" font-size="11" fill="#1d4ed8">session.id: ses-98a7c2</text>
+  <text x="55" y="145" font-size="11" fill="#1d4ed8">action: click#login-button</text>
+
+  <path d="M 260 125 L 315 125" fill="none" stroke="#7c3aed" stroke-width="2" marker-end="url(#arrow-purple)"/>
+  <text x="268" y="115" font-size="9" fill="#7c3aed">inject trace_id</text>
+
+  <rect x="320" y="70" width="440" height="110" rx="6" fill="#faf5ff" stroke="#d8b4fe"/>
+  <text x="335" y="95" font-size="12" font-weight="700" fill="#6b21a8">Distributed APM Trace Waterfall</text>
+  <rect x="335" y="110" width="410" height="24" rx="4" fill="#ede9fe"/>
+  <text x="345" y="126" font-size="10" fill="#5b21b6">trace_id: 4bf92f3577b34da6a3ce929d0e0e4736</text>
+  <text x="335" y="155" font-size="11" fill="#6b21a8">Span: POST /auth/login → Status: 200 OK → Duration: 38ms</text>
+
+</svg>

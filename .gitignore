@@ -8,3 +8,6 @@ scripts/pdf/node_modules/
 output/
 dist/
 *.pdf
+__pycache__/
+*.pyc
+content/03-observability/guance-data-ai/pdf_exports/

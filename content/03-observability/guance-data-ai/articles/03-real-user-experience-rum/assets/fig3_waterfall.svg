@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 240" width="100%" height="auto" style="max-width: 800px; background: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; margin: 16px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M 0 1 L 10 5 L 0 9 z" fill="#475569"/>
+  </marker>
+  <marker id="arrow-blue" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M 0 1 L 10 5 L 0 9 z" fill="#2563eb"/>
+  </marker>
+  <marker id="arrow-purple" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M 0 1 L 10 5 L 0 9 z" fill="#7c3aed"/>
+  </marker>
+  <marker id="arrow-emerald" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M 0 1 L 10 5 L 0 9 z" fill="#059669"/>
+  </marker>
+  <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+    <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.08"/>
+  </filter>
+</defs>
+
+  <rect x="20" y="16" width="760" height="34" rx="6" fill="#f8fafc" stroke="#cbd5e1"/>
+  <text x="35" y="38" font-size="14" font-weight="700" fill="#1e293b">WATERFALL: 280MS CLIENT LONG TASK VS 38MS BACKEND API</text>
+
+  <!-- Timeline header -->
+  <line x1="50" y1="70" x2="750" y2="70" stroke="#cbd5e1" stroke-width="1"/>
+  <text x="50" y="65" font-size="10" fill="#64748b">0 ms</text>
+  <text x="250" y="65" font-size="10" fill="#64748b">100 ms</text>
+  <text x="450" y="65" font-size="10" fill="#64748b">200 ms</text>
+  <text x="650" y="65" font-size="10" fill="#64748b">300 ms</text>
+
+  <!-- Backend API -->
+  <text x="50" y="100" font-size="12" font-weight="700" fill="#1e40af">Cloud Run Backend API</text>
+  <rect x="50" y="110" width="80" height="30" rx="4" fill="#93c5fd" stroke="#3b82f6"/>
+  <text x="58" y="130" font-size="11" font-weight="600" fill="#1e3a8a">38 ms (HTTP 200)</text>
+
+  <!-- Client Main Thread -->
+  <text x="50" y="170" font-size="12" font-weight="700" fill="#991b1b">Browser Main Thread (AI Component Execution)</text>
+  <rect x="130" y="180" width="560" height="30" rx="4" fill="#fca5a5" stroke="#ef4444"/>
+  <text x="145" y="200" font-size="11" font-weight="700" fill="#7f1d1d">Long Task: 280 ms (Markdown Regex &amp; React Re-render Lock)</text>
+
+</svg>
