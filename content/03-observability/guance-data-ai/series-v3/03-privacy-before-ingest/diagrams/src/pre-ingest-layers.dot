@@ -1,0 +1,12 @@
+digraph G { rankdir=LR; graph [bgcolor="white", fontname="Noto Sans CJK SC", pad=0.4, nodesep=0.45, ranksep=0.55];
+node [shape=box, style="rounded,filled", fillcolor="#F5F7FA", color="#9AA5B1", fontname="Noto Sans CJK SC", fontsize=18, margin="0.25,0.14", penwidth=1.4];
+edge [color="#52606D", fontname="Noto Sans CJK SC", fontsize=15, penwidth=1.4, arrowsize=0.8];
+
+app [label="应用 / 主机", fillcolor="#FFFFFF"];
+v [label="Vector\nremap 改写 · 丢字段", fillcolor="#EEF8F0", color="#3E8E5A"];
+oc [label="OTel Collector\n属性删除 / 哈希", fillcolor="#EEF8F0", color="#3E8E5A"];
+dk [label="DataKit\n本地 Pipeline", fillcolor="#EEF8F0", color="#3E8E5A"];
+rum [label="浏览器 RUM SDK\n隐私遮罩", fillcolor="#EAF2FF", color="#4C7BD9"];
+g [label="观测云", fillcolor="#EAF2FF", color="#4C7BD9"];
+app -> v -> dk; app -> oc -> dk; dk -> g; rum -> g;
+}

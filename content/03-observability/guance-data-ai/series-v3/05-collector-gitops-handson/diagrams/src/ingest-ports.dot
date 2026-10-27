@@ -1,0 +1,15 @@
+digraph G { rankdir=LR; graph [bgcolor="white", fontname="Noto Sans CJK SC", pad=0.4, nodesep=0.45, ranksep=0.55];
+node [shape=box, style="rounded,filled", fillcolor="#F5F7FA", color="#9AA5B1", fontname="Noto Sans CJK SC", fontsize=18, margin="0.25,0.14", penwidth=1.4];
+edge [color="#52606D", fontname="Noto Sans CJK SC", fontsize=15, penwidth=1.4, arrowsize=0.8];
+
+oc [label="OTel Collector", fillcolor="#EEF8F0", color="#3E8E5A"];
+ve [label="Vector\n指标 sink", fillcolor="#EEF8F0", color="#3E8E5A"];
+vl [label="Vector\n日志 sink", fillcolor="#EEF8F0", color="#3E8E5A"];
+subgraph cluster_dk { label="DataKit"; style=rounded; color="#4C7BD9"; fontsize=16;
+ i1 [label="opentelemetry\ngRPC · HTTP（仅 protobuf）", fillcolor="#EAF2FF", color="#4C7BD9"];
+ i2 [label="prom_remote_write\n/prom_remote_write", fillcolor="#EAF2FF", color="#4C7BD9"];
+ i3 [label="logstreaming\n/v1/write/logstreaming", fillcolor="#EAF2FF", color="#4C7BD9"];
+}
+g [label="观测云", fillcolor="#EAF2FF", color="#4C7BD9"];
+oc -> i1; ve -> i2; vl -> i3; i1 -> g; i2 -> g; i3 -> g;
+}

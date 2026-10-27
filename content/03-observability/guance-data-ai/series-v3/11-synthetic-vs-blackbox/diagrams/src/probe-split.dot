@@ -1,0 +1,11 @@
+digraph G { rankdir=TB; graph [bgcolor="white", fontname="Noto Sans CJK SC", pad=0.4, nodesep=0.45, ranksep=0.55];
+node [shape=box, style="rounded,filled", fillcolor="#F5F7FA", color="#9AA5B1", fontname="Noto Sans CJK SC", fontsize=18, margin="0.25,0.14", penwidth=1.4];
+edge [color="#52606D", fontname="Noto Sans CJK SC", fontsize=15, penwidth=1.4, arrowsize=0.8];
+
+t [label="站点 · 接口 · 证书", fillcolor="#FFFFFF"];
+bb [label="自建 Blackbox Exporter\n自定探测间隔 · 进 Grafana", fillcolor="#EEF8F0", color="#3E8E5A"];
+st [label="观测云可用性监测\n平台节点 · 外部视角", fillcolor="#EAF2FF", color="#4C7BD9"];
+a [label="Grafana 告警", fillcolor="#EEF8F0", color="#3E8E5A"];
+b [label="拨测结果 · 告警", fillcolor="#EAF2FF", color="#4C7BD9"];
+t -> bb -> a; t -> st -> b;
+}

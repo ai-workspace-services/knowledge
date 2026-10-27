@@ -1,0 +1,9 @@
+digraph G { rankdir=LR; graph [bgcolor="white", fontname="Noto Sans CJK SC", pad=0.4, nodesep=0.45, ranksep=0.55];
+node [shape=box, style="rounded,filled", fillcolor="#F5F7FA", color="#9AA5B1", fontname="Noto Sans CJK SC", fontsize=18, margin="0.25,0.14", penwidth=1.4];
+edge [color="#52606D", fontname="Noto Sans CJK SC", fontsize=15, penwidth=1.4, arrowsize=0.8];
+
+f [label="关联字段\nenv · service · route\nrevision · release_tag · trace_id", fillcolor="#FFFBEA", color="#C99A06"];
+l1 [label="RUM", fillcolor="#EAF2FF", color="#4C7BD9"]; l2 [label="边缘日志", fillcolor="#EAF2FF", color="#4C7BD9"]; l3 [label="后端 Trace / 日志", fillcolor="#EAF2FF", color="#4C7BD9"]; l4 [label="DB 调用 span", fillcolor="#EAF2FF", color="#4C7BD9"];
+q [label="同一请求可跨层检索", fillcolor="#EEF8F0", color="#3E8E5A"];
+f -> l1; f -> l2; f -> l3; f -> l4; l1 -> q; l2 -> q; l3 -> q; l4 -> q;
+}

@@ -1,0 +1,10 @@
+digraph G { rankdir=LR; graph [bgcolor="white", fontname="Noto Sans CJK SC", pad=0.4, nodesep=0.45, ranksep=0.55];
+node [shape=box, style="rounded,filled", fillcolor="#F5F7FA", color="#9AA5B1", fontname="Noto Sans CJK SC", fontsize=18, margin="0.25,0.14", penwidth=1.4];
+edge [color="#52606D", fontname="Noto Sans CJK SC", fontsize=15, penwidth=1.4, arrowsize=0.8];
+
+v [label="Vector", fillcolor="#EEF8F0", color="#3E8E5A"];
+s1 [label="自建存储", fillcolor="#EEF8F0", color="#3E8E5A"];
+s2 [label="DataKit → 观测云", fillcolor="#EAF2FF", color="#4C7BD9"];
+gm [label="Grafana 告警\n缓冲积压 · 组件错误", fillcolor="#FFFBEA", color="#C99A06"];
+v -> s1; v -> s2 [style=dashed]; v -> gm [style=dotted];
+}

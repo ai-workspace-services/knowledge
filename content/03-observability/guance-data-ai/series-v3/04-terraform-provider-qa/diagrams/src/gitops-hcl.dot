@@ -1,0 +1,13 @@
+digraph G { rankdir=TB; graph [bgcolor="white", fontname="Noto Sans CJK SC", pad=0.4, nodesep=0.45, ranksep=0.55];
+node [shape=box, style="rounded,filled", fillcolor="#F5F7FA", color="#9AA5B1", fontname="Noto Sans CJK SC", fontsize=18, margin="0.25,0.14", penwidth=1.4];
+edge [color="#52606D", fontname="Noto Sans CJK SC", fontsize=15, penwidth=1.4, arrowsize=0.8];
+
+g [label="GitOps\n监控意图 + 非敏感模板", fillcolor="#EAF2FF", color="#4C7BD9"];
+r [label="renderer\nPython + Jinja2", fillcolor="#EAF2FF", color="#4C7BD9"];
+h [label="显式 HCL\n可读 · 可审查", fillcolor="#F5F7FA"];
+pr [label="PR 审查", fillcolor="#FFFBEA", color="#C99A06"];
+dec [label="空间有\nAPI 权限？", shape=diamond, style=filled, fillcolor="#FFFBEA", color="#C99A06", margin="0.05,0.05"];
+yes [label="terraform plan\n→ import 已有资源\n→ apply", fillcolor="#EEF8F0", color="#3E8E5A"];
+no [label="apply 被阻断\nHCL 保留在 PR", fillcolor="#FFF4F4", color="#D64545", fontcolor="#9B2C2C"];
+g -> r -> h -> pr -> dec; dec -> yes [label="有"]; dec -> no [label="无"];
+}

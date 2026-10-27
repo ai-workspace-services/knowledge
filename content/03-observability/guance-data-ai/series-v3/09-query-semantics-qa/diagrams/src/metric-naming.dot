@@ -1,0 +1,9 @@
+digraph G { rankdir=TB; graph [bgcolor="white", fontname="Noto Sans CJK SC", pad=0.4, nodesep=0.45, ranksep=0.55];
+node [shape=box, style="rounded,filled", fillcolor="#F5F7FA", color="#9AA5B1", fontname="Noto Sans CJK SC", fontsize=18, margin="0.25,0.14", penwidth=1.4];
+edge [color="#52606D", fontname="Noto Sans CJK SC", fontsize=15, penwidth=1.4, arrowsize=0.8];
+
+raw [label="Remote Write 指标\ngo_memstats_heap_objects", fillcolor="#FFFFFF"];
+d0 [label="默认\n指标集 go\n字段 memstats_heap_objects", fillcolor="#FFFBEA", color="#C99A06"];
+d1 [label="keep_exist_metric_name = true\n字段 go_memstats_heap_objects", fillcolor="#EEF8F0", color="#3E8E5A"];
+raw -> d0 [label="首个下划线切分"]; raw -> d1 [label="保留原名"];
+}
