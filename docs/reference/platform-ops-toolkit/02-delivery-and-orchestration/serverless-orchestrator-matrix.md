@@ -1,0 +1,311 @@
+# Serverless Orchestrator 矩阵部署
+
+`.github/workflows/serverless-orchestrator.yml` 的手动执行页提供制品版本、环境、执行开关，
+以及与 Selfhost 编排器一致的业务域和云服务商选择。UAT 是默认环境；路由、域名、Worker
+名称和数据库模式统一从 GitOps 读取。
+
+## 三种运行模式
+
+```text
+Selfhost mode
+DNS → VPS Full Stack
+    ├── Console
+    ├── Accounts
+    ├── Content
+    ├── Billing
+    └── self-managed PostgreSQL
+
+Serverless mode
+DNS → Cloudflare Pages
+    └── SSR ×5
+        └── edge-gateway ×3: auth / admin / core
+            └── Cloud Run: accounts / content-service / billing-service
+                └── Supabase Cloud DB
+
+Hybrid mode
+DNS → Cloudflare edge → edge-gateway
+                    └── selfhost primary → Cloud Run request-level fallback
+```
+
+Canonical DNS is an explicit traffic cutover switch, not a side effect of every deployment. UAT
+uses `console-uat.onwalk.net` and `accounts-uat.onwalk.net`; their `selfhost` and `serverless`
+targets, TTL, and desired mode are declared in:
+
+```text
+ai-workspace-infra/gitops/topology/uat/serverless/runtime-topology.yaml
+```
+
+### PROD public entry cutover (manual)
+
+The PROD pipeline deploys the Cloudflare and Web SaaS mode-qualified services, but it does not
+automatically move the customer-facing aliases. After readiness and security verification, an
+operator performs the following CNAME cutover manually. Production serverless targets use the
+`serverless` role name; `*-cloudflare-prod.*` is retired and must not be used by deployments or
+verification probes:
+
+| Public entry | CNAME target |
+| --- | --- |
+| `www.svc.plus` | `console-serverless-prod.svc.plus` |
+| `console.svc.plus` | `console-serverless-prod.svc.plus` |
+| `accounts.svc.plus` | `accounts-serverless-prod.svc.plus` |
+| `billing.svc.plus` | `billing-serverless-prod.svc.plus` |
+
+`assets.svc.plus` and `install.svc.plus` are outside this cutover list.
+The deployment workflow must leave these canonical aliases unchanged unless
+an explicit, separately approved DNS cutover is requested.
+
+Production platform entrypoints use the `svc.plus` domain family.
+`frontend_router.website` declares `xworktech.com` and `www.xworktech.com` as
+homepage-only custom domains of `frontend-router-prod`, in zone `xworktech.com`.
+They are not `console_aliases` and are not added as authentication origins.
+The router serves `/` and homepage assets in place; other read paths go to
+`https://svc.plus` with their path and query preserved. Non-read requests are
+rejected on the website domains. The domains job reconciles both hosts even
+with `dns_mode=none`, using the declared zone for the apex binding.
+
+Deploy a frontend-router release with website policy support before domain
+reconciliation. Readiness verifies that both homepages do not redirect and
+that `/login` and `/ai-workspace?entry=trial` lead to `svc.plus`. Existing legacy
+bindings are not deleted by removing them from GitOps; retire them separately
+when their callers have migrated. Pages remains the static asset origin, with
+`assets.svc.plus` reconciled separately as its custom domain.
+
+Every mode profile also declares the five public service entrances in
+`spec.public_endpoints` using `<service>-<mode>-<environment>.<base-domain>`:
+
+| Service | Default access | Serverless UAT | Selfhost UAT |
+| --- | --- | --- | --- |
+| Console | public | `console-serverless-uat.onwalk.net` | `console-selfhost-uat.onwalk.net` |
+| Accounts | authenticated | `accounts-serverless-uat.onwalk.net` | `accounts-selfhost-uat.onwalk.net` |
+| Billing | authenticated | `billing-serverless-uat.onwalk.net` | `billing-selfhost-uat.onwalk.net` |
+| PostgreSQL | authenticated | `postgresql-serverless-uat.onwalk.net` | `postgresql-selfhost-uat.onwalk.net` |
+| Agent-Proxy | public UUID validation | `agent-proxy-serverless-uat.onwalk.net` | `agent-proxy-vps-uat.onwalk.net` |
+
+The Serverless workflow actively reconciles and verifies Console, Accounts, and Billing. PostgreSQL
+remains provider-owned. UAT's combined snapshot path dispatches the Selfhost workflow separately for
+Agent Proxy after Serverless readiness; it passes `agent_controller_url=https://accounts-serverless-
+uat.onwalk.net` so the native Agent Proxy registers to Serverless Accounts rather than creating a
+second controller. The combined dispatch explicitly uses `dns_mode=uat-records` for both workflows;
+the Agent Proxy-only Selfhost DNS stage publishes `agent-proxy-vps-uat.onwalk.net` without requiring
+a selfhost Web SaaS host. Standalone Selfhost runs keep the Selfhost Accounts fallback.
+
+The mode-qualified entries can coexist as separate DNS names. A normal Serverless deployment uses
+`dns_mode=none`, publishes only the `*-serverless-uat` entries, and verifies those entries directly;
+it does not rewrite `console-uat.onwalk.net` or `accounts-uat.onwalk.net`. The Serverless workflow
+may change the canonical aliases only with the explicit `dns_mode=uat-records` or
+`dns_mode=prod-cutover` input.
+
+The production mode-qualified internal service entrances are:
+
+| Service | Serverless | Selfhost |
+| --- | --- | --- |
+| Console | `console-serverless-prod.svc.plus` | `console-selfhost-prod.svc.plus` |
+| Accounts | `accounts-serverless-prod.svc.plus` | `accounts-selfhost-prod.svc.plus` |
+| Billing | `billing-serverless-prod.svc.plus` | `billing-selfhost-prod.svc.plus` |
+| PostgreSQL | `postgresql-serverless-prod.svc.plus` | `postgresql-selfhost-prod.svc.plus` |
+| Agent Proxy | `agent-proxy-serverless-prod.svc.plus` | JP: `agent-proxy-selfhost-prod-jp.svc.plus`; US: `agent-proxy-selfhost-prod-us.svc.plus` |
+
+Post-deployment verification must use these declared names. The Serverless orchestrator verifies
+the deployed Console, Accounts, and Billing edge chain; PostgreSQL and the regional Agent Proxy
+pool remain provider-owned and are verified by the Selfhost/provider readiness gates rather than
+being silently treated as Serverless deployments. The historical generic production Agent Proxy
+name is not an active endpoint.
+
+Ownership of the canonical aliases is asymmetric, and deliberately so. `dns_mode=uat-records`
+binds `console-uat.onwalk.net` as a Worker custom domain, and Cloudflare then refuses to delete
+that record through the DNS API. The Selfhost UAT reconciler therefore never reclaims a canonical
+alias: it yields any canonical name that already exists, logs the current owner, and creates the
+declared CNAME only when the name is unpublished. It always owns the mode-qualified
+`*-selfhost-<environment>` records. To move a canonical alias back to Selfhost, detach the Worker
+custom domain first -- the Selfhost DNS job holds only a DNS-scoped token and cannot do it. The two
+DNS jobs share the `public-dns-<environment>` concurrency group, so only one public cutover can run
+at a time. Distinct hostnames may each have a CNAME; the same hostname cannot have two CNAME targets or
+weighted DNS behavior on the free DNS tier.
+
+The serverless workflow requires the serverless pre-configuration at
+`spec.runtime.mode: serverless`. The hybrid workflow independently uses the hybrid pre-configuration
+with selfhost weight 100 and Serverless weight 0; the hybrid
+workflow owns the request-level selfhost→Cloud Run failover.
+
+### Billing Cloud Run routing
+
+`billing-serverless-<environment>` is a custom domain of the core Edge Gateway Worker. The
+Worker proxies Billing requests to the GitOps-declared Cloud Run `run.app` upstream and preserves
+the public host separately. This avoids Cloudflare Origin Rule Host/SNI overrides, which require
+an Enterprise plan. `billing_origin_host` is a retired compatibility field; reconciliation removes
+its old DNS-only CNAME when present and does not create or update an Origin Ruleset.
+
+## PROD resource inventory
+
+The PROD release deploys the following resources. The application pipeline prepares and verifies
+these resources; canonical public-entry CNAME cutover remains a separate manual operation.
+
+| Resource | Quantity | Responsibility | Dependency |
+|---|---:|---|---|
+| Cloudflare Pages | 1 project | Static portal assets, Pages deployment | Cloudflare account/token from Vault |
+| Cloudflare Workers | 8 Workers | 5 SSR boundaries, 3 edge gateways (`auth`, `admin`, `core`) | Cloudflare account/token and routing manifest |
+| Google Cloud Run | 3 services | `accounts`, `content-service`, `billing-service` backend services | GCP workload identity from Vault |
+| Supabase Cloud DB | 1 project | PROD database, schema verification and selected migration | PROD DB credentials from Vault |
+
+The shared immutable PROD release tag is passed to Pages, all Workers, and all Cloud Run services.
+Supabase verification/migration is executed as a separate gated stage. No database password,
+Cloudflare token, GCP credential, or other secret is stored in the repository or exposed as a
+workflow input.
+
+The production snapshot dispatches both Serverless and Selfhost orchestrators from that same
+`v*` control-plane tag, rather than `main`. The resulting GitHub OIDC `ref` claim matches the
+Vault PROD role's `refs/tags/v*` binding; do not widen that general role to `main` to recover a
+failed deployment.
+
+## Deployment stages and dependencies
+
+Deployment order is intentionally separate from request topology. The application targets run in
+parallel after preflight, then readiness is the single fan-in:
+
+```text
+                         preflight
+             ┌──────────────┼──────────────┐
+             ▼              ▼              ▼
+      Supabase       Cloud Run       Cloudflare
+                                      SSR / Router /
+                                      Gateway / Pages
+             └──────────────┼──────────────┘
+                            ▼
+                  Readiness / public chain
+                            ▼
+                    Migrate (if selected)
+                            ▼
+                      Verify / Summary
+```
+
+Supabase, Cloud Run, SSR, Frontend Router, Edge Gateway, and Pages depend only on `preflight` and
+run in parallel. Migration runs after readiness and is serialized by the shared data-migration
+concurrency group for the environment and migration scope.
+
+`edge-gateway` is a required stage. selfhost→Cloud Run request-level failover is enabled only
+when `spec.runtime.mode` is `hybrid`; `serverless` routes directly to Cloud Run and `selfhost` is
+served by the VPS Full Stack through DNS.
+
+The five SSR Workers, three edge-gateway Workers, and Pages project remain separate deployment
+units because the Cloudflare Worker artifact must stay below 3 MiB. The GitOps manifest is the
+source of truth for these names and routes:
+
+| Boundary | Name | Route contract |
+| --- | --- | --- |
+| SSR public | `frontend-ssr-public-uat` | `/*`, `/_edge/public/*` |
+| SSR content | `frontend-ssr-content-uat` | `/blogs*`, `/docs*`, `/download*` |
+| SSR identity | `frontend-ssr-auth-uat` | `/login*`, `/register*`, etc. |
+| SSR console | `frontend-ssr-console-uat` | `/panel*`, `/dashboard*` |
+| SSR workspace | `frontend-ssr-workspace-uat` | `/ai-workspace*`, `/editor*`, etc. |
+| API auth | `edge-gateway-auth-uat` | `accounts-serverless-uat.onwalk.net/api/auth/*` |
+| API admin | `edge-gateway-admin-uat` | `accounts-serverless-uat.onwalk.net/api/admin/*` |
+| API core | `edge-gateway-core-uat` | `accounts-serverless-uat.onwalk.net/api/*` fallback |
+| Billing | `edge-gateway-core-uat` | `billing-serverless-uat.onwalk.net/*` custom domain |
+| Static assets | `ai-workspace-portal-uat` | `/static/*`, `/assets/*` |
+
+Console is owned only by the `frontend-router` custom domain. SSR boundaries are Service Bindings,
+not public Worker Routes. Reconciliation deletes explicit routes on the GitOps Console host because
+they take precedence over the custom domain and bypass the router.
+
+## GitOps boundary contract
+
+The workflow checks out GitOps `main`, renders the environment YAML, and passes the temporary
+manifest to every Cloudflare consumer. The manifest must define:
+
+- `spec.runtime.mode` (`selfhost`, `serverless`, or `hybrid`), routing, services, and data handover;
+- flat `spec.domains` entries with both `selfhost` and `serverless` targets;
+- Cloudflare zone and Pages project;
+- `spec.serverless.billing_host` and the core Edge Gateway Billing upstream;
+- exactly five `spec.serverless.ssr` boundaries;
+- `auth`, `admin`, and `core` in `spec.serverless.edge_gateway`, with `core` owning `/api/*`;
+- both database modes and an async DTS reservation under `spec.runtime.data.migration`.
+
+Repository-local Cloudflare boundary JSON is not a deployment source of truth and is not used by
+the orchestrator.
+
+Preflight compares SIT/UAT Portal `dashboardUrl`, `authUrl`, and `apiBaseUrl` with these GitOps
+hosts. Production Portal config intentionally uses customer-facing canonical domains; production
+DNS cutover is a separate approval and is not blocked by this internal-host parity check. Readiness
+requires `X-Frontend-Route` on public and console HTML and CSS, validates the public
+Tailwind marker, and reports both boundary CSS SHA-256 hashes; HTTP 200 and file size alone are not
+accepted as proof of a correct deployment.
+
+## Database handover and DTS reservation
+
+GitOps reserves both database endpoints under `spec.runtime.data`:
+
+- Selfhost mode: self-managed PostgreSQL;
+- Serverless mode: Supabase Cloud DB;
+- async DTS: declared as a migration constraint; each run's `operation` selects execution;
+- one active writer only, 60-second maximum lag target, and a required quiesce window;
+- connection strings and replication credentials remain in Vault and are never committed.
+
+Before a DNS cutover, the operator must validate lag, quiesce writes, promote exactly one writer,
+switch the canonical CNAME, and run Verify / Summary. Rollback reverses those steps without
+overwriting or deleting DTS checkpoints. DNS cutover is controlled by the workflow input, not by
+the GitOps topology alone.
+
+## Manual inputs
+
+The manual dispatch uses one explicit operation:
+
+```text
+operation=plan             # only validate GitOps and dispatch inputs
+operation=init-schema      # initialize and verify the Supabase Accounts schema only
+operation=deploy           # deploy the selected serverless application targets
+operation=migrate          # migrate VPS PostgreSQL data to Supabase
+operation=deploy+migrate  # deploy first, then migrate
+operation=destroy          # destroy environment-scoped ephemeral Cloud Run compute
+```
+
+For an application deployment, the normal UAT dispatch is:
+
+```text
+vault_env_path=uat                 # default
+target_domains=all                 # default; equivalent to the full web-saas control plane
+cloud_provider=vultr-vps           # default; the VPS replica/migration path currently supports only Vultr
+tag_ref=daily-build-YYYY.MM.DD-rN  # required immutable snapshot
+deploy_cloud_run=true              # default
+deploy_cloudflare=true             # default
+dns_mode=none                      # default; use uat-records or prod-cutover only for an intentional switch
+```
+
+The Serverless workflow only deploys the complete `web-saas` control plane
+(Cloudflare, Cloud Run, and Supabase). `target_domains=web-saas` selects that segment directly;
+`target_domains=all` keeps the full-domain form compatible and resolves its Serverless segment
+to `web-saas`. Other domains are not deployed by this workflow; they use the
+`cloud_provider` environment-replica path. Multi-cloud choices are visible for compatibility
+but are rejected until their replica path is connected. `vultr-vps` is the only accepted value
+today.
+
+`dns_mode=none` is the safe default. `dns_mode=uat-records` is valid only for SIT/UAT, and
+`dns_mode=prod-cutover` is valid only for production. Both cutover modes are accepted only with
+`operation=deploy` or `operation=deploy+migrate` and `deploy_cloudflare=true`; they are the only
+Serverless paths that change the shared canonical Console/Accounts records.
+
+`tag_ref` is required only for `deploy` and `deploy+migrate`. The `operation` input is the
+control-plane authority that selects whether the migration job runs. GitOps declares data
+topology and migration constraints (strategy, single-writer, lag, and quiesce requirements), but
+does not authorize or select an individual workflow run.
+
+Supabase account-schema initialization uses the same manual workflow with
+`operation=init-schema`. It is a separate job from application deployment, so it only runs the
+schema initialization and verification path.
+
+`tag_ref` is the single immutable version for Cloud Run images, Portal SSR, and edge-gateway.
+The three repositories and the GitOps repository are fixed workflow dependencies, so their
+repository/ref fields are intentionally not exposed as dispatch inputs.
+
+## Credentials and artifacts
+
+All runtime credentials use GitHub OIDC → Vault JWT:
+
+- GCP provider and service account: `kv/uat/serverless/gcp`;
+- Cloudflare account and API token: `kv/uat/serverless/cloudflare`;
+- Supabase connection contract: `kv/uat/serverless/supabase`.
+
+No JSON service-account private key is generated or uploaded. Cloud Run expects three immutable
+images in the environment's GitOps-declared Artifact Registry, both in `asia-east1`:
+`asia-east1-docker.pkg.dev/open-platform-uat/serverless/` for UAT and
+`asia-east1-docker.pkg.dev/open-platform-prod/serverless/` for PROD. All three images
+must use the same immutable snapshot tag.
