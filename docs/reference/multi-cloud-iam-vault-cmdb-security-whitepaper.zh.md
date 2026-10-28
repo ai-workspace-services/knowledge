@@ -3,9 +3,9 @@ title: 多云资源三档权限、IAM 与 Vault 安全集成及 Shared CMDB 技�
 description: 面向每个资源与服务及初始化 OS、PostgreSQL、Supabase 用户的 reader/operator/admin 权限合同、IaC/Vault 集成、Shared CMDB 和实施验收规范。
 slug: multi-cloud-iam-vault-cmdb-security-whitepaper
 lang: zh
-date: 2026-10-10
-version: "1.2"
-status: proposed-not-applied
+date: 2026-10-28
+version: "1.3"
+status: active-with-implementation
 category: reference
 tags:
   - multi-cloud
@@ -19,9 +19,10 @@ tags:
 
 # 多云资源三档权限、IAM 与 Vault 安全集成及 Shared CMDB 技术规范白皮书
 
-版本：1.2 · 规划基准：2026-10-10 · 状态：待实施、待真实环境验收。
+版本：1.3 · 规划基准：2026-10-10 · 落地更新：2026-10-28（Infrastructure-MCP-Server CMDB 动态对账、只读 CLI Guardrails 与 15 依赖边图拓扑联动已通过 PR #4 合并落地）· 状态：核心模块已落地实施并归档。
 
 1.2 补充：将三档权限拆分为云账号、主机 OS、自建服务三个独立授权层；三层分别初始化、分别验收，不自动继承。
+1.3 补充：CMDB 动态对账与只读 reader 策略通过 Go 原生 Infrastructure-MCP-Server 网关实现，打通 SIT/UAT/PROD 多云资产动态汇总、service/observability-gateway 15 条拓扑依赖检索及 safe CLI 工具受控执行。详见《[Infrastructure-MCP-Server 部署、集中式可观测性、CMDB 与 QMD 记忆系统交付全景技术规范](infrastructure-mcp-observability-cmdb-qmd-delivery-spec.zh.md)》。
 
 [参考资料总索引](index.md) · [平台工程白皮书](multi-cloud-platform-engineering-whitepaper.zh.md) · [原 CMDB 落地规划](multi-cloud-cmdb-postgresql-grafana-plan.zh.md)
 
@@ -435,6 +436,20 @@ Shared 接入前确认同主机现有服务健康、备份、资源预算和回�
 源码基线已具备 GCP 部分采集和 observations 合同；尚需 Shared 声明/数据库引用对齐、identity_ref 真实消费、云账号/OS/PostgreSQL/Supabase/自建服务三层初始化、Vault live 授权、其他 provider adapters、全范围采集和持续运行验收。本次没有创建或验证实际用户/角色。
 
 每项完成必须记录精确 PR/commit、环境、目标、运行及证据，区分设计、静态检查、CI、merge、部署与 live acceptance。本文不能作为“权限已应用”“全量已采集”或“11 台探针已部署”的证据。
+
+### 12.4 2026-10-28 落地进展：Infrastructure-MCP-Server CMDB 与只读安全网关交付
+
+2026-10-28 期间，团队在 `ai-workspace-infra/Infrastructure-MCP-Server` 仓库中完成了 CMDB 动态对账引擎、安全受控 CLI 驱动与集中式可观测性网关的实现与交付，并通过 GitHub [PR #4](https://github.com/ai-workspace-infra/Infrastructure-MCP-Server/pull/4) 合并至 `main`（提交基线 `36f7441`）：
+
+1. **CMDB 动态对账与多云资产收敛**：
+   * 实现了 `infra.cmdb.summary`、`infra.cmdb.query`、`infra.cmdb.sync` 三项核心资产工具。
+   * 建立了规范的 `Resource`、`ServiceStatus` 与 `EnvironmentSummary` 数据模型，支持 SIT（100% selfhost standby 待命）、UAT（Akamai Linode `45.79.175.119` + Vultr `167.179.105.137` + GCP Serverless 混合）与 PROD（GCP `34.81.174.112` + AWS Tokyo `43.207.194.92` + Vultr K3s + Cloudflare Edge）资产自动对账。
+2. **只读三档权限落地（Safe CLI Guardrails）**：
+   * 通过 `infra.cli.exec` 实现受控云/运维工具调用，限制命令白名单（`linode-cli`, `aws`, `gcloud`, `gh`, `curl`, `jq`）。
+   * 严格实施只读 `reader` 边界，强行阻断包含 `delete`, `destroy`, `drop`, `rm`, `create`, `apply`, `push`, `write` 等任何变更动词，以及非 GET/HEAD 的 `curl` 动作。
+3. **Environment Graph 15 依赖边图拓扑联动**：
+   * 支持通过 `infra.cmdb.query` 传入 `node_id: "service/observability-gateway"` 进行一阶子图抽取，精确对应上游 6 条编排/凭据边与下游 9 条遥测/MCP 暴露边。
+   * 对应全景规范见《[Infrastructure-MCP-Server 部署、集中式可观测性、CMDB 与 QMD 记忆系统交付全景技术规范](infrastructure-mcp-observability-cmdb-qmd-delivery-spec.zh.md)》。
 
 ## 13. 来源与维护
 
