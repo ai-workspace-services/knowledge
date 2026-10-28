@@ -38,16 +38,25 @@ tags:
 ```mermaid
 flowchart TD
     subgraph ClientLayer ["Agent & IDE 客户端交互层"]
-        Agent["Antigravity / Codex / XWorkmate Agent"]
+        Agent["Antigravity / Codex / XWorkmate Agent / Trae / Cursor"]
     end
 
-    subgraph LocalHost ["MacOS 本机运行环境"]
+    subgraph DevK3sV5 ["dev-k3s-v5 节点 (Akamai Linode jp-tyo-3 2C4G 独立网关集群)"]
+        Traefik_Edge["Traefik Ingress Controller (dev-web-saas / hostPort 80/443 / ACME dev-http01)"]
+        
+        subgraph PlatformMCP ["Namespace: platform-mcp (Restricted PSA)"]
+            Infra_Gateway_Pod["infrastructure-mcp-server:8080<br>(mcp-server.svc.plus)<br>SSE / Streamable HTTP"]
+            Obsy_Gateway_Pod["observability-mcp-gateway:8000<br>(mcp.svc.plus)<br>mcp-grafana (SSE --base-path /v1/grafana)"]
+        end
+    end
+
+    subgraph LocalHost ["MacOS 开发者本机运行环境 (可选本地 CLI 模式)"]
         MCP_Config["~/.gemini/config/mcp_config.json"]
-        Infra_Bin["/Users/shenlan/.local/bin/infrastructure-mcp-server (main 分支)"]
+        Infra_Bin["/Users/shenlan/.local/bin/infrastructure-mcp-server"]
         Infra_Cfg["~/.config/infrastructure-mcp-server/config.json"]
         
         subgraph LocalMCP ["本机 MCP 服务阵列"]
-            Infra_Gateway["Infrastructure-MCP-Server (Gateway)"]
+            Infra_Gateway["Infrastructure-MCP-Server (Local Stdio)"]
             CMDB_Store["CMDB Store (SIT / UAT / PROD 多云资产)"]
             Graph_Store["Environment Graph (15 边依赖拓扑引擎)"]
             CLI_Exec["Safe Read-Only CLI Runner (linode/aws/gcloud/gh)"]
@@ -57,39 +66,32 @@ flowchart TD
         QMD_Sync["scripts/sync-knowledge-to-qmd.sh (每日 03:00 Cron)"]
     end
 
-    subgraph ObservabilityStack ["集中式可观测性服务集群 (observability.svc.plus)"]
+    subgraph ObservabilityStack ["集中式可观测性服务核心集群 (observability.svc.plus)"]
         Caddy_Edge["Caddy 反向代理网关 (TLS / Zitadel JWT Forward Auth)"]
         VM["VictoriaMetrics (Metrics TSDB: :8428)"]
         VL["VictoriaLogs (LogsQL 引擎: :9428)"]
         VT["VictoriaTraces (OTLP 链路: :10428)"]
         GF["Grafana (仪表盘与告警: :3000)"]
         BB["Blackbox Exporter (网络与主机拨测: :9115)"]
-        
-        subgraph RemoteMCP ["远程只读 MCP 适配器"]
-            MCP_VM["mcp-victoriametrics (/mcp/v1/metrics/mcp)"]
-            MCP_VL["mcp-victorialogs (/mcp/v1/logs/mcp)"]
-            MCP_VT["mcp-victoriatraces (/mcp/v1/traces/mcp)"]
-            MCP_GF["mcp-grafana (/mcp/v1/grafana/mcp)"]
-        end
     end
 
     subgraph KnowledgeBase ["历史参考文档 (Knowledge Base)"]
-        RefDocs["ai-workspace-service/knowledge/docs/reference (192 篇 Markdown)"]
+        RefDocs["ai-workspace-service/knowledge/docs/reference (193 篇 Markdown)"]
     end
 
-    Agent --> MCP_Config
+    Agent -->|远程 HTTPS/SSE| Traefik_Edge
+    Traefik_Edge -->|mcp-server.svc.plus| Infra_Gateway_Pod
+    Traefik_Edge -->|mcp.svc.plus| Obsy_Gateway_Pod
+    
+    Infra_Gateway_Pod -->|内部聚合 / 遥测查询| Obsy_Gateway_Pod
+    Obsy_Gateway_Pod -->|上游数据查询透传| Caddy_Edge
+    Caddy_Edge --> VM & VL & VT & GF
+    
+    Agent -.->|本地开发模式| MCP_Config
     MCP_Config --> Infra_Bin
     MCP_Config --> QMD_MCP
-    
     Infra_Bin --> Infra_Gateway
-    Infra_Gateway --> Infra_Cfg
-    Infra_Gateway --> CMDB_Store
-    Infra_Gateway --> Graph_Store
-    Infra_Gateway --> CLI_Exec
-    
-    Infra_Gateway -->|Streamable HTTP / SSE| Caddy_Edge
-    Caddy_Edge --> RemoteMCP
-    RemoteMCP --> VM & VL & VT & GF
+    Infra_Gateway --> CMDB_Store & Graph_Store & CLI_Exec
     
     RefDocs -->|定时增量对齐/BM25/向量索引| QMD_Sync
     QMD_Sync --> QMD_MCP
@@ -115,17 +117,17 @@ flowchart TD
 
 ---
 
-## 二、集中式可观测性对接规范 (`observability.svc.plus`)
+## 二、集中式可观测性对接规范 (`observability.svc.plus` 与 `mcp.svc.plus`)
 
-集中式可观测性平台承载多云双平面的实时遥测数据，各组件的直查路径与 MCP 接入规范如下：
+集中式可观测性平台承载多云双平面的实时遥测数据存储与分析，各组件直查路径（数据面）与解耦后的独立 MCP 接入网关（控制面，部署于 `dev-k3s-v5`）映射如下：
 
-| 组件名称 | 核心功能 | 遥测写入 / 直查路径 | 对应 MCP 适配器 Endpoint | 数据协议 |
-| :--- | :--- | :--- | :--- | :--- |
-| **VictoriaMetrics** | 指标存储与 MetricsQL 分析 | `https://observability.svc.plus/ingest/metrics/api/v1/write`<br>`https://observability.svc.plus/vmetrics/` | `https://observability.svc.plus/mcp/v1/metrics/mcp` | Prometheus Remote Write / MetricsQL |
-| **VictoriaLogs** | 高基数系统与应用日志 | `https://observability.svc.plus/ingest/logs/insert/jsonline`<br>`https://observability.svc.plus/vlogs/` | `https://observability.svc.plus/mcp/v1/logs/mcp` | LogsQL / JSON Lines / OTLP |
-| **VictoriaTraces** | 分布式微服务调用链追踪 | `https://observability.svc.plus/ingest/otlp/v1/traces`<br>`https://observability.svc.plus/vtraces/` | `https://observability.svc.plus/mcp/v1/traces/mcp` | OTLP/HTTP / TraceQL |
-| **Grafana** | 统一大盘与告警可视化 | `https://observability.svc.plus/grafana/` | `https://observability.svc.plus/mcp/v1/grafana/mcp` | HTTP / Dashboard Provisioning |
-| **Blackbox Exporter** | 网络、端口与域名探测 | `https://observability.svc.plus/blackbox/` | 内置合成拨测链路 | HTTP/TCP ICMP Prober |
+| 组件名称 | 核心功能 | 遥测写入 / 直查路径 (`observability.svc.plus`) | 独立 MCP 网关 Endpoint (`mcp.svc.plus`) | 数据传输协议 | 只读安全基线 |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **VictoriaMetrics** | 指标存储与 MetricsQL 分析 | `https://observability.svc.plus/ingest/metrics/api/v1/write`<br>`https://observability.svc.plus/vmetrics/` | `https://mcp.svc.plus/v1/metrics/mcp` | Streamable HTTP / MetricsQL | 只读时序检索 |
+| **VictoriaLogs** | 高基数系统与应用日志 | `https://observability.svc.plus/ingest/logs/insert/jsonline`<br>`https://observability.svc.plus/vlogs/` | `https://mcp.svc.plus/v1/logs/mcp` | Streamable HTTP / LogsQL | 只读日志检索 |
+| **VictoriaTraces** | 分布式微服务调用链追踪 | `https://observability.svc.plus/ingest/otlp/v1/traces`<br>`https://observability.svc.plus/vtraces/` | `https://mcp.svc.plus/v1/traces/mcp` | Streamable HTTP / TraceQL | 只读链路排查 |
+| **Grafana** | 统一大盘与告警可视化 | `https://observability.svc.plus/grafana/` | `https://mcp.svc.plus/v1/grafana/sse` | **SSE** (`--base-path /v1/grafana`) | `--disable-write`<br>`--disable-admin`<br>Viewer Token |
+| **Blackbox Exporter** | 网络、端口与域名探测 | `https://observability.svc.plus/blackbox/` | 内置合成拨测链路 | HTTP/TCP ICMP Prober | 只读网络拨测 |
 
 ### 2.1 探测工具：`infra.observability.status`
 
@@ -407,36 +409,87 @@ flowchart TD
 }
 ```
 
-### 8.4 全量未来配置（含待服务端网关就绪的 4-MCP）
+### 8.4 远程独立双域名全量推荐配置 (GitOps 交付就绪)
 
-> [!WARNING]
-> 请在服务端完成 Caddy MCP 路由上线与鉴权放行后再行挂载以下 4 项远程端点：
+在云端 / 远程容器客户端中，推荐通过独立域名直接挂载两大 MCP 服务：
 
 ```json
 {
   "mcpServers": {
     "infrastructure": {
-      "args": [
-        "-config",
-        "/Users/shenlan/.config/infrastructure-mcp-server/config.json"
-      ],
-      "command": "/Users/shenlan/.local/bin/infrastructure-mcp-server"
-    },
-    "qmd": {
-      "command": "/Users/shenlan/.local/bin/run-qmd-mcp.sh"
+      "type": "sse",
+      "url": "https://mcp-server.svc.plus/sse"
     },
     "observability-grafana": {
-      "url": "https://observability.svc.plus/mcp/v1/grafana/mcp"
+      "type": "sse",
+      "url": "https://mcp.svc.plus/v1/grafana/sse",
+      "headers": {
+        "Authorization": "Basic <vault-injected-base64-credentials>"
+      }
     },
     "observability-metrics": {
-      "url": "https://observability.svc.plus/mcp/v1/metrics/mcp"
+      "url": "https://mcp.svc.plus/v1/metrics/mcp"
     },
     "observability-logs": {
-      "url": "https://observability.svc.plus/mcp/v1/logs/mcp"
+      "url": "https://mcp.svc.plus/v1/logs/mcp"
     },
     "observability-traces": {
-      "url": "https://observability.svc.plus/mcp/v1/traces/mcp"
+      "url": "https://mcp.svc.plus/v1/traces/mcp"
     }
   }
 }
 ```
+
+---
+
+## 九、dev-k3s-v5 独立双域名网关部署与 GitOps 交付体系
+
+为彻底解决主域名子路径转发引起的剥离断裂、相对路径解析混乱以及权限越界风险，平台工程团队通过 **GitOps + FluxCD** 模式，将两大 MCP 网关全量声明式迁移部署至 **`dev-k3s-v5`** 独立轻量级节点，并分别分配独立域名：
+
+```mermaid
+flowchart TD
+    subgraph DevK3s ["dev-k3s-v5 节点 (Linode jp-tyo-3 2C4G)"]
+        Ingress["Traefik Ingress Controller (dev-web-saas / dev-http01)"]
+        
+        subgraph NS ["Namespace: platform-mcp (Restricted PSA)"]
+            InfraMCP["infrastructure-mcp-server:8080<br>域名: mcp-server.svc.plus<br>请求: 50m / 64Mi | 限制: 200m / 256Mi"]
+            ObsyMCP["observability-mcp-gateway:8000<br>域名: mcp.svc.plus<br>请求: 50m / 64Mi | 限制: 200m / 256Mi"]
+        end
+    end
+
+    subgraph CentralTelemetry ["集中式遥测集群 (observability.svc.plus)"]
+        CaddyProxy["Caddy 反向代理网关"]
+        VMCluster["VictoriaMetrics / Logs / Traces / Grafana"]
+    end
+
+    Ingress -->|mcp-server.svc.plus| InfraMCP
+    Ingress -->|mcp.svc.plus| ObsyMCP
+    ObsyMCP -->|上游遥测查询数据流| CaddyProxy
+    CaddyProxy --> VMCluster
+```
+
+### 9.1 双域名职责隔离矩阵
+
+| 独立域名 | 运行节点 | 监听端口 | 承载组件 | 核心能力 | 上游数据源 |
+| :--- | :--- | :---: | :--- | :--- | :--- |
+| **`mcp-server.svc.plus`** | `dev-k3s-v5` | `8080` | `infrastructure-mcp-server` | 多云 CMDB 对账、15 边依赖图拓扑、安全只读 CLI、QMD 记忆检索 | 下游聚合 `https://mcp.svc.plus` 与本地/远程 QMD |
+| **`mcp.svc.plus`** | `dev-k3s-v5` | `8000`-`8003` | `observability-mcp-gateway` (4-MCP) | Grafana SSE 仪表盘/告警、VM 指标、VL 日志、VT 链路 | **`https://observability.svc.plus/`** (集中式监控节点) |
+
+### 9.2 2C4G 节点容量控制与安全红线
+
+1. **资源配额**：
+   - `dev-k3s-v5` 采用 Linode `g6-standard-2`（2 vCPU / 4096 MiB RAM）。
+   - 两大 MCP 网关容器合计仅占用 **100m CPU Requests (5%)** 与 **128Mi RAM Requests (3.1%)**，预留 > 90% 资源给临时 SIT 特性测试泳道。
+2. **只读安全红线**：
+   - `mcp-grafana` 容器严格执行启动参数：`-t sse --base-path /v1/grafana --disable-write --disable-admin`。
+   - Grafana Service Account 严格配置 `Viewer` 角色，严禁开启任何修改、创建数据源或删除快照工具。
+3. **安全准入 (PSA)**：
+   - 命名空间 `platform-mcp` 强制实施 `pod-security.kubernetes.io/enforce: restricted`。
+   - 容器均运行于非 root 用户（`UID 65532`），挂载只读根文件系统（`readOnlyRootFilesystem: true`），完全丢弃全部内核权限（`capabilities.drop: [ALL]`）。
+
+### 9.3 交付 PR 履历
+
+* **Playbooks 仓库 (PR #820)**：修复 `mcp-grafana` SSE 传输协议、增加 `--base-path /mcp/v1/grafana`、增加 `--disable-write` 与 `--disable-admin` 只读安全红线。
+* **Infrastructure-MCP-Server 仓库 (PR #8)**：增加原生 HTTP/SSE 协议引擎、`-listen` 与 `-base-path` 运行时参数、多阶段 Dockerfile、以及 `dev-k3s-v5` 双域名拓扑声明。
+* **GitOps 仓库 (PR #612)**：在 `dev-k3s-v5` 编排 `platform-mcp` 命名空间、Traefik Ingress 双域名路由契约、ACME `dev-http01` TLS 证书绑定与 FluxCD 持续对账。
+
