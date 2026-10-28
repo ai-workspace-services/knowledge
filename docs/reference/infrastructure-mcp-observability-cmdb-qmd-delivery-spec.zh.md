@@ -223,6 +223,7 @@ flowchart TD
 * **双模态检索**：
   * **Vector Embedding**：当提供外部 Embedding API 密钥时，自动生成密集向量嵌入。
   * **Lexical BM25 降级**：当无外部 API Key 或处于断网/离线开发模式时，自动采用高性能全文倒排与 BM25 算法检索，确保 100% 检索可用性。
+* **当前环境实测状态**：开发机环境未配置外部 Embedding 模型 API Key，系统当前全面运行于高性能 **BM25 词法全文倒排检索模式**，已收录全量 193 篇白皮书；未建立稠密向量索引，待后续注入大模型凭证后可自动激活稠密向量检索。
 
 ### 5.2 自动化增量同步流水线
 
@@ -322,6 +323,115 @@ flowchart TD
     "arguments": {
       "command": "gh",
       "args": ["--version"]
+    }
+  }
+}
+```
+
+---
+
+## 八、智能体与 IDE 客户端配置与实测验证矩阵
+
+针对各类 Code Agent（**Trae**、**Cursor**、**Cherry Studio**、**Claude Desktop**、**Windsurf**）以及可观测性智能体（**观测云 Obsy Agent Teams**），建立端到端 MCP 接入与协议抓包实测矩阵。
+
+### 8.1 客户端实测验证结论矩阵
+
+| 配置组件 / 服务项 | 接入模式 | 实测结果 | 可用工具数 | 协议抓包与就绪状态说明 |
+| :--- | :--- | :---: | :---: | :--- |
+| **Infrastructure-MCP-Server** | 本地 Command + Args / Wrapper | ✅ **通过** | **8 个工具** | 成功完成 `initialize` 与 `tools/list` 握手，稳定提供 `infra.cmdb.query`、`infra.cmdb.summary`、`infra.graph.query`、`infra.cli.exec` 等全量工具。 |
+| **QMD MCP Server** | 本地 Wrapper 脚本 | ✅ **通过** | **23 个工具** | 握手通过，工具集全量暴露。**检索状态说明**：基于本地 PG 15432 已完整索引 193 篇白皮书并生效 **BM25 词法倒排全文检索**；当前未配置外部 Embedding API Key 故未建立稠密向量索引，后续注入模型 Key 后方可激活稠密向量检索。 |
+| **可观测性 4-MCP 端点**<br>(Grafana / Metrics / Logs / Traces) | 远程 Streamable HTTP | ❌ **未通过** | 0 | **协议不符（阻断）**：请求返回 `HTTP/2 302` 重定向至 Grafana 网页 `/login`（`Content-Type: text/html`），非 MCP 协议响应。服务端 Caddy Ingress 尚未开启 MCP 路由代理（`observability_mcp_enabled: false`），**待生产网关放行前暂勿在客户端中挂载**。 |
+
+> [!IMPORTANT]
+> **仅有 HTTP 200/302 不代表 MCP 配置可用**。必须返回合法的 JSON-RPC 2.0 / SSE 协议流。各客户端当前应仅挂载已 100% 验证通过的本地 Infrastructure 与 QMD 两个服务。
+
+### 8.2 单服务配置规范（Trae / Cherry Studio 避坑）
+
+在各类国内与国际 IDE 的“添加单个 MCP 服务”弹窗中，底层的 Schema 解析器强制要求以 `"mcpServers"` 作为最外层根对象，否则会触发错误：`当前 JSON 配置中没有解析到 MCP 服务项`。
+
+#### 1. Infrastructure 单服务标准配置（首选原生模式）
+```json
+{
+  "mcpServers": {
+    "infrastructure": {
+      "args": [
+        "-config",
+        "/Users/shenlan/.config/infrastructure-mcp-server/config.json"
+      ],
+      "command": "/Users/shenlan/.local/bin/infrastructure-mcp-server"
+    }
+  }
+}
+```
+*表单模式填写*：
+* **类型 (Type)**：`STDIO`
+* **命令 (Command)**：`/Users/shenlan/.local/bin/infrastructure-mcp-server`
+* **参数 (Args)**：
+  * `-config`
+  * `/Users/shenlan/.config/infrastructure-mcp-server/config.json`
+* **环境变量 (Env)**：留空
+
+> 💡 *备选 0 参数 Wrapper 模式*：`"command": "/Users/shenlan/.local/bin/run-infrastructure-mcp.sh"`
+
+#### 2. QMD 单服务标准配置（免参数 Wrapper 模式）
+```json
+{
+  "mcpServers": {
+    "qmd": {
+      "command": "/Users/shenlan/.local/bin/run-qmd-mcp.sh"
+    }
+  }
+}
+```
+
+### 8.3 即刻可用推荐组合（已实测验证通过）
+
+```json
+{
+  "mcpServers": {
+    "infrastructure": {
+      "args": [
+        "-config",
+        "/Users/shenlan/.config/infrastructure-mcp-server/config.json"
+      ],
+      "command": "/Users/shenlan/.local/bin/infrastructure-mcp-server"
+    },
+    "qmd": {
+      "command": "/Users/shenlan/.local/bin/run-qmd-mcp.sh"
+    }
+  }
+}
+```
+
+### 8.4 全量未来配置（含待服务端网关就绪的 4-MCP）
+
+> [!WARNING]
+> 请在服务端完成 Caddy MCP 路由上线与鉴权放行后再行挂载以下 4 项远程端点：
+
+```json
+{
+  "mcpServers": {
+    "infrastructure": {
+      "args": [
+        "-config",
+        "/Users/shenlan/.config/infrastructure-mcp-server/config.json"
+      ],
+      "command": "/Users/shenlan/.local/bin/infrastructure-mcp-server"
+    },
+    "qmd": {
+      "command": "/Users/shenlan/.local/bin/run-qmd-mcp.sh"
+    },
+    "observability-grafana": {
+      "url": "https://observability.svc.plus/mcp/v1/grafana/mcp"
+    },
+    "observability-metrics": {
+      "url": "https://observability.svc.plus/mcp/v1/metrics/mcp"
+    },
+    "observability-logs": {
+      "url": "https://observability.svc.plus/mcp/v1/logs/mcp"
+    },
+    "observability-traces": {
+      "url": "https://observability.svc.plus/mcp/v1/traces/mcp"
     }
   }
 }
