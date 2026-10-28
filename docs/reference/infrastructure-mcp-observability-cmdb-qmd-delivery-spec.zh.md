@@ -249,6 +249,8 @@ flowchart TD
 | **阶段 1：可观测性对接** | `738d555` | 实现 HTTP/SSE 客户端、`observability.svc.plus` 探针、Seed 拓扑种子与 QMD 同步脚本 | 通过单元测试与集成拨测 |
 | **阶段 2：CMDB 与安全 CLI** | `75f6d77` | 新增 `internal/cmdb` 引擎、安全 CLI 守卫拦截、Graph Subgraph 拓扑联动与 GitHub/Cloudflare MCP 插槽 | 通过所有安全拦截测试用例 |
 | **阶段 3：代码审查与合并** | [`36f7441`](https://github.com/ai-workspace-infra/Infrastructure-MCP-Server/commit/36f7441) | 提交并在 GitHub 成功合并 [PR #4](https://github.com/ai-workspace-infra/Infrastructure-MCP-Server/pull/4) 到 `main` 分支 | **PR #4 Merged** |
+| **阶段 4：客户端配置与验证** | [`4648af6`](https://github.com/ai-workspace-infra/Infrastructure-MCP-Server/commit/4648af6) | 提交并在 GitHub 成功合并 [PR #6](https://github.com/ai-workspace-infra/Infrastructure-MCP-Server/pull/6) 与 [PR #7](https://github.com/ai-workspace-infra/Infrastructure-MCP-Server/pull/7) | **PR #6, #7 Merged** |
+| **阶段 5：服务端网关与只读加固** | [`PR #820`](https://github.com/ai-workspace-infra/playbooks/pull/820) | 在 `playbooks` 仓库修复 `mcp-grafana` `--base-path /mcp/v1/grafana`、Caddy `handle` 透传及 `--disable-write` 只读安全红线 | **Playbooks PR #820 Merged** |
 
 编译产物已通过 `go build` 重新编译，落盘至生产路径 [`/Users/shenlan/.local/bin/infrastructure-mcp-server`](file:///Users/shenlan/.local/bin/infrastructure-mcp-server)。
 
@@ -340,14 +342,16 @@ flowchart TD
 | :--- | :--- | :---: | :---: | :--- |
 | **Infrastructure-MCP-Server** | 本地 Command + Args / Wrapper | ✅ **通过** | **8 个工具** | 成功完成 `initialize` 与 `tools/list` 握手，稳定提供 `infra.cmdb.query`、`infra.cmdb.summary`、`infra.graph.query`、`infra.cli.exec` 等全量工具。 |
 | **QMD MCP Server** | 本地 Wrapper 脚本 | ✅ **通过** | **23 个工具** | 握手通过，工具集全量暴露。**检索状态说明**：基于本地 PG 15432 已完整索引 193 篇白皮书并生效 **BM25 词法倒排全文检索**；当前未配置外部 Embedding API Key 故未建立稠密向量索引，后续注入模型 Key 后方可激活稠密向量检索。 |
-| **可观测性 4-MCP 端点**<br>(Grafana / Metrics / Logs / Traces) | 远程 Streamable HTTP | ❌ **未通过** | 0 | **协议不符（阻断）**：请求返回 `HTTP/2 302` 重定向至 Grafana 网页 `/login`（`Content-Type: text/html`），非 MCP 协议响应。服务端 Caddy Ingress 尚未开启 MCP 路由代理（`observability_mcp_enabled: false`），**待生产网关放行前暂勿在客户端中挂载**。 |
+| **可观测性 4-MCP 端点**<br>(Grafana / Metrics / Logs / Traces) | 远程 SSE | ⚡ **服务端已修复** | 30+ 工具 (Grafana) | **传输与网关加固就绪**：协议严格为 **`SSE`** 传输。服务端已在 [`playbooks PR #820`](https://github.com/ai-workspace-infra/playbooks/pull/820) 修复 `--base-path /mcp/v1/grafana` 前缀透传，消除标准客户端/Bot 的 302 阻断，并启用 `--disable-write` 与 `--disable-admin` 彻底封死写操作。建议在生产部署后进行凭据轮换再行挂载。 |
 
 > [!IMPORTANT]
 > **仅有 HTTP 200/302 不代表 MCP 配置可用**。必须返回合法的 JSON-RPC 2.0 / SSE 协议流。各客户端当前应仅挂载已 100% 验证通过的本地 Infrastructure 与 QMD 两个服务。
 
 ### 8.2 单服务配置规范（Trae / Cherry Studio 避坑）
 
-在各类国内与国际 IDE 的“添加单个 MCP 服务”弹窗中，底层的 Schema 解析器强制要求以 `"mcpServers"` 作为最外层根对象，否则会触发错误：`当前 JSON 配置中没有解析到 MCP 服务项`。
+在各类国内与国际 IDE（如 **Trae**、**Cherry Studio**）的“添加/编辑单个 MCP 服务”弹窗中：
+1. **必须包含 `"mcpServers"` 根节点**，否则触发校验报错：`当前 JSON 配置中没有解析到 MCP 服务项`；
+2. **单次仅支持编辑单个服务卡片**，若在弹窗中同时输入包含 2 个服务的 JSON，底层会拦截并报错：`该配置被识别为多配置项`。必须分别添加、分别保存。
 
 #### 1. Infrastructure 单服务标准配置（首选原生模式）
 ```json
