@@ -156,6 +156,12 @@ GitHub 组织入口：[ai-workspace-infra](https://github.com/ai-workspace-infra
 | ---: | --- | --- | --- | --- |
 | 46 | 11 大核心服务类别 macOS OrbStack 单机部署与健康验收矩阵 | zh | knowledge working tree · v1.1-release · approved | [docs/reference/platform-core-services-orbstack-acceptance-matrix.zh.md](platform-core-services-orbstack-acceptance-matrix.zh.md) |
 
+## 十、可观测性、CMDB 与基础设施 MCP 网关
+
+| # | 标题 | 语言 | 来源版本 | 文件或入口 |
+| ---: | --- | --- | --- | --- |
+| 47 | Infrastructure-MCP-Server 部署、集中式可观测性、CMDB 与 QMD 记忆系统交付全景技术规范 | zh | knowledge working tree · v1.0-release · approved | [docs/reference/infrastructure-mcp-observability-cmdb-qmd-delivery-spec.zh.md](infrastructure-mcp-observability-cmdb-qmd-delivery-spec.zh.md) |
+
 ## 使用与维护约束
 
 - 本索引记录的是来源入口，不改变各仓库的架构结论、权限边界或部署授权。

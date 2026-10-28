@@ -3,7 +3,7 @@ title: 多云平台工程技术白皮书
 description: 基于四仓职责边界、40 个工作流与 Vault 路径契约的多云平台架构、交付治理和迁移白皮书。
 slug: multi-cloud-platform-engineering-whitepaper
 lang: zh
-date: 2026-10-06
+date: 2026-10-28
 version: "1.5"
 status: review-draft
 tags:
@@ -18,7 +18,7 @@ category: reference
 
 # 多云平台工程技术白皮书
 
-**版本：1.5 · 源码盘点基线：2026-10-05 · 跨仓状态补充：2026-10-07 · UAT Selfhost 环境隔离核查：2026-10-14 · V5 PostgreSQL DNS 案例：2026-10-24 · 状态：架构与契约评审稿**
+**版本：1.5 · 源码盘点基线：2026-10-05 · 跨仓状态补充：2026-10-07 · UAT Selfhost 环境隔离核查：2026-10-14 · V5 PostgreSQL DNS 案例：2026-10-24 · 2026-10-28 落地更新：Infrastructure-MCP-Server、集中式可观测性 4-MCP、CMDB 多云资产对账与 QMD 知识记忆库同步 PR #4 合并落地 · 状态：架构与契约评审稿**
 
 [English version](multi-cloud-platform-engineering-whitepaper.en.md) · [参考资料总览](overview.zh.md)
 
@@ -1053,6 +1053,7 @@ DNS 由用户手动改为 `postgresql.svc.plus` CNAME → `postgresql-selfhost-p
 | M06 Worker 轻量 GTM 与 API CNAME | Edge Gateway 发布路由；IaC 执行 CNAME/domain；GitOps 提供固定声明 | Edge #28/#29、IaC #398/#400、Toolkit #1326 已合并；GitOps #392 已合并，声明三种 PROD topology mode 的 mode-qualified `worker-routes-cname` / `api_cname_records`，但声明不等于 live DNS/Worker effect。实际发布、Vault/owner/caller UAT 与生产验收待完成。PROD Accounts/Billing 读回退默认禁用。稳定 API CNAME 指向模式限定域名，三种模式保留 Worker；不能直接固定到 Cloud Run |
 | M07 OIDC 与免费额度 | Toolkit/Vault/WIF 身份合同；各 owner 记录容量预算 | 既有 `prod` OIDC 已验证，无日常个人登录依赖。Pages 静态 CDN、Workers 账户共享日预算、Cloud Run billing account 月额度及 Supabase 组织/项目额度按 7.2.2 分别预算 |
 | M08 生产闭环与回退 | Toolkit 关联精确 run；Edge/服务 owner 验证公开入口；数据 owner 处理写入恢复 | 发布证据绑定 GitOps/owner/caller SHA、tag/digest、环境、资源、DB 摘要与入口结果。HTTPS 可达性独立验收；品牌/控制台保持原入口。Accounts/Billing 的登录、身份、权限、订阅、额度、账本及单写者由人工业务验收记录，不自动伪造通过。切换后若出现新写入，禁止仅改 CNAME 回到旧库；回退须先完成数据追平与单写者验收 |
+| M09 Infrastructure-MCP-Server、集中式可观测性与 CMDB 拓扑网关 | Infrastructure-MCP-Server 原生开发；对接 observability.svc.plus 4-MCP；CMDB 动态对账与 safe CLI；QMD 知识同步 | PR #4 已合并至 main（commit `36f7441`）；生产二进制已部署至 `/Users/shenlan/.local/bin/infrastructure-mcp-server`；已落地 `service/observability-gateway` 15 条拓扑依赖检索、SIT/UAT/PROD 资源对账、只读 CLI 守卫与每日 03:00 QMD 知识库增量向量化调度。详见《[Infrastructure-MCP-Server 部署、集中式可观测性、CMDB 与 QMD 记忆系统交付全景技术规范](infrastructure-mcp-observability-cmdb-qmd-delivery-spec.zh.md)》 |
 
 实现顺序与停止条件：
 
