@@ -42,7 +42,7 @@ flowchart TD
     end
 
     subgraph DevK3sV5 ["dev-k3s-v5 节点 (Akamai Linode jp-tyo-3 2C4G 独立网关集群)"]
-        Traefik_Edge["Traefik Ingress Controller (dev-web-saas / hostPort 80/443 / ACME dev-http01)"]
+        Caddy_Edge_Ingress["Caddy Ingress Controller (platform-ingress / IngressClass: caddy / hostPort 80/443)"]
         
         subgraph PlatformMCP ["Namespace: platform-mcp (Restricted PSA)"]
             Infra_Gateway_Pod["infrastructure-mcp-server:8080<br>(mcp-server.svc.plus /)<br>SSE / Streamable HTTP"]
@@ -79,9 +79,9 @@ flowchart TD
         RefDocs["ai-workspace-service/knowledge/docs/reference (194 篇 Markdown)"]
     end
 
-    Agent -->|远程 HTTPS/SSE| Traefik_Edge
-    Traefik_Edge -->|mcp-server.svc.plus /| Infra_Gateway_Pod
-    Traefik_Edge -->|mcp-server.svc.plus /v1/grafana| Obsy_Gateway_Pod
+    Agent -->|远程 HTTPS/SSE| Caddy_Edge_Ingress
+    Caddy_Edge_Ingress -->|mcp-server.svc.plus /| Infra_Gateway_Pod
+    Caddy_Edge_Ingress -->|mcp-server.svc.plus /v1/grafana| Obsy_Gateway_Pod
     
     Infra_Gateway_Pod -->|内部聚合 / 遥测查询| Obsy_Gateway_Pod
     Obsy_Gateway_Pod -->|上游数据查询透传| Caddy_Edge
@@ -452,7 +452,7 @@ flowchart TD
 ```mermaid
 flowchart TD
     subgraph DevK3s ["dev-k3s-v5 节点 (Linode jp-tyo-3 2C4G)"]
-        Ingress["Traefik Ingress Controller (dev-web-saas / dev-http01)"]
+        Ingress["Caddy Ingress Controller (platform-ingress / IngressClass: caddy)"]
         
         subgraph NS ["Namespace: platform-mcp (Restricted PSA)"]
             InfraMCP["infrastructure-mcp-server:8080<br>路径: /<br>请求: 50m / 64Mi | 限制: 200m / 256Mi"]
@@ -493,10 +493,14 @@ flowchart TD
 3. **安全准入 (PSA)**：
    - 命名空间 `platform-mcp` 强制实施 `pod-security.kubernetes.io/enforce: restricted`。
    - 容器均运行于非 root 用户（`UID 65532`），挂载只读根文件系统（`readOnlyRootFilesystem: true`），完全丢弃全部内核权限（`capabilities.drop: [ALL]`）。
+4. **网关选型红线 (Prohibit Traefik)**：
+   - GitOps + FluxCD 默认采用 **Caddy Ingress Controller** 部署在独立的 `platform-ingress` 命名空间，作为集群标准 Ingress / Gateway 入口，**默认禁止使用 Traefik Ingress 服务**。
+   - 统一通过 FluxCD `HelmRelease` 模式（`helm.toolkit.fluxcd.io/v2`）消费官方 `caddyserver/caddy-ingress-controller` Chart 实施声明式持续交付，IngressClass 统一配置为 `caddy`。
 
 ### 9.3 交付 PR 履历
 
 * **Playbooks 仓库 (PR #820)**：修复 `mcp-grafana` SSE 传输协议、增加 `--base-path /mcp/v1/grafana`、增加 `--disable-write` 与 `--disable-admin` 只读安全红线。
 * **Infrastructure-MCP-Server 仓库 (PR #8 & PR #9)**：增加原生 HTTP/SSE 协议引擎、`-listen` 与 `-base-path` 运行时参数、多阶段 Dockerfile、以及单域名 `mcp-server.svc.plus` 聚合拓扑。
 * **GitOps 仓库 (PR #612 & PR #613)**：在 `dev-k3s-v5` 编排 `platform-mcp` 命名空间，收敛并入单一 `mcp-server.svc.plus` Ingress 规则，并在 `prod-k3s-v5`（`services/platform-observability/prod/retire-observability-mcp.yaml`）停用并缩容至 0 遗留的 `observability-mcp` 副本。
+* **GitOps 仓库 (PR #614)**：下发 Caddy Ingress Controller HelmRelease 替换 Traefik，全量 Ingress 切换为 `spec.ingressClassName: caddy`，执行 Traefik 绝对禁用红线校验。
 
