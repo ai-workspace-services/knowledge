@@ -45,8 +45,8 @@ flowchart TD
         Traefik_Edge["Traefik Ingress Controller (dev-web-saas / hostPort 80/443 / ACME dev-http01)"]
         
         subgraph PlatformMCP ["Namespace: platform-mcp (Restricted PSA)"]
-            Infra_Gateway_Pod["infrastructure-mcp-server:8080<br>(mcp-server.svc.plus)<br>SSE / Streamable HTTP"]
-            Obsy_Gateway_Pod["observability-mcp-gateway:8000<br>(mcp.svc.plus)<br>mcp-grafana (SSE --base-path /v1/grafana)"]
+            Infra_Gateway_Pod["infrastructure-mcp-server:8080<br>(mcp-server.svc.plus /)<br>SSE / Streamable HTTP"]
+            Obsy_Gateway_Pod["observability-mcp-gateway:8000<br>(mcp-server.svc.plus /v1/grafana)<br>mcp-grafana (SSE --base-path /v1/grafana)"]
         end
     end
 
@@ -76,12 +76,12 @@ flowchart TD
     end
 
     subgraph KnowledgeBase ["历史参考文档 (Knowledge Base)"]
-        RefDocs["ai-workspace-service/knowledge/docs/reference (193 篇 Markdown)"]
+        RefDocs["ai-workspace-service/knowledge/docs/reference (194 篇 Markdown)"]
     end
 
     Agent -->|远程 HTTPS/SSE| Traefik_Edge
-    Traefik_Edge -->|mcp-server.svc.plus| Infra_Gateway_Pod
-    Traefik_Edge -->|mcp.svc.plus| Obsy_Gateway_Pod
+    Traefik_Edge -->|mcp-server.svc.plus /| Infra_Gateway_Pod
+    Traefik_Edge -->|mcp-server.svc.plus /v1/grafana| Obsy_Gateway_Pod
     
     Infra_Gateway_Pod -->|内部聚合 / 遥测查询| Obsy_Gateway_Pod
     Obsy_Gateway_Pod -->|上游数据查询透传| Caddy_Edge
@@ -117,16 +117,16 @@ flowchart TD
 
 ---
 
-## 二、集中式可观测性对接规范 (`observability.svc.plus` 与 `mcp.svc.plus`)
+## 二、集中式可观测性对接规范 (`observability.svc.plus` 与 `mcp-server.svc.plus`)
 
-集中式可观测性平台承载多云双平面的实时遥测数据存储与分析，各组件直查路径（数据面）与解耦后的独立 MCP 接入网关（控制面，部署于 `dev-k3s-v5`）映射如下：
+集中式可观测性平台承载多云双平面的实时遥测数据存储与分析，各组件直查路径（数据面）与解耦后的统一 MCP 接入网关（控制面，统一收敛至 `mcp-server.svc.plus/v1`，部署于 `dev-k3s-v5`）映射如下：
 
-| 组件名称 | 核心功能 | 遥测写入 / 直查路径 (`observability.svc.plus`) | 独立 MCP 网关 Endpoint (`mcp.svc.plus`) | 数据传输协议 | 只读安全基线 |
+| 组件名称 | 核心功能 | 遥测写入 / 直查路径 (`observability.svc.plus`) | 统一 MCP 网关 Endpoint (`mcp-server.svc.plus`) | 数据传输协议 | 只读安全基线 |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **VictoriaMetrics** | 指标存储与 MetricsQL 分析 | `https://observability.svc.plus/ingest/metrics/api/v1/write`<br>`https://observability.svc.plus/vmetrics/` | `https://mcp.svc.plus/v1/metrics/mcp` | Streamable HTTP / MetricsQL | 只读时序检索 |
-| **VictoriaLogs** | 高基数系统与应用日志 | `https://observability.svc.plus/ingest/logs/insert/jsonline`<br>`https://observability.svc.plus/vlogs/` | `https://mcp.svc.plus/v1/logs/mcp` | Streamable HTTP / LogsQL | 只读日志检索 |
-| **VictoriaTraces** | 分布式微服务调用链追踪 | `https://observability.svc.plus/ingest/otlp/v1/traces`<br>`https://observability.svc.plus/vtraces/` | `https://mcp.svc.plus/v1/traces/mcp` | Streamable HTTP / TraceQL | 只读链路排查 |
-| **Grafana** | 统一大盘与告警可视化 | `https://observability.svc.plus/grafana/` | `https://mcp.svc.plus/v1/grafana/sse` | **SSE** (`--base-path /v1/grafana`) | `--disable-write`<br>`--disable-admin`<br>Viewer Token |
+| **VictoriaMetrics** | 指标存储与 MetricsQL 分析 | `https://observability.svc.plus/ingest/metrics/api/v1/write`<br>`https://observability.svc.plus/vmetrics/` | `https://mcp-server.svc.plus/v1/metrics/mcp` | Streamable HTTP / MetricsQL | 只读时序检索 |
+| **VictoriaLogs** | 高基数系统与应用日志 | `https://observability.svc.plus/ingest/logs/insert/jsonline`<br>`https://observability.svc.plus/vlogs/` | `https://mcp-server.svc.plus/v1/logs/mcp` | Streamable HTTP / LogsQL | 只读日志检索 |
+| **VictoriaTraces** | 分布式微服务调用链追踪 | `https://observability.svc.plus/ingest/otlp/v1/traces`<br>`https://observability.svc.plus/vtraces/` | `https://mcp-server.svc.plus/v1/traces/mcp` | Streamable HTTP / TraceQL | 只读链路排查 |
+| **Grafana** | 统一大盘与告警可视化 | `https://observability.svc.plus/grafana/` | `https://mcp-server.svc.plus/v1/grafana/sse` | **SSE** (`--base-path /v1/grafana`) | `--disable-write`<br>`--disable-admin`<br>Viewer Token |
 | **Blackbox Exporter** | 网络、端口与域名探测 | `https://observability.svc.plus/blackbox/` | 内置合成拨测链路 | HTTP/TCP ICMP Prober | 只读网络拨测 |
 
 ### 2.1 探测工具：`infra.observability.status`
@@ -422,19 +422,19 @@ flowchart TD
     },
     "observability-grafana": {
       "type": "sse",
-      "url": "https://mcp.svc.plus/v1/grafana/sse",
+      "url": "https://mcp-server.svc.plus/v1/grafana/sse",
       "headers": {
         "Authorization": "Basic <vault-injected-base64-credentials>"
       }
     },
     "observability-metrics": {
-      "url": "https://mcp.svc.plus/v1/metrics/mcp"
+      "url": "https://mcp-server.svc.plus/v1/metrics/mcp"
     },
     "observability-logs": {
-      "url": "https://mcp.svc.plus/v1/logs/mcp"
+      "url": "https://mcp-server.svc.plus/v1/logs/mcp"
     },
     "observability-traces": {
-      "url": "https://mcp.svc.plus/v1/traces/mcp"
+      "url": "https://mcp-server.svc.plus/v1/traces/mcp"
     }
   }
 }
@@ -442,9 +442,12 @@ flowchart TD
 
 ---
 
-## 九、dev-k3s-v5 独立双域名网关部署与 GitOps 交付体系
+## 九、dev-k3s-v5 单独立域名网关收敛与 PROD MCP 下线体系
 
-为彻底解决主域名子路径转发引起的剥离断裂、相对路径解析混乱以及权限越界风险，平台工程团队通过 **GitOps + FluxCD** 模式，将两大 MCP 网关全量声明式迁移部署至 **`dev-k3s-v5`** 独立轻量级节点，并分别分配独立域名：
+为避免域名泛滥并彻底规避 `prod-k3s-v5` 生产节点的资源竞争与权限风险，平台工程团队遵照用户指令完成架构收敛：
+1. **单一独立域名收敛**：不再分配或使用 `mcp.svc.plus`，所有 MCP 服务统一收敛至单一独立域名 **`mcp-server.svc.plus`**（`/` 为基础设施网关，`/v1/grafana` 为只读 Grafana SSE 网关）。
+2. **彻底下线 `prod-k3s-v5` 上遗留的 `observability-mcp` Pod**：针对 `platform-observability-mcp-victoriametrics-bddc8bddc-wzgh9` 等 Pod，在 GitOps `services/platform-observability/prod/retire-observability-mcp.yaml` 中显式声明 `replicas: 0`，由 FluxCD 自动完成缩容回收。
+3. **部署集中在 `dev-k3s-v5` 节点**：所有控制面适配器统一部署在轻量级 `dev-k3s-v5`，上游数据面依然直连 `https://observability.svc.plus/`。
 
 ```mermaid
 flowchart TD
@@ -452,8 +455,8 @@ flowchart TD
         Ingress["Traefik Ingress Controller (dev-web-saas / dev-http01)"]
         
         subgraph NS ["Namespace: platform-mcp (Restricted PSA)"]
-            InfraMCP["infrastructure-mcp-server:8080<br>域名: mcp-server.svc.plus<br>请求: 50m / 64Mi | 限制: 200m / 256Mi"]
-            ObsyMCP["observability-mcp-gateway:8000<br>域名: mcp.svc.plus<br>请求: 50m / 64Mi | 限制: 200m / 256Mi"]
+            InfraMCP["infrastructure-mcp-server:8080<br>路径: /<br>请求: 50m / 64Mi | 限制: 200m / 256Mi"]
+            ObsyMCP["observability-mcp-gateway:8000<br>路径: /v1/grafana<br>请求: 50m / 64Mi | 限制: 200m / 256Mi"]
         end
     end
 
@@ -462,18 +465,22 @@ flowchart TD
         VMCluster["VictoriaMetrics / Logs / Traces / Grafana"]
     end
 
-    Ingress -->|mcp-server.svc.plus| InfraMCP
-    Ingress -->|mcp.svc.plus| ObsyMCP
+    subgraph ProdK3sV5 ["prod-web-saas-k3s-v5 节点 (生产集群)"]
+        RetiredPod["platform-observability-mcp-victoriametrics<br>(replicas: 0 / 下线停用)"]
+    end
+
+    Ingress -->|mcp-server.svc.plus /| InfraMCP
+    Ingress -->|mcp-server.svc.plus /v1/grafana| ObsyMCP
     ObsyMCP -->|上游遥测查询数据流| CaddyProxy
     CaddyProxy --> VMCluster
 ```
 
-### 9.1 双域名职责隔离矩阵
+### 9.1 单域名路由分流矩阵 (`mcp-server.svc.plus`)
 
-| 独立域名 | 运行节点 | 监听端口 | 承载组件 | 核心能力 | 上游数据源 |
+| 路径匹配 | 目标 Service | 监听端口 | 承载组件 | 核心能力 | 上游数据源 |
 | :--- | :--- | :---: | :--- | :--- | :--- |
-| **`mcp-server.svc.plus`** | `dev-k3s-v5` | `8080` | `infrastructure-mcp-server` | 多云 CMDB 对账、15 边依赖图拓扑、安全只读 CLI、QMD 记忆检索 | 下游聚合 `https://mcp.svc.plus` 与本地/远程 QMD |
-| **`mcp.svc.plus`** | `dev-k3s-v5` | `8000`-`8003` | `observability-mcp-gateway` (4-MCP) | Grafana SSE 仪表盘/告警、VM 指标、VL 日志、VT 链路 | **`https://observability.svc.plus/`** (集中式监控节点) |
+| **`/`** (Prefix) | `infrastructure-mcp-server` | `8080` | `infrastructure-mcp-server` | 多云 CMDB 对账、15 边依赖图拓扑、安全只读 CLI、QMD 记忆检索 | 下游聚合 `https://mcp-server.svc.plus/v1/...` 与本地/远程 QMD |
+| **`/v1/grafana`** (Prefix) | `mcp-grafana` | `8000` | `observability-mcp-gateway` | Grafana SSE 仪表盘/告警检索 | **`https://observability.svc.plus/grafana/`** (集中式监控节点) |
 
 ### 9.2 2C4G 节点容量控制与安全红线
 
@@ -490,6 +497,6 @@ flowchart TD
 ### 9.3 交付 PR 履历
 
 * **Playbooks 仓库 (PR #820)**：修复 `mcp-grafana` SSE 传输协议、增加 `--base-path /mcp/v1/grafana`、增加 `--disable-write` 与 `--disable-admin` 只读安全红线。
-* **Infrastructure-MCP-Server 仓库 (PR #8)**：增加原生 HTTP/SSE 协议引擎、`-listen` 与 `-base-path` 运行时参数、多阶段 Dockerfile、以及 `dev-k3s-v5` 双域名拓扑声明。
-* **GitOps 仓库 (PR #612)**：在 `dev-k3s-v5` 编排 `platform-mcp` 命名空间、Traefik Ingress 双域名路由契约、ACME `dev-http01` TLS 证书绑定与 FluxCD 持续对账。
+* **Infrastructure-MCP-Server 仓库 (PR #8 & PR #9)**：增加原生 HTTP/SSE 协议引擎、`-listen` 与 `-base-path` 运行时参数、多阶段 Dockerfile、以及单域名 `mcp-server.svc.plus` 聚合拓扑。
+* **GitOps 仓库 (PR #612 & PR #613)**：在 `dev-k3s-v5` 编排 `platform-mcp` 命名空间，收敛并入单一 `mcp-server.svc.plus` Ingress 规则，并在 `prod-k3s-v5`（`services/platform-observability/prod/retire-observability-mcp.yaml`）停用并缩容至 0 遗留的 `observability-mcp` 副本。
 
