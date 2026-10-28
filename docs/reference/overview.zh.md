@@ -36,6 +36,7 @@ tags:
 ## 相关引用
 
 - [参考资料总索引与 PDF 合订编排](index.md)
+- [Platform Ops Toolkit 运维体系参考文档汇编（183 份多云平台工程与运维全景索引）](platform-ops-toolkit/README.md)
 - [11 大核心服务类别 macOS OrbStack 单机部署与健康验收矩阵](platform-core-services-orbstack-acceptance-matrix.zh.md)
 - [多云平台工程技术白皮书——英文版](multi-cloud-platform-engineering-whitepaper.en.md)
 - [Toolkit Daily Main Snapshot 实施规划与表格审计](platform-ops-toolkit-daily-main-snapshot-plan.zh.md)
