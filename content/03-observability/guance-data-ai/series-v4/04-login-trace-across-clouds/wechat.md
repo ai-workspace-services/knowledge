@@ -40,4 +40,4 @@ AI 起草 OTel SDK 配置、Collector exporter 声明和 PR 说明；Playbook �
 
 参考：观测云《OpenTelemetry 采集器》《版本区分》；Supabase 定价页。
 
-上一篇：[《AI生成的页面上线后变卡，我先看用户体验而不是CPU》](../03-rum-ai-page-slow/wechat.md)｜下一篇：[《AI帮我生成的告警，怎样才能真的值得打断我？》](../05-actionable-alerts/wechat.md)
+上一篇：[《同一场线上排障：Coding Agent 和观测 Agent 谁更适合独立开发者？》](../03-code-agent-vs-obsy-agent-teams/outline.md)｜下一篇：[《AI帮我生成的告警，怎样才能真的值得打断我？》](../05-actionable-alerts/wechat.md)

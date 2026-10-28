@@ -45,4 +45,4 @@
 
 参考：观测云《场景 FAQ》《仪表板入门》《PromQL 查询》《Prometheus Remote Write 采集器》《版本区分》。
 
-上一篇：[《Cloudflare + Cloud Run + Supabase 之后，我给个人 SaaS 补上了观测云免费专区》](../01-free-zone-onboarding/wechat.md)｜下一篇：[《AI生成的页面上线后变卡，我先看用户体验而不是CPU》](../03-rum-ai-page-slow/wechat.md)
+上一篇：[《Cloudflare + Cloud Run + Supabase 之后，我给个人 SaaS 补上了观测云免费专区》](../01-free-zone-onboarding/wechat.md)｜下一篇：[《同一场线上排障：Coding Agent 和观测 Agent 谁更适合独立开发者？》](../03-code-agent-vs-obsy-agent-teams/outline.md)

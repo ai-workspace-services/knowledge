@@ -12,7 +12,7 @@
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 01 | [Cloudflare + Cloud Run + Supabase 之后，我给个人 SaaS 补上了观测云免费专区](01-free-zone-onboarding/wechat.md) | [低成本 SaaS 拼好了，还差一双眼睛](01-free-zone-onboarding/xhs.md) | 成本账本型 | 第一月·接得上 | 全文稿 | 1330 | 637 | 4 |
 | 02 | [AI 辅助 Grafana 面板搬家：从 JSON 到观测云配置，保留回退](02-dashboard-semantic-reconcile/wechat.md) | [面板搬家，最难的是查询口径对上](02-dashboard-semantic-reconcile/xhs.md) | 动手实操型 | 第一月·接得上 | 全文稿 | 1378 | 630 | 4 |
-| 03 | [AI生成的页面上线后变卡，我先看用户体验而不是CPU](03-rum-ai-page-slow/wechat.md) | [用户说卡，AI写的页面哪里慢？](03-rum-ai-page-slow/xhs.md) | 误区纠偏型 | 第一月·接得上 | 大纲 | 693 | 250 | 3 |
+| 03 | [同一场线上排障：Coding Agent 和观测 Agent 谁更适合独立开发者？](03-code-agent-vs-obsy-agent-teams/outline.md) | AI 都会排障，为什么还要观测 Agent？ | 对比选型型 | 第一月·接得上 | 大纲，待实测 | — | — | — |
 | 04 | [一个登录请求经过几朵云？用Trace把它接起来](04-login-trace-across-clouds/wechat.md) | [一个登录请求到底去了哪里？](04-login-trace-across-clouds/xhs.md) | 故障复盘型 | 第一月·接得上 | 全文稿 | 1169 | 647 | 4 |
 | 05 | [AI帮我生成的告警，怎样才能真的值得打断我？](05-actionable-alerts/wechat.md) | [告警太多，AI能帮我筛吗？](05-actionable-alerts/xhs.md) | 问答拆解型 | 第二月·看得懂 AI | 全文稿 | 963 | 635 | 3 |
 | 06 | [Codex的一次任务，到底调用了多少次工具？](06-codex-tool-calls/wechat.md) | [AI说完成了，我想看它做了什么](06-codex-tool-calls/xhs.md) | 动手实操型 | 第二月·看得懂 AI | 大纲 | 709 | 256 | 3 |
@@ -29,6 +29,8 @@
 | --- | --- | --- | --- | --- | --- |
 | R1 | [换平台演练：同一份 OTel 数据，能不能同时送进自建和观测云？](R1-otel-dual-target-portability/outline.md) | 动手实操型 | 可替换 #08 | 替补大纲 | 757 |
 | R2 | [AI 调用慢，是模型慢还是工具慢？](R2-ai-latency-model-vs-tool/outline.md) | 问答拆解型 | 可替换 #08 | 替补大纲 | 600 |
-| R3 | [只给 AI 只读工具，它能解释异常吗？](R3-readonly-mcp-explain/outline.md) | 动手实操型 | 可替换 #10 | 替补大纲 | 522 |
+| R3 | [AI 生成的页面上线后变卡，我先看用户体验而不是 CPU](03-rum-ai-page-slow/wechat.md) | 误区纠偏型 | 可替换 #03 | 替补大纲，原稿保留 | 693 |
 
-阅读顺序为 01 → 12，每篇末尾有上一篇 / 下一篇链接，12 回到 01 形成闭环；相邻两篇模板不重复。季度计划见 [quarterly-plan.md](quarterly-plan.md)。
+阅读顺序为 01 → 12；#03 为新大纲，实测前不视为全文稿。原 R3 的 [只读 MCP 大纲](R3-readonly-mcp-explain/outline.md)继续保留供 #03 / #10 参考，不计入本季三个替补。季度计划见 [quarterly-plan.md](quarterly-plan.md)。
+
+参考素材：[OPE 开篇案例（PR #250）](../articles/00-nov-opener-ope-case/article_draft.md) · [#01 新增底稿与素材核验](../articles/01-free-tier-for-indie-saas/evidence-and-followups.md)
