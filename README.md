@@ -67,6 +67,8 @@
 
 ## 2. 多云平台工程：白皮书与参考规范
 
+- [K3s 基础与核心业务监控白皮书](docs/reference/k3s-core-observability-whitepaper.zh.md)（实施复盘与目标方案；区分 PROD/SIT 实测和待验收项）
+
 - [参考资料总索引与 PDF 合订编排](docs/reference/index.md)（42 项来源索引）
 - [多云平台工程技术白皮书](docs/reference/multi-cloud-platform-engineering-whitepaper.zh.md) · [English](docs/reference/multi-cloud-platform-engineering-whitepaper.en.md)（review-draft；覆盖四仓职责、40 个 workflow 调用链、GitOps 与 IaC state、Vault 路径/权限及迁移验收，源码基线 2026-10-05）
 - [多云资源三档权限、IAM 与 Vault 安全集成及 Shared CMDB 技术规范白皮书](docs/reference/multi-cloud-iam-vault-cmdb-security-whitepaper.zh.md)（proposed-not-applied）
