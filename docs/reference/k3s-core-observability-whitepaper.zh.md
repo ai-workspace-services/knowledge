@@ -16,6 +16,29 @@ tags: [observability, k3s, victoriametrics, grafana, blackbox, caddy, postgresql
 
 自建链路由 vmagent 负责指标抓取和写入 VictoriaMetrics，Vector 负责日志并写入 VictoriaLogs，追踪由实际接入的追踪采集器写入 VictoriaTraces，Grafana 查询自建数据源。DataKit 是观测云 SaaS 的辅助采集与上报链路；自建 Victoria 全家桶与观测云服务端独立，互不回写或同步。按实际数据源和指标边界避免重复采集，不能仅凭图示认定双端均已收数。
 
+## 1.1 三类信号与 SaaS 扩展预留
+
+```mermaid
+flowchart LR
+    E[Blackbox / Caddy / PostgreSQL exporter] --> A[vmagent：指标采集]
+    A --> M[VictoriaMetrics]
+    L[主机与容器日志] --> V[Vector：日志采集]
+    V --> VL[VictoriaLogs]
+    AP[应用 OTLP 信号] --> O[OTel Collector：OTLP 接收]
+    O -. 按实际管道验证 .-> VT[VictoriaTraces]
+    O -. 指标或日志接入待验证 .-> M
+    O -. 指标或日志接入待验证 .-> VL
+    M --> G[自建 Grafana]
+    VL --> G
+    VT --> G
+    A -. 可选指标扩展待验证 .-> DK[DataKit]
+    DK --> SAAS[观测云 SaaS]
+    J[Git 中的 Dashboard 源] --> G
+    J -. 导入与兼容性验证 .-> SAAS
+```
+
+实线表示架构职责或已有组件，不自动代表端到端链路已验收；虚线表示预留及待验证。自建 Victoria 数据服务与 SaaS 各自独立；OTLP 是否接收指标、日志或链路以实际 Collector 配置及协议测试为准。导入 Dashboard 需要验证观测云的查询、变量及图表兼容性。
+
 ## 2. 环境和标签
 
 | 用途 | environment | cluster 目标值 | 事实与差异 |
