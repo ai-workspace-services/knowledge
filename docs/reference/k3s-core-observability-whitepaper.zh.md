@@ -14,7 +14,7 @@ tags: [observability, k3s, victoriametrics, grafana, blackbox, caddy, postgresql
 
 以集群基础监控定位资源与工作负载问题，以三个业务入口回答可用性问题：Blackbox 检查证书和入口，Caddy exporter 检查入口处理，PostgreSQL exporter 检查数据库。指标、日志、链路共同支持排障，但 Pod Running、HTTP 200 或 pg_up=1 均不能单独证明业务流程成功。
 
-自建链路由 vmagent 负责指标抓取和写入 VictoriaMetrics，Vector 负责日志并写入 VictoriaLogs，追踪由实际接入的追踪采集器写入 VictoriaTraces，Grafana 查询自建数据源。DataKit 是观测云 SaaS 的辅助采集与上报链路；自建 Victoria 全家桶与观测云服务端独立，互不回写或同步。按实际数据源和指标边界避免重复采集，不能仅凭图示认定双端均已收数。
+自建链路由 vmagent 负责指标抓取和写入 VictoriaMetrics，Vector 负责日志并写入 VictoriaLogs，追踪由实际接入的追踪采集器写入 VictoriaTraces，Grafana 查询自建数据源。DataKit 是观测云 SaaS 的辅助采集与上报链路；自建 Victoria 全家桶与观测云服务端独立，互不回写或同步。DataKit 直接采集 SaaS 所需指标和日志，vmagent、Vector 服务自建平台；两条链路分别控制采样范围和开销，不能仅凭图示认定双端均已收数。
 
 ## 1.1 三类信号与 SaaS 扩展预留
 
@@ -31,7 +31,9 @@ flowchart LR
     M --> G[自建 Grafana]
     VL --> G
     VT --> G
-    A -. 可选指标扩展待验证 .-> DK[DataKit]
+    E -. SaaS 独立指标采集待验证 .-> DK[DataKit]
+    L -. SaaS 日志采集待验证 .-> DK
+    AP -. SaaS OTLP 接收待验证 .-> DK
     DK --> SAAS[观测云 SaaS]
     J[Git 中的 Dashboard 源] --> G
     J -. 导入与兼容性验证 .-> SAAS
