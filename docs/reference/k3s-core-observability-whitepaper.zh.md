@@ -16,30 +16,49 @@ tags: [observability, k3s, victoriametrics, grafana, blackbox, caddy, postgresql
 
 自建链路由 vmagent 负责指标抓取和写入 VictoriaMetrics，Vector 负责日志并写入 VictoriaLogs，追踪由实际接入的追踪采集器写入 VictoriaTraces，Grafana 查询自建数据源。DataKit 是观测云 SaaS 的辅助采集与上报链路；自建 Victoria 全家桶与观测云服务端独立，互不回写或同步。DataKit 直接采集 SaaS 所需指标和日志，vmagent、Vector 服务自建平台；两条链路分别控制采样范围和开销，不能仅凭图示认定双端均已收数。
 
-## 1.1 三类信号与 SaaS 扩展预留
+## 1.1 应用 OTLP 信号
+
+应用运行在集群、非集群主机或边缘节点，通过 OpenTelemetry SDK、自动埋点或应用原生能力产生指标、日志和链路。具体启用哪些信号由应用和采集配置决定。
 
 ```mermaid
 flowchart LR
-    E[Blackbox / Caddy / PostgreSQL exporter] --> A[vmagent：指标采集]
-    A --> M[VictoriaMetrics]
-    L[主机与容器日志] --> V[Vector：日志采集]
-    V --> VL[VictoriaLogs]
-    AP[应用 OTLP 信号] --> O[OTel Collector：OTLP 接收]
-    O -. 按实际管道验证 .-> VT[VictoriaTraces]
-    O -. 指标或日志接入待验证 .-> M
-    O -. 指标或日志接入待验证 .-> VL
-    M --> G[自建 Grafana]
-    VL --> G
-    VT --> G
-    E -. SaaS 独立指标采集待验证 .-> DK[DataKit]
-    L -. SaaS 日志采集待验证 .-> DK
-    AP -. SaaS OTLP 接收待验证 .-> DK
-    DK --> SAAS[观测云 SaaS]
-    J[Git 中的 Dashboard 源] --> G
-    J -. 导入与兼容性验证 .-> SAAS
+    A[应用与服务：集群 / 主机 / 边缘节点] --> SDK[OpenTelemetry SDK 或自动埋点]
+    SDK --> OTLP[OTLP：指标 / 日志 / 链路]
+    OTLP --> OC[OTel Collector]
+    OTLP -. SaaS 接入待验证 .-> DK[DataKit]
 ```
 
-实线表示架构职责或已有组件，不自动代表端到端链路已验收；虚线表示预留及待验证。自建 Victoria 数据服务与 SaaS 各自独立；OTLP 是否接收指标、日志或链路以实际 Collector 配置及协议测试为准。导入 Dashboard 需要验证观测云的查询、变量及图表兼容性。
+## 1.2 自建 Victoria 全家桶与 Grafana
+
+```mermaid
+flowchart LR
+    EXP[Blackbox / Caddy / PostgreSQL 及集群基础 exporter] --> VM[vmagent]
+    VM --> MET[VictoriaMetrics]
+    LOG[主机与容器日志] --> VEC[Vector]
+    VEC --> VLOG[VictoriaLogs]
+    APP[应用 OTLP] --> OC[OTel Collector]
+    OC -. 链路写入待验证 .-> TRACE[VictoriaTraces]
+    MET --> G[自建 Grafana]
+    VLOG --> G
+    TRACE --> G
+    SRC[Git 中的面板定义] --> G
+```
+
+集群指标优先由 vmagent 采集；非集群及边缘节点根据实际信号和资源选择 Vector 或 vmagent，避免同一自建后端重复采集。Vector、OTel 的配置与端到端状态必须分别核验，图示职责不代表当前链路已上线。
+
+## 1.3 DataKit 与观测云 SaaS
+
+```mermaid
+flowchart LR
+    EXP[Blackbox / Caddy / PostgreSQL 及集群基础 exporter] -. 直接采集指标 .-> DK[DataKit]
+    LOG[主机与容器日志] -. 直接采集日志 .-> DK
+    APP[应用 OTLP] -. OTLP 接收待验证 .-> DK
+    DK --> SaaS[观测云 SaaS：指标 / 日志 / 链路]
+    SRC[Git 中的 Grafana 面板源] --> CONV[导入转换与兼容性检查]
+    CONV -. 验证后导入 .-> SaaS
+```
+
+DataKit 直接采集 SaaS 所需信号，不以 vmagent 作为中转。自建 Victoria 数据服务与 SaaS 独立，不互相同步。面板导入需要逐项核验查询、变量、单位和图表兼容性；虚线表示预留或待验证能力，不作为线上收数证明。
 
 ## 2. 环境和标签
 
