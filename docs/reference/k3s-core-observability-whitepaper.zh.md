@@ -59,6 +59,8 @@ PostgreSQL 统一面板包含摘要、详细指标和连接/数据库大小样�
 | Flux | `platform-observability-prod` 仍由 `platform-config-prod` 的 `v2026.10.28.5` 管理；独立监控 Source 已创建并 Ready。 | 独立来源存在不等于监控 Kustomization 已交接或新面板已由 Flux 管理。 |
 | Dashboard | 统一 PostgreSQL 面板曾通过 Grafana API 确认存在；变量转义导致 422 的修复及中文说明已进入 PR。 | 手动导入与 Grafana 渲染验收、SIT 选择及 Flux 持续管理分别验证。 |
 
+**后续修复记录：**同日约 15:28，经核对 Accounts `/healthz` 与 Billing `/readyz` 是实际探测路径，已手动更新 vmagent 配置；VictoriaMetrics 对这两个新目标均观察到 `probe_success=1`。旧根路径历史时序可能暂时仍可见；PostgreSQL TLS tunnel 的失败仍待诊断。此路径修复尚未纳入 Flux。
+
 PROD 的 vmagent、blackbox、postgres-exporter、数据库账号与新增网络策略曾通过 SSH 手动建立；应尽快纳入受审查的 GitOps 和凭据生命周期管理，并核查无重复抓取。不要把手动资源、PR 合并或 Kustomize 渲染写成自动交付验收。
 
 ## 6. 安全与网络
