@@ -1,5 +1,9 @@
 # PROD-K3S-V6 独立节点、集群冷启动规划与部署状态归档
 
+## Accounts 应用根账号 bootstrap 字段（2026-11-01，北京时间）
+
+用户已在 `kv/prod/Accounts-service` 添加 `ROOT_BOOTSTRAP_EMAIL` 和 `ROOT_BOOTSTRAP_PASSWORD`。只读检查确认两字段非空，bootstrap 密码与 PostgreSQL admin 密码不同，未记录字段值。[GitOps PR #732](https://github.com/ai-workspace-infra/gitops/pull/732) 已转为可审查状态，将字段交付到 `web-saas-prod/accounts-bootstrap`，仅供 Accounts 使用；复用只允许读取该 KV 记录的现有 JWT 身份。合并、SecretSynced、根账号初始化和 Accounts 业务就绪尚待验证；bootstrap 字段不是数据库用户凭据。
+
 ## 业务 namespace 网络互通决定（2026-11-01，北京时间）
 
 用户确认允许 `web-saas-prod`、`postgresql-prod`、`ingress-prod`、`observability-prod`、`vault-prod` 五个业务 namespace 的 Pod 相互入站访问。[GitOps PR #729](https://github.com/ai-workspace-infra/gitops/pull/729) 在各 Flux 服务单元中增加 `business-namespaces-ingress` NetworkPolicy，目标为本 namespace 全部 Pod，来源使用五个 namespace 的名称选择器，放行所有端口和协议。
