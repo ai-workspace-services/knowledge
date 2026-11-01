@@ -30,6 +30,34 @@ vault write auth/jwt-prod-k3s-prod-k3s-v6/role/prod-k3s-v6-grafana-admin-reader 
   token_type=batch token_ttl=10m token_max_ttl=10m token_explicit_max_ttl=10m
 ```
 
+### DataKit 共享 DataWay 来源（2026-11-01，北京时间）
+
+用户确认 V6 DataKit 使用公共 Vault 中已有的共享 DataWay 入口，启用后会向该入口发送 V6 遥测。凭据值不写入 Git 或本文档。
+
+| 项目 | 声明与状态 |
+| --- | --- |
+| Vault KV 路径与字段 | `kv/datakit/shared/dataway`，`DATAWAY_URL` |
+| Kubernetes Secret | `observability-prod/datakit-dataway-secret`，字段 `ENV_DATAWAY` |
+| 工作负载身份 | ServiceAccount `observability-prod/datakit-dataway-reader`；JWT role 与 policy `prod-k3s-v6-datakit-dataway-reader`；audience `vault-prod-k3s-v6-datakit-dataway-reader` |
+| 授权边界 | policy 仅允许读取 `kv/data/datakit/shared/dataway`，另允许 `auth/token/lookup-self`；该共享路径按用户明确选择作为生产环境例外 |
+| 交付与验收 | [GitOps PR #720](https://github.com/ai-workspace-infra/gitops/pull/720) 已提交；role 和 policy 已创建，真实身份允许/拒绝测试、ESO 同步、DataKit 就绪和遥测接收尚待验证 |
+
+使用已认证的 Vault 管理会话创建身份的脱敏命令：
+
+```sh
+export VAULT_ADDR=https://vault.svc.plus
+vault policy write prod-k3s-v6-datakit-dataway-reader - <<'EOF'
+path "kv/data/datakit/shared/dataway" { capabilities = ["read"] }
+path "auth/token/lookup-self" { capabilities = ["read"] }
+EOF
+vault write auth/jwt-prod-k3s-prod-k3s-v6/role/prod-k3s-v6-datakit-dataway-reader \
+  role_type=jwt user_claim=sub \
+  bound_subject=system:serviceaccount:observability-prod:datakit-dataway-reader \
+  bound_audiences=vault-prod-k3s-v6-datakit-dataway-reader \
+  token_policies=prod-k3s-v6-datakit-dataway-reader token_no_default_policy=true \
+  token_type=batch token_ttl=10m token_max_ttl=10m token_explicit_max_ttl=10m
+```
+
 ## 最新网络规划与实施记录（2026-11-01，北京时间）
 
 **状态：V6 控制面已按新网段重建，WireGuard 尚未配置。** V6 是新集群，用户确认没有生产数据；V5 继续提供服务，`vault.svc.plus` 的 DNS/CNAME 暂不切换。以下为 2026-11-01 的现场观察，不代表所有服务恢复或业务验收完成。
