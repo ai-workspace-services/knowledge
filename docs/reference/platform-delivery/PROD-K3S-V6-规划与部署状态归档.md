@@ -5,6 +5,44 @@
 用户确认沿用 V5 的 K3s ServiceLB：节点 TCP `443` → ServiceLB Pod → `ingress-prod/caddy-ingress-caddy-ingress` LoadBalancer Service `443` → Caddy Pod `8443`。V5 现场使用此方式；V6 原入口为 ClusterIP，虽然 Caddy Pod 和 TLS Secret 就绪，节点 HTTPS 访问仍失败。
 
 [GitOps PR #725](https://github.com/ai-workspace-infra/gitops/pull/725) 将入口 Service 改为 LoadBalancer，并移除未生效的 Deployment hostPort 补丁；固定 chart 渲染已确认 `443 → 8443`。实际调谐、ServiceLB Pod 就绪、批次域名 DNS、TLS/SNI 和业务后端验收尚待完成；该修正不代表业务应用已就绪。
+## 最新应用数据库 KV 与交付状态（2026-11-01，北京时间）
+
+**网络修复交付：** [GitOps PR #728](https://github.com/ai-workspace-infra/gitops/pull/728) 新增独立 NetworkPolicy，使用同一 peer 中的 namespaceSelector 与 podSelector，仅允许 `web-saas-prod` 内 `web-saas` release 的 Accounts、Billing Pod 访问 PostgreSQL TCP `5432`。原 chart 策略保留；渲染检查通过，实际数据库连接、schema 与应用就绪待合并调谐后验证。
+
+### PostgreSQL NetworkPolicy 变更与验收
+
+原策略在 `postgresql-prod` 中仅使用 podSelector，要求调用方具有 `app.kubernetes.io/instance: postgresql` 等标签；这不会选中另一 namespace 的 Accounts、Billing。该策略不匹配已核实，但不能仅凭策略内容排除其他连接故障，须在调谐后验证实际访问。
+
+| 项目 | 本次声明 |
+| --- | --- |
+| 新增策略 | `postgresql-prod/postgresql-web-saas-access` |
+| 目标 Pod | `app.kubernetes.io/instance: postgresql` 且 `app.kubernetes.io/component: postgresql` |
+| 来源 namespace | `kubernetes.io/metadata.name: web-saas-prod` |
+| 来源 Pod | `app.kubernetes.io/instance: web-saas` 且 component 为 `accounts` 或 `billing` |
+| 网络范围 | 仅入站 TCP `5432`；namespace 与 Pod 条件在同一 peer 中相与 |
+| GitOps 文件 | `services/prod-k3s-v6/postgresql-prod/application-networkpolicy.yaml`；由该目录 Kustomization 引用 |
+| 现有权限 | 保留原 chart 策略；多条入站策略的允许范围合并生效 |
+| 回退 | 通过 GitOps revert 本次新增策略及引用，再调谐；会重新阻断本次跨 namespace 访问 |
+
+合并后先确认 `postgresql-prod-config` 获取合并 SHA、`postgresql-prod` 调谐应用策略，再从真实 Accounts/Billing Pod 验证连接和数据库认证；同时检查业务表、应用健康和重启次数。使用受控样本验证非允许来源不能访问，禁止为排查直接关闭所有 NetworkPolicy。配置检查或 Pod `Running` 均不能替代连接和应用就绪验收；目前这些运行验证仍待完成。
+
+本节更新此前的业务数据库凭据规划。用户明确授权 V6 冷启动阶段暂用 PostgreSQL admin 身份；Accounts 和 Billing 的连接配置集中在同一 KV 记录。以下仅记录路径、字段及验证结果，不包含密码或连接串原文。
+
+| 用途 | Vault KV 逻辑路径 | 字段 | Kubernetes Secret / 字段 | 当前状态 |
+| --- | --- | --- | --- | --- |
+| PostgreSQL 管理凭据原始来源 | `kv/prod/database/postgresql/admin` | `password` | `postgresql-prod/postgresql-admin` / `password` | 已同步；管理用户为 `root` |
+| Accounts 数据库连接 | `kv/prod/Accounts-service` | `DATABASE_URL`、`POSTGRES_PASSWORD` | `web-saas-prod/accounts-db-runtime` / 同名字段 | `SecretSynced` |
+| Billing 数据库连接 | `kv/prod/Accounts-service` | `DATABASE_URL` | `web-saas-prod/billing-db-runtime` / `DATABASE_URL` | `SecretSynced` |
+
+Vault KV v2 API 路径为 `kv/data/prod/Accounts-service`；`vault kv` CLI 和 ESO remoteRef 使用逻辑路径，remoteRef 不包含 mount 名 `kv/` 或 API 段 `data/`。`kv/prod/billing-service` 的 Stripe 字段保留，数据库连接已统一从 Accounts-service 读取。
+
+- [GitOps PR #726](https://github.com/ai-workspace-infra/gitops/pull/726) 曾临时从 PostgreSQL admin KV 生成应用连接串；已由合并的 [PR #727](https://github.com/ai-workspace-infra/gitops/pull/727) 改为直接读取 Accounts-service 的 `DATABASE_URL`，不再在 ESO 中拼接。此次 Flux 已获取 `main@sha1:34d257f6a5c84c268a167bf94d03d2588200965a`。
+- 专用 `app-database-reader` ServiceAccount/SecretStore 使用 mount `jwt-prod-k3s-prod-k3s-v6`，role/policy `prod-k3s-v6-app-database-reader`，audience `vault-prod-k3s-v6-app-database-reader`；仅允许读取 `kv/data/prod/Accounts-service` 及查询自身 token。旧临时 admin-bootstrap 读取授权仍需在确认无消费者后清理。
+- 已通过不输出凭据的核验：连接用户为 `root`，目标为 `postgresql-postgresql.postgresql-prod.svc.cluster.local:5432/account`，连接串密码与 `POSTGRES_PASSWORD` 及 admin KV 的 `password` 一致。业务进程使用 admin 属于临时例外；恢复独立业务身份并验证权限后，应更新此 KV 的两字段并撤销临时管理凭据交付。
+- Accounts 固定源码支持 `DATABASE_URL` 覆盖旧配置文件的本地隧道 DSN；`127.0.0.1:15432` 用于本地 stunnel TLS 隧道，V6 集群内直连使用 PostgreSQL Service `5432`。
+- 已重启 Accounts、Billing 加载新 Secret。Accounts 日志确认读取正确目标，但连接仍失败；PostgreSQL NetworkPolicy 当前仅允许同 namespace 且带 PostgreSQL release 标签的调用方，跨 namespace 的应用不匹配，需要显式授权并复验。`account` 数据库业务表数量仍为 0，schema 初始化、数据库业务连接及应用就绪尚未通过。
+
+历史段落中的 `accounts_runtime` 为待恢复的业务身份目标，不代表本次已创建或已授权。一次 Pod `Running` 或 Secret 同步成功不构成数据库连接验收。
 
 ## Web SaaS 修复进展（2026-11-01，北京时间）
 
