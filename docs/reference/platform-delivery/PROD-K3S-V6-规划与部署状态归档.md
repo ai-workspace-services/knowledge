@@ -4,7 +4,7 @@
 
 本节为对 `172.237.24.232` 的最新只读核查及公共 Vault 操作记录，优先于下方历史部署状态；下方所列其他节点地址、PVC、服务和验收仅代表当时证据，不能作为当前集群状态。
 
-- 目标节点 `prod-k3s-v6` Ready；Flux 管理根运行，ESO HelmRelease Ready。现场 SecretStore `vault-prod/shared-vault-tls-bootstrap` 为 `InvalidProviderConfig`，ExternalSecret `vault-prod/vault-server-tls` 为 `SecretSyncedError`；Vault Kustomization 仍被 TLS 引导依赖阻塞。其余目标 HelmRelease 尚未在当前集群创建，不能报告全栈就绪。
+- 目标节点 `prod-k3s-v6` Ready；云平台只读查询显示实例 `109819324`、`jp-tyo-3`、地址 `172.237.24.232`。尚未完成 CMDB 和经认证的 SSH host key 交接核验。Flux 管理根运行，ESO HelmRelease Ready。现场 SecretStore `vault-prod/shared-vault-tls-bootstrap` 为 `InvalidProviderConfig`，ExternalSecret `vault-prod/vault-server-tls` 为 `SecretSyncedError`；Vault Kustomization 仍被 TLS 引导依赖阻塞。其余目标 HelmRelease 尚未在当前集群创建，不能报告全栈就绪。
 - 清理前公共 Vault mount `jwt-prod-k3s-v6` 列出 TLS reader role `prod-k3s-v6-vault-tls-reader`；ESO 原报 JWT 签名验证失败。用户明确要求清理后，已停用该 mount，role 随之删除、该 mount 签发的 token 撤销；复查 mount 已不存在。全局 reader policy 保留，证书 KV 未删除。执行前保存了不含 token 和 TLS 私钥的配置快照与脱敏操作记录。
 - 当前 SecretStore 仍引用旧 mount。符合[通用 Vault 工作负载身份契约](通用-Vault-工作负载身份契约.md)的新集群独立 mount、role 和 GitOps 引用尚未创建或切换；需要先核验集群与 CMDB 身份、配置最小授权并完成允许/拒绝验证，再逐项恢复调谐。不能将历史 TLS、Vault 或业务验收视为当前通过。
 - V5 源服务和写入方保持不变；本次未执行 DNS、数据迁移、流量切换或旧 policy 删除。
