@@ -188,20 +188,20 @@ projects/<PROJECT_NUMBER>/locations/global/workloadIdentityPools/<POOL_ID>/provi
 
 1. 在目标 GCP 项目创建或核对 Workload Identity Pool 和 OIDC Provider，issuer 使用 `https://token.actions.githubusercontent.com/`；attribute mapping 和 workflow/repository 条件必须与 GitHub Actions 工作流一致。
 2. 确认 provider 状态为 `ACTIVE`，并确认部署 Service Account 已授予所需的最小资源权限。
-3. 使用已认证的 Vault 管理终端执行 Platform-Orchestrator 的共享角色脚本，将运行时身份写入 `kv/uat/serverless/gcp`：
+3. 在 Platform-Orchestrator 最新 `main` 目录中，使用已认证的 `gcloud` 和 Vault 管理终端执行：
 
    ```bash
    export VAULT_ADDR=https://vault.svc.plus
-   export GCP_WORKLOAD_IDENTITY_PROVIDER='projects/.../locations/global/workloadIdentityPools/.../providers/...'
-   export GCP_SERVICE_ACCOUNT_EMAIL='...@....iam.gserviceaccount.com'
+   export PROJECT_ID="open-platform-uat"
+   export POOL_ID="github-actions"
+   export PROVIDER_ID="github"
+   export REPOSITORY="ai-workspace-infra/Platform-Orchestrator"
 
-   bash scripts/vault/bootstrap_shared_gcp_roles.sh \
-     --apply --write-runtime --runtime-environment uat
-   bash scripts/vault/bootstrap_shared_gcp_roles.sh \
-     --check --write-runtime --runtime-environment uat
+   bash scripts/vault/bootstrap_shared_gcp_roles.sh --apply --write-runtime --runtime-environment uat
+   bash scripts/vault/bootstrap_shared_gcp_roles.sh --check --write-runtime --runtime-environment uat
    ```
 
-   脚本只写入 provider 和 Service Account 字段，不输出值；共享 JWT role/policy 仍由同一脚本按 GitOps 声明校验和应用。
+   脚本自动获取项目编号并生成 provider 资源名和默认 Service Account。`--apply` 同时更新脚本列出的共享 JWT role/policy，并 patch `kv/uat/serverless/gcp` 的两个字段；KV 记录需已存在。`REPOSITORY` 是操作上下文变量，当前脚本不会使用它配置 GCP 信任条件。生成资源名不代表 provider 已创建或通过验证。
 4. 重新执行 UAT Serverless 编排，确认 IaC owner 的 GCP OIDC 认证成功，再检查 Cloud Run、Cloudflare、DNS（如选择 `none` 则不变更）和运行时 owner 回执。
 
 失败边界：`invalid_target` 通常表示 provider 不存在、被禁用、项目编号/池/provider 路径错误，或 Vault KV 中的值已过期。不能用 Service Account key、占位成功或 CI 通过替代运行时验收。Vault token、私钥和真实 provider 值不得写入 Git、文档或聊天记录。
