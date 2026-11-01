@@ -1,5 +1,27 @@
 # PROD-K3S-V6 独立节点、集群冷启动规划与部署状态归档
 
+## Accounts 应用根账号 bootstrap 字段（2026-11-01，北京时间）
+
+用户已在 `kv/prod/Accounts-service` 添加 `ROOT_BOOTSTRAP_EMAIL` 和 `ROOT_BOOTSTRAP_PASSWORD`。只读检查确认两字段非空，bootstrap 密码与 PostgreSQL admin 密码不同，未记录字段值。[GitOps PR #732](https://github.com/ai-workspace-infra/gitops/pull/732) 已转为可审查状态，将字段交付到 `web-saas-prod/accounts-bootstrap`，仅供 Accounts 使用；复用只允许读取该 KV 记录的现有 JWT 身份。合并、SecretSynced、根账号初始化和 Accounts 业务就绪尚待验证；bootstrap 字段不是数据库用户凭据。
+
+## 注册验证 SMTP 凭据来源（2026-11-02，北京时间）
+
+SMTP 凭据由公共 Vault KV v2 记录提供，供后续配置和验证注册邮件发送流程使用。本文只记录逻辑路径、API/ACL 路径和字段名，不记录凭据值。
+
+| 用途 | Vault CLI 路径 | Vault KV v2 API / ACL 路径 | 字段 | 当前状态 |
+| --- | --- | --- | --- | --- |
+| Google SMTP 注册验证邮件 | `kv/prod/platform/smtp/google` | `kv/data/prod/platform/smtp/google` | `username`、`password` | 路径和字段由用户确认；GitOps/ESO 投递、SMTP 连接与注册验证邮件收发尚待配置和验证 |
+
+验证时应确认实际 SMTP 主机、端口、TLS/认证方式与应用配置匹配，再使用受控测试邮箱完成注册验证邮件发送及验证链接流程；仅有 KV 记录或 Secret 同步成功不能视为邮件链路验收通过。
+
+## 业务 namespace 网络互通决定（2026-11-01，北京时间）
+
+用户确认允许 `web-saas-prod`、`postgresql-prod`、`ingress-prod`、`observability-prod`、`vault-prod` 五个业务 namespace 的 Pod 相互入站访问。[GitOps PR #729](https://github.com/ai-workspace-infra/gitops/pull/729) 在各 Flux 服务单元中增加 `business-namespaces-ingress` NetworkPolicy，目标为本 namespace 全部 Pod，来源使用五个 namespace 的名称选择器，放行所有端口和协议。
+
+这是明确扩大业务组件横向访问范围的部署选择；新增规则不包含任意公网来源，不改变 egress 策略，原规则继续合并生效。hostNetwork 流量的识别依赖 CNI，须单独验证。该策略与 #728 数据库专项策略重叠但不冲突；未来收敛前需盘点真实调用关系。回退通过 GitOps revert 新增策略及各目录引用，恢复原入站范围。
+
+五个 Kustomize 单元已渲染通过。实际调谐、应用到 PostgreSQL 连接、非业务 namespace 的访问边界及应用就绪尚待验证；不得把 PR 提交视为策略已经生效。
+
 ## V6 HTTPS 入口修正（2026-11-01，北京时间）
 
 用户确认沿用 V5 的 K3s ServiceLB：节点 TCP `443` → ServiceLB Pod → `ingress-prod/caddy-ingress-caddy-ingress` LoadBalancer Service `443` → Caddy Pod `8443`。V5 现场使用此方式；V6 原入口为 ClusterIP，虽然 Caddy Pod 和 TLS Secret 就绪，节点 HTTPS 访问仍失败。
