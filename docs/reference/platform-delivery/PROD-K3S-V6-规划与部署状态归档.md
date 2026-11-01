@@ -4,6 +4,23 @@
 
 **网络修复交付：** [GitOps PR #728](https://github.com/ai-workspace-infra/gitops/pull/728) 新增独立 NetworkPolicy，使用同一 peer 中的 namespaceSelector 与 podSelector，仅允许 `web-saas-prod` 内 `web-saas` release 的 Accounts、Billing Pod 访问 PostgreSQL TCP `5432`。原 chart 策略保留；渲染检查通过，实际数据库连接、schema 与应用就绪待合并调谐后验证。
 
+### PostgreSQL NetworkPolicy 变更与验收
+
+原策略在 `postgresql-prod` 中仅使用 podSelector，要求调用方具有 `app.kubernetes.io/instance: postgresql` 等标签；这不会选中另一 namespace 的 Accounts、Billing。该策略不匹配已核实，但不能仅凭策略内容排除其他连接故障，须在调谐后验证实际访问。
+
+| 项目 | 本次声明 |
+| --- | --- |
+| 新增策略 | `postgresql-prod/postgresql-web-saas-access` |
+| 目标 Pod | `app.kubernetes.io/instance: postgresql` 且 `app.kubernetes.io/component: postgresql` |
+| 来源 namespace | `kubernetes.io/metadata.name: web-saas-prod` |
+| 来源 Pod | `app.kubernetes.io/instance: web-saas` 且 component 为 `accounts` 或 `billing` |
+| 网络范围 | 仅入站 TCP `5432`；namespace 与 Pod 条件在同一 peer 中相与 |
+| GitOps 文件 | `services/prod-k3s-v6/postgresql-prod/application-networkpolicy.yaml`；由该目录 Kustomization 引用 |
+| 现有权限 | 保留原 chart 策略；多条入站策略的允许范围合并生效 |
+| 回退 | 通过 GitOps revert 本次新增策略及引用，再调谐；会重新阻断本次跨 namespace 访问 |
+
+合并后先确认 `postgresql-prod-config` 获取合并 SHA、`postgresql-prod` 调谐应用策略，再从真实 Accounts/Billing Pod 验证连接和数据库认证；同时检查业务表、应用健康和重启次数。使用受控样本验证非允许来源不能访问，禁止为排查直接关闭所有 NetworkPolicy。配置检查或 Pod `Running` 均不能替代连接和应用就绪验收；目前这些运行验证仍待完成。
+
 本节更新此前的业务数据库凭据规划。用户明确授权 V6 冷启动阶段暂用 PostgreSQL admin 身份；Accounts 和 Billing 的连接配置集中在同一 KV 记录。以下仅记录路径、字段及验证结果，不包含密码或连接串原文。
 
 | 用途 | Vault KV 逻辑路径 | 字段 | Kubernetes Secret / 字段 | 当前状态 |
