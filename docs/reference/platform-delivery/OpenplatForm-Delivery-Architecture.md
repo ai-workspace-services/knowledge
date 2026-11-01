@@ -201,9 +201,10 @@ projects/<PROJECT_NUMBER>/locations/global/workloadIdentityPools/<POOL_ID>/provi
 
    ```bash
    export VAULT_ADDR=https://vault.svc.plus
-   PROJECT_NUMBER="$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')"
-   export GCP_WORKLOAD_IDENTITY_PROVIDER="projects/${PROJECT_NUMBER}/locations/global/workloadIdentityPools/${POOL_ID}/providers/${PROVIDER_ID}"
-   export GCP_SERVICE_ACCOUNT_EMAIL="github-actions-uat@${PROJECT_ID}.iam.gserviceaccount.com"
+   export PROJECT_ID="open-platform-uat"
+   export POOL_ID="github-actions"
+   export PROVIDER_ID="github"
+   export REPOSITORY="ai-workspace-infra/Platform-Orchestrator"
 
    bash scripts/vault/bootstrap_shared_gcp_roles.sh \
      --apply --write-runtime --runtime-environment uat
@@ -211,20 +212,10 @@ projects/<PROJECT_NUMBER>/locations/global/workloadIdentityPools/<POOL_ID>/provi
      --check --write-runtime --runtime-environment uat
    ```
 
+   脚本内部通过 `gcloud projects describe` 获取项目编号，生成完整 provider 资源名，并按环境推导 GitHub Actions Service Account；无需手工设置 `GCP_WORKLOAD_IDENTITY_PROVIDER` 或 `GCP_SERVICE_ACCOUNT_EMAIL`。
+
    脚本只写入 provider 和 Service Account 字段，不输出值；共享 JWT role/policy 仍由同一脚本按 GitOps 声明校验和应用。
 5. 重新执行 UAT Serverless 编排，确认 IaC owner 的 GCP OIDC 认证成功，再检查 Cloud Run、Cloudflare、DNS（如选择 `none` 则不变更）和运行时 owner 回执。
-
-生成 provider 名称后，使用共享 Vault 脚本完成 role/policy 校验并写入运行时 KV：
-
-```bash
-export GCP_WORKLOAD_IDENTITY_PROVIDER="projects/${PROJECT_NUMBER}/locations/global/workloadIdentityPools/${POOL_ID}/providers/${PROVIDER_ID}"
-export GCP_SERVICE_ACCOUNT_EMAIL="github-actions-uat@${PROJECT_ID}.iam.gserviceaccount.com"
-
-bash scripts/vault/bootstrap_shared_gcp_roles.sh \
-  --apply --write-runtime --runtime-environment uat
-bash scripts/vault/bootstrap_shared_gcp_roles.sh \
-  --check --write-runtime --runtime-environment uat
-```
 
 `--write-runtime` 是显式写入开关；未提供时脚本只处理共享 JWT role/policy。`--check` 仅比对 `kv/uat/serverless/gcp` 中的两个字段，不输出字段值，也不执行 GCP 资源变更。
 
