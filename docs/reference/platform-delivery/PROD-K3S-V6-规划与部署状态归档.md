@@ -146,6 +146,7 @@ PostgreSQL、Caddy、Web SaaS 共用 `distributed-web-saas-fullstack` chart 包�
 | 2 common | ⚠️ 部分完成 | hostname、三账户和声明要求的主机基线 | 身份和 auditor 登录已验证；fail2ban、auditd、UFW 未运行，是否启用按节点安全方案选择，其他必需基线待核验 |
 | 3 存储与控制面 | ⚠️ 部分完成 | 独立盘、K3s 和 Flux | 100 GB ext4 挂载 `/data`，K3s 运行；安全幂等续跑未验收 |
 | 4 管理根 | ✅ 已观察 | 管理 source/root | `prod-k3s` Ready，GitOps commit `e5bc36a5…`；业务就绪另验 |
+| 4.5 主机安全基线 | ❌ 必需基线未完成验收 | SSH、账户授权、主机及云防火墙 | `fail2ban`、`auditd`、UFW 未运行，属于按节点安全方案选择的可选项；必需控制及拒绝证据待核验，详见 5.5 节 |
 | 5 ESO 与 TLS 身份 | ✅ 已验证 | ESO、专用身份和权限 | 指定 TLS KV 允许，邻接路径、错误 audience 和 ServiceAccount 被拒绝；SecretStore Valid |
 | 6 TLS 同步 | ⚠️ 部分完成 | 生成 `vault-prod/vault-server-tls` | SecretSynced，证书有效期和 SAN 已核对；链、密钥匹配及实际集群内 TLS 待验证 |
 | 7 Vault | ❌ 未完成 | 新 Raft 存储、初始化、unseal、内部认证 | 容器运行但未初始化、未解封；监听器 TLS disabled，须修复 |
