@@ -6,13 +6,13 @@
 
 ## 创建命令与脚本记录
 
-**2026-11-01 V6 执行记录：** 公共 Vault 已创建 mount `jwt-prod-k3s-2519bf1ba3d7db80`、role 和 policy `prod-k3s-tls-reader`。使用真实 V6 ServiceAccount 验证指定记录允许、相邻记录及错误 audience / ServiceAccount 被拒绝；公钥 PEM SHA-256 为 `2a0b1cbe6522f9eadc8cc1e10367f4d10671b47a0d248476305be0c37ff1524e`。创建使用了本机已有 root 会话，而非下述短期受限管理身份；该偏离需后续治理。GitOps 引用和 ESO 同步尚未验证。
+**2026-11-01 V6 执行记录：** 公共 Vault 已创建 mount `jwt-prod-k3s-prod-k3s-v6`、role 和 policy `prod-k3s-tls-reader`。使用真实 V6 ServiceAccount 验证指定记录允许、相邻记录及错误 audience / ServiceAccount 被拒绝；公钥 PEM SHA-256 为 `2a0b1cbe6522f9eadc8cc1e10367f4d10671b47a0d248476305be0c37ff1524e`。用户指定当前 cluster ID 为 `prod-k3s-v6`，其带版本号，属于对通用命名约定的显式例外；重建集群不能仅凭同名复用信任。此前创建的 `jwt-prod-k3s-2519bf1ba3d7db80` 暂保留且未切换消费者。创建使用了本机已有 root 会话，而非下述短期受限管理身份；该偏离需后续治理。GitOps 引用和 ESO 同步尚未验证。
 
 **以下为 Vault CLI 命令模板。** 执行前核验 GitOps 声明、CMDB、实际 cluster UID 和节点 UID、SSH host key、issuer 及集群签名公钥。使用受限、短期的 Vault 管理身份；token 通过受控环境提供，不写入命令参数、脚本、仓库、日志或回执。准备 `jq` 和经过核验的公钥 PEM 文件，不使用私钥。
 
 ```bash
 export VAULT_ADDR="https://vault.svc.plus"
-CLUSTER_ID="2519bf1ba3d7db80" # 当前 V6；其他集群使用其独立声明的 ID
+CLUSTER_ID="prod-k3s-v6" # 当前 V6；其他集群使用其独立声明的 ID
 MOUNT="jwt-prod-k3s-${CLUSTER_ID}"
 ROLE="prod-k3s-tls-reader"
 POLICY="prod-k3s-tls-reader"
