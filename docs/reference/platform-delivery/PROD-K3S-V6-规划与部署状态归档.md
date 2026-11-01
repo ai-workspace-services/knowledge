@@ -1,5 +1,34 @@
 # PROD-K3S-V6 独立节点、集群冷启动规划与部署状态归档
 
+## Web SaaS 修复进展（2026-11-01，北京时间）
+
+- Web SaaS SecretStore `Valid`、ExternalSecret `SecretSynced`；Accounts、Billing 仍分别缺少 `accounts-db-runtime`、`billing-db-runtime`，数据库业务身份与凭据交付尚待核验。
+
+数据库 Secret 的规划来源与当次只读核查如下；V6 当前尚无这两个 Secret 的同步声明，表中不包含凭据值：
+
+**最新决定：** 用户确认将两个应用的数据库凭据集中在 `kv/prod/Accounts-service`，使用 `accounts_runtime` 身份；Accounts 读取 `POSTGRES_PASSWORD`，Billing 读取 `DATABASE_URL`。这替代下表中 Billing 的原路径规划。[GitOps PR #724](https://github.com/ai-workspace-infra/gitops/pull/724) 为草稿；Vault 记录和字段、两字段一致性、专用 JWT 授权及 PostgreSQL 角色权限尚待核验。共用数据库身份意味着两个应用不具备数据库角色级隔离。
+
+### PostgreSQL 与业务凭据路径汇总
+
+| 用途 | Vault KV 路径 | 字段 | 身份及消费方 | 状态 |
+| --- | --- | --- | --- | --- |
+| 数据库管理 | `kv/prod/database/postgresql/admin` | `password` | `root`，初始化、DDL、恢复和必要管理 | 字段存在；不注入业务应用 |
+| 数据库运维 | `kv/prod/database/postgresql/operator` | `password` | `operator`，限定范围的数据库维护 | 字段存在；不作为业务账号 |
+| 数据库审计 | `kv/prod/database/postgresql/auditor` | `password` | `auditor`，独立只读审计 | 字段存在；不作为业务账号 |
+| Accounts 数据库连接 | `kv/prod/Accounts-service` | `POSTGRES_PASSWORD` | `accounts_runtime` 的独立业务密码，交付给 `accounts-db-runtime` | 记录和字段尚未核实 |
+| Billing 数据库连接 | `kv/prod/Accounts-service` | `DATABASE_URL` | 同一 `accounts_runtime` 身份的完整连接串，交付给 `billing-db-runtime` | 记录和字段尚未核实 |
+
+业务连接目标为 `postgresql-postgresql.postgresql-prod.svc.cluster.local:5432/account`。`DATABASE_URL` 的账号和密码必须与 `POSTGRES_PASSWORD` 对应；密码中的 URL 特殊字符需编码，TLS 参数须符合数据库实际配置。不得把三权管理、运维或审计密码复制为业务密码。`accounts_runtime` 的存在、密码一致性、权限和两应用实际连接仍待验证；共用账号不提供应用间数据库角色隔离。
+
+| Kubernetes Secret | GitOps 规划的 Vault 路径 | 当前核查 |
+| --- | --- | --- |
+| `web-saas-prod/accounts-db-runtime` | `kv/prod/Accounts-service` | 当前 Vault 会话未能读取该记录，尚不能区分记录不存在还是权限不足。 |
+| `web-saas-prod/billing-db-runtime` | `kv/prod/billing-service` | 记录可读取，当次列出的字段均为 Stripe 配置，未发现数据库凭据字段。 |
+
+V5 两个应用共用 `web-saas-secrets`，数据库字段来自 V5 集群内 Vault 的 `kv/prod/services/web-saas-k3s-v5/database`，未发现上述两个独立 Secret。V6 的数据库位于 `postgresql-prod`；须核实独立业务账号、凭据来源和权限后再声明同步，不能据此直接复用或覆盖 V5 凭据。
+- Console 容器报 Nginx 无法修改 `/var/lib/nginx/body` 所有权，需核对镜像与非 root 运行配置；Content 报缺少 `KNOWLEDGE_REPO_PATH`。[GitOps PR #723](https://github.com/ai-workspace-infra/gitops/pull/723) 参照现有生产配置声明知识库路径和 URL，尚待合并及运行验证。
+- Grafana 修复已调谐，监控栈 Pod 一次观察为 `5/5 Running`，仍需持续观察。
+
 ## 最新 V5 Vault 网络策略变更（2026-11-01，北京时间）
 
 为 V6 加入 V5 Vault Raft 做准备，在 V5 `platform-vault` 新增临时 NetworkPolicy `vault-raft-v6-migration`，选择 `app.kubernetes.io/name=vault-raft`。该策略保留原 `vault-raft-quarantine`，额外允许 TCP 8200/8201：入站来源限于当时 V6 Vault Pod `10.52.0.14/32` 及其可能经 Flannel SNAT 后使用的 WireGuard 地址 `10.254.250.2/32`；出站目标限于 `10.52.0.14/32`。变更通过现场 `kubectl apply` 执行，非 Flux 声明，清单由操作方保管；Pod IP 变化会使 `/32` 失效，须先核对后按受控方式更新。此策略不是对整个 V6 Pod CIDR 的放行。
