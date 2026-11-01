@@ -206,6 +206,26 @@ projects/<PROJECT_NUMBER>/locations/global/workloadIdentityPools/<POOL_ID>/provi
 
 失败边界：`invalid_target` 通常表示 provider 不存在、被禁用、项目编号/池/provider 路径错误，或 Vault KV 中的值已过期。不能用 Service Account key、占位成功或 CI 通过替代运行时验收。Vault token、私钥和真实 provider 值不得写入 Git、文档或聊天记录。
 
+#### UAT Serverless Cloudflare 预留
+
+当前运行时路径：
+
+```text
+kv/uat/serverless/cloudflare
+```
+
+用于 Cloudflare account、API token 及经审查的边缘交付配置。Cloudflare Worker、Pages 和 DNS 操作必须由对应 owner 执行；Orchestrator 只传递目标、交付范围、DNS 模式并核对 owner 回执。`dns_mode=none` 时不得修改 DNS。API token 不得写入 Git、工作流日志或交付回执。
+
+#### UAT Serverless Supabase 预留
+
+当前运行时路径：
+
+```text
+kv/uat/serverless/supabase
+```
+
+用于 Supabase 项目标识、数据库连接合同和受控数据库操作输入。数据库初始化、schema 变更和迁移必须由 Playbooks/数据库 owner 按显式 operation 执行；普通应用部署不得隐式执行数据迁移。源只读、目标写入和管理凭据必须分离，连接串和密码只在运行时读取，不写入声明、日志或回执。
+
 KV v2 API 路径在挂载点后增加 `data/`，例如 `kv/data/uat/serverless/supabase`；它与表中的逻辑路径引用同一记录。服务 owner 按用途申请最小权限，不将秘密值写入 GitOps、日志或交付回执。路径记录不代表该环境已经部署或验收。
 
 ### 4.3 PROD：受控渐进发布
