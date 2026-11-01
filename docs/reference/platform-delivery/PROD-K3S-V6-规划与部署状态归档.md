@@ -3,6 +3,15 @@
 ## Web SaaS 修复进展（2026-11-01，北京时间）
 
 - Web SaaS SecretStore `Valid`、ExternalSecret `SecretSynced`；Accounts、Billing 仍分别缺少 `accounts-db-runtime`、`billing-db-runtime`，数据库业务身份与凭据交付尚待核验。
+
+数据库 Secret 的规划来源与当次只读核查如下；V6 当前尚无这两个 Secret 的同步声明，表中不包含凭据值：
+
+| Kubernetes Secret | GitOps 规划的 Vault 路径 | 当前核查 |
+| --- | --- | --- |
+| `web-saas-prod/accounts-db-runtime` | `kv/prod/Accounts-service` | 当前 Vault 会话未能读取该记录，尚不能区分记录不存在还是权限不足。 |
+| `web-saas-prod/billing-db-runtime` | `kv/prod/billing-service` | 记录可读取，当次列出的字段均为 Stripe 配置，未发现数据库凭据字段。 |
+
+V5 两个应用共用 `web-saas-secrets`，数据库字段来自 V5 集群内 Vault 的 `kv/prod/services/web-saas-k3s-v5/database`，未发现上述两个独立 Secret。V6 的数据库位于 `postgresql-prod`；须核实独立业务账号、凭据来源和权限后再声明同步，不能据此直接复用或覆盖 V5 凭据。
 - Console 容器报 Nginx 无法修改 `/var/lib/nginx/body` 所有权，需核对镜像与非 root 运行配置；Content 报缺少 `KNOWLEDGE_REPO_PATH`。[GitOps PR #723](https://github.com/ai-workspace-infra/gitops/pull/723) 参照现有生产配置声明知识库路径和 URL，尚待合并及运行验证。
 - Grafana 修复已调谐，监控栈 Pod 一次观察为 `5/5 Running`，仍需持续观察。
 
