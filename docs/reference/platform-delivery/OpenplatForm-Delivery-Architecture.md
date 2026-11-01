@@ -204,6 +204,20 @@ projects/<PROJECT_NUMBER>/locations/global/workloadIdentityPools/<POOL_ID>/provi
    脚本只写入 provider 和 Service Account 字段，不输出值；共享 JWT role/policy 仍由同一脚本按 GitOps 声明校验和应用。
 4. 重新执行 UAT Serverless 编排，确认 IaC owner 的 GCP OIDC 认证成功，再检查 Cloud Run、Cloudflare、DNS（如选择 `none` 则不变更）和运行时 owner 回执。
 
+生成 provider 名称后，使用共享 Vault 脚本完成 role/policy 校验并写入运行时 KV：
+
+```bash
+export GCP_WORKLOAD_IDENTITY_PROVIDER="projects/${PROJECT_NUMBER}/locations/global/workloadIdentityPools/${POOL_ID}/providers/${PROVIDER_ID}"
+export GCP_SERVICE_ACCOUNT_EMAIL="github-actions-uat@${PROJECT_ID}.iam.gserviceaccount.com"
+
+bash scripts/vault/bootstrap_shared_gcp_roles.sh \
+  --apply --write-runtime --runtime-environment uat
+bash scripts/vault/bootstrap_shared_gcp_roles.sh \
+  --check --write-runtime --runtime-environment uat
+```
+
+`--write-runtime` 是显式写入开关；未提供时脚本只处理共享 JWT role/policy。`--check` 仅比对 `kv/uat/serverless/gcp` 中的两个字段，不输出字段值，也不执行 GCP 资源变更。
+
 失败边界：`invalid_target` 通常表示 provider 不存在、被禁用、项目编号/池/provider 路径错误，或 Vault KV 中的值已过期。不能用 Service Account key、占位成功或 CI 通过替代运行时验收。Vault token、私钥和真实 provider 值不得写入 Git、文档或聊天记录。
 
 #### UAT Serverless Cloudflare 预留
