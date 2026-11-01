@@ -176,6 +176,32 @@ UAT 可选择：
 | GCP Cloud Run | `kv/uat/serverless/gcp` | GCP Workload Identity Provider 和部署 Service Account |
 | Supabase | `kv/uat/serverless/supabase` | Supabase 项目标识和数据库连接合同 |
 
+#### UAT Serverless 集成关系与准备
+
+GitHub Actions 是统一入口；GitOps 固定本次运行使用的目标配置；IaC 管 GCP/Cloudflare 云资源与资源回执；Playbooks/数据库 owner 执行明确授权的数据操作。三种服务的凭据链不同，不能把一条服务的认证成功当成另外两条已就绪。
+
+```mermaid
+flowchart LR
+  GH["GitHub Actions<br/>固定源与制品版本<br/>id-token: write"] --> VAULT["Vault JWT role<br/>绑定仓库 / workflow / environment"]
+  GO["固定 GitOps commit<br/>目标、项目、region、域名、WIF subject"] --> IAC["IaC owner"]
+  VAULT -->|WIF provider + Service Account| IAC
+  IAC --> GCP["GCP Cloud Run / Artifact Registry"]
+  VAULT -->|限权 Cloudflare API token| CF["Cloudflare owner<br/>Workers / Pages / DNS"]
+  VAULT -->|Supabase 运行/数据凭据引用| DB["Supabase 数据 owner<br/>checkpoint / schema / migration"]
+  GH -->|目标与不可变制品 tag| IAC
+  GH -->|服务版本与 DNS mode| CF
+  GH -->|显式 operation| DB
+```
+
+| 集成 | 身份与配置来源 | 执行边界与放行检查 |
+| --- | --- | --- |
+| GitHub → Vault | GitHub Actions 请求短期 OIDC token；Vault JWT role 按实际 repository、workflow/ref 和 GitHub Environment claims 授权。KV 路径只由授权 role 读取。 | Job 只声明必需的 `id-token: write`；不得把 Vault token、Cloudflare token 或服务凭据作为 workflow input、变量明文或日志输出。Vault 登录成功只证明 GitHub→Vault 身份链可用。 |
+| GitHub/Vault → GCP | GitOps OIDC 声明提供 `repository`、`subjects`、pool/provider、audience、项目和 state 身份。IaC 用该声明配置 GCP Workload Identity Federation；运行时先从 Vault 读取 `GCP_WORKLOAD_IDENTITY_PROVIDER` 与 `GCP_SERVICE_ACCOUNT_EMAIL`，再由 `google-github-actions/auth` 交换短期凭据。 | Provider 的 attribute condition、service-account IAM binding 与 GitOps `repository`/subjects 必须完全一致；只授予目标项目所需权限。不得使用长期 Service Account JSON key。IaC 先完成目标身份预检和资源回执，之后 Cloud Run 才能部署。 |
+| GitHub/Vault → Cloudflare | `kv/uat/serverless/cloudflare` 提供 Cloudflare account ID 和 API token；GitHub job 以 Vault JWT 身份读取后，交给 IaC 的 Cloudflare provider operation。 | Token 限定目标 account/zone 和所需资源权限；Workers、Pages、edge gateway 与域名操作由对应 owner 执行。`dns_mode=none` 必须保持无 DNS 写入；其他 DNS 模式须与环境、目标和本次授权匹配。 |
+| GitHub/Vault → Supabase | `kv/uat/serverless/supabase` 记录项目标识与数据库连接合同；敏感连接材料只在运行时由数据库 owner 读取。 | 显式 `operation` 决定 checkpoint、初始化、schema 变更或迁移。普通 `deploy` 不代表空库初始化，也不自动迁移；schema/data 变更须由数据库 owner 按备份、目标身份和审核后的 migration 执行。 |
+
+当前 Serverless 主调用链按 `Resolve → IaC → Deploy → Migrate/Configure → Verify` 组织。IaC 阶段失败时，Cloud Run、Cloudflare 和 Supabase 后续阶段应保持未执行；不得以跳过 IaC 或伪造成功回执放行。`Verify` 需要核验各 owner 的真实回执和运行行为，Resolve/CI 通过不等于服务验收完成。
+
 #### UAT Serverless GCP bootstrap TL;DR
 
 `GCP_WORKLOAD_IDENTITY_PROVIDER` 是 Google Workload Identity Provider 的完整资源名，不是短名称或随机 token：
@@ -186,7 +212,7 @@ projects/<PROJECT_NUMBER>/locations/global/workloadIdentityPools/<POOL_ID>/provi
 
 最小流程：
 
-1. 在目标 GCP 项目创建或核对 Workload Identity Pool 和 OIDC Provider，issuer 使用 `https://token.actions.githubusercontent.com/`；attribute mapping 和 workflow/repository 条件必须与 GitHub Actions 工作流一致。
+1. 在目标 GCP 项目创建或核对 Workload Identity Pool 和 OIDC Provider，issuer 使用 `https://token.actions.githubusercontent.com/`；attribute mapping 和 workflow/repository 条件必须与 GitHub Actions 工作流一致。GitOps OIDC 声明中的 repository 与所有 subject 必须指向实际运行工作流的 `ai-workspace-infra/Platform-Orchestrator`，不要保留旧的 `ai-workspace-infra/platform-ops-toolkit` subject。
 2. 确认 provider 状态为 `ACTIVE`，并确认部署 Service Account 已授予所需的最小资源权限。
 3. 在 Platform-Orchestrator 最新 `main` 目录中，使用已认证的 `gcloud` 和 Vault 管理终端执行：
 
