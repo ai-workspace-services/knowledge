@@ -2,6 +2,8 @@
 
 ## 最新应用数据库 KV 与交付状态（2026-11-01，北京时间）
 
+**网络修复交付：** [GitOps PR #728](https://github.com/ai-workspace-infra/gitops/pull/728) 新增独立 NetworkPolicy，使用同一 peer 中的 namespaceSelector 与 podSelector，仅允许 `web-saas-prod` 内 `web-saas` release 的 Accounts、Billing Pod 访问 PostgreSQL TCP `5432`。原 chart 策略保留；渲染检查通过，实际数据库连接、schema 与应用就绪待合并调谐后验证。
+
 本节更新此前的业务数据库凭据规划。用户明确授权 V6 冷启动阶段暂用 PostgreSQL admin 身份；Accounts 和 Billing 的连接配置集中在同一 KV 记录。以下仅记录路径、字段及验证结果，不包含密码或连接串原文。
 
 | 用途 | Vault KV 逻辑路径 | 字段 | Kubernetes Secret / 字段 | 当前状态 |
