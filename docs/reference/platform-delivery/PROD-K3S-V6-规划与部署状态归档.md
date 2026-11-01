@@ -6,7 +6,7 @@
 
 数据库 Secret 的规划来源与当次只读核查如下；V6 当前尚无这两个 Secret 的同步声明，表中不包含凭据值：
 
-**最新决定：** 用户确认将两个应用的数据库凭据集中在 `kv/prod/Accounts-service`，使用 `accounts_runtime` 身份；Accounts 读取 `POSTGRES_PASSWORD`，Billing 读取 `DATABASE_URL`。这替代下表中 Billing 的原路径规划。[GitOps PR #724](https://github.com/ai-workspace-infra/gitops/pull/724) 为草稿；Vault 记录和字段、两字段一致性、专用 JWT 授权及 PostgreSQL 角色权限尚待核验。共用数据库身份意味着两个应用不具备数据库角色级隔离。
+**最新决定：** 用户确认将两个应用的数据库凭据集中在 `kv/prod/Accounts-service`，使用 `accounts_runtime` 身份；Accounts 读取 `POSTGRES_PASSWORD`，Billing 读取 `DATABASE_URL`。这替代下表中 Billing 的原路径规划。[GitOps PR #724](https://github.com/ai-workspace-infra/gitops/pull/724) 为草稿。已只读核实两字段存在、连接目标和密码一致；已创建仅允许读取该记录的 `prod-k3s-v6-app-database-reader` JWT role/policy。PostgreSQL 中查询未发现 `accounts_runtime`，其创建、权限、真实身份授权及应用连接尚待实施验证。共用数据库身份意味着两个应用不具备数据库角色级隔离。
 
 ### PostgreSQL 与业务凭据路径汇总
 
