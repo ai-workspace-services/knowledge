@@ -1,24 +1,25 @@
 # PROD-K3S-V6 独立节点、集群冷启动规划与部署状态归档
 
 
-## 最新状态补充：三身份交付与 Vault 归档（2026-10-31）
+## 最新部署状态（2026-11-01，北京时间）
 
-此节为最近一次已核对结果，状态可能随调谐变化。
+以下为本次独立节点的实际证据，不代表业务验收或流量切换完成。
 
 | 项目 | 状态 | 证据与缺口 |
-|---|---|---|
-| 节点与独立盘 | ✅ 已观察 | 新实例 `109770723`、`172.237.24.232`；100 GB 数据盘 `18838806` 已绑定并挂载 `/data`。此前用户明确授权删除的旧实例与旧盘不再作为当前目标。 |
-| OS 三账户 | ✅ 存在 | `root`、`operator`、`auditor` 用户存在，`auditor` 可 SSH 登录；完整安全基线仍未验收。 |
-| OS 安全服务 | ❌ 未就绪 | 最近只读检查 `fail2ban`、`auditd`、UFW 未运行；需按声明及实际防火墙边界核对并修复。 |
-| K3s / Flux / ESO | ⚠️ 部分就绪 | K3s 节点 Ready；Flux root/source 与 ESO 已观察 Ready，GitOps revision `e5bc36a5…`。其他服务依赖与运行验收未完成。 |
-| 本地凭据 | ⚠️ 已生成、未交付 | root、operator、auditor 的节点受保护目录中均观察到证书与 kubeconfig 文件；各用户默认 `~/.kube/config` 均缺失，未验证三身份实际 RBAC。 |
-| 身份归档 | ❌ 未完成 | [运行 #41213025474](https://github.com/ai-workspace-infra/Platform-Orchestrator/actions/runs/41213025474) 在身份生成/归档步骤退出 1；Vault 冲突或授权问题只是候选原因，尚无证据确定。 |
-| 身份阶段分类 | ✅ 已合并，❌ 未执行验证 | [Playbooks #935](https://github.com/ai-workspace-infra/playbooks/pull/935) 合并的是 `127c0e04` 对应的阶段失败分类，main 合并提交 `1fc2d41e`；不能据此称线上问题已修复。 |
-| 本地交付先于 Vault | ❌ 候选未合入 | Playbooks 分支 `fix/k3s-existing-flux-preflight` 的 `e61245df`、`8e9f64ae` 在 #935 合并之后提交，不属于已合并的 #935；须另建 PR、通过 CI 并在安全续跑路径就绪后验证。 |
-| 活跃 Flux 幂等续跑 | ❌ 未完成 | common 仍拒绝活跃 Flux 图；必须验证节点、PV 和现有 source/root 与固定 GitOps 声明一致，不能通过暂停、重置或重建绕过保护。 |
-| 业务与 DNS | ❌ 未验收 | Vault TLS 同步、Vault、PostgreSQL、Observability、Web SaaS 和 Ingress 尚无完整实际验收；本轮 `dns_mode=none`，不请求迁移或 DNS 变更。 |
+| --- | --- | --- |
+| 节点和独立盘 | ✅ 已验证 | Akamai `manbuzhe2026`、`jp-tyo-3`，实例 `109798839`、`172.237.5.48`；100 GB 盘 `18844637` 为 ext4，挂载 `/data`。[部署运行 #41251575217](https://github.com/ai-workspace-infra/Platform-Orchestrator/actions/runs/41251575217) 的 IaC 成功、部署失败。 |
+| OS 身份和安全基线 | ⚠️ 部分验证 | `root`、`operator`、`auditor` 用户与同名组存在，`auditor` SSH 可登录且无 sudo。`fail2ban`、`auditd`、UFW 未运行，容器集群按节点安全方案选择是否启用；必需的 SSH、主机和云防火墙基线仍需按声明核验。 |
+| K3s、Flux 与身份 | ⚠️ 部分验证 | K3s 运行，Flux `prod-k3s` 和 ESO 已就绪，GitOps revision `e5bc36a5fd9fb36d1f5a61324c06a426f075caee`。三账户已交付独立 kubeconfig；真实 `auditor` 可读取节点，Secret 读取、Deployment 创建、Pod exec 和 sudo 被拒绝；完整授权和独立回执仍待核对。 |
+| K3s 身份 Vault 归档 | ❌ 未完成 | 目标 KV 的旧记录关联不同集群 UID，归档脚本拒绝覆盖，运行在归档阶段退出 23；需受控凭据轮换和活跃集群安全续跑。 |
+| 公共 Vault TLS reader | ✅ 已验证 | 专用 JWT 公钥与当前集群匹配；单条 TLS 记录允许读取，相邻路径、错误 audience 和错误 ServiceAccount 拒绝。reader policy 包含 `auth/token/lookup-self`，不扩大 KV 读取范围。 |
+| ESO 与证书 | ⚠️ 部分验证 | SecretStore `Valid`，ExternalSecret `SecretSynced`；`vault-prod/vault-server-tls` 已生成且有 `tls.crt`、`tls.key`。证书有效至 2027-01-05，SAN 为 `*.svc.plus`、`svc.plus`；证书链、密钥匹配和集群内 SNI 仍待验证。 |
+| Vault | ❌ 未完成 | 容器 Running，`initialized=false`、`sealed=true`；初始化和解封由人工受控执行。当前 Vault 监听器日志显示 TLS disabled，必须修复并验证集群内 TLS，不能用 Flux Ready 替代服务验收。 |
+| PostgreSQL | ❌ 未完成 | PVC 已绑定；镜像拉取 `401 Unauthorized`，Pod 未配置 imagePullSecrets；数据库初始化、角色和备份恢复均待验收。 |
+| Observability | ❌ 未完成 | `datakit-dataway-secret` 与 `grafana-admin` 缺失，node-exporter 探针失败；监控链路未验收。 |
+| Web SaaS、Ingress 与 DNS | ❌ 未验收 | Web SaaS 等待 PostgreSQL；Ingress 等待依赖。运行使用 `dns_mode=none`，未请求迁移或 DNS 变更；V5/canonical DNS 继续保持不变。 |
+| 活跃集群续跑 | ❌ 未完成 | 现有 common 防护拒绝将活跃 Flux 图作为新节点重复 bootstrap；需绑定节点、PV、source/root 与 GitOps revision 后提供安全续跑入口。 |
 
-**目标身份顺序：** master 生成并验证独立证书和私有 kubeconfig → 各用户交付默认配置并以真实身份验收 RBAC → 通过受控 writer 归档 Vault KV → 校验回读后形成成功回执。Vault 归档失败不能产生完整成功回执；不得覆盖冲突记录或从管理员配置复制凭据。
+**身份交付顺序：** master 生成并验证独立证书和私有 kubeconfig → 各用户交付默认配置并以真实身份验收 RBAC → 通过受控 writer 归档 Vault KV → 校验回读后形成成功回执。Vault 归档失败不能产生完整成功回执；不得覆盖冲突记录或从管理员配置复制凭据。
 
 ## 1. 状态标记与目标
 
@@ -141,17 +142,17 @@ PostgreSQL、Caddy、Web SaaS 共用 `distributed-web-saas-fullstack` chart 包�
 | 阶段 | 状态 | 工作内容 | 放行条件与当前缺口 |
 | --- | --- | --- | --- |
 | 0 Plan 证据、制品与容量准备 | ❌ 未完成 | 记录本次运行解析的基础仓库 SHA；业务制品固定不可变版本 | 完整制品核验和 2C4G 全栈容量评审仍无充分证据 |
-| 1 IaC | ✅ 已创建 | 独立节点与数据盘 | 实例 `109770723`，盘 `18838806` 已绑定；对应运行 #41213025474 的 IaC 通过 |
-| 2 common | ❌ 部分完成 | hostname、三账户和主机安全基线 | 三账户存在，审计可登录；fail2ban、auditd、UFW 未运行，基线未完成 |
-| 3 存储与控制面 | ⚠️ 部分完成 | 独立盘、K3s 和 Flux | 100 GB ext4 已挂载 `/data`，K3s 节点 Ready；完整交接和重试未验收 |
-| 4 管理根 | ✅ 已观察 | 管理 source/root | `prod-k3s` Ready，观察到 GitOps commit `e5bc36a5…`；业务就绪另验 |
-| 5 ESO 与 TLS 身份 | ⚠️ 部分完成 | ESO、专用身份和权限 | ESO HelmRelease/Pod 与 TLS identity Kustomization 已观察就绪；端到端同步需验收 |
-| 6 TLS 同步 | ❌ 未验收 | 生成 `vault-prod/vault-server-tls` | 尚无 ExternalSecret、证书链、有效期、SAN 和密钥匹配验收 |
-| 7 Vault | ❌ 未验收 | 新 Raft 存储、初始化、unseal、内部认证 | 无完整运行、恢复材料保管及内部 SecretStore 可用回执 |
-| 8 PostgreSQL | ❌ 未验收 | 新 PVC、空目标库、审查后的 SQL schema 和分权角色 | 无实际版本、schema、权限、连接及恢复路径验收 |
-| 9 Observability | ❌ 未验收 | 新监控存储、采集、查询、Dashboard、告警 | 无采集、持久化和查询链路验收 |
-| 10 Web SaaS | ❌ 未验收 | 应用、数据库连接和隔离验证模式 | 无业务身份、健康及内部链路验收；迁移前写者需受控 |
-| 11 Ingress | ❌ 未验收 | 最后部署 Caddy、TLS 和跨 namespace 路由 | 无指向 V6 的 Host/SNI 验收；验收后启用 V6 批次域名解析，V5 DNS 不变 |
+| 1 IaC | ✅ 已创建 | 独立节点与数据盘 | 实例 `109798839`，盘 `18844637` 已绑定；运行 #41251575217 的 IaC 通过 |
+| 2 common | ⚠️ 部分完成 | hostname、三账户和声明要求的主机基线 | 身份和 auditor 登录已验证；fail2ban、auditd、UFW 未运行，是否启用按节点安全方案选择，其他必需基线待核验 |
+| 3 存储与控制面 | ⚠️ 部分完成 | 独立盘、K3s 和 Flux | 100 GB ext4 挂载 `/data`，K3s 运行；安全幂等续跑未验收 |
+| 4 管理根 | ✅ 已观察 | 管理 source/root | `prod-k3s` Ready，GitOps commit `e5bc36a5…`；业务就绪另验 |
+| 5 ESO 与 TLS 身份 | ✅ 已验证 | ESO、专用身份和权限 | 指定 TLS KV 允许，邻接路径、错误 audience 和 ServiceAccount 被拒绝；SecretStore Valid |
+| 6 TLS 同步 | ⚠️ 部分完成 | 生成 `vault-prod/vault-server-tls` | SecretSynced，证书有效期和 SAN 已核对；链、密钥匹配及实际集群内 TLS 待验证 |
+| 7 Vault | ❌ 未完成 | 新 Raft 存储、初始化、unseal、内部认证 | 容器运行但未初始化、未解封；监听器 TLS disabled，须修复 |
+| 8 PostgreSQL | ❌ 未完成 | 新 PVC、空目标库、审查后的 SQL schema 和分权角色 | PVC 已绑定；GHCR 镜像匿名拉取 401，凭据、schema、权限及恢复待验收 |
+| 9 Observability | ❌ 未完成 | 新监控存储、采集、查询、Dashboard、告警 | 缺少 DataKit/Grafana Secret，node-exporter 探针失败；完整链路未验收 |
+| 10 Web SaaS | ❌ 未验收 | 应用、数据库连接和隔离验证模式 | 等待 PostgreSQL；业务身份及内部链路未验收 |
+| 11 Ingress | ❌ 未验收 | 最后部署 Caddy、TLS 和跨 namespace 路由 | 等待依赖；Host/SNI、域名解析尚待单独核验 |
 | 12 整体验收 | ❌ 未完成 | 迁移评审、业务恢复、回归、重跑与观察 | 尚未形成完整证据及待切换报告 |
 
 **Vault 初始化顺序**：安装后先确认 Pod、卷和 TLS 挂载具备初始化条件，再由 Vault owner 初始化/unseal，最后等 Vault Ready。不能先要求未初始化的 Vault Ready，才允许初始化。
