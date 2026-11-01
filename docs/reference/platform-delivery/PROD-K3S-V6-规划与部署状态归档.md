@@ -10,9 +10,25 @@ V6 Grafana 管理凭据由公共 Vault 通过 ESO 同步。已只读核实目标
 | Vault 字段 | `grafana_password` |
 | Kubernetes Secret | `observability-prod/grafana-admin`，字段 `password` |
 | 消费方 | `observability-prod` 的 Grafana，`existingSecret: grafana-admin` |
-| 交付 | GitOps [PR #718](https://github.com/ai-workspace-infra/gitops/pull/718) 声明专用工作负载身份和 ESO 同步，目前为草稿、尚未合并 |
+| 交付 | GitOps [PR #718](https://github.com/ai-workspace-infra/gitops/pull/718) 已合并并调谐；Grafana 专用 JWT 角色及 policy 已建立 |
 
-该路径按用户指定作为本次生产环境的明确例外；读取授权应仅限该 KV 记录。专用 Vault JWT role 和 policy 尚待创建并完成允许与拒绝验证；SecretStore `Valid`、ExternalSecret `SecretSynced` 及 Grafana 就绪尚未验证。保留 V5 原凭据及其消费者，待分别确认后再考虑退役。
+该路径按用户指定作为本次生产环境的明确例外；读取授权仅限该 KV 记录。实际 ServiceAccount 登录后目标读取成功，相邻 TLS 路径、错误 audience、错误 ServiceAccount 被拒绝；SecretStore `Valid`，ExternalSecret `SecretSynced`，Grafana 所在 Pod `5/5 Running`。保留 V5 原凭据及其消费者，待分别确认后再考虑退役。
+
+Grafana 身份创建时使用已认证的 Vault 管理会话，执行以下脱敏命令，不包含 token 或凭据值：
+
+```sh
+export VAULT_ADDR=https://vault.svc.plus
+vault policy write prod-k3s-v6-grafana-admin-reader - <<'EOF'
+path "kv/data/CICD/observability/grafana-admin" { capabilities = ["read"] }
+path "auth/token/lookup-self" { capabilities = ["read"] }
+EOF
+vault write auth/jwt-prod-k3s-prod-k3s-v6/role/prod-k3s-v6-grafana-admin-reader \
+  role_type=jwt user_claim=sub \
+  bound_subject=system:serviceaccount:observability-prod:grafana-admin-reader \
+  bound_audiences=vault-prod-k3s-v6-grafana-admin-reader \
+  token_policies=prod-k3s-v6-grafana-admin-reader token_no_default_policy=true \
+  token_type=batch token_ttl=10m token_max_ttl=10m token_explicit_max_ttl=10m
+```
 
 ## 最新网络规划与实施记录（2026-11-01，北京时间）
 
