@@ -16,6 +16,26 @@
 
 ## 2. 基础运行环境
 
+### 2.1 环境矩阵 V1.1
+
+下表给出三环境的 Selfhost/K3s 目标基线。UAT 也允许选择 Serverless 承载；该路径按其云服务与服务 owner 交付，不要求安装 K3s、Traefik 或 Flagger。实际组件和运行状态须由固定配置与回执证明。
+
+| 层次 | SIT | UAT（K3s） | PROD（K3s） |
+| --- | --- | --- | --- |
+| Kubernetes | K3s | K3s | K3s |
+| GitOps | Flux CD | Flux CD | Flux CD |
+| 入口网关 | Traefik | Traefik | Traefik |
+| 特性泳道 | Namespace-per-Feature | 不启用 | 不启用 |
+| 发布控制 | Flux + CI | Flux + Flagger | Flux + Flagger |
+| 发布模式 | Feature SIT / Blue-Green | Blue-Green / Canary | Blue-Green / Canary |
+| 指标 | vmagent → VictoriaMetrics | 同左 | 同左 |
+| 日志 | Vector → VictoriaLogs | 同左 | 同左 |
+| 链路追踪 | OTel → VictoriaTraces | 同左 | 同左 |
+| 可视化 | Grafana | Grafana | Grafana |
+| 外部观测 | DataKit | DataKit | DataKit |
+
+主观测后端统一采用 Victoria Stack（VictoriaMetrics、VictoriaLogs、VictoriaTraces）与 Grafana。DataKit 作为观测云的独立并行采集与输出链路；按采集目标和信号去重，不重复部署第二套完整监控存储。Flagger 按服务适配情况启用，并以已验证的路由集成和新鲜指标作决策。
+
 | 层 | 目标组件 | 职责边界 |
 | --- | --- | --- |
 | Infrastructure | Multi-cloud IaC、CMDB、DNS、独立 state 与存储 | 云资源、网络、节点和权威资源事实 |
@@ -31,7 +51,7 @@
 
 目标部署应分别声明 Traefik、Flagger、Grafana、Victoria Stack、vmagent、Vector 与 DataKit 等 HelmRelease，复用既有服务单元和 Flux 层级，不建立平行控制面。组件是否实际存在、Chart 能力和有效配置须以固定 GitOps commit 与运行证据核验。
 
-### 2.1 GitOps 规划基线
+### 2.2 GitOps 规划基线
 
 现有 PROD-K3S-V6 规划为 **6 个 GitRepository、9 个 Flux Kustomization、8 个 HelmRelease**。这是目标图数量，不是一次运行的已就绪数量。历史初次引导回执为 6/6/7；V6 归档记录的新增 ESO/TLS 前置图尚不能与历史回执混作同一验收。
 
