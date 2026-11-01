@@ -166,6 +166,18 @@ UAT 可选择：
 
 同一候选和配置固定后执行验收。UAT 成功不代表生产资源、身份或数据状态相同；晋级前核对目标差异、发布记录和生产准入。
 
+#### UAT Serverless 凭据路径
+
+下表记录现有 Serverless 交付文档中的 Vault KV 逻辑路径。路径和字段存在性、实际消费者以及当前身份的读取授权尚需在 Vault 中单独核验；表中不包含凭据值。
+
+| 服务 | Vault KV 逻辑路径 | 记录中的用途 |
+| --- | --- | --- |
+| Cloudflare | `kv/uat/serverless/cloudflare` | Cloudflare account 和 API token，用于边缘服务交付 |
+| GCP Cloud Run | `kv/uat/serverless/gcp` | GCP Workload Identity Provider 和部署 Service Account |
+| Supabase | `kv/uat/serverless/supabase` | Supabase 项目标识和数据库连接合同 |
+
+KV v2 API 路径在挂载点后增加 `data/`，例如 `kv/data/uat/serverless/supabase`；它与表中的逻辑路径引用同一记录。服务 owner 按用途申请最小权限，不将秘密值写入 GitOps、日志或交付回执。路径记录不代表该环境已经部署或验收。
+
 ### 4.3 PROD：受控渐进发布
 
 PROD 采用 `GitHub Release → Flux CD → Flagger（适用时）→ Traefik → Primary / Canary`。Traefik 提供稳定入口，Flagger 按已验证的成功率、延迟和 SLO 指标逐步推进权重；Blue/Green 或 Canary 按服务风险、路由能力及回退特性选择。若指标不可用、陈旧或查询语义未经验证，不允许自动放量。
