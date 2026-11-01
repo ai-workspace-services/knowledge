@@ -1,5 +1,25 @@
 # PROD-K3S-V6 独立节点、集群冷启动规划与部署状态归档
 
+## 最新 V5 Vault 网络策略变更（2026-11-01，北京时间）
+
+为 V6 加入 V5 Vault Raft 做准备，在 V5 `platform-vault` 新增临时 NetworkPolicy `vault-raft-v6-migration`，选择 `app.kubernetes.io/name=vault-raft`。该策略保留原 `vault-raft-quarantine`，额外允许 TCP 8200/8201：入站来源限于当时 V6 Vault Pod `10.52.0.14/32` 及其可能经 Flannel SNAT 后使用的 WireGuard 地址 `10.254.250.2/32`；出站目标限于 `10.52.0.14/32`。变更通过现场 `kubectl apply` 执行，非 Flux 声明，清单由操作方保管；Pod IP 变化会使 `/32` 失效，须先核对后按受控方式更新。此策略不是对整个 V6 Pod CIDR 的放行。
+
+验证：V6 Vault Pod 到 V5 Vault Pod `10.42.0.135` 的 TCP 8200、8201 可连接；V5 Vault Pod 到 V6 Pod TCP 8200 可连接，8201 当时未连通，V6 Vault 仍处于 sealed 状态，不能将其归因确定为网络策略或报告 Raft 通信通过。V5 已公布的 Raft 地址仍为 V5 内部 Service DNS，V6 无法直接使用；TLS、稳定地址、Raft join、解封和 leader 迁移均未完成。原策略及现有业务访问保留；移除此临时策略前须确认 Vault 不再依赖该路径。
+
+## 最新 WireGuard Pod 路由记录（2026-11-01，北京时间）
+
+V5 与 V6 的 `v5v6` WireGuard 接口已启用，隧道地址分别为 `10.254.250.1/30` 和 `10.254.250.2/30`。V5 peer 的 `AllowedIPs` 添加 `10.52.0.0/16`，V6 peer 添加 `10.42.0.0/16`；两端保留对端隧道 `/32`，并分别执行 `ip route replace <对端Pod CIDR> dev v5v6`。配置写入两端 wg-quick 文件；变更前配置在各节点 `/etc/wireguard/v5v6.conf.pre-pod-routes`，含私钥，不得提交或输出。此为现场操作，尚未固化 GitOps/Playbooks。
+
+运行验证：V5 Vault Pod `10.42.0.135` → V6 Vault Pod `10.52.0.14` 的 ICMP 2/2 成功；反向 ICMP 2/2 成功。地址为当时的 Pod IP。TCP/TLS、网络策略、重启恢复、Vault Raft 和其他 Pod 尚未验证；ICMP 成功不代表业务或迁移完成。此前云防火墙 UDP 51820 对所有 IPv4/IPv6 来源开放，须收敛为对端 `/32` 并重新核验。
+
+本次实际步骤（peer 公钥为非敏感标识）：
+
+1. 两端检查 `net.ipv4.ip_forward=1`、当前 `wg show v5v6 allowed-ips` 与路由；将 `/etc/wireguard/v5v6.conf` 复制为同目录 `.pre-pod-routes`，以原权限保管。
+2. V5 将配置中的 AllowedIPs 设为 `10.254.250.2/32, 10.52.0.0/16`，执行 `wg set v5v6 peer 1D5N/pSpwqYKR3o/2UzIHsM0PJ0NxJiKLknDwHoao0I= allowed-ips 10.254.250.2/32,10.52.0.0/16`，再执行 `ip route replace 10.52.0.0/16 dev v5v6`。
+3. V6 将配置中的 AllowedIPs 设为 `10.254.250.1/32, 10.42.0.0/16`，执行 `wg set v5v6 peer k9qMFWg8XC/zbEKmQ27Q1h1URtGttqDN/qiYU6CTOHs= allowed-ips 10.254.250.1/32,10.42.0.0/16`，再执行 `ip route replace 10.42.0.0/16 dev v5v6`。
+4. 分别通过 `wg show v5v6 allowed-ips` 和 `ip route get` 核对运行态，从两侧 Vault Pod 执行 ICMP 探测。配置文件包含本节点私钥，编辑和检查时不得输出其内容；以上命令不包含私钥或 token。
+
+回退时先核对 Raft 和业务是否依赖隧道，再分别移除对端 Pod 网段的路由与 peer AllowedIPs，恢复对应持久配置并保留隧道 `/32`；不要直接断开正在承载写入的 Raft 连接。
 ## 近期运行修复记录（2026-11-01，北京时间）
 
 以下状态以当次观察为准，后续调谐和健康检查需重新核验；历史章节中的状态不代表当前结果。
