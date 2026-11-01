@@ -1,5 +1,11 @@
 # PROD-K3S-V6 独立节点、集群冷启动规划与部署状态归档
 
+## Web SaaS 修复进展（2026-11-01，北京时间）
+
+- Web SaaS SecretStore `Valid`、ExternalSecret `SecretSynced`；Accounts、Billing 仍分别缺少 `accounts-db-runtime`、`billing-db-runtime`，数据库业务身份与凭据交付尚待核验。
+- Console 容器报 Nginx 无法修改 `/var/lib/nginx/body` 所有权，需核对镜像与非 root 运行配置；Content 报缺少 `KNOWLEDGE_REPO_PATH`。[GitOps PR #723](https://github.com/ai-workspace-infra/gitops/pull/723) 参照现有生产配置声明知识库路径和 URL，尚待合并及运行验证。
+- Grafana 修复已调谐，监控栈 Pod 一次观察为 `5/5 Running`，仍需持续观察。
+
 ## 最新 V5 Vault 网络策略变更（2026-11-01，北京时间）
 
 为 V6 加入 V5 Vault Raft 做准备，在 V5 `platform-vault` 新增临时 NetworkPolicy `vault-raft-v6-migration`，选择 `app.kubernetes.io/name=vault-raft`。该策略保留原 `vault-raft-quarantine`，额外允许 TCP 8200/8201：入站来源限于当时 V6 Vault Pod `10.52.0.14/32` 及其可能经 Flannel SNAT 后使用的 WireGuard 地址 `10.254.250.2/32`；出站目标限于 `10.52.0.14/32`。变更通过现场 `kubectl apply` 执行，非 Flux 声明，清单由操作方保管；Pod IP 变化会使 `/32` 失效，须先核对后按受控方式更新。此策略不是对整个 V6 Pod CIDR 的放行。
