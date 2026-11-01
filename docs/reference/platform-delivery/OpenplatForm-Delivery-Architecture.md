@@ -188,7 +188,16 @@ projects/<PROJECT_NUMBER>/locations/global/workloadIdentityPools/<POOL_ID>/provi
 
 1. 在目标 GCP 项目创建或核对 Workload Identity Pool 和 OIDC Provider，issuer 使用 `https://token.actions.githubusercontent.com/`；attribute mapping 和 workflow/repository 条件必须与 GitHub Actions 工作流一致。
 2. 确认 provider 状态为 `ACTIVE`，并确认部署 Service Account 已授予所需的最小资源权限。
-3. 使用已认证的 Vault 管理终端执行 Platform-Orchestrator 的共享角色脚本，将运行时身份写入 `kv/uat/serverless/gcp`：
+3. 保持以下变量作为本次创建与写入的唯一输入，不要把真实值改写进脚本或声明：
+
+   ```bash
+   export PROJECT_ID="open-platform-uat"
+   export POOL_ID="github-actions"
+   export PROVIDER_ID="github"
+   export REPOSITORY="ai-workspace-infra/Platform-Orchestrator"
+   ```
+
+4. 使用已认证的 Vault 管理终端执行 Platform-Orchestrator 的共享角色脚本，将运行时身份写入 `kv/uat/serverless/gcp`：
 
    ```bash
    export VAULT_ADDR=https://vault.svc.plus
@@ -202,7 +211,7 @@ projects/<PROJECT_NUMBER>/locations/global/workloadIdentityPools/<POOL_ID>/provi
    ```
 
    脚本只写入 provider 和 Service Account 字段，不输出值；共享 JWT role/policy 仍由同一脚本按 GitOps 声明校验和应用。
-4. 重新执行 UAT Serverless 编排，确认 IaC owner 的 GCP OIDC 认证成功，再检查 Cloud Run、Cloudflare、DNS（如选择 `none` 则不变更）和运行时 owner 回执。
+5. 重新执行 UAT Serverless 编排，确认 IaC owner 的 GCP OIDC 认证成功，再检查 Cloud Run、Cloudflare、DNS（如选择 `none` 则不变更）和运行时 owner 回执。
 
 生成 provider 名称后，使用共享 Vault 脚本完成 role/policy 校验并写入运行时 KV：
 
