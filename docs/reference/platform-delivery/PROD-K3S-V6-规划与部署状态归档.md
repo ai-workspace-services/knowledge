@@ -1,5 +1,13 @@
 # PROD-K3S-V6 独立节点、集群冷启动规划与部署状态归档
 
+## 业务 namespace 网络互通决定（2026-11-01，北京时间）
+
+用户确认允许 `web-saas-prod`、`postgresql-prod`、`ingress-prod`、`observability-prod`、`vault-prod` 五个业务 namespace 的 Pod 相互入站访问。[GitOps PR #729](https://github.com/ai-workspace-infra/gitops/pull/729) 在各 Flux 服务单元中增加 `business-namespaces-ingress` NetworkPolicy，目标为本 namespace 全部 Pod，来源使用五个 namespace 的名称选择器，放行所有端口和协议。
+
+这是明确扩大业务组件横向访问范围的部署选择；新增规则不包含任意公网来源，不改变 egress 策略，原规则继续合并生效。hostNetwork 流量的识别依赖 CNI，须单独验证。该策略与 #728 数据库专项策略重叠但不冲突；未来收敛前需盘点真实调用关系。回退通过 GitOps revert 新增策略及各目录引用，恢复原入站范围。
+
+五个 Kustomize 单元已渲染通过。实际调谐、应用到 PostgreSQL 连接、非业务 namespace 的访问边界及应用就绪尚待验证；不得把 PR 提交视为策略已经生效。
+
 ## V6 HTTPS 入口修正（2026-11-01，北京时间）
 
 用户确认沿用 V5 的 K3s ServiceLB：节点 TCP `443` → ServiceLB Pod → `ingress-prod/caddy-ingress-caddy-ingress` LoadBalancer Service `443` → Caddy Pod `8443`。V5 现场使用此方式；V6 原入口为 ClusterIP，虽然 Caddy Pod 和 TLS Secret 就绪，节点 HTTPS 访问仍失败。
