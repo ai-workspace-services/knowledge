@@ -20,6 +20,86 @@ V5 与 V6 的 `v5v6` WireGuard 接口已启用，隧道地址分别为 `10.254.2
 4. 分别通过 `wg show v5v6 allowed-ips` 和 `ip route get` 核对运行态，从两侧 Vault Pod 执行 ICMP 探测。配置文件包含本节点私钥，编辑和检查时不得输出其内容；以上命令不包含私钥或 token。
 
 回退时先核对 Raft 和业务是否依赖隧道，再分别移除对端 Pod 网段的路由与 peer AllowedIPs，恢复对应持久配置并保留隧道 `/32`；不要直接断开正在承载写入的 Raft 连接。
+## 近期运行修复记录（2026-11-01，北京时间）
+
+以下状态以当次观察为准，后续调谐和健康检查需重新核验；历史章节中的状态不代表当前结果。
+
+- PostgreSQL 镜像包已公开，V6 成功拉取固定 digest；Pod `1/1 Running`，HelmRelease 在重试后 `Ready=True`。
+- Grafana SecretStore `Valid`、ExternalSecret `SecretSynced`。随后 Grafana 因 liveness 探针连接拒绝反复重启，监控栈 `4/5`；Grafana CPU 上限为 `40m`，启动探针尚未配置，资源与启动时限调整尚待实施。
+- [GitOps PR #720](https://github.com/ai-workspace-infra/gitops/pull/720) 已合并，DataKit 专用 SecretStore `Valid`、ExternalSecret `SecretSynced`，Pod `1/1 Running`；遥测接收仍待验证。
+- [GitOps PR #719](https://github.com/ai-workspace-infra/gitops/pull/719) 已合并。新建 Vault role/policy `prod-k3s-v6-ingress-tls-reader`，仅允许读取 `kv/data/CICD/domains/svc.plus` 和查询自身 token；绑定 `system:serviceaccount:ingress-prod:ingress-tls-reader`、audience `vault-prod-k3s-v6-ingress-tls-reader`。三个 TLS ExternalSecret 均 `SecretSynced`，Caddy Pod `1/1 Running`；身份拒绝测试与服务入口验收待完成。
+- Web SaaS 的旧 mount 引用通过 [GitOps PR #721](https://github.com/ai-workspace-infra/gitops/pull/721) 修复，PR 尚未合并。公共 Vault 新建 role/policy `prod-k3s-v6-web-saas-secrets-reader`，绑定 `system:serviceaccount:web-saas-prod:web-saas-secrets-reader` 和 audience `vault-prod-k3s-v6-web-saas-secrets-reader`，仅允许读取 `kv/data/prod/accounts/runtime` 和查询自身 token；该记录包含 `INTERNAL_SERVICE_TOKEN` 字段。真实身份允许/拒绝测试、Secret 同步及应用就绪待验证。
+
+上述两个 role 均使用 `jwt-prod-k3s-prod-k3s-v6` mount，role 类型为 JWT，`user_claim=sub`，batch token 有效期及上限为 10 分钟，禁止附加 default policy；命令和记录均不包含 token 或凭据值。
+
+## 监控组件 Vault KV 路径（2026-11-01，北京时间）
+
+以下为 V6 当前确认的监控凭据来源，公共 Vault 地址为 `https://vault.svc.plus`。表中为 KV 逻辑路径；KV v2 policy 中对应的 API 路径在 `kv/` 后加 `data/`。Secret 值不写入 Git 或本文档。
+
+| 组件及用途 | Vault KV 路径 | Vault 字段 | Kubernetes Secret / 字段 | 交付状态 |
+| --- | --- | --- | --- | --- |
+| Grafana 管理凭据 | `kv/CICD/observability/grafana-admin` | `grafana_password` | `observability-prod/grafana-admin` / `password` | ESO 已同步；Grafana 当前重启中 |
+| DataKit DataWay | `kv/datakit/shared/dataway` | `DATAWAY_URL` | `observability-prod/datakit-dataway-secret` / `ENV_DATAWAY` | 已同步，Pod Running；遥测接收待验收 |
+
+两项分别使用专用 ServiceAccount、JWT role 和精确路径 policy；共享路径及非环境前缀路径是本次用户明确选择的生产例外。
+
+### Grafana 管理凭据来源
+
+V6 Grafana 管理凭据由公共 Vault 通过 ESO 同步。已只读核实目标 KV 记录存在且包含 `grafana_password` 字段；未记录凭据值。
+
+| 项目 | 声明 |
+| --- | --- |
+| Vault 地址与 KV 路径 | `https://vault.svc.plus`，`kv/CICD/observability/grafana-admin` |
+| Vault 字段 | `grafana_password` |
+| Kubernetes Secret | `observability-prod/grafana-admin`，字段 `password` |
+| 消费方 | `observability-prod` 的 Grafana，`existingSecret: grafana-admin` |
+| 交付 | GitOps [PR #718](https://github.com/ai-workspace-infra/gitops/pull/718) 已合并并调谐；Grafana 专用 JWT 角色及 policy 已建立 |
+
+该路径按用户指定作为本次生产环境的明确例外；读取授权仅限该 KV 记录。实际 ServiceAccount 登录后目标读取成功，相邻 TLS 路径、错误 audience、错误 ServiceAccount 被拒绝；SecretStore `Valid`，ExternalSecret `SecretSynced`，Grafana 所在 Pod `5/5 Running`。保留 V5 原凭据及其消费者，待分别确认后再考虑退役。
+
+Grafana 身份创建时使用已认证的 Vault 管理会话，执行以下脱敏命令，不包含 token 或凭据值：
+
+```sh
+export VAULT_ADDR=https://vault.svc.plus
+vault policy write prod-k3s-v6-grafana-admin-reader - <<'EOF'
+path "kv/data/CICD/observability/grafana-admin" { capabilities = ["read"] }
+path "auth/token/lookup-self" { capabilities = ["read"] }
+EOF
+vault write auth/jwt-prod-k3s-prod-k3s-v6/role/prod-k3s-v6-grafana-admin-reader \
+  role_type=jwt user_claim=sub \
+  bound_subject=system:serviceaccount:observability-prod:grafana-admin-reader \
+  bound_audiences=vault-prod-k3s-v6-grafana-admin-reader \
+  token_policies=prod-k3s-v6-grafana-admin-reader token_no_default_policy=true \
+  token_type=batch token_ttl=10m token_max_ttl=10m token_explicit_max_ttl=10m
+```
+
+### DataKit 共享 DataWay 来源（2026-11-01，北京时间）
+
+用户确认 V6 DataKit 使用公共 Vault 中已有的共享 DataWay 入口，启用后会向该入口发送 V6 遥测。凭据值不写入 Git 或本文档。
+
+| 项目 | 声明与状态 |
+| --- | --- |
+| Vault KV 路径与字段 | `kv/datakit/shared/dataway`，`DATAWAY_URL` |
+| Kubernetes Secret | `observability-prod/datakit-dataway-secret`，字段 `ENV_DATAWAY` |
+| 工作负载身份 | ServiceAccount `observability-prod/datakit-dataway-reader`；JWT role 与 policy `prod-k3s-v6-datakit-dataway-reader`；audience `vault-prod-k3s-v6-datakit-dataway-reader` |
+| 授权边界 | policy 仅允许读取 `kv/data/datakit/shared/dataway`，另允许 `auth/token/lookup-self`；该共享路径按用户明确选择作为生产环境例外 |
+| 交付与验收 | [GitOps PR #720](https://github.com/ai-workspace-infra/gitops/pull/720) 已提交；role 和 policy 已创建，真实身份允许/拒绝测试、ESO 同步、DataKit 就绪和遥测接收尚待验证 |
+
+使用已认证的 Vault 管理会话创建身份的脱敏命令：
+
+```sh
+export VAULT_ADDR=https://vault.svc.plus
+vault policy write prod-k3s-v6-datakit-dataway-reader - <<'EOF'
+path "kv/data/datakit/shared/dataway" { capabilities = ["read"] }
+path "auth/token/lookup-self" { capabilities = ["read"] }
+EOF
+vault write auth/jwt-prod-k3s-prod-k3s-v6/role/prod-k3s-v6-datakit-dataway-reader \
+  role_type=jwt user_claim=sub \
+  bound_subject=system:serviceaccount:observability-prod:datakit-dataway-reader \
+  bound_audiences=vault-prod-k3s-v6-datakit-dataway-reader \
+  token_policies=prod-k3s-v6-datakit-dataway-reader token_no_default_policy=true \
+  token_type=batch token_ttl=10m token_max_ttl=10m token_explicit_max_ttl=10m
+```
 
 ## 最新网络规划与实施记录（2026-11-01，北京时间）
 
