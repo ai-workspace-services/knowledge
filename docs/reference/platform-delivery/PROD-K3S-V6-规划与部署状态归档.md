@@ -1,5 +1,11 @@
 # PROD-K3S-V6 独立节点、集群冷启动规划与部署状态归档
 
+## V6 HTTPS 入口修正（2026-11-01，北京时间）
+
+用户确认沿用 V5 的 K3s ServiceLB：节点 TCP `443` → ServiceLB Pod → `ingress-prod/caddy-ingress-caddy-ingress` LoadBalancer Service `443` → Caddy Pod `8443`。V5 现场使用此方式；V6 原入口为 ClusterIP，虽然 Caddy Pod 和 TLS Secret 就绪，节点 HTTPS 访问仍失败。
+
+[GitOps PR #725](https://github.com/ai-workspace-infra/gitops/pull/725) 将入口 Service 改为 LoadBalancer，并移除未生效的 Deployment hostPort 补丁；固定 chart 渲染已确认 `443 → 8443`。实际调谐、ServiceLB Pod 就绪、批次域名 DNS、TLS/SNI 和业务后端验收尚待完成；该修正不代表业务应用已就绪。
+
 ## Web SaaS 修复进展（2026-11-01，北京时间）
 
 - Web SaaS SecretStore `Valid`、ExternalSecret `SecretSynced`；Accounts、Billing 仍分别缺少 `accounts-db-runtime`、`billing-db-runtime`，数据库业务身份与凭据交付尚待核验。
