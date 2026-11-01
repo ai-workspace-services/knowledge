@@ -70,68 +70,82 @@
 
 ## 3. 统一平台架构
 
+### 总体
+
 ```mermaid
 flowchart TB
-    subgraph SCM["代码与制品"]
-      GH["GitHub：Feature / PR / main / Release"]
-      CI["GitHub Actions / Platform-Orchestrator"]
-      ART["Artifacts：镜像与 Chart，不可变版本 / Digest"]
-      GH --> CI --> ART
-    end
-
-    subgraph Owners["五仓职责边界"]
-      ORCH["Platform-Orchestrator：输入、授权、DAG、派发、等待、回执"]
-      IAC["IaC：云资源、DNS、State、CMDB"]
-      PB["Playbooks：主机、K3s、身份、服务与数据操作"]
-      GO["GitOps：目标声明、版本 pin、Flux 资源"]
-      ORCH --> IAC --> PB
-      ORCH --> PB
-      GO --> IAC
-      GO --> PB
-      ART -. 固定制品引用 .-> GO
-    end
-
-    subgraph Envs["运行环境"]
-      SIT["SIT：Feature Namespace"]
-      UAT["UAT：Serverless 或 K3s"]
-      PROD["PROD：K3s"]
-      FLUX["Flux CD：持续调谐 GitOps 声明"]
-      TRAEFIK["Traefik：统一入口"]
-      FLAGGER["Flagger：按指标推进 Canary / Blue-Green"]
-      SVC["Primary / Canary Services"]
-      SIT --> TRAEFIK
-      UAT --> FLUX
-      PROD --> FLUX
-      FLUX --> TRAEFIK
-      FLUX --> FLAGGER
-      FLAGGER -. 更新流量权重/路由配置 .-> TRAEFIK
-      TRAEFIK --> SVC
-    end
-    GO --> FLUX
-    ART --> SIT
-    ART --> UAT
-    ART --> PROD
-    CI --> SIT
-    CI --> UAT
-    CI --> PROD
-
-    subgraph Obs["观测数据平面"]
-      VMAGENT["vmagent"] --> VM["VictoriaMetrics"]
-      VECTOR["Vector"] --> VL["VictoriaLogs"]
-      OTEL["OpenTelemetry Collector"] --> VT["VictoriaTraces"]
-      DK["DataKit"] --> GUANCE["观测云"]
-      VM --> GRAFANA["Grafana"]
-      VL --> GRAFANA
-      VT --> GRAFANA
-      FLAGGER -. 指标查询 / 发布判断 .-> VM
-    end
-    SVC -. metrics .-> VMAGENT
-    SVC -. logs .-> VECTOR
-    SVC -. traces .-> OTEL
-    SVC -. 按需并行采集 .-> DK
+    GH["GitHub：Feature / PR / main / Release"] --> ORCH["Platform-Orchestrator：授权与编排"]
+    ORCH --> IAC["IaC：云资源与 CMDB"]
+    ORCH --> PB["Playbooks：主机、K3s 与服务操作"]
+    GO["GitOps：目标声明与版本 pin"] --> FLUX["Flux CD：持续调谐"]
+    ART["Artifacts：不可变镜像与 Chart"] -. 固定制品引用 .-> GO
+    IAC --> RUNTIME["SIT / UAT / PROD 运行环境"]
+    PB --> RUNTIME
+    FLUX --> RUNTIME
+    RUNTIME --> EDGE["Traefik 统一入口"] --> APP["业务服务"]
+    FLAGGER["Flagger：按需渐进发布"] -. 流量决策 .-> EDGE
+    APP -. 指标 / 日志 / 链路 .-> OBS["Grafana + Victoria Stack"]
+    APP -. 并行采集 .-> DK["DataKit → 观测云"]
+    OBS -. 发布指标 .-> FLAGGER
 ```
 
-图中实线表示配置或交付方向，虚线表示制品引用、观测数据或控制决策。业务 HTTP 流量经过 Traefik 到 Service；Flux 是配置调谐器，Flagger 是发布控制器，不是请求代理。
+总体图展示五仓协作、运行环境、入口、渐进发布与观测之间的关系。实线表示交付/调谐方向，虚线表示制品引用、观测数据或控制决策。局部图展开关键链路；业务 HTTP 流量经过 Traefik 到 Service，Flux 是配置调谐器，Flagger 是发布控制器，不是请求代理。
+
+### 局部 1：五仓职责与交付控制链
+
+```mermaid
+flowchart LR
+    GH["GitHub Feature / PR / Release"] --> ORCH["Platform-Orchestrator<br/>输入、授权、DAG、回执"]
+    ORCH --> IAC["IaC<br/>云资源、DNS、State、CMDB"]
+    ORCH --> PB["Playbooks<br/>主机、身份、K3s、服务与数据操作"]
+    GO["GitOps<br/>环境目标、版本 pin、Flux 声明"] --> FLUX["Flux CD<br/>持续调谐"]
+    ART["Artifacts<br/>镜像 / Chart 固定 digest"] -. 不可变制品引用 .-> GO
+    IAC --> CMDB["目标资源与 CMDB 事实"] --> PB
+    FLUX --> K3S["K3s 集群资源"]
+    PB --> HANDOFF["主机与 Flux 交接回执"] --> FLUX
+```
+
+IaC 是云资源和 CMDB 的 owner，Playbooks 是主机、身份、服务及数据操作的 owner，GitOps 声明集群期望状态，Flux 执行持续调谐。Orchestrator 负责授权、派发和验证各 owner 回执，不在编排层复制执行逻辑。CI 或交接成功不能替代 Flux/业务运行验收。
+
+### 局部 2：SIT、UAT、PROD 发布与流量链
+
+```mermaid
+flowchart TB
+    subgraph SIT["SIT：Feature 隔离"]
+      FEATURE["GitHub Feature ID / PR 候选"] --> FSOURCE["Flux CD"] --> FNS["Feature Namespace"]
+      FNS --> TEDGE["Traefik"] --> TE2E["E2E"]
+    end
+    subgraph UAT["UAT：K3s 路径；另支持 Serverless"]
+      UCAND["冻结候选"] --> UFLUX["Flux CD"] --> UFLAG["Flagger（适用时）"]
+      UFLAG --> UEDGE["Traefik"] --> UAPP["Primary / Canary"]
+    end
+    subgraph PROD["PROD：K3s"]
+      RELEASE["Release + 不可变 digest"] --> PFLUX["Flux CD"] --> PFLAG["Flagger（适用时）"]
+      PFLAG --> PEDGE["Traefik"] --> PAPP["Primary / Canary"]
+    end
+    METRICS["vmagent → VictoriaMetrics"] -. 健康 / SLO 判断 .-> UFLAG
+    METRICS -. 健康 / SLO 判断 .-> PFLAG
+    PFLAG -. 放量或中止决策 .-> PEDGE
+```
+
+SIT 按 Feature ID 部署隔离 Namespace 并通过 Traefik 运行 E2E。UAT 可采用 Serverless 或 K3s；图中展开 K3s 路径。UAT/PROD 的 Flagger 根据已验证且新鲜的指标控制渐进放量，实际流量仍通过 Traefik；服务不适配时不启用 Flagger。
+
+### 局部 3：主观测与并行采集链
+
+```mermaid
+flowchart LR
+    APP["节点 / Kubernetes / Traefik / 应用"]
+    APP -->|metrics| VMAGENT["vmagent"] --> VM["VictoriaMetrics"]
+    APP -->|logs| VECTOR["Vector"] --> VL["VictoriaLogs"]
+    APP -->|traces| OTEL["OpenTelemetry Collector"] --> VT["VictoriaTraces"]
+    APP -. 按需并行、按信号去重 .-> DK["DataKit"] --> GUANCE["观测云"]
+    VM --> GRAFANA["Grafana"]
+    VL --> GRAFANA
+    VT --> GRAFANA
+    VM -. 发布指标查询 .-> FLAGGER["Flagger"]
+```
+
+Victoria Stack 是主观测存储，Grafana 提供统一查询与可视化。DataKit 独立向观测云采集/输出，不经 Grafana 转发，也不重复部署另一套主存储。重复采集前先限定目标、信号、标签、过滤和采样。
 
 ## 4. 环境与发布模型
 
