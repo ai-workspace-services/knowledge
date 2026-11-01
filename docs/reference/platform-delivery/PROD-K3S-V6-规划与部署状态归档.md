@@ -3,7 +3,7 @@
 ## 近期运行修复记录（2026-11-01，北京时间）
 
 - [GitOps PR #721](https://github.com/ai-workspace-infra/gitops/pull/721) 已合并；Web SaaS SecretStore `Valid`、ExternalSecret `SecretSynced`。Accounts 和 Billing 随后分别缺少 `accounts-db-runtime`、`billing-db-runtime`；Console 报 Nginx 无法修改 `/var/lib/nginx/body` 所有权；Content 报缺少 `KNOWLEDGE_REPO_PATH`。以上应用运行问题待逐项修复。
-- [GitOps PR #722](https://github.com/ai-workspace-infra/gitops/pull/722) 增加 Grafana 启动探针并提高资源预算；待合并、Flux 调谐和实际就绪验证。
+- [GitOps PR #722](https://github.com/ai-workspace-infra/gitops/pull/722) 增加 Grafana 启动探针，并将 requests 调整为 CPU `250m`、内存 `256Mi`，limits 为 CPU `500m`、内存 `512Mi`；待合并、Flux 调谐和实际就绪验证。
 
 以下状态以当次观察为准，后续调谐和健康检查需重新核验；历史章节中的状态不代表当前结果。
 
