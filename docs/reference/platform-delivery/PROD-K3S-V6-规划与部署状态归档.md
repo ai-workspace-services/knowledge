@@ -1,5 +1,19 @@
 # PROD-K3S-V6 独立节点、集群冷启动规划与部署状态归档
 
+## Grafana 管理凭据来源（2026-11-01，北京时间）
+
+V6 Grafana 管理凭据由公共 Vault 通过 ESO 同步。已只读核实目标 KV 记录存在且包含 `grafana_password` 字段；未记录凭据值。
+
+| 项目 | 声明 |
+| --- | --- |
+| Vault 地址与 KV 路径 | `https://vault.svc.plus`，`kv/CICD/observability/grafana-admin` |
+| Vault 字段 | `grafana_password` |
+| Kubernetes Secret | `observability-prod/grafana-admin`，字段 `password` |
+| 消费方 | `observability-prod` 的 Grafana，`existingSecret: grafana-admin` |
+| 交付 | GitOps [PR #718](https://github.com/ai-workspace-infra/gitops/pull/718) 声明专用工作负载身份和 ESO 同步，目前为草稿、尚未合并 |
+
+该路径按用户指定作为本次生产环境的明确例外；读取授权应仅限该 KV 记录。专用 Vault JWT role 和 policy 尚待创建并完成允许与拒绝验证；SecretStore `Valid`、ExternalSecret `SecretSynced` 及 Grafana 就绪尚未验证。保留 V5 原凭据及其消费者，待分别确认后再考虑退役。
+
 ## 最新网络规划与实施记录（2026-11-01，北京时间）
 
 **状态：V6 控制面已按新网段重建，WireGuard 尚未配置。** V6 是新集群，用户确认没有生产数据；V5 继续提供服务，`vault.svc.plus` 的 DNS/CNAME 暂不切换。以下为 2026-11-01 的现场观察，不代表所有服务恢复或业务验收完成。
