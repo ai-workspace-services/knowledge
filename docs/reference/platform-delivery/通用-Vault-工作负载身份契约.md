@@ -1,6 +1,8 @@
 # 通用 Vault 工作负载身份契约
 
-状态：仅为设计。现有声明和运行中的 Vault mount 在 owner 与调用方完成实现和验证前仍为有效配置。本文不授权写入 Vault、切换 Flux、迁移凭据或删除旧资源。
+状态：通用身份契约仍为设计，尚未完成通用声明及调用方实现。本文不自动授权写入 Vault、切换 Flux、迁移凭据或删除旧资源。
+
+**最新执行记录（2026-11-01，北京时间）：** 经用户明确要求，公共 Vault 的旧 `jwt-prod-k3s-v6` mount 已停用，其下旧 TLS reader role 随之删除，mount 签发的 token 已撤销；同名 reader policy 保留。当前 V6 SecretStore 仍引用旧 mount，证书同步失败。新集群专用 mount、role 和通用 GitOps 引用尚未创建或切换；执行前配置快照及脱敏操作记录由操作方保管。详见 [V6 最新部署状态](PROD-K3S-V6-规划与部署状态归档.md)。
 
 ## Vault、ESO 与 Secret 名称的关系
 
