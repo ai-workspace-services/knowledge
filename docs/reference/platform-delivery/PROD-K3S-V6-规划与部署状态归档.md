@@ -8,6 +8,18 @@
 
 **最新决定：** 用户确认将两个应用的数据库凭据集中在 `kv/prod/Accounts-service`，使用 `accounts_runtime` 身份；Accounts 读取 `POSTGRES_PASSWORD`，Billing 读取 `DATABASE_URL`。这替代下表中 Billing 的原路径规划。[GitOps PR #724](https://github.com/ai-workspace-infra/gitops/pull/724) 为草稿；Vault 记录和字段、两字段一致性、专用 JWT 授权及 PostgreSQL 角色权限尚待核验。共用数据库身份意味着两个应用不具备数据库角色级隔离。
 
+### PostgreSQL 与业务凭据路径汇总
+
+| 用途 | Vault KV 路径 | 字段 | 身份及消费方 | 状态 |
+| --- | --- | --- | --- | --- |
+| 数据库管理 | `kv/prod/database/postgresql/admin` | `password` | `root`，初始化、DDL、恢复和必要管理 | 字段存在；不注入业务应用 |
+| 数据库运维 | `kv/prod/database/postgresql/operator` | `password` | `operator`，限定范围的数据库维护 | 字段存在；不作为业务账号 |
+| 数据库审计 | `kv/prod/database/postgresql/auditor` | `password` | `auditor`，独立只读审计 | 字段存在；不作为业务账号 |
+| Accounts 数据库连接 | `kv/prod/Accounts-service` | `POSTGRES_PASSWORD` | `accounts_runtime` 的独立业务密码，交付给 `accounts-db-runtime` | 记录和字段尚未核实 |
+| Billing 数据库连接 | `kv/prod/Accounts-service` | `DATABASE_URL` | 同一 `accounts_runtime` 身份的完整连接串，交付给 `billing-db-runtime` | 记录和字段尚未核实 |
+
+业务连接目标为 `postgresql-postgresql.postgresql-prod.svc.cluster.local:5432/account`。`DATABASE_URL` 的账号和密码必须与 `POSTGRES_PASSWORD` 对应；密码中的 URL 特殊字符需编码，TLS 参数须符合数据库实际配置。不得把三权管理、运维或审计密码复制为业务密码。`accounts_runtime` 的存在、密码一致性、权限和两应用实际连接仍待验证；共用账号不提供应用间数据库角色隔离。
+
 | Kubernetes Secret | GitOps 规划的 Vault 路径 | 当前核查 |
 | --- | --- | --- |
 | `web-saas-prod/accounts-db-runtime` | `kv/prod/Accounts-service` | 当前 Vault 会话未能读取该记录，尚不能区分记录不存在还是权限不足。 |
