@@ -4,6 +4,16 @@
 
 用户已在 `kv/prod/Accounts-service` 添加 `ROOT_BOOTSTRAP_EMAIL` 和 `ROOT_BOOTSTRAP_PASSWORD`。只读检查确认两字段非空，bootstrap 密码与 PostgreSQL admin 密码不同，未记录字段值。[GitOps PR #732](https://github.com/ai-workspace-infra/gitops/pull/732) 已转为可审查状态，将字段交付到 `web-saas-prod/accounts-bootstrap`，仅供 Accounts 使用；复用只允许读取该 KV 记录的现有 JWT 身份。合并、SecretSynced、根账号初始化和 Accounts 业务就绪尚待验证；bootstrap 字段不是数据库用户凭据。
 
+## 注册验证 SMTP 凭据来源（2026-11-02，北京时间）
+
+SMTP 凭据由公共 Vault KV v2 记录提供，供后续配置和验证注册邮件发送流程使用。本文只记录逻辑路径、API/ACL 路径和字段名，不记录凭据值。
+
+| 用途 | Vault CLI 路径 | Vault KV v2 API / ACL 路径 | 字段 | 当前状态 |
+| --- | --- | --- | --- | --- |
+| Google SMTP 注册验证邮件 | `kv/prod/platform/smtp/google` | `kv/data/prod/platform/smtp/google` | `username`、`password` | 路径和字段由用户确认；GitOps/ESO 投递、SMTP 连接与注册验证邮件收发尚待配置和验证 |
+
+验证时应确认实际 SMTP 主机、端口、TLS/认证方式与应用配置匹配，再使用受控测试邮箱完成注册验证邮件发送及验证链接流程；仅有 KV 记录或 Secret 同步成功不能视为邮件链路验收通过。
+
 ## 业务 namespace 网络互通决定（2026-11-01，北京时间）
 
 用户确认允许 `web-saas-prod`、`postgresql-prod`、`ingress-prod`、`observability-prod`、`vault-prod` 五个业务 namespace 的 Pod 相互入站访问。[GitOps PR #729](https://github.com/ai-workspace-infra/gitops/pull/729) 在各 Flux 服务单元中增加 `business-namespaces-ingress` NetworkPolicy，目标为本 namespace 全部 Pod，来源使用五个 namespace 的名称选择器，放行所有端口和协议。
