@@ -1,5 +1,11 @@
 # PROD-K3S-V6 独立节点、集群冷启动规划与部署状态归档
 
+## 最新 V5 Vault 网络策略变更（2026-11-01，北京时间）
+
+为 V6 加入 V5 Vault Raft 做准备，在 V5 `platform-vault` 新增临时 NetworkPolicy `vault-raft-v6-migration`，选择 `app.kubernetes.io/name=vault-raft`。该策略保留原 `vault-raft-quarantine`，额外允许 TCP 8200/8201：入站来源限于当时 V6 Vault Pod `10.52.0.14/32` 及其可能经 Flannel SNAT 后使用的 WireGuard 地址 `10.254.250.2/32`；出站目标限于 `10.52.0.14/32`。变更通过现场 `kubectl apply` 执行，非 Flux 声明，清单由操作方保管；Pod IP 变化会使 `/32` 失效，须先核对后按受控方式更新。此策略不是对整个 V6 Pod CIDR 的放行。
+
+验证：V6 Vault Pod 到 V5 Vault Pod `10.42.0.135` 的 TCP 8200、8201 可连接；V5 Vault Pod 到 V6 Pod TCP 8200 可连接，8201 当时未连通，V6 Vault 仍处于 sealed 状态，不能将其归因确定为网络策略或报告 Raft 通信通过。V5 已公布的 Raft 地址仍为 V5 内部 Service DNS，V6 无法直接使用；TLS、稳定地址、Raft join、解封和 leader 迁移均未完成。原策略及现有业务访问保留；移除此临时策略前须确认 Vault 不再依赖该路径。
+
 ## 最新 WireGuard Pod 路由记录（2026-11-01，北京时间）
 
 V5 与 V6 的 `v5v6` WireGuard 接口已启用，隧道地址分别为 `10.254.250.1/30` 和 `10.254.250.2/30`。V5 peer 的 `AllowedIPs` 添加 `10.52.0.0/16`，V6 peer 添加 `10.42.0.0/16`；两端保留对端隧道 `/32`，并分别执行 `ip route replace <对端Pod CIDR> dev v5v6`。配置写入两端 wg-quick 文件；变更前配置在各节点 `/etc/wireguard/v5v6.conf.pre-pod-routes`，含私钥，不得提交或输出。此为现场操作，尚未固化 GitOps/Playbooks。
