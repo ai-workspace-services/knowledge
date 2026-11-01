@@ -9,15 +9,15 @@
 | --- | --- | --- |
 | 节点和独立盘 | ✅ 已验证 | Akamai `manbuzhe2026`、`jp-tyo-3`，实例 `109798839`、`172.237.5.48`；100 GB 盘 `18844637` 为 ext4，挂载 `/data`。[部署运行 #41251575217](https://github.com/ai-workspace-infra/Platform-Orchestrator/actions/runs/41251575217) 的 IaC 成功、部署失败。 |
 | OS 身份和安全基线 | ⚠️ 部分验证 | `root`、`operator`、`auditor` 用户与同名组存在，`auditor` SSH 可登录且无 sudo。`fail2ban`、`auditd`、UFW 未运行，容器集群按节点安全方案选择是否启用；必需的 SSH、主机和云防火墙基线仍需按声明核验。 |
-| K3s、Flux 与身份 | ⚠️ 部分验证 | K3s 运行，Flux `prod-k3s` 和 ESO 已就绪，GitOps revision `e5bc36a5fd9fb36d1f5a61324c06a426f075caee`。三账户已交付独立 kubeconfig；真实 `auditor` 可读取节点，Secret 读取、Deployment 创建、Pod exec 和 sudo 被拒绝；完整授权和独立回执仍待核对。 |
-| K3s 身份 Vault 归档 | ❌ 未完成 | 目标 KV 的旧记录关联不同集群 UID，归档脚本拒绝覆盖，运行在归档阶段退出 23；需受控凭据轮换和活跃集群安全续跑。 |
+| K3s、Flux 与身份 | ⚠️ 部分验证 | K3s 节点 Ready（v1.37.1+k3s1），Flux 管理根与单元 source 已就绪；单元 source 固定到 GitOps main SHA `c19f35185aa9004c0a973e49327d54889aa3a575`。root/operator/auditor kubeconfig 已分别生成；真实 auditor 身份可读 nodes、namespaces，但当前不能列出工作负载、事件、Service、PVC 或 HelmRelease。Secret、写入、exec、RBAC 修改和 impersonation 被拒绝。扩展只读状态权限的 GitOps PR #689 待合并，尚未调谐。 |
+| K3s 身份 Vault 归档 | ❌ 未完成 | 当前归档目标存在与本集群 UID 不匹配的旧记录，安全检查拒绝覆盖；在受控轮换/归档路径完成前，不得报告三身份 Vault 归档完成。 |
 | 公共 Vault TLS reader | ✅ 已验证 | 专用 JWT 公钥与当前集群匹配；单条 TLS 记录允许读取，相邻路径、错误 audience 和错误 ServiceAccount 拒绝。reader policy 包含 `auth/token/lookup-self`，不扩大 KV 读取范围。 |
-| ESO 与证书 | ⚠️ 部分验证 | SecretStore `Valid`，ExternalSecret `SecretSynced`；`vault-prod/vault-server-tls` 已生成且有 `tls.crt`、`tls.key`。证书有效至 2027-01-05，SAN 为 `*.svc.plus`、`svc.plus`；证书链、密钥匹配和集群内 SNI 仍待验证。 |
-| Vault | ❌ 未完成 | 容器 Running，`initialized=false`、`sealed=true`；初始化和解封由人工受控执行。当前 Vault 监听器日志显示 TLS disabled，必须修复并验证集群内 TLS，不能用 Flux Ready 替代服务验收。 |
-| PostgreSQL | ❌ 未完成 | PVC 已绑定；镜像拉取 `401 Unauthorized`，Pod 未配置 imagePullSecrets；数据库初始化、角色和备份恢复均待验收。 |
-| Observability | ❌ 未完成 | `datakit-dataway-secret` 与 `grafana-admin` 缺失，node-exporter 探针失败；监控链路未验收。 |
-| Web SaaS、Ingress 与 DNS | ❌ 未验收 | Web SaaS 等待 PostgreSQL；Ingress 等待依赖。运行使用 `dns_mode=none`，未请求迁移或 DNS 变更；V5/canonical DNS 继续保持不变。 |
-| 活跃集群续跑 | ❌ 未完成 | 现有 common 防护拒绝将活跃 Flux 图作为新节点重复 bootstrap；需绑定节点、PV、source/root 与 GitOps revision 后提供安全续跑入口。 |
+| ESO 与证书 | ✅ 已验证 | SecretStore `Valid`，ExternalSecret `SecretSynced`，`vault-prod/vault-server-tls` 已生成。证书有效至 2027-01-05，SAN 包含 `*.svc.plus`、`svc.plus`；完整链、证书与私钥公钥匹配、集群内 TLS/SNI `vault-selfhost-prod-v6.svc.plus` 均已验证。DNS 未启用；TLS 验证通过指定 SNI 直连集群 Service。 |
+| Vault | ❌ 未完成 | Pod Running 但 `0/1` Ready；只读 status 为 `initialized=false`、`sealed=true`。TLS 已启用，集群内受信任链与 `vault-selfhost-prod-v6.svc.plus` SNI 验证通过。Vault HelmRelease upgrade 因 StatefulSet readiness 等待超时而失败，PVC `data-vault-0` 仍 Bound（10 GiB）。按约定由 Vault owner 手动初始化与解封；未删除或重建 PVC。 |
+| PostgreSQL | ❌ 未完成 | HelmRelease 安装失败，Pod `ImagePullBackOff`；拉取 GHCR 固定 digest 返回未授权，Pod 未配置 `imagePullSecrets`，namespace 中没有可用拉取 Secret。PVC 20 GiB Bound。需由 owner 提供受控、最小权限镜像拉取凭据/声明后再验证；数据库初始化、三身份权限、备份恢复均未验收。 |
+| Observability | ❌ 未完成 | DataKit 为 `CreateContainerConfigError`（缺 `datakit-dataway-secret`）；Grafana 缺 `grafana-admin`，namespace 尚无 SecretStore/ExternalSecret。监控栈 Pod `4/5`，PVC 20 GiB Bound；node-exporter liveness 超时后拒绝连接并持续重启。GitOps PR #689 提高其资源预算，待合并与 Flux 调谐后复验。 |
+| Web SaaS、Ingress 与 DNS | ❌ 未验收 | Web SaaS 与 Ingress namespace 当前无资源；其 GitOps Kustomization 因 `vault-prod` 未就绪而阻塞，业务依赖尚未部署验收。全程 `dns_mode=none`，未请求迁移或 DNS 变更；V5/canonical DNS 未触碰。 |
+| 活跃集群续跑 | ✅ 已观察 | 活跃 K3s/Flux 管理根和已绑定 PVC 均保留；最新部署运行已完成 IaC，但部署阶段失败。当前无需重建节点或存储；后续只针对未就绪的 Flux 单元修复并核验回执。 |
 
 **身份交付顺序：** master 生成并验证独立证书和私有 kubeconfig → 各用户交付默认配置并以真实身份验收 RBAC → 通过受控 writer 归档 Vault KV → 校验回读后形成成功回执。Vault 归档失败不能产生完整成功回执；不得覆盖冲突记录或从管理员配置复制凭据。
 
@@ -148,10 +148,10 @@ PostgreSQL、Caddy、Web SaaS 共用 `distributed-web-saas-fullstack` chart 包�
 | 4 管理根 | ✅ 已观察 | 管理 source/root | `prod-k3s` Ready，GitOps commit `e5bc36a5…`；业务就绪另验 |
 | 4.5 主机安全基线 | ❌ 必需基线未完成验收 | SSH、账户授权、主机及云防火墙 | `fail2ban`、`auditd`、UFW 未运行，属于按节点安全方案选择的可选项；必需控制及拒绝证据待核验，详见 5.5 节 |
 | 5 ESO 与 TLS 身份 | ✅ 已验证 | ESO、专用身份和权限 | 指定 TLS KV 允许，邻接路径、错误 audience 和 ServiceAccount 被拒绝；SecretStore Valid |
-| 6 TLS 同步 | ⚠️ 部分完成 | 生成 `vault-prod/vault-server-tls` | SecretSynced，证书有效期和 SAN 已核对；链、密钥匹配及实际集群内 TLS 待验证 |
-| 7 Vault | ❌ 未完成 | 新 Raft 存储、初始化、unseal、内部认证 | 容器运行但未初始化、未解封；监听器 TLS disabled，须修复 |
-| 8 PostgreSQL | ❌ 未完成 | 新 PVC、空目标库、审查后的 SQL schema 和分权角色 | PVC 已绑定；GHCR 镜像匿名拉取 401，凭据、schema、权限及恢复待验收 |
-| 9 Observability | ❌ 未完成 | 新监控存储、采集、查询、Dashboard、告警 | 缺少 DataKit/Grafana Secret，node-exporter 探针失败；完整链路未验收 |
+| 6 TLS 同步 | ✅ 已验证 | `vault-prod/vault-server-tls` SecretSynced；证书有效期/SAN、完整链、证书密钥匹配及集群内 SNI/TLS 均已验证。 |
+| 7 Vault | ❌ 未完成 | Raft 初始化、unseal、内部认证与健康 | Pod 运行但未 Ready，`initialized=false`、`sealed=true`；TLS 已验证，HelmRelease 因 StatefulSet readiness 超时失败。需按约定人工初始化/unseal。 |
+| 8 PostgreSQL | ❌ 未完成 | 新 PVC、空目标库、审查后的 SQL schema 和分权角色 | HelmRelease 失败，GHCR digest 拉取未授权，缺少 imagePullSecret；PVC Bound。需要受控镜像凭据后验证；schema、权限及恢复待验收 |
+| 9 Observability | ❌ 未完成 | 监控存储、采集、查询、Dashboard、告警 | DataKit/Grafana Secret 缺失且无 SecretStore/ExternalSecret；栈 Pod 4/5，node-exporter 持续探针失败。PR #689 的资源调整待合并调谐，完整链路未验收 |
 | 10 Web SaaS | ❌ 未验收 | 应用、数据库连接和隔离验证模式 | 等待 PostgreSQL；业务身份及内部链路未验收 |
 | 11 Ingress | ❌ 未验收 | 最后部署 Caddy、TLS 和跨 namespace 路由 | 等待依赖；Host/SNI、域名解析尚待单独核验 |
 | 12 整体验收 | ❌ 未完成 | 迁移评审、业务恢复、回归、重跑与观察 | 尚未形成完整证据及待切换报告 |
@@ -199,9 +199,9 @@ PostgreSQL、Caddy、Web SaaS 共用 `distributed-web-saas-fullstack` chart 包�
 | --- | --- | --- |
 | V6 公共 Vault 专用身份 | ✅ 已配置与验收 | 指定记录允许，相邻路径、错误 audience、错误 SA 拒绝 |
 | 初始 TLS 来源 | ✅ 已明确规划 | 使用公共 Vault 已有证书记录，不在本机签发 |
-| ESO 到目标 Secret 同步 | ❌ 未验收 | 目标为 `vault-prod/vault-server-tls`，类型 `kubernetes.io/tls` |
-| 证书验证 | ❌ 未验收 | 信任链、有效期、证书/私钥匹配、SAN `vault-k3s-v6.svc.plus` |
-| 内部 TLS 连接契约 | ❌ 待核实 | Service FQDN 的 SAN 或受支持的 TLS server-name 配置须与实际调用一致 |
+| ESO 到目标 Secret 同步 | ✅ 已验证 | `vault-prod/vault-server-tls`，类型 `kubernetes.io/tls`，SecretSynced |
+| 证书验证 | ✅ 已验证 | 完整信任链、有效期、证书/私钥匹配、SAN `*.svc.plus`；实际 SNI `vault-selfhost-prod-v6.svc.plus` 握手通过 |
+| 内部 TLS 连接契约 | ✅ 已验证 | 通过集群内 Service 地址并使用 `vault-selfhost-prod-v6.svc.plus` SNI 完成受信任 TLS 握手；未依赖公网 DNS |
 | V6 Vault 内部运行凭据/ESO 路径 | ❌ 未验收 | V6 Vault 就绪后独立建立，不能依赖未启动的 V6 Vault 提供初始证书 |
 
 公共 Vault JWT 身份与 V6 Vault 内部认证分开管理；不使用静态 Vault token 兜底，不输出证书私钥、token 或 DSN。
@@ -238,13 +238,13 @@ V6 验收仍需确认上述路径的 Vault 实存与字段合同、ESO 映射和
 | 独立业务账户 | 服务独立 SA/Vault role/DB DML 角色；业务进程非 root；只授予必需对象权限 | ❌ 待逐服务部署与验收 |
 | 强制只读审计 | 独立系统身份与 RBAC；允许必要状态读取，拒绝配置写入、Secret、exec、提权和业务数据写入 | ✅ 已有有限范围允许/拒绝验收；❌ 完整审计覆盖待核实 |
 
-已验收审计身份为 `cluster-audit`，Kubernetes 身份为 `system:serviceaccount:flux-system:cluster-audit`。历史回执允许 `system-status`、`nodes`、`namespaces`；拒绝 `admin-kubeconfig`、`system-write`、`data-write`、`secrets`、`node-proxy`、`namespace-write-dry-run`。
+当前真实审计身份为 X.509 用户 `auditor`（Groups: `system:authenticated`），不是 `cluster-audit` ServiceAccount。可读 nodes、namespaces；当前无权列举 pods、events、services、PVC、HelmRelease。Secret 读取、资源写入、`pods/exec`、RBAC 修改、impersonation 均拒绝；auditor 无 passwordless sudo。GitOps PR #689 补充状态只读权限，尚未合并/调谐。
 
 该回执不证明已有通用 SSH 审计登录或 Flux/PVC/业务数据的完整只读盘点权限，也不等于所有业务服务已经落实分权。
 
 ## 7. 已有 V6 的续建策略与当前阻断
 
-当前阻断为身份凭据生成或 Vault 归档失败，以及 common 对活跃 Flux 图拒绝续跑。先核对节点、PV、Flux source/root 和固定 GitOps 声明的一致性，修复安全幂等续跑；再分类诊断身份失败、交付三个账户的独立 kubeconfig，并以真实身份验证 RBAC。不得暂停 Flux、重置集群、格式化已有盘或覆盖 Vault 凭据来绕过保护。
+当前运行阻断为 Vault 尚未人工初始化/unseal、PostgreSQL 镜像拉取授权缺失、Observability Secret 声明/来源缺失，以及 auditor 工作负载状态读取范围不足（修复 PR #689 待审）。Flux 的 Vault/PostgreSQL/Observability/Web SaaS/Ingress 单元未全部 Ready。按 owner 补齐受控凭据来源和 GitOps 声明后逐项由 Flux 调谐验证；不暂停 Flux、不重建集群或 PVC、不迁移数据、不修改 DNS，也不将 Vault 手动门禁自动化。
 
 ## 8. 数据、整体验收与未来升级
 
