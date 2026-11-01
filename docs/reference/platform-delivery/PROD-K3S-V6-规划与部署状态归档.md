@@ -1,13 +1,25 @@
 # PROD-K3S-V6 独立节点、集群冷启动规划与部署状态归档
 
+## 近期运行修复记录（2026-11-01，北京时间）
+
+以下状态以当次观察为准，后续调谐和健康检查需重新核验；历史章节中的状态不代表当前结果。
+
+- PostgreSQL 镜像包已公开，V6 成功拉取固定 digest；Pod `1/1 Running`，HelmRelease 在重试后 `Ready=True`。
+- Grafana SecretStore `Valid`、ExternalSecret `SecretSynced`。随后 Grafana 因 liveness 探针连接拒绝反复重启，监控栈 `4/5`；Grafana CPU 上限为 `40m`，启动探针尚未配置，资源与启动时限调整尚待实施。
+- [GitOps PR #720](https://github.com/ai-workspace-infra/gitops/pull/720) 已合并，DataKit 专用 SecretStore `Valid`、ExternalSecret `SecretSynced`，Pod `1/1 Running`；遥测接收仍待验证。
+- [GitOps PR #719](https://github.com/ai-workspace-infra/gitops/pull/719) 已合并。新建 Vault role/policy `prod-k3s-v6-ingress-tls-reader`，仅允许读取 `kv/data/CICD/domains/svc.plus` 和查询自身 token；绑定 `system:serviceaccount:ingress-prod:ingress-tls-reader`、audience `vault-prod-k3s-v6-ingress-tls-reader`。三个 TLS ExternalSecret 均 `SecretSynced`，Caddy Pod `1/1 Running`；身份拒绝测试与服务入口验收待完成。
+- Web SaaS 的旧 mount 引用通过 [GitOps PR #721](https://github.com/ai-workspace-infra/gitops/pull/721) 修复，PR 尚未合并。公共 Vault 新建 role/policy `prod-k3s-v6-web-saas-secrets-reader`，绑定 `system:serviceaccount:web-saas-prod:web-saas-secrets-reader` 和 audience `vault-prod-k3s-v6-web-saas-secrets-reader`，仅允许读取 `kv/data/prod/accounts/runtime` 和查询自身 token；该记录包含 `INTERNAL_SERVICE_TOKEN` 字段。真实身份允许/拒绝测试、Secret 同步及应用就绪待验证。
+
+上述两个 role 均使用 `jwt-prod-k3s-prod-k3s-v6` mount，role 类型为 JWT，`user_claim=sub`，batch token 有效期及上限为 10 分钟，禁止附加 default policy；命令和记录均不包含 token 或凭据值。
+
 ## 监控组件 Vault KV 路径（2026-11-01，北京时间）
 
 以下为 V6 当前确认的监控凭据来源，公共 Vault 地址为 `https://vault.svc.plus`。表中为 KV 逻辑路径；KV v2 policy 中对应的 API 路径在 `kv/` 后加 `data/`。Secret 值不写入 Git 或本文档。
 
 | 组件及用途 | Vault KV 路径 | Vault 字段 | Kubernetes Secret / 字段 | 交付状态 |
 | --- | --- | --- | --- | --- |
-| Grafana 管理凭据 | `kv/CICD/observability/grafana-admin` | `grafana_password` | `observability-prod/grafana-admin` / `password` | ESO 已同步，Grafana 所在 Pod `5/5 Running` |
-| DataKit DataWay | `kv/datakit/shared/dataway` | `DATAWAY_URL` | `observability-prod/datakit-dataway-secret` / `ENV_DATAWAY` | 用户确认使用共享入口；[GitOps PR #720](https://github.com/ai-workspace-infra/gitops/pull/720) 待调谐和验收 |
+| Grafana 管理凭据 | `kv/CICD/observability/grafana-admin` | `grafana_password` | `observability-prod/grafana-admin` / `password` | ESO 已同步；Grafana 当前重启中 |
+| DataKit DataWay | `kv/datakit/shared/dataway` | `DATAWAY_URL` | `observability-prod/datakit-dataway-secret` / `ENV_DATAWAY` | 已同步，Pod Running；遥测接收待验收 |
 
 两项分别使用专用 ServiceAccount、JWT role 和精确路径 policy；共享路径及非环境前缀路径是本次用户明确选择的生产例外。
 
