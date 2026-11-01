@@ -2,20 +2,20 @@
 
 ## 最新网络规划与实施记录（2026-11-01，北京时间）
 
-**状态：目标已声明，集群网络重建和 WireGuard 尚未执行。** V6 是新集群，用户确认没有生产数据；V5 继续提供服务，`vault.svc.plus` 的 DNS/CNAME 暂不切换。
+**状态：V6 控制面已按新网段重建，WireGuard 尚未配置。** V6 是新集群，用户确认没有生产数据；V5 继续提供服务，`vault.svc.plus` 的 DNS/CNAME 暂不切换。以下为 2026-11-01 的现场观察，不代表所有服务恢复或业务验收完成。
 
 | 项目 | V6 目标 | 当前观察或交付状态 |
 | --- | --- | --- |
-| Pod CIDR | `10.52.0.0/16` | GitOps [PR #713](https://github.com/ai-workspace-infra/gitops/pull/713) 已合并，commit `ed338494fe46b1df6ad7e5b957f188d05bceae18`；V6 节点实际 Pod CIDR 仍为 `10.42.0.0/24` |
-| Service CIDR | `10.53.0.0/16` | 目标已进入同一 GitOps 声明；V6 当前 Kubernetes Service IP 为 `10.43.0.1` |
-| CoreDNS | `10.53.0.10` | V6 当前 kube-dns Service IP 为 `10.43.0.10`；支持显式配置的 [Playbooks PR #956](https://github.com/ai-workspace-infra/playbooks/pull/956) 已合并，尚未在重建后的 V6 验证 |
+| Pod CIDR | `10.52.0.0/16` | V6 节点实际 Pod CIDR 为 `10.52.0.0/24`；GitOps [PR #713](https://github.com/ai-workspace-infra/gitops/pull/713) 已合并 |
+| Service CIDR | `10.53.0.0/16` | Kubernetes Service IP 为 `10.53.0.1` |
+| CoreDNS | `10.53.0.10` | kube-dns Service IP 为 `10.53.0.10`，CoreDNS Pod Running；实际域名解析尚未验证 |
 | 点对点 WireGuard | 打通 V5 ↔ V6 Pod 网络 | 两端此前均使用 `10.42.0.0/24`，不能直接路由重叠地址。V6 改为非重叠网段后实施；V6 当前未观察到 WireGuard 接口，握手与跨集群通信未验证 |
 
 实施顺序：先核实固定 GitOps 和 Playbooks 候选、CMDB、节点身份、数据卷及回退点；在 V6 新集群网络中配置三个目标地址并恢复 Flux、ESO 与 Vault 身份；确认 Pod 和 Service 的实际地址、CoreDNS 及服务健康。随后由 GitOps 声明双端 WireGuard 网络及非敏感引用，Playbooks 执行节点配置，IaC 负责云防火墙；隧道密钥留在受控凭据系统，不写入 Git。确认路由不与现有网络冲突、两端防火墙和转发范围符合声明后，验证握手、双向 Pod 流量及重启恢复，再核验 Vault API 与 Raft 所需路径和 TLS。
 
-现有 `vhosts/k3s-cluster-server` 是控制面引导 role：它会渲染 K3s 配置，并在检测到已安装时跳过安装；它没有实现将现存集群的 Pod CIDR、Service IP 和 etcd 状态迁移到新网段的流程。因此不能仅重跑 role 或重启节点就声称已完成网段迁移；需要先明确 V6 重建、凭据交接和验证路径。当前 V6 的 TLS SecretStore 已为 `Valid`、ExternalSecret 已为 `SecretSynced`；Vault HelmRelease 仍失败，Vault PVC `data-vault-0` 保持 Bound。此状态覆盖下方旧的 TLS 阻断现场记录。
+本次通过直接主机操作保留旧 etcd 目录、更新 K3s 配置并启动新的控制面，随后使用 Flux CLI 恢复控制器与管理根；没有通过 Playbook 执行重建。Flux 四个控制器 Running，`prod-k3s` 已应用 `main@sha1:ed338494fe46b1df6ad7e5b957f188d05bceae18`。新集群 UID 已变化；ESO HelmRelease 正在安装，SecretStore、ExternalSecret 和 Vault 尚未完成恢复验证。重建前的 `Valid` / `SecretSynced` 不能视为新集群的验证结果。
 
-V6 当前 Vault PVC 的 PV 回收策略为 `Delete`；重建前须核对卷数据和处理方式。`pre-network-change-prod-k3s-v6-1793534773` 是本机 etcd 快照，尚未证明可恢复，也不包含 PVC 数据。新集群的 UID 和 ServiceAccount 签名密钥可能变化；须在恢复 ESO 前重新核对公共 Vault JWT 信任，不能因沿用 `prod-k3s-v6` 名称就复用旧集群身份。WireGuard 就绪不代表 Vault 已加入 Raft、V6 已成为 leader 或业务/DNS 已切换。
+重建前 Vault PVC 的 PV 回收策略为 `Delete`；原数据目录未删除，新集群的 PVC 交接尚未验证。旧 etcd 目录保留在 `/opt/rancher/k3s/server/db-pre-cidr-rebuild`，其中 `pre-network-change-prod-k3s-v6-1793534773` 是本机快照，尚未证明可恢复，也不包含 PVC 数据。新集群 UID 已变化，须重新核对公共 Vault JWT 信任，不能因沿用 `prod-k3s-v6` 名称就复用旧集群身份。WireGuard 就绪不代表 Vault 已加入 Raft、V6 已成为 leader 或业务/DNS 已切换。
 
 ### 数据方向与断开 WireGuard 的条件
 
