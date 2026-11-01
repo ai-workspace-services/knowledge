@@ -176,6 +176,36 @@ UAT 可选择：
 | GCP Cloud Run | `kv/uat/serverless/gcp` | GCP Workload Identity Provider 和部署 Service Account |
 | Supabase | `kv/uat/serverless/supabase` | Supabase 项目标识和数据库连接合同 |
 
+#### UAT Serverless GCP bootstrap TL;DR
+
+`GCP_WORKLOAD_IDENTITY_PROVIDER` 是 Google Workload Identity Provider 的完整资源名，不是短名称或随机 token：
+
+```text
+projects/<PROJECT_NUMBER>/locations/global/workloadIdentityPools/<POOL_ID>/providers/<PROVIDER_ID>
+```
+
+最小流程：
+
+1. 在目标 GCP 项目创建或核对 Workload Identity Pool 和 OIDC Provider，issuer 使用 `https://token.actions.githubusercontent.com/`；attribute mapping 和 workflow/repository 条件必须与 GitHub Actions 工作流一致。
+2. 确认 provider 状态为 `ACTIVE`，并确认部署 Service Account 已授予所需的最小资源权限。
+3. 使用已认证的 Vault 管理终端执行 Platform-Orchestrator 的共享角色脚本，将运行时身份写入 `kv/uat/serverless/gcp`：
+
+   ```bash
+   export VAULT_ADDR=https://vault.svc.plus
+   export GCP_WORKLOAD_IDENTITY_PROVIDER='projects/.../locations/global/workloadIdentityPools/.../providers/...'
+   export GCP_SERVICE_ACCOUNT_EMAIL='...@....iam.gserviceaccount.com'
+
+   bash scripts/vault/bootstrap_shared_gcp_roles.sh \
+     --apply --write-runtime --runtime-environment uat
+   bash scripts/vault/bootstrap_shared_gcp_roles.sh \
+     --check --write-runtime --runtime-environment uat
+   ```
+
+   脚本只写入 provider 和 Service Account 字段，不输出值；共享 JWT role/policy 仍由同一脚本按 GitOps 声明校验和应用。
+4. 重新执行 UAT Serverless 编排，确认 IaC owner 的 GCP OIDC 认证成功，再检查 Cloud Run、Cloudflare、DNS（如选择 `none` 则不变更）和运行时 owner 回执。
+
+失败边界：`invalid_target` 通常表示 provider 不存在、被禁用、项目编号/池/provider 路径错误，或 Vault KV 中的值已过期。不能用 Service Account key、占位成功或 CI 通过替代运行时验收。Vault token、私钥和真实 provider 值不得写入 Git、文档或聊天记录。
+
 KV v2 API 路径在挂载点后增加 `data/`，例如 `kv/data/uat/serverless/supabase`；它与表中的逻辑路径引用同一记录。服务 owner 按用途申请最小权限，不将秘密值写入 GitOps、日志或交付回执。路径记录不代表该环境已经部署或验收。
 
 ### 4.3 PROD：受控渐进发布
