@@ -6,35 +6,46 @@
 
 ## 创建命令与脚本记录
 
-**状态：以下为待执行的命令模板，不是创建或验证成功的记录。** 现有执行脚本归 Playbooks 所有：[workload_identity_operation.py](https://github.com/ai-workspace-infra/playbooks/blob/main/scripts/workload_identity_operation.py) 调用 `vault_jwt_workload_identity.yml` 和 `vhosts/vault_jwt_workload_identity` role。执行时必须固定并记录实际 Playbooks commit；以上链接只用于定位入口，不代表固定运行版本。
-
-先准备已审查的 GitOps 身份操作声明及其干净 checkout、精确目标的 CMDB、已验证的 bootstrap 回执、已认证的 SSH host key 和隔离 SSH agent。`VAULT_ADDR` 必须与声明一致；`configure` 使用仅含声明的管理 policy、有效期不超过 1200 秒的短期 Vault token。凭据通过受控运行环境提供，不能写入脚本、命令参数、仓库、日志或回执。以下大写参数均为操作方提供的非敏感路径或摘要，须在执行前核对；不要用旧集群回执冒充当前集群证据。
+**状态：以下为待执行的 Vault CLI 命令模板，不是创建或验证成功的记录。** 执行前核验 GitOps 声明、CMDB、实际 cluster UID 和节点 UID、SSH host key、issuer 及集群签名公钥。使用受限、短期的 Vault 管理身份；token 通过受控环境提供，不写入命令参数、脚本、仓库、日志或回执。准备 `jq` 和经过核验的公钥 PEM 文件，不使用私钥。
 
 ```bash
-# 创建新 mount、policy 和 role；输出是脱敏回执，路径必须不存在。
-python3 "$PLAYBOOKS_DIR/scripts/workload_identity_operation.py" \
-  --mode configure \
-  --gitops "$GITOPS_DIR" --gitops-sha "$GITOPS_SHA" \
-  --operation-path "$IDENTITY_OPERATION_PATH" \
-  --cmdb "$CMDB_PATH" --cmdb-sha256 "$CMDB_SHA256" \
-  --bootstrap-receipt "$BOOTSTRAP_RECEIPT_PATH" \
-  --known-hosts "$VERIFIED_KNOWN_HOSTS_PATH" \
-  --receipt "$CONFIGURE_RECEIPT_PATH"
+export VAULT_ADDR="https://vault.svc.plus"
+CLUSTER_ID="<已声明并核验的集群ID>"
+MOUNT="jwt-prod-k3s-${CLUSTER_ID}"
+ROLE="prod-k3s-tls-reader"
+POLICY="prod-k3s-tls-reader"
+ISSUER="https://kubernetes.default.svc.cluster.local"
+AUDIENCE="vault-prod-k3s-tls"
+SUBJECT="system:serviceaccount:vault-prod:vault-tls-reader"
+PUBLIC_KEY_FILE="<已核验的JWT公钥PEM路径>"
 
-# 单独使用真实 ServiceAccount TokenRequest 验证允许与拒绝；另用新的回执路径。
-python3 "$PLAYBOOKS_DIR/scripts/workload_identity_operation.py" \
-  --mode verify \
-  --gitops "$GITOPS_DIR" --gitops-sha "$GITOPS_SHA" \
-  --operation-path "$IDENTITY_OPERATION_PATH" \
-  --cmdb "$CMDB_PATH" --cmdb-sha256 "$CMDB_SHA256" \
-  --bootstrap-receipt "$BOOTSTRAP_RECEIPT_PATH" \
-  --known-hosts "$VERIFIED_KNOWN_HOSTS_PATH" \
-  --receipt "$VERIFY_RECEIPT_PATH"
+# 人工核对：新 mount 不存在；同名 policy 不存在，或内容及所有消费者已审查。
+vault auth list
+vault policy list
+
+# 仅在新 mount 不存在且 policy 可安全创建时执行。
+vault auth enable -path="$MOUNT" jwt
+jq -n --arg issuer "$ISSUER" --rawfile key "$PUBLIC_KEY_FILE" \
+  '{bound_issuer:$issuer,jwt_validation_pubkeys:[$key]}' | \
+  vault write "auth/${MOUNT}/config" -
+vault policy write "$POLICY" - <<'POLICY_EOF'
+path "kv/data/CICD/domains/svc.plus" {
+  capabilities = ["read"]
+}
+path "auth/token/lookup-self" {
+  capabilities = ["read"]
+}
+POLICY_EOF
+vault write "auth/${MOUNT}/role/${ROLE}" \
+  role_type=jwt user_claim=sub bound_subject="$SUBJECT" \
+  bound_audiences="$AUDIENCE" token_policies="$POLICY" \
+  token_no_default_policy=true token_type=batch \
+  token_ttl=10m token_max_ttl=10m token_explicit_max_ttl=10m
 ```
 
-`configure` 成功只证明配置步骤完成；`verify` 须单独证明指定证书路径允许、相邻路径和错误 audience / ServiceAccount 拒绝。若创建中断，可能留下部分 Vault 配置；重试前读取脱敏失败阶段并检查现有对象。记录执行时间、目标实例和集群身份、GitOps/Playbooks SHA、mount、role、policy、命令模式、结果及允许/拒绝测试，不记录 token、JWT、证书私钥或秘密值。验证通过后才通过 GitOps 切换 SecretStore，再记录 Flux revision、SecretStore 与 ExternalSecret 状态。
+`vault policy write` 会覆盖同名 policy；仅在确认不存在时使用上面的创建命令。若已存在，先核对实际内容和消费者，内容完全匹配时复用，不执行覆盖。命令中的名称是规划示例，实际运行必须与已审查的 GitOps 声明一致。执行若中断，可能留下部分配置；重试前检查 mount、配置、role 和 policy，不盲目重复创建。
 
-执行记录应保留实际使用的非敏感名称和引用，包括 Vault 地址、环境、cluster ID、节点和实例标识、JWT mount、role、policy、namespace、ServiceAccount、audience、KV 路径和字段名、SecretStore、ExternalSecret 和目标 Secret 名称，以及命令中非敏感的文件路径、SHA 和操作模式。名称可以完整记录，不必统一替换为占位符；未确定或未创建的名称标为待定，不能把示例写成实际执行结果。token、ServiceAccount JWT、证书私钥、密码及其他凭据值不得记录。
+创建后以真实 ServiceAccount TokenRequest 验证指定证书路径允许、相邻路径及错误 audience 和 ServiceAccount 被拒绝；不得将 JWT、Vault token 或读取到的秘密输出到终端或日志。记录实际非敏感名称、目标、GitOps commit、公钥指纹、执行时间、命令和脱敏结果；未确定的名称标为待定。验证通过后才通过 GitOps 切换 SecretStore，并记录 Flux revision、SecretStore 与 ExternalSecret 状态。CLI 创建成功不等于上述验证或服务就绪。
 
 ## Vault、ESO 与 Secret 名称的关系
 
