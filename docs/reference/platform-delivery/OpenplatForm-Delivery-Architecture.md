@@ -195,6 +195,17 @@ DataKit 对接观测云作为独立的并行观测通道，不由 Grafana 转发
 
 ## 7. 身份、密钥、网络与数据保护
 
+| 控制域 | 责任边界 | 最低验收要点 |
+| --- | --- | --- |
+| Linux / 主机身份 | 系统管理、日常操作、审计身份分开；业务进程使用独立非 root 服务账户 | 实际身份登录与权限验证；审计身份读授权状态、拒绝写入/提权/读取管理秘密 |
+| Vault / ESO | Vault 管理短期身份与策略；ESO 按环境和服务同步所需 Secret；GitOps 只保存非敏感引用 | 核对 repo/workflow/ref、role、路径和 ServiceAccount；授权路径允许、相邻路径拒绝；不在日志与回执输出秘密 |
+| Kubernetes / Flux | Flux 依据 GitOps 声明调谐；集群 operator 与 auditor 使用独立 RBAC | 以真实身份检查允许/拒绝；审计身份无写、exec、Secret 读取或提权能力；记录 source 与运行版本 |
+| PostgreSQL | 管理/DDL、各服务业务 DML、只读审计分离 | 业务凭据只获必需 schema/对象权限；审计使用授权视图并验证写入拒绝；迁移单独核对备份恢复 |
+| 网络 / TLS | IaC 管云网络和 DNS；Traefik 管明确批准的业务入口；证书由受控身份与同步链路交付 | 检查入口 Host/path、TLS/SNI、证书链和回退路由；集群 API、数据库与管理面不公开暴露 |
+| state / 持久数据 | IaC state、数据盘、PVC 和数据库数据按目标独立管理；变更 owner 保留恢复路径 | 核对资源/卷身份、活动写者、备份及恢复；未验证前不格式化、覆盖、重建或切换写入权 |
+
+表格列出跨层控制摘要；具体身份配置、K3s role 与 V6 运行证据见下方五篇专项参考文档。
+
 - **三权分立：** 系统管理身份负责必要管理和恢复，不作为日常业务进程；每个业务使用独立的最小权限身份并渐进 rootless；审计身份由系统权限强制只读，不能依赖脚本约定或管理员 impersonation 证明。
 - **Secrets：** Vault 与 ESO 通过短期、受限身份交付 Secret。GitOps 保存非敏感引用；工作流、日志、制品与回执不包含秘密值。SIT/UAT/PROD 的 Vault role、路径、Kubernetes service account 与证书按环境隔离。
 - **集群访问：** Kubernetes root/operator/auditor 与 Linux OS 用户是不同的授权面。RBAC 按具体资源和动作验证允许及拒绝；审计角色不得 exec、写资源、读取 Secret 或提权。
