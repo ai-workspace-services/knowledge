@@ -1,6 +1,17 @@
 # PROD-K3S-V6 独立节点、集群冷启动规划与部署状态归档
 
-## Grafana 管理凭据来源（2026-11-01，北京时间）
+## 监控组件 Vault KV 路径（2026-11-01，北京时间）
+
+以下为 V6 当前确认的监控凭据来源，公共 Vault 地址为 `https://vault.svc.plus`。表中为 KV 逻辑路径；KV v2 policy 中对应的 API 路径在 `kv/` 后加 `data/`。Secret 值不写入 Git 或本文档。
+
+| 组件及用途 | Vault KV 路径 | Vault 字段 | Kubernetes Secret / 字段 | 交付状态 |
+| --- | --- | --- | --- | --- |
+| Grafana 管理凭据 | `kv/CICD/observability/grafana-admin` | `grafana_password` | `observability-prod/grafana-admin` / `password` | ESO 已同步，Grafana 所在 Pod `5/5 Running` |
+| DataKit DataWay | `kv/datakit/shared/dataway` | `DATAWAY_URL` | `observability-prod/datakit-dataway-secret` / `ENV_DATAWAY` | 用户确认使用共享入口；[GitOps PR #720](https://github.com/ai-workspace-infra/gitops/pull/720) 待调谐和验收 |
+
+两项分别使用专用 ServiceAccount、JWT role 和精确路径 policy；共享路径及非环境前缀路径是本次用户明确选择的生产例外。
+
+### Grafana 管理凭据来源
 
 V6 Grafana 管理凭据由公共 Vault 通过 ESO 同步。已只读核实目标 KV 记录存在且包含 `grafana_password` 字段；未记录凭据值。
 
