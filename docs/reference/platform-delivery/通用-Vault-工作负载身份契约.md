@@ -1,6 +1,38 @@
 # 通用 Vault 工作负载身份契约
 
-状态：仅为设计。现有声明和运行中的 Vault mount 在 owner 与调用方完成实现和验证前仍为有效配置。本文不授权写入 Vault、切换 Flux、迁移凭据或删除旧资源。
+状态：通用身份契约仍为设计，尚未完成通用声明及调用方实现。本文不自动授权写入 Vault、切换 Flux、迁移凭据或删除旧资源。
+
+**最新执行记录（2026-11-01，北京时间）：** 经用户明确要求，公共 Vault 的旧 `jwt-prod-k3s-v6` mount 已停用，其下旧 TLS reader role 随之删除，mount 签发的 token 已撤销；同名 reader policy 保留。当前 V6 SecretStore 仍引用旧 mount，证书同步失败。新集群专用 mount、role 和通用 GitOps 引用尚未创建或切换；执行前配置快照及脱敏操作记录由操作方保管。详见 [V6 最新部署状态](PROD-K3S-V6-规划与部署状态归档.md)。
+
+## 创建命令与脚本记录
+
+**状态：以下为待执行的命令模板，不是创建或验证成功的记录。** 现有执行脚本归 Playbooks 所有：[workload_identity_operation.py](https://github.com/ai-workspace-infra/playbooks/blob/main/scripts/workload_identity_operation.py) 调用 `vault_jwt_workload_identity.yml` 和 `vhosts/vault_jwt_workload_identity` role。执行时必须固定并记录实际 Playbooks commit；以上链接只用于定位入口，不代表固定运行版本。
+
+先准备已审查的 GitOps 身份操作声明及其干净 checkout、精确目标的 CMDB、已验证的 bootstrap 回执、已认证的 SSH host key 和隔离 SSH agent。`VAULT_ADDR` 必须与声明一致；`configure` 使用仅含声明的管理 policy、有效期不超过 1200 秒的短期 Vault token。凭据通过受控运行环境提供，不能写入脚本、命令参数、仓库、日志或回执。以下大写参数均为操作方提供的非敏感路径或摘要，须在执行前核对；不要用旧集群回执冒充当前集群证据。
+
+```bash
+# 创建新 mount、policy 和 role；输出是脱敏回执，路径必须不存在。
+python3 "$PLAYBOOKS_DIR/scripts/workload_identity_operation.py" \
+  --mode configure \
+  --gitops "$GITOPS_DIR" --gitops-sha "$GITOPS_SHA" \
+  --operation-path "$IDENTITY_OPERATION_PATH" \
+  --cmdb "$CMDB_PATH" --cmdb-sha256 "$CMDB_SHA256" \
+  --bootstrap-receipt "$BOOTSTRAP_RECEIPT_PATH" \
+  --known-hosts "$VERIFIED_KNOWN_HOSTS_PATH" \
+  --receipt "$CONFIGURE_RECEIPT_PATH"
+
+# 单独使用真实 ServiceAccount TokenRequest 验证允许与拒绝；另用新的回执路径。
+python3 "$PLAYBOOKS_DIR/scripts/workload_identity_operation.py" \
+  --mode verify \
+  --gitops "$GITOPS_DIR" --gitops-sha "$GITOPS_SHA" \
+  --operation-path "$IDENTITY_OPERATION_PATH" \
+  --cmdb "$CMDB_PATH" --cmdb-sha256 "$CMDB_SHA256" \
+  --bootstrap-receipt "$BOOTSTRAP_RECEIPT_PATH" \
+  --known-hosts "$VERIFIED_KNOWN_HOSTS_PATH" \
+  --receipt "$VERIFY_RECEIPT_PATH"
+```
+
+`configure` 成功只证明配置步骤完成；`verify` 须单独证明指定证书路径允许、相邻路径和错误 audience / ServiceAccount 拒绝。若创建中断，可能留下部分 Vault 配置；重试前读取脱敏失败阶段并检查现有对象。记录执行时间、目标实例和集群身份、GitOps/Playbooks SHA、mount、role、policy、命令模式、结果及允许/拒绝测试，不记录 token、JWT、证书私钥或秘密值。验证通过后才通过 GitOps 切换 SecretStore，再记录 Flux revision、SecretStore 与 ExternalSecret 状态。
 
 ## Vault、ESO 与 Secret 名称的关系
 
