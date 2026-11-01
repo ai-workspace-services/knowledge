@@ -201,8 +201,9 @@ projects/<PROJECT_NUMBER>/locations/global/workloadIdentityPools/<POOL_ID>/provi
 
    ```bash
    export VAULT_ADDR=https://vault.svc.plus
-   export GCP_WORKLOAD_IDENTITY_PROVIDER='projects/.../locations/global/workloadIdentityPools/.../providers/...'
-   export GCP_SERVICE_ACCOUNT_EMAIL='...@....iam.gserviceaccount.com'
+   PROJECT_NUMBER="$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')"
+   export GCP_WORKLOAD_IDENTITY_PROVIDER="projects/${PROJECT_NUMBER}/locations/global/workloadIdentityPools/${POOL_ID}/providers/${PROVIDER_ID}"
+   export GCP_SERVICE_ACCOUNT_EMAIL="github-actions-uat@${PROJECT_ID}.iam.gserviceaccount.com"
 
    bash scripts/vault/bootstrap_shared_gcp_roles.sh \
      --apply --write-runtime --runtime-environment uat
