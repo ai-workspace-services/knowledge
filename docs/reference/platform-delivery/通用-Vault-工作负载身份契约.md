@@ -34,6 +34,8 @@ python3 "$PLAYBOOKS_DIR/scripts/workload_identity_operation.py" \
 
 `configure` 成功只证明配置步骤完成；`verify` 须单独证明指定证书路径允许、相邻路径和错误 audience / ServiceAccount 拒绝。若创建中断，可能留下部分 Vault 配置；重试前读取脱敏失败阶段并检查现有对象。记录执行时间、目标实例和集群身份、GitOps/Playbooks SHA、mount、role、policy、命令模式、结果及允许/拒绝测试，不记录 token、JWT、证书私钥或秘密值。验证通过后才通过 GitOps 切换 SecretStore，再记录 Flux revision、SecretStore 与 ExternalSecret 状态。
 
+执行记录应保留实际使用的非敏感名称和引用，包括 Vault 地址、环境、cluster ID、节点和实例标识、JWT mount、role、policy、namespace、ServiceAccount、audience、KV 路径和字段名、SecretStore、ExternalSecret 和目标 Secret 名称，以及命令中非敏感的文件路径、SHA 和操作模式。名称可以完整记录，不必统一替换为占位符；未确定或未创建的名称标为待定，不能把示例写成实际执行结果。token、ServiceAccount JWT、证书私钥、密码及其他凭据值不得记录。
+
 ## Vault、ESO 与 Secret 名称的关系
 
 ```text
