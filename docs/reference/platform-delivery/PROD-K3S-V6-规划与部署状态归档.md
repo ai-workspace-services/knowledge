@@ -1,5 +1,20 @@
 # PROD-K3S-V6 独立节点、集群冷启动规划与部署状态归档
 
+## 最新 WireGuard Pod 路由记录（2026-11-01，北京时间）
+
+V5 与 V6 的 `v5v6` WireGuard 接口已启用，隧道地址分别为 `10.254.250.1/30` 和 `10.254.250.2/30`。V5 peer 的 `AllowedIPs` 添加 `10.52.0.0/16`，V6 peer 添加 `10.42.0.0/16`；两端保留对端隧道 `/32`，并分别执行 `ip route replace <对端Pod CIDR> dev v5v6`。配置写入两端 wg-quick 文件；变更前配置在各节点 `/etc/wireguard/v5v6.conf.pre-pod-routes`，含私钥，不得提交或输出。此为现场操作，尚未固化 GitOps/Playbooks。
+
+运行验证：V5 Vault Pod `10.42.0.135` → V6 Vault Pod `10.52.0.14` 的 ICMP 2/2 成功；反向 ICMP 2/2 成功。地址为当时的 Pod IP。TCP/TLS、网络策略、重启恢复、Vault Raft 和其他 Pod 尚未验证；ICMP 成功不代表业务或迁移完成。此前云防火墙 UDP 51820 对所有 IPv4/IPv6 来源开放，须收敛为对端 `/32` 并重新核验。
+
+本次实际步骤（peer 公钥为非敏感标识）：
+
+1. 两端检查 `net.ipv4.ip_forward=1`、当前 `wg show v5v6 allowed-ips` 与路由；将 `/etc/wireguard/v5v6.conf` 复制为同目录 `.pre-pod-routes`，以原权限保管。
+2. V5 将配置中的 AllowedIPs 设为 `10.254.250.2/32, 10.52.0.0/16`，执行 `wg set v5v6 peer 1D5N/pSpwqYKR3o/2UzIHsM0PJ0NxJiKLknDwHoao0I= allowed-ips 10.254.250.2/32,10.52.0.0/16`，再执行 `ip route replace 10.52.0.0/16 dev v5v6`。
+3. V6 将配置中的 AllowedIPs 设为 `10.254.250.1/32, 10.42.0.0/16`，执行 `wg set v5v6 peer k9qMFWg8XC/zbEKmQ27Q1h1URtGttqDN/qiYU6CTOHs= allowed-ips 10.254.250.1/32,10.42.0.0/16`，再执行 `ip route replace 10.42.0.0/16 dev v5v6`。
+4. 分别通过 `wg show v5v6 allowed-ips` 和 `ip route get` 核对运行态，从两侧 Vault Pod 执行 ICMP 探测。配置文件包含本节点私钥，编辑和检查时不得输出其内容；以上命令不包含私钥或 token。
+
+回退时先核对 Raft 和业务是否依赖隧道，再分别移除对端 Pod 网段的路由与 peer AllowedIPs，恢复对应持久配置并保留隧道 `/32`；不要直接断开正在承载写入的 Raft 连接。
+
 ## 最新网络规划与实施记录（2026-11-01，北京时间）
 
 **状态：V6 控制面已按新网段重建，WireGuard 尚未配置。** V6 是新集群，用户确认没有生产数据；V5 继续提供服务，`vault.svc.plus` 的 DNS/CNAME 暂不切换。以下为 2026-11-01 的现场观察，不代表所有服务恢复或业务验收完成。
