@@ -255,6 +255,57 @@ PROD 采用 `GitHub Release → Flux CD → Flagger（适用时）→ Traefik �
 
 DataKit 对接观测云作为独立的并行观测通道，不由 Grafana 转发，也不要求部署第二套主存储。对同一目标或信号启用第二采集路径前，明确 owner、标签、过滤、采样、保留期和上报成本，避免重复采集及高基数膨胀。组件协议、Chart 功能和容量须按固定版本验证。
 
+### Agent Proxy 监控采集认证 bootstrap TL;DR
+
+Agent Proxy 节点上的 Vector 使用 Vault KV v2 数据路径
+`kv/data/CICD/observability` 的 `user`、`password` 作为监控指标
+remote-write 凭据。所有 Agent Proxy 共用一个 Vault AppRole；每个节点使用独立
+SecretID。该角色只读取上述业务密钥路径，另允许查询自身权限和续期自身 token。
+
+在部署或更新 Agent Proxy 的 Vector 采集配置**之前**，完成以下步骤：
+
+1. 固定并审查包含监控 AppRole bootstrap 脚本的 Platform-Orchestrator 版本，以及
+   包含对应 policy 和 workload identity 声明的 GitOps 版本。确认 Vault 的
+   `approle` auth mount 已启用；脚本不会创建该 mount。
+2. 在 Platform-Orchestrator checkout 中，使用具有角色和策略管理权限的短期
+   Vault 管理会话执行。`GITOPS_ROOT` 指向上述已审查的 GitOps checkout：
+
+   ```bash
+   export VAULT_ADDR=https://vault.svc.plus
+   export GITOPS_ROOT="/path/to/reviewed/gitops"
+   # 在受控会话中取得短期 VAULT_TOKEN，不要将 token 写入文档或命令历史。
+   : "${VAULT_TOKEN:?需要已认证的短期 Vault 管理 token}"
+
+   python3 -m pip install -r scripts/vault/requirements.txt
+   python3 scripts/vault/bootstrap_agent_proxy_observability_approle.py --apply
+   python3 scripts/vault/bootstrap_agent_proxy_observability_approle.py --check
+   ```
+
+   `--apply` 只创建缺失的专用角色和策略；若已有配置与声明不一致，脚本停止，
+   需先检查现状。`--check` 核对 Vault 中的角色和策略，不签发节点 SecretID。
+3. 通过受控 bootstrap 为每个节点签发、分发独立 SecretID 和共享 RoleID，放入
+   节点 root 可读的 `/run/agent-proxy-vector-auth/role-id` 和
+   `/run/agent-proxy-vector-auth/secret-id`，文件权限为 `0600`。当前
+   声明的 SecretID 有效期为 24 小时，必须在到期前及节点重启后重新注入；此
+   分发和刷新机制须先完成，才能启用依赖它的 Vector 配置。
+4. 使用 Terraform CMDB 的 `agent_proxy` 组部署 Playbooks 采集角色，在执行端设置：
+
+   ```bash
+   export VAULT_ADDR=https://vault.svc.plus
+   export AGENT_PROXY_VECTOR_VAULT_KV_PATH=kv/data/CICD/observability
+   ```
+
+   节点 Vault Agent 通过 AppRole 认证并读取 KV 的 `user`、`password`，将结果
+   写入受限的 `/run` 文件。Vector 从该文件取得 remote-write 认证信息；Agent
+   默认每 5 分钟刷新 KV，定时任务比较凭据，变化时校验配置并重启 Vector。认证信息不应
+   出现在命令输出、日志或交付回执中。
+5. 用实际节点身份核验目标路径读取成功、相邻密钥读取被拒绝；再核验 Vault
+   Agent 和 Vector 服务状态、remote-write 接收端及 Grafana 中的新鲜指标。角色
+   存在或脚本 `--check` 成功不能替代实际采集验收。
+
+该 bootstrap 脚本、GitOps 声明和 Playbooks 角色目前仍是待合入的配套变更；合入、
+创建角色、SecretID 分发和节点运行验收须分别确认，不能仅凭本文假定已生效。
+
 ## 7. 身份、密钥、网络与数据保护
 
 | 控制域 | 责任边界 | 最低验收要点 |
