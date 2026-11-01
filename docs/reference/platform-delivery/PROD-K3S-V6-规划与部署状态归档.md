@@ -1,5 +1,20 @@
 # PROD-K3S-V6 独立节点、集群冷启动规划与部署状态归档
 
+## 最新网络规划与实施记录（2026-11-01，北京时间）
+
+**状态：目标已声明，集群网络重建和 WireGuard 尚未执行。** V6 是新集群，用户确认没有生产数据；V5 继续提供服务，`vault.svc.plus` 的 DNS/CNAME 暂不切换。
+
+| 项目 | V6 目标 | 当前观察或交付状态 |
+| --- | --- | --- |
+| Pod CIDR | `10.52.0.0/16` | GitOps [PR #713](https://github.com/ai-workspace-infra/gitops/pull/713) 已合并，commit `ed338494fe46b1df6ad7e5b957f188d05bceae18`；V6 节点实际 Pod CIDR 仍为 `10.42.0.0/24` |
+| Service CIDR | `10.53.0.0/16` | 目标已进入同一 GitOps 声明；V6 当前 Kubernetes Service IP 为 `10.43.0.1` |
+| CoreDNS | `10.53.0.10` | V6 当前 kube-dns Service IP 为 `10.43.0.10`；支持显式配置的 [Playbooks PR #956](https://github.com/ai-workspace-infra/playbooks/pull/956) 尚未合并 |
+| 点对点 WireGuard | 打通 V5 ↔ V6 Pod 网络 | 两端此前均使用 `10.42.0.0/24`，不能直接路由重叠地址。V6 改为非重叠网段后实施；V6 当前未观察到 WireGuard 接口，握手与跨集群通信未验证 |
+
+实施顺序：先核实固定 GitOps 和 Playbooks 候选、CMDB、节点身份、数据卷及回退点；在 V6 新集群网络中配置三个目标地址并恢复 Flux、ESO 与 Vault 身份；确认 Pod 和 Service 的实际地址、CoreDNS 及服务健康。随后由 GitOps 声明双端 WireGuard 网络及非敏感引用，Playbooks 执行节点配置，IaC 负责云防火墙；隧道密钥留在受控凭据系统，不写入 Git。确认路由不与现有网络冲突、两端防火墙和转发范围符合声明后，验证握手、双向 Pod 流量及重启恢复，再核验 Vault API 与 Raft 所需路径和 TLS。
+
+V6 当前 Vault PVC 的 PV 回收策略为 `Delete`；重建前须核对卷数据和处理方式。`pre-network-change-prod-k3s-v6-1793534773` 是本机 etcd 快照，尚未证明可恢复，也不包含 PVC 数据。新集群的 UID 和 ServiceAccount 签名密钥可能变化；须在恢复 ESO 前重新核对公共 Vault JWT 信任，不能因沿用 `prod-k3s-v6` 名称就复用旧集群身份。WireGuard 就绪不代表 Vault 已加入 Raft、V6 已成为 leader 或业务/DNS 已切换。
+
 ## 最新现场记录：公共 Vault 身份清理（2026-11-01，北京时间）
 
 本节为对 `172.237.24.232` 的最新只读核查及公共 Vault 操作记录，优先于下方历史部署状态；下方所列其他节点地址、PVC、服务和验收仅代表当时证据，不能作为当前集群状态。
