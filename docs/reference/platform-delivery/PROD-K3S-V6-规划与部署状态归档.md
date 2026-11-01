@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | Pod CIDR | `10.52.0.0/16` | GitOps [PR #713](https://github.com/ai-workspace-infra/gitops/pull/713) 已合并，commit `ed338494fe46b1df6ad7e5b957f188d05bceae18`；V6 节点实际 Pod CIDR 仍为 `10.42.0.0/24` |
 | Service CIDR | `10.53.0.0/16` | 目标已进入同一 GitOps 声明；V6 当前 Kubernetes Service IP 为 `10.43.0.1` |
-| CoreDNS | `10.53.0.10` | V6 当前 kube-dns Service IP 为 `10.43.0.10`；支持显式配置的 [Playbooks PR #956](https://github.com/ai-workspace-infra/playbooks/pull/956) 尚未合并 |
+| CoreDNS | `10.53.0.10` | V6 当前 kube-dns Service IP 为 `10.43.0.10`；支持显式配置的 [Playbooks PR #956](https://github.com/ai-workspace-infra/playbooks/pull/956) 已合并，尚未在重建后的 V6 验证 |
 | 点对点 WireGuard | 打通 V5 ↔ V6 Pod 网络 | 两端此前均使用 `10.42.0.0/24`，不能直接路由重叠地址。V6 改为非重叠网段后实施；V6 当前未观察到 WireGuard 接口，握手与跨集群通信未验证 |
 
 实施顺序：先核实固定 GitOps 和 Playbooks 候选、CMDB、节点身份、数据卷及回退点；在 V6 新集群网络中配置三个目标地址并恢复 Flux、ESO 与 Vault 身份；确认 Pod 和 Service 的实际地址、CoreDNS 及服务健康。随后由 GitOps 声明双端 WireGuard 网络及非敏感引用，Playbooks 执行节点配置，IaC 负责云防火墙；隧道密钥留在受控凭据系统，不写入 Git。确认路由不与现有网络冲突、两端防火墙和转发范围符合声明后，验证握手、双向 Pod 流量及重启恢复，再核验 Vault API 与 Raft 所需路径和 TLS。
@@ -16,6 +16,16 @@
 现有 `vhosts/k3s-cluster-server` 是控制面引导 role：它会渲染 K3s 配置，并在检测到已安装时跳过安装；它没有实现将现存集群的 Pod CIDR、Service IP 和 etcd 状态迁移到新网段的流程。因此不能仅重跑 role 或重启节点就声称已完成网段迁移；需要先明确 V6 重建、凭据交接和验证路径。当前 V6 的 TLS SecretStore 已为 `Valid`、ExternalSecret 已为 `SecretSynced`；Vault HelmRelease 仍失败，Vault PVC `data-vault-0` 保持 Bound。此状态覆盖下方旧的 TLS 阻断现场记录。
 
 V6 当前 Vault PVC 的 PV 回收策略为 `Delete`；重建前须核对卷数据和处理方式。`pre-network-change-prod-k3s-v6-1793534773` 是本机 etcd 快照，尚未证明可恢复，也不包含 PVC 数据。新集群的 UID 和 ServiceAccount 签名密钥可能变化；须在恢复 ESO 前重新核对公共 Vault JWT 信任，不能因沿用 `prod-k3s-v6` 名称就复用旧集群身份。WireGuard 就绪不代表 Vault 已加入 Raft、V6 已成为 leader 或业务/DNS 已切换。
+
+### 数据方向与断开 WireGuard 的条件
+
+**以下为规划，尚未执行数据补齐、写入方切换或隧道断开。** WireGuard 用于迁移期间的跨集群连接；V6 正式运行时，应用、Vault、数据库、DNS 和后台任务不得依赖 V5 的隧道地址。
+
+1. 迁移前 V5 继续作为业务写入方。通过 WireGuard 向 V6 复制数据，记录每次同步的边界和结果；隧道中断期间 V5 可以继续产生新数据，不能把旧同步结果当作当前一致。
+2. 恢复连接后，以最近成功边界为起点重新核对和补传；结合业务唯一标识、版本及内容校验检查遗漏、重复和冲突，不能仅凭时间戳证明一致。
+3. 在另行授权的切换窗口，暂停或隔离 V5 的所有写入入口、排空在途请求，完成最终补齐和一致性检查，再开放 V6 正式写入。`vault.svc.plus` CNAME 暂不切换。
+4. 断开隧道前，确认 V6 应用连接及依赖已指向 V6 或其他独立服务并完成观察；断开后验证业务读写、服务重启和恢复。若切换后发现 V5 新写入，以切换基线识别遗漏、预览冲突并幂等补入经确认数据，不以旧库覆盖 V6。
+5. Vault Raft 单独验证：两节点均为 voter 时，断开隧道可能丢失 quorum。先确认 V6 已追平并实际成为 leader，按受控流程移除 V5 peer，验证 V6 单节点持续可读写后才能断开；单节点不构成高可用。Raft 加入、领导权变更和 peer 移除均须以实际回执为准。
 
 ## 历史现场记录：公共 Vault 身份清理（2026-11-01，北京时间）
 
