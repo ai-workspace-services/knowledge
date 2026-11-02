@@ -40,6 +40,23 @@
   - 入口 443、批次域名 DNS/TLS、SMTP 注册验证邮件（`kv/prod/platform/smtp/google` 尚未配置 ESO 同步与应用挂载）及 V5→V6 业务数据迁移属于独立验收项，不因上述 4 个工作负载 `1/1 Ready` 视为全部生产验收通过。
   - **回退范围**：GitOps 配置可通过 revert [PR #741](https://github.com/ai-workspace-infra/gitops/pull/741)（`4405e98`）并重新调谐 `web-saas-prod` 无状态回退；数据库增量补齐的 4 张表与 `billing_plans` 种子不修改原有 6 张自举表数据。
 
+### 4. 独立现场复核与集群整体验收边界（2026-11-02 12:16，北京时间）
+
+通过 SSH 对 `172.237.24.232` 只读复核，并查询 GitHub 实际合并记录。GitOps #741、Playbooks #957、Knowledge #286 均已合并，SHA 与上述交付记录一致；Web SaaS 的 Flux revision 为 `4405e986703fab53421e6460603b61676d5f843c`，HelmRelease 与 Kustomization 均 Ready。
+
+- 四个应用 Deployment 的 generation 与 observedGeneration 一致，均为 `1/1`；旧 ReplicaSet 均已缩容为 0。Accounts/Content Pod 已运行约 66/75 分钟，Billing/Console 约 21 分钟，累计重启均为 0；实际 imageID 与固定 digest 一致。
+- 从 Console 容器经集群 Service 读取 Accounts `/healthz`、`/readyz`、`/api/ping`，Billing `/readyz`、`/api/ping`，Console `/healthz`、`/api/ping`、`/`，Content `/healthz`，全部返回 200；四个 Service 均有 EndpointSlice，`nginx -t` 成功。近 15 分钟 Accounts/Billing 日志均未检出缺表错误，Accounts 有 15 次订阅访问对账成功记录。
+- 数据库只读查询确认 public 有 51 张表，四张修复表和 `pgcrypto` 已存在；`users`/`tenants`/`tenant_domains`/`billing_plans` 当前行数为 3/1/1/19。对照固定 Accounts commit 的原生 schema 74 张表，仍缺 23 张原生表；`schema_migrations`、`cloud_vendor_costs` 也不存在。因此仅通过本轮应用启动与增量修复验收，完整 schema/业务数据迁移验收仍未完成。
+
+| 集群剩余项 | 当前现场证据 | 验收结论 |
+| --- | --- | --- |
+| Observability / Datakit | Datakit Pod 当前 `1/1`，但 HelmRelease 和 `observability-prod` Kustomization 为 False；累计重启 9 次，最近一次终止为 `OOMKilled`（退出码 137），内存 request/limit 为 `64Mi`/`128Mi` | 尚未通过，需处理资源与调谐失败状态 |
+| Caddy 公网 HTTPS | LoadBalancer Service external IP 为 pending，Service `443` 对应 NodePort `22299`；使用 V6 域名 SNI 直连节点 `443` 未建立 HTTPS 连接，节点 DNS 查询未返回该域名地址 | 尚未通过，仍需完成 ServiceLB、DNS 和 TLS 入口验收；本次直连探测跳过证书校验，不构成证书有效性证明 |
+| 数据库运行身份 | 当前管理连接 `postgres` 的 `rolsuper=true`；应用使用该临时管理连接的例外仍未退出 | 最小权限身份验收未完成 |
+| SMTP / 注册验证 | 仍按前节列为独立交付与收发验证任务 | 本轮未验收 |
+
+本轮仅做合并记录核查、状态读取、健康 HTTP 请求和数据库只读查询；没有重放 Playbooks、修改数据库对象或触发新一轮部署。四个业务应用就绪不代表 V6 全部集群服务或生产切换验收通过。
+
 ## Accounts 应用根账号 bootstrap 字段（2026-11-01，北京时间）
 
 用户已在 `kv/prod/Accounts-service` 添加 `ROOT_BOOTSTRAP_EMAIL` 和 `ROOT_BOOTSTRAP_PASSWORD`。只读检查确认两字段非空，bootstrap 密码与 PostgreSQL admin 密码不同，未记录字段值。[GitOps PR #732](https://github.com/ai-workspace-infra/gitops/pull/732) 已转为可审查状态，将字段交付到 `web-saas-prod/accounts-bootstrap`，仅供 Accounts 使用；复用只允许读取该 KV 记录的现有 JWT 身份。合并、SecretSynced、根账号初始化和 Accounts 业务就绪尚待验证；bootstrap 字段不是数据库用户凭据。
