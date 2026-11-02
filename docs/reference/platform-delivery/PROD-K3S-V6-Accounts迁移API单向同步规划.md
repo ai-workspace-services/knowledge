@@ -6,7 +6,10 @@
 
 ### 2026-11-02 服务 token 发布准备（最新）
 
-Accounts #297 已合并，迁移授权改用 `INTERNAL_SERVICE_TOKEN`。现场 V5 与 V6 分别运行独立 email-union 发布线，不能直接用 main 镜像替换。V5 回补 [Accounts #296](https://github.com/ai-workspace-services/accounts/pull/296) 已更新，V6 回补 [Accounts #298](https://github.com/ai-workspace-services/accounts/pull/298) 已提交；两者定向授权测试及 gitleaks 检查通过，尚待合并与固定镜像发布。当前两端业务 Deployment 尚未因本次变更更新。共享 token 可授权全部迁移 scope，不能区分个人操作者；备份、schema 和冲突门禁仍适用。
+Accounts #296、#298 已合并，V5 合并提交 `85263b78bc4398ff11acc19a1097b99bd2cc628e`，V6 合并提交 `a0a867f0c7b9bf9480f5db42a4b7aec316daa9fb`。两端固定镜像已核验并经 SSH 预拉取成功；GitOps 镜像声明分别提交 [#750](https://github.com/ai-workspace-infra/gitops/pull/750) 和 [#751](https://github.com/ai-workspace-infra/gitops/pull/751)，声明与密钥检查通过，待合并。两端业务 Pod 尚未由本次操作更新。两端现有 `web-saas-secrets` 均包含 `INTERNAL_SERVICE_TOKEN` 字段，未读取字段值。
+
+
+Accounts #297 已合并，迁移授权改用 `INTERNAL_SERVICE_TOKEN`。现场 V5 与 V6 分别运行独立 email-union 发布线，不能直接用 main 镜像替换。V5 回补 [Accounts #296](https://github.com/ai-workspace-services/accounts/pull/296) 已更新，V6 回补 [Accounts #298](https://github.com/ai-workspace-services/accounts/pull/298) 已提交；两者定向授权测试及 gitleaks 检查通过，已合并并发布固定镜像。当前两端业务 Deployment 尚未因本次变更更新。共享 token 可授权全部迁移 scope，不能区分个人操作者；备份、schema 和冲突门禁仍适用。
 
 
 ### V5 Accounts 发布状态（2026-11-02，最新）
