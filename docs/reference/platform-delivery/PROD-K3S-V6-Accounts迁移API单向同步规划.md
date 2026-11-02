@@ -4,6 +4,13 @@
 
 ## 实施进度与今晚切换要求（2026-11-02）
 
+### 2026-11-02 Accounts 服务 token 授权发布验收（最新）
+
+GitOps [#750](https://github.com/ai-workspace-infra/gitops/pull/750)、[#751](https://github.com/ai-workspace-infra/gitops/pull/751) 已合并，Flux 自动调谐完成。V5 Accounts 固定提交 `85263b78bc4398ff11acc19a1097b99bd2cc628e`，V6 固定提交 `a0a867f0c7b9bf9480f5db42a4b7aec316daa9fb`，两端 Pod 均 `1/1 Running`、滚动更新成功，公网 `/api/ping` 报告的提交和镜像与声明一致。
+
+从各节点使用各自 Secret 内的 `INTERNAL_SERVICE_TOKEN` 验证 `POST /api/admin/migration/authorize` 的 `source.read`，均返回 `200`；错误 token 均返回 `401`，未输出凭据。两端 `GET /api/migrations/v1/plans/<测试UUID>` 仍返回 `404`，迁移 listener/路由尚未验收；本次没有执行快照、预览或迁移写入。
+
+
 ### 2026-11-02 服务 token 发布准备（最新）
 
 Accounts #296、#298 已合并，V5 合并提交 `85263b78bc4398ff11acc19a1097b99bd2cc628e`，V6 合并提交 `a0a867f0c7b9bf9480f5db42a4b7aec316daa9fb`。两端固定镜像已核验并经 SSH 预拉取成功；GitOps 镜像声明分别提交 [#750](https://github.com/ai-workspace-infra/gitops/pull/750) 和 [#751](https://github.com/ai-workspace-infra/gitops/pull/751)，声明与密钥检查通过，待合并。两端业务 Pod 尚未由本次操作更新。两端现有 `web-saas-secrets` 均包含 `INTERNAL_SERVICE_TOKEN` 字段，未读取字段值。
