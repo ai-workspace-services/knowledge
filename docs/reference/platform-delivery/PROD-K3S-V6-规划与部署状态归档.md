@@ -2,6 +2,9 @@
 
 ## Accounts 迁移 API 单向快照规划（2026-11-02）
 
+构件及仓库治理最新记录：Accounts #289 已合并为 `677fb48ef92be426904864f8f849a1e9ac044bab`，GHCR固定镜像digest核实为 `sha256:be8e7ebb8017e453006a042e83a97c8e7f4ddb60503fe38837bd515dd44621e6`（linux/amd64）。未派发部署流水线或更新节点；V5普通Accounts managed runtime检查点兼容仍须先验证，不能把API读取兼容当作普通服务可升级证明。GitOps旧PR #728已关闭；PR #747仅精简PR检查为声明格式与敏感信息扫描，未改变应用声明。详见下链规划的最新进度。
+
+
 实施进度：用户确认今晚准备V5→V6迁移/切换，V5 Accounts允许直接更新固定版本。源检查点兼容修复已提交 [Accounts #289](https://github.com/ai-workspace-services/accounts/pull/289)（`03fcac83`），单元测试、隔离PG17 API回归及V5原生SQL合成数据迁移通过。生产部署、token、监听器、备份恢复与迁移尚未执行；后续发布构件和逐阶段回执不能由测试结果替代。最终可变状态追齐拟使用源停写后的新快照及独立最终候选库，避免覆盖演练库冲突。
 
 本轮选择 [Accounts 独立迁移 API + migratectl transfer-api](PROD-K3S-V6-Accounts迁移API单向同步规划.md)：Mac 从 Vault 读取专用短期 token，经 HTTPS 获取 V5 一致性快照并在 V6 候选库预览；快照/预览无需暂停服务。源/目标 listener 使用各自集群内的独立数据库身份，不把应用 DATABASE_URL 交给 Mac。当前API固定42表，缺失记录插入、同键内容变化冲突即停，不等于持续覆盖或全库复制。
