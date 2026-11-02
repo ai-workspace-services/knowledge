@@ -8,6 +8,8 @@
 
 V6 的 Accounts 使用可配置的明文环境变量 `XWORKMATE_SHARED_TENANT_DOMAIN=svc.plus`，由 GitOps 的 `web-saas-prod` HelmRelease 声明。该值用于初始化 XWorkmate 共享租户域名，也是生成随机租户域名的后缀；V5 使用相同值。GitOps 合并、Flux 调谐、Accounts 启动及租户解析尚待验证。该声明不创建 DNS 记录，也不切换流量；生成的租户子域名仍需单独验证 DNS、TLS 和入口。
 
+身份声明检查发现 `web-saas-secrets-reader` 的操作声明仍引用旧 mount，而实际 SecretStore 已使用 `jwt-prod-k3s-prod-k3s-v6`。[GitOps PR #740](https://github.com/ai-workspace-infra/gitops/pull/740) 对齐操作声明，并声明新 mount 的精确 role 管理权限；尚未合并或向 Vault 写入。旧权限暂时保留，清理前需核对消费者。
+
 ## 注册验证 SMTP 凭据来源（2026-11-02，北京时间）
 
 SMTP 凭据由公共 Vault KV v2 记录提供，供后续配置和验证注册邮件发送流程使用。本文只记录逻辑路径、API/ACL 路径和字段名，不记录凭据值。
