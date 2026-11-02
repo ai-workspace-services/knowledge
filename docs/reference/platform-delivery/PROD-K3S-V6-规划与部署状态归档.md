@@ -1,5 +1,23 @@
 # PROD-K3S-V6 独立节点、集群冷启动规划与部署状态归档
 
+## V6 三个业务批次域名 DNS 交付（2026-11-02 14:51，北京时间）
+
+用户反馈 `console-selfhost-prod-v6.svc.plus` 浏览器报 `ERR_NAME_NOT_RESOLVED`。只读核对确认权威 DNS 为 NXDOMAIN，而 `curl --noproxy '*' --resolve` 访问 V6 节点 443 的首页为 HTTP 200、TLS 校验结果 0。此前的强制解析验收不能替代真实 DNS 交付。
+
+本次通过受限目标的单次 Ansible 操作，只新增以下原本不存在的记录，没有删除或覆盖记录：
+
+| 类型 | 域名 | 目标 | TTL | Cloudflare 代理 |
+| --- | --- | --- | --- | --- |
+| A | `console-selfhost-prod-v6.svc.plus` | `172.237.24.232` | 300 | DNS-only |
+| A | `accounts-selfhost-prod-v6.svc.plus` | `172.237.24.232` | 300 | DNS-only |
+| A | `billing-selfhost-prod-v6.svc.plus` | `172.237.24.232` | 300 | DNS-only |
+
+Ansible 退出码为 0，Cloudflare API 回读确认三条记录的类型、地址、TTL 和代理状态正确。Google 与 Cloudflare 的 DNS-over-HTTPS 查询均返回 `172.237.24.232`；V6 节点不带 `--resolve` 访问 Console 首页得到 HTTP 200、TLS=0。控制端使用 `curl --doh-url https://cloudflare-dns.com/dns-query --noproxy '*'`，不带 `--resolve` 或 `-k` 访问 Console 首页和 Accounts/Billing `/readyz`，三者均 HTTP 200、TLS=0、远端 IP 为 `172.237.24.232`。控制端系统解析路径尚未刷新，普通 curl 在本次采样仍报解析失败，可能涉及此前 NXDOMAIN 负缓存或所用解析器未更新；浏览器需等待缓存到期或由本机管理员清理缓存后重验。当前控制端非交互 sudo 要求密码，未自动清理系统 DNS 缓存；不能据公共 DNS 已生效宣称每个客户端缓存已刷新。
+
+操作前后通过 API 对比 `vault.svc.plus`、`xworktech.com`、`console.svc.plus`、`accounts.svc.plus`、`billing.svc.plus`、`postgresql.svc.plus`、`observability.svc.plus` 的记录，结果完全一致，canonical DNS/CNAME 仍保留 V5 路由。其他 V6 管理/数据库域名未在此次创建；PostgreSQL 仍为受控 TLS 隧道预留用途，不因创建 A 记录就具备公网 HTTPS 数据库入口。
+
+执行材料保存在控制端 `ai-workspace-infra/handoffs/v6-dns-20261102/`：`publish-v6-dns.yml`、`run_publish.py`、脱敏 Ansible 回执及 canonical 前后快照。创建入口为 `python3 run_publish.py`，脚本从已认证的 Vault 会话在内存读取 `kv/CICD` 的 `CLOUDFLARE_DNS_API_TOKEN`，以环境变量交给全部 `no_log` 的 Ansible 任务；文件及回执均不包含凭据值。脚本发现任一目标名称已有记录即停止，不应盲目重跑。若回退，仅按本次创建回执核对这三条记录并独立授权处理，不动 canonical 记录。
+
 ## ServiceLB、Datakit 修复与 Canonical/V6 标准 HTTPS 入口链路验收（2026-11-02 14:22，北京时间）
 
 本节记录 `prod-k3s-v6`（`172.237.24.232`）在保持公共 canonical DNS/CNAME 不切换（仍指向 V5 `104.105.141.213`）前提下，完成 **K3s ServiceLB + Caddy 443 入口修复**、**Datakit 资源对齐与 59+ 分钟无 OOM 观察**、**Vault `prod-k3s-v6-ingress-tls-reader` 策略扩权**以及 **6 个 canonical 域名 + V6 批次域名的 GitOps/Flux 候选路由与端到端 HTTPS 链路验收**。
@@ -15,14 +33,16 @@
   - **Ingress TLS Vault 策略与身份声明**：[ai-workspace-infra/gitops#746](https://github.com/ai-workspace-infra/gitops/pull/746)（merge commit `4ebea19e28303075da0fc5e1838f55ff1c1b784c`，head `abd84108374f5b7581d993f1c07bbf6edeee1308`）——新增 `security/vault/policies/prod-k3s-v6-ingress-tls-reader.yaml` 与 `security/vault/workload-identities/prod-k3s-v6-ingress-tls-reader.yaml`，最小化授权读取 `kv/data/CICD/domains/svc.plus` 与 `kv/data/CICD/domains/xworktech.com`。
   - **V6 Ingress Canonical 与批次域名路由/TLS 补全**：[ai-workspace-infra/gitops#745](https://github.com/ai-workspace-infra/gitops/pull/745)（merge commit `319cfb084594af6d9a1a2db68ea6034814c3c3e9`，head `5b67701`）——在 `services/prod-k3s-v6/ingress-prod/vault-tls.yaml` 新增 `ExternalSecret/brand-console-tls`（同步 `CICD/domains/xworktech.com`），在 `services/prod-k3s-v6/ingress-prod/helmrelease.yaml` 声明 `consoleAliases`、`accountsAliases`、`billingAliases`、`additionalHosts`（`brand-console`、`vault`、`observability`）及 `postRenderers`（为 `vault` upstream 注入 `transport http { tls_server_name vault.svc.plus }` 与 `checksum/caddyfile-postrender`），并在 `resources/svc.plus/prod/akamai/prod-k3s-v6.yaml` 登记 `service_domains` 与 `reserved_dns_aliases`（`public_dns_cutover: false`）。
 - **Flux 调谐修订（`2026-11-02T06:16:33Z`）**：
-  - `GitRepository`：`ingress-prod-config`、`observability-prod-config`、`postgresql-prod-config`、`vault-prod-config`、`web-saas-prod-config` 均 `Ready=True`，revision 为 `main@sha1:319cfb084594af6d9a1a2db68ea6034814c3c3e9`（`flux-system` 管理根 pin 在 `3d8f3cbc24d98ca393e3c3daae37273b273c46e8`）。
+  - `GitRepository`：`ingress-prod-config`、`observability-prod-config`、`postgresql-prod-config`、`vault-prod-config`、`web-saas-prod-config` 均 `Ready=True`，revision 为 `main@sha1:319cfb084594af6d9a1a2db68ea6034814c3c3e9`（`flux-system` 管理根 pin 在 `3d8f3cbc072ac7641ffbcfffb1906e7b5ffe5edd`）。
   - `Kustomization`（10/10 `Ready=True`）：`ingress-prod`、`observability-prod`、`postgresql-prod`、`vault-prod`、`web-saas-prod` 均已应用 `main@sha1:319cfb084594af6d9a1a2db68ea6034814c3c3e9`。
-  - `HelmRelease`（7/7 `Ready=True`）：
-    - `ingress-prod/caddy-ingress`：`caddy-ingress@0.1.3`（`caddy-ingress.v4`，镜像 `caddy:2.8.4-alpine@sha256:63c1fc374db6de3ceefcefbff3dc2ebbeae2fb6bb0f7bb9a5943ca8755ebcb9a`）。
-    - `observability-prod/datakit`：`datakit@1.65.0`（`datakit.v2`，镜像 `pubrepo.guance.com/datakit/datakit:1.84.0@sha256:aa7ca23b502a8d2c6293909b1ef15f0b3fb63cf188fc2e19c53349f2da428cf9`）。
-    - `observability-prod/victoria-metrics-k8s-stack`：`victoria-metrics-k8s-stack@0.25.0+1a33f1ffbd99`。
-    - `postgresql-prod/postgresql`：`postgresql@15.5.38`。
-    - `vault-prod/vault`：`vault@0.28.1`。
+  - `HelmRelease`（8/8 `Ready=True`）：
+    - `external-secrets/external-secrets`：`external-secrets@2.14.0`。
+    - `ingress-prod/caddy-ingress`：`distributed-web-saas-fullstack@0.2.13+5ca7c0415e3a`（`caddy-ingress.v4`，镜像 `ghcr.io/ai-workspace-infra/caddy-cloudflare:959d6c8@sha256:9895385033fea2bdb445841b45f37e6cd58b9e071a16e4c147e483abb74a0acf`）。
+    - `observability-prod/datakit`：`datakit@2.16.1`（`datakit.v2`，镜像 `pubrepo.guance.com/datakit/datakit:2.16.1@sha256:1cd545f7f14dc08935ec6557936b1e6422a3d7d9728b57d6e1d6b57ea1703fc6`）。
+    - `observability-prod/observability`：`observability-stack@1.1.7+63dc89ea20ff`。
+    - `observability-prod/observability-agent`：`observability-agent@1.1.1+4095ed924194`。
+    - `postgresql-prod/postgresql`：`distributed-web-saas-fullstack@0.2.13+5ca7c0415e3a`。
+    - `vault-prod/vault`：`vault@0.32.0`。
     - `web-saas-prod/web-saas-prod`：`distributed-web-saas-fullstack@0.2.13+5ca7c0415e3a`。
 
 ### 2. ServiceLB + Caddy 与 Datakit 修复结果
@@ -33,7 +53,7 @@
   - `ingress-prod/caddy-ingress-caddy-ingress` LoadBalancer Service（`ClusterIP=10.53.220.215`）已分配 `EXTERNAL-IP=172.237.24.232`，端口映射 `443:22299/TCP -> targetPort=8443`，`EndpointSlice/caddy-ingress-caddy-ingress-s9tp2` 指向 Ready Pod `caddy-ingress-caddy-745cd48f9b-56szg`（`10.52.0.63:8443`）。
 - **Datakit 稳定性与遥测接收（59+ 分钟连续观察）**：
   - 新 Pod `observability-prod/datakit-6k2mr`（`startedAt=2026-11-02T05:23:51Z`）连续运行 **59+ 分钟**，`1/1 Running`，`restartCount=0`，`lastState={}`（0 OOM）；CPU `4m~34m`，内存 `145Mi~193Mi`（远低于 `512Mi` limit）；节点 `prod-k3s-v6` 总负载 `CPU 196m (9%)`、`MEMORY 2674Mi (68%)`，`free -m` `available: 1048 MiB`。
-  - 容器内 `curl -s http://127.0.0.1:9529/metrics` 显示 `datakit_http_api_total` 对 `/v1/write/metric`、`/v1/write/logging`、`/v1/write/object` 持续返回 `200 OK`（累计写入 10,800+ 时间序列点，零失败）。
+  - 此前容器内 `curl -s http://127.0.0.1:9529/metrics` 的 `datakit_http_api_total` 对 `/v1/write/metric`、`/v1/write/logging`、`/v1/write/object` 记录 200，只能证明本地接收 API 的对应请求成功；不能替代 DataWay 远端或观测云空间的新鲜数据接收证据，远端接收仍待独立核验。
 - **Vault TLS 授权与拒绝验证**：
   - 使用 `ingress-prod/ingress-tls-reader` 真实签发 JWT（audience `vault-prod-k3s-v6-ingress-tls-reader`）向 `https://vault.svc.plus` 登录 `auth/jwt-prod-k3s-prod-k3s-v6/login` 成功（`policies=["prod-k3s-v6-ingress-tls-reader"]`，`ttl=10m`）。
   - 允许路径：`GET /v1/kv/data/CICD/domains/svc.plus` -> `200`，`GET /v1/kv/data/CICD/domains/xworktech.com` -> `200`。
