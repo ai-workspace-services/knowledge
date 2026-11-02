@@ -2,6 +2,8 @@
 
 ## Accounts 迁移 API 单向快照规划（2026-11-02）
 
+实施进度：用户确认今晚准备V5→V6迁移/切换，V5 Accounts允许直接更新固定版本。源检查点兼容修复已提交 [Accounts #289](https://github.com/ai-workspace-services/accounts/pull/289)（`03fcac83`），单元测试、隔离PG17 API回归及V5原生SQL合成数据迁移通过。生产部署、token、监听器、备份恢复与迁移尚未执行；后续发布构件和逐阶段回执不能由测试结果替代。最终可变状态追齐拟使用源停写后的新快照及独立最终候选库，避免覆盖演练库冲突。
+
 本轮选择 [Accounts 独立迁移 API + migratectl transfer-api](PROD-K3S-V6-Accounts迁移API单向同步规划.md)：Mac 从 Vault 读取专用短期 token，经 HTTPS 获取 V5 一致性快照并在 V6 候选库预览；快照/预览无需暂停服务。源/目标 listener 使用各自集群内的独立数据库身份，不把应用 DATABASE_URL 交给 Mac。当前API固定42表，缺失记录插入、同键内容变化冲突即停，不等于持续覆盖或全库复制。
 
 只读现场盘点：V5 PostgreSQL17.11、76张public表、干净checkpoint `2026102002`，存在无成员关系的 `readonly_release`；V6 PostgreSQL17.11、51张public表、缺少schema_migrations。两端未发现迁移工作负载和Caddy迁移路由，指定SNI的迁移路径探测404、TLS=0。固定发布及所查main的API版本守卫尚不接受V5检查点，V6需独立完整候选schema；以上为规划与阻断记录，未部署listener、未采集快照或复制数据。
