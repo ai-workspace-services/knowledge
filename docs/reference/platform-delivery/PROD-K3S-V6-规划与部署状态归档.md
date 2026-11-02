@@ -781,6 +781,10 @@ Accounts #300 的 `6c7c48ab` 增加目标侧触发器兼容 SQL：仅 `accounts_
 
 隔离 PostgreSQL 回归覆盖默认拒绝、目标显式启用、无检查点源拒绝、未审查列拒绝、索引变化指纹改变、不可读检查点拒绝，以及专用非 owner 登录的预览、导入与追齐重试。本机按 V6 实际结构和增量 SQL 准备的无检查点库也通过 42 表结构及指纹校验。这些测试未处理现存九条触发器差异、生产应用授权或真实备份回执；选项尚未写入生产 GitOps，代码尚未发布。
 
+**业务库身份准备（2026-11-03 北京时间）**：现场只读检查确认 V6 PostgreSQL 对本机 `127.0.0.1/::1` 使用 `trust`，其他 host 规则使用 SCRAM；通过 PostgreSQL Service 地址使用合成错误密码已被拒绝，尚无实际业务迁移登录的正向认证证据。因此不能把容器内回环登录当作密码验证。
+
+[Playbooks #960](https://github.com/ai-workspace-infra/playbooks/pull/960) 和 [GitOps #761](https://github.com/ai-workspace-infra/gitops/pull/761) 均为 Draft：业务目标声明使用独立的待切换 Secret、目标凭据路径和已有暂存密钥引用，不自动切换 Flux 或覆盖当前 listener Secret。Playbooks 在目标结构完整后准备 42 表 SELECT/INSERT/UPDATE，不授予 DELETE；拒绝表 owner、角色成员关系、异常 RLS 和非回环 trust，并通过 Service 地址验证错误密码拒绝、正确密码允许及来源非回环。已有角色先验证凭据，不重置密码。隔离 PostgreSQL 已实际执行 42 表授权并验证重试与 RLS 拒绝；Vault、SSH 和正向登录在该隔离用例中为模拟，V6 尚未执行该角色。
+
 
 - 迁移前 V6 业务写者、后台任务、真实支付和通知受控。
 - 迁移源连接只读；V5 原业务写入方保留。
