@@ -4,11 +4,11 @@
 
 ## 实施进度与今晚切换要求（2026-11-02）
 
-最新构件状态：Accounts #289 已合并到 `677fb48ef92be426904864f8f849a1e9ac044bab`。已通过GHCR回读和run-bound manifest核实镜像 `ghcr.io/ai-workspace-services/accounts:sha-677fb48ef92be426904864f8f849a1e9ac044bab@sha256:be8e7ebb8017e453006a042e83a97c8e7f4ddb60503fe38837bd515dd44621e6`，平台linux/amd64，source_sha一致。只读取既有发布结果，未派发部署工作流、未SSH更新节点。独立CLI新release尚未发布，旧CLI不能当作本次修复构件。
+最新构件状态：Accounts #289 已合并到 `677fb48ef92be426904864f8f849a1e9ac044bab`。已通过GHCR回读和run-bound manifest核实镜像 `ghcr.io/ai-workspace-services/accounts:sha-677fb48ef92be426904864f8f849a1e9ac044bab@sha256:be8e7ebb8017e453006a042e83a97c8e7f4ddb60503fe38837bd515dd44621e6`，平台linux/amd64，source_sha一致。已在本机拉取固定digest并核对OCI revision为该合并SHA，容器内transfer-api help可用。只读取既有发布结果，未派发部署工作流、未SSH更新节点。独立CLI新release尚未发布，旧CLI不能当作本次修复构件。
 
 部署前限制：该修复仅处理源迁移API的检查点兼容；V5现有应用配置 `DATABASE_RUNTIME_ROLE=primary`，普通Accounts的 `VerifiedNativeRuntimeVersion` 仍使用当前完整native契约，不接受 `2026102002`。因此不能将上述tag直接改到V5普通Accounts并宣称可启动；需要独立兼容验证/修复，或先仅将同构件用于独立迁移listener。GitOps镜像选择待此条件满足后提交生效，不使用浮动tag、不伪造digest。
 
-用户要求GitOps只保存声明，PR检查只做声明格式及敏感信息检测。已关闭被主线业务namespace互通策略覆盖的 [GitOps #728](https://github.com/ai-workspace-infra/gitops/pull/728)；[GitOps #747](https://github.com/ai-workspace-infra/gitops/pull/747) 将自动检查从11项收敛为YAML声明校验和gitleaks两项，移除IaC/IAM及业务/运行态自动PR检查。两个保留检查已本地验证，PR提交范围gitleaks无泄露。工作流变更尚待合并；未修改生产声明或分支保护，main原本没有required status contexts/额外rulesets。
+用户要求GitOps只保存声明，PR检查只做声明格式及敏感信息检测。已关闭被主线业务namespace互通策略覆盖的 [GitOps #728](https://github.com/ai-workspace-infra/gitops/pull/728)；[GitOps #747](https://github.com/ai-workspace-infra/gitops/pull/747) 将自动检查从11项收敛为YAML声明校验和gitleaks两项，移除IaC/IAM及业务/运行态自动PR检查。两个保留检查已本地验证，PR提交范围gitleaks无泄露，#747线上仅出现这两项且均通过。工作流变更尚待合并；未修改生产声明或分支保护，main原本没有required status contexts/额外rulesets。
 
 
 用户已明确允许 V5 Accounts 直接更新满足迁移要求的固定版本，不再要求 cherry-pick；V6 同步使用最新且已验收的固定构件。目标是今晚完成 V5 → V6 数据迁移及业务切换。本次只读线上盘点之后尚未部署或改写现网。
