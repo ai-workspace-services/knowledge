@@ -823,6 +823,8 @@ Accounts #300 的 `6c7c48ab` 增加目标侧触发器兼容 SQL：仅 `accounts_
 
 **schema 和身份交付后的新备份（2026-11-03）**：重新流式加密保存 `account` custom-format 数据、含 ACL 的 schema 和 PostgreSQL globals，备份 ID `v6-post-schema-20261102T204953Z-2fa58d8d-25f7-46a8-af97-3681a0a54d16`；对应密文 SHA-256 分别为 `fdc50b00d852951e5006d094fba2f87ec3c52c60ae7c7b54060cd954afb8a4fc`、`daa21940f34b487e3d4521bf3ce0494dab5261d4310dc7a528418ef0ab1b4d28`、`d655caf850542ce15595414a1006fefb45bcb81865e7aaa4c103b163ac1a189b`。三个文件均解密验证，独立 PostgreSQL 17 私有 socket 集群恢复 globals、schema/ACL 和数据后，与 V6 分别取只读快照对比：72 表行数及 SHA-256 整行摘要一致，展开后的 711 项 public 表/序列等关系对象有效 ACL 一致；恢复装载期间禁用触发器，事后检查 53 个 public 外键无违例。恢复库已撤销 PUBLIC CONNECT 并停止。三个备份与两端比对不是跨库原子快照，数据库级及函数/schema ACL、业务登录和 migration plan 绑定仍未完整验收；此备份未授权导入 V5 数据。
 
+**迁移回执 schema 准备（2026-11-03）**：现场只读检查确认 V6 `account` 尚无 `accounts_migration_api` schema。[Playbooks #962](https://github.com/ai-workspace-infra/playbooks/pull/962) Draft 提供目标侧事务 SQL（SHA-256 `9e9b40d1bfea12a6ae516caf59d9523a5086e03feca3ef217801d04e300690a4`），将回执表的 `accounts_migration` 权限限制为 SELECT/INSERT；拒绝异常默认授权、特权角色、目标身份不符和未经核验的既有 schema。隔离 PostgreSQL 测试和 schema 后真实备份恢复库的独立演练已通过，后者实际创建两张回执表并核验权限。V6 业务库未执行该 SQL；预览不需要回执 schema，数据写入仍须独立备份和计划门禁。
+
 
 - 迁移前 V6 业务写者、后台任务、真实支付和通知受控。
 - 迁移源连接只读；V5 原业务写入方保留。
