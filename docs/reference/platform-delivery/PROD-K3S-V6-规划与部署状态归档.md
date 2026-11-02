@@ -825,6 +825,8 @@ Accounts #300 的 `6c7c48ab` 增加目标侧触发器兼容 SQL：仅 `accounts_
 
 **迁移回执 schema 准备（2026-11-03）**：现场只读检查确认 V6 `account` 尚无 `accounts_migration_api` schema。[Playbooks #962](https://github.com/ai-workspace-infra/playbooks/pull/962) Draft 提供目标侧事务 SQL（SHA-256 `9e9b40d1bfea12a6ae516caf59d9523a5086e03feca3ef217801d04e300690a4`），将回执表的 `accounts_migration` 权限限制为 SELECT/INSERT；拒绝异常默认授权、特权角色、目标身份不符和未经核验的既有 schema。隔离 PostgreSQL 测试和 schema 后真实备份恢复库的独立演练已通过，后者实际创建两张回执表并核验权限。V6 业务库未执行该 SQL；预览不需要回执 schema，数据写入仍须独立备份和计划门禁。
 
+**业务库 listener 发布与首次预览（2026-11-03）**：使用 Vault `kv/CICD` 中既有 GHCR 凭据推送目标 listener 镜像，远端与本地 manifest digest 均为 `sha256:272e09a7306a44b0bd30e499242f9be34729eadf03da2b698117ef806836636d`，V6 节点拉取成功；上传权限空探针获 202，取消请求返回 405，未将该探针记作业务发布。GitOps [#762](https://github.com/ai-workspace-infra/gitops/pull/762) 固定镜像、引用 `migration-listener-business` 并启用 `--allow-unversioned-target`，不启用回执初始化。首次调谐时 listener 因业务 PostgreSQL 5432 不可达重启；[GitOps #763](https://github.com/ai-workspace-infra/gitops/pull/763) 增加仅 `accounts-migration` 的 listener Pod 到 `postgresql-prod` PostgreSQL Pod TCP 5432 入站规则，Flux 应用 `48aef96025bd2f8a0aaaacb00f03bba032cc5171` 后 listener 运行且无重启。先以旧 snapshot `c79af158-d045-47cc-b2ac-5f1f2c6cc2f3` 请求得到 HTTP 410，旧候选库 plan 不可用于业务库；已重新发起只读快照和业务库预览。客户端以获授权的本机 Kubernetes port-forward 访问目标，保留目标 HTTPS 域名和证书校验；未更改 `/root/migrate.sh`。新预览、账单冲突及数据写入结果以后续回执为准。
+
 
 - 迁移前 V6 业务写者、后台任务、真实支付和通知受控。
 - 迁移源连接只读；V5 原业务写入方保留。
