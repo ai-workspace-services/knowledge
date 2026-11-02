@@ -2,6 +2,9 @@
 
 ## Accounts 迁移 API 单向快照规划（2026-11-02）
 
+认证填写与预检记录：迁移客户端路径使用日期标签 `2026-11-02`，即 `kv/prod/accounts/migration/jobs/2026-11-02/{source-auth,target-preview-auth}`，两者均只需字段 `token`，分别由源/目标独立迁移签名密钥签发，scope为source.read和target.plan。内部JOB_UUID仍为两端一致的UUID，不用日期替代。实际读取两条日期路径均not_found；本机Vault登录有效，但两端迁移路径仍404、TLS验证通过，当前PRECHECK_BLOCKED，未完成快照/预览/apply。签发、有效期、CAS写入命令与脱敏回执要求已补充到规划文档。
+
+
 构件及仓库治理最新记录：Accounts #289 已合并为 `677fb48ef92be426904864f8f849a1e9ac044bab`，GHCR固定镜像digest核实为 `sha256:be8e7ebb8017e453006a042e83a97c8e7f4ddb60503fe38837bd515dd44621e6`（linux/amd64）。未派发部署流水线或更新节点；V5普通Accounts managed runtime检查点兼容仍须先验证，不能把API读取兼容当作普通服务可升级证明。GitOps旧PR #728已关闭；PR #747仅精简PR检查为声明格式与敏感信息扫描，未改变应用声明。详见下链规划的最新进度。
 
 

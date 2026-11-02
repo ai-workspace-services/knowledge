@@ -123,15 +123,85 @@ flowchart LR
 | `kv/prod/accounts/migration/listeners/<clusterId>/database` | `dsn` | 本集群对应 listener；V5 使用真实 readonly_release，V6 使用候选库专用迁移身份 |
 | `kv/prod/accounts/migration/listeners/<clusterId>/signing` | `key_base64` | 本 listener 验签与受控 token 签发 owner |
 | `kv/prod/accounts/migration/listeners/<clusterId>/staging` | `key_base64` | 仅本 listener，加密持久分片/计划；重启后保持一致 |
-| `kv/prod/accounts/migration/jobs/<JOB_ID>/source-auth` | `token` | 授权操作人客户端，source.read |
-| `kv/prod/accounts/migration/jobs/<JOB_ID>/target-preview-auth` | `token` | 授权操作人客户端，target.plan |
-| `kv/prod/accounts/migration/jobs/<JOB_ID>/target-apply-auth` | `token` | 写入阶段授权操作人，target.plan,target.apply |
+| `kv/prod/accounts/migration/jobs/<RUN_ID>/source-auth` | `token` | 授权操作人客户端，source.read |
+| `kv/prod/accounts/migration/jobs/<RUN_ID>/target-preview-auth` | `token` | 授权操作人客户端，target.plan |
+| `kv/prod/accounts/migration/jobs/<RUN_ID>/target-apply-auth` | `token` | 写入阶段授权操作人，target.plan,target.apply |
 
 KV v2 ACL 路径在 `kv/` 后加 `data/`。监听器和客户端分别精确授权，Mac 无需读数据库、signing/staging key。每个 endpoint 的 signing key 和 staging key 各为独立随机 32 字节 base64，源目标也独立；不复用 Accounts JWT、INTERNAL_SERVICE_TOKEN 或 Vault 登录 token。
 
 当前实现是独立 HS256 迁移 JWT，不是由公共 Vault JWT auth 自动签发。`migratectl migration-token` 由受控签发 owner 运行，以命令替换/管道保存在内存并写到对应 KV 的 token 字段，不输出到终端或参数。JWT 绑定 source_audience、target_audience、job_id 与同一不透明 operator subject；source/target token 必须同一操作人/同一 job。TTL 建议 10 分钟，最大 15 分钟。续签保留 subject/job/pair。对象 TTL 默认 1 小时，最大 24 小时；token 续签不延长快照或计划 TTL。
 
 source DB 必须 readonly_release、无写/序列变更/成员关系/管理权限、完整 RLS 可见；两端均需 EXECUTE pg_control_system() 和足够 catalog 读取来验证物理库身份。目标预览需 SELECT 与 TEMP，apply 另需精确表 INSERT、必要序列及私有回执权限，不能为省事授予超级用户。源只读连接和目标迁移连接由节点内材料解析，应用 DSN 仅作来源盘点。
+
+### 日期路径与 token 字段填写契约（2026-11-02）
+
+操作者看到的 `RUN_ID` 使用日期 `2026-11-02`；同日独立运行按 `2026-11-02-r2` 递增。它只是 Vault 路径和回执的批次标签。listener/JWT 内部 `job_id` 仍必须是 canonical 小写 UUID，命名为 `JOB_UUID`，不改成日期；两端 listener、签发的JWT及快照绑定同一个已批准JOB_UUID。日期、job UUID、snapshot ID、plan ID分别记录，不互相代替。
+
+| 命令参数及本次完整 CLI 路径 | Vault 字段 | 应填写的值 / 权限 |
+|---|---|---|
+| `--source-auth-kv kv/prod/accounts/migration/jobs/2026-11-02/source-auth` | `token` | V5 source listener 专用 signing key 签发的迁移 JWT；aud=`accounts-migration-prod-k3s-v5`，scopes=`source.read` |
+| `--target-auth-kv kv/prod/accounts/migration/jobs/2026-11-02/target-preview-auth` | `token` | V6 target listener 专用 signing key 签发的迁移 JWT；aud=`accounts-migration-prod-k3s-v6`，scopes=`target.plan`（仅预览/状态） |
+
+两条token均绑定 `source_audience=accounts-migration-prod-k3s-v5`、`target_audience=accounts-migration-prod-k3s-v6`、相同 `job_id=JOB_UUID`、相同不透明operator `sub`，TTL建议10分钟、最大15分钟。字段值是完整签名JWT字符串，由受控签发owner运行 `migratectl migration-token` 生成；不填写Vault登录token、Accounts普通登录JWT、密码、DATABASE_URL、signing key或手工拼接的字符串。操作者不需要在聊天或文档填写真实token。
+
+客户端代码 `cmd/migratectl/api.go:migrationCredential` 实际运行 `vault kv get -field=token <路径>`，捕获到内存；参数本身只传路径。KV v2 ACL/API分别为 `kv/data/prod/accounts/migration/jobs/2026-11-02/source-auth` 与 `kv/data/prod/accounts/migration/jobs/2026-11-02/target-preview-auth`。Mac的Vault身份仅需精确read；签发owner才有对应写权限和signing key读取权限，目标预览token不授予target.apply。
+
+#### 由签发 owner 写入的命令模板
+
+仅在两端listener签名密钥、audience和JOB_UUID已实际配置后执行；下面尚未运行。运行环境已通过Vault受控解析得到各自独立32字节base64 signing key，Mac日常调用不持有这些key。`vault kv put ... token=-` 从stdin接收字段值；首次创建使用CAS=0，拒绝覆盖已有记录。续签由owner核对版本后使用明确CAS版本更新，保持同一subject/job/pair，不盲目覆盖或换job。
+
+```bash
+(
+  set -euo pipefail
+  set +x
+  export VAULT_ADDR="https://vault.svc.plus"
+  RUN_ID="2026-11-02"
+  : "${MIGRATECTL_BIN:?已校验的固定二进制}"
+  : "${JOB_UUID:?已配置在两端listener的任务UUID}"
+  : "${OPERATOR_ID:?两端token共用的不透明操作者ID}"
+  : "${SOURCE_MIGRATION_SIGNING_KEY:?仅签发owner运行环境持有}"
+  : "${TARGET_MIGRATION_SIGNING_KEY:?仅签发owner运行环境持有}"
+  export SOURCE_MIGRATION_SIGNING_KEY TARGET_MIGRATION_SIGNING_KEY
+
+  SOURCE_TOKEN="$("$MIGRATECTL_BIN" migration-token \
+    --auth-key-env SOURCE_MIGRATION_SIGNING_KEY \
+    --audience accounts-migration-prod-k3s-v5 \
+    --source-audience accounts-migration-prod-k3s-v5 \
+    --target-audience accounts-migration-prod-k3s-v6 \
+    --job-id "$JOB_UUID" --subject "$OPERATOR_ID" \
+    --scopes source.read --ttl 10m)"
+  test -n "$SOURCE_TOKEN"
+  printf '%s' "$SOURCE_TOKEN" \
+    | vault kv put -cas=0 "kv/prod/accounts/migration/jobs/${RUN_ID}/source-auth" token=-
+
+  TARGET_TOKEN="$("$MIGRATECTL_BIN" migration-token \
+    --auth-key-env TARGET_MIGRATION_SIGNING_KEY \
+    --audience accounts-migration-prod-k3s-v6 \
+    --source-audience accounts-migration-prod-k3s-v5 \
+    --target-audience accounts-migration-prod-k3s-v6 \
+    --job-id "$JOB_UUID" --subject "$OPERATOR_ID" \
+    --scopes target.plan --ttl 10m)"
+  test -n "$TARGET_TOKEN"
+  printf '%s' "$TARGET_TOKEN" \
+    | vault kv put -cas=0 "kv/prod/accounts/migration/jobs/${RUN_ID}/target-preview-auth" token=-
+)
+```
+
+签发命令先成功取得非空token，再通过shell内建printf管道写入；签发失败时停止，不创建空token记录。预览用上述target-preview-auth；真实apply需另行签发到target-apply-auth，只有scope不足的预览token不能写入业务数据。token写入KV后不会自动部署listener、配置数据库身份或改变路由。
+
+#### 本次实际迁移记录
+
+| 记录项 | 本次事实 |
+|---|---|
+| 日期标识 | `2026-11-02`，方向V5 → V6 |
+| Vault会话 | 本机 `https://vault.svc.plus` 已认证，只输出认证是否成功 |
+| 两条日期路径 | 对上述source-auth / target-preview-auth的实际读取均为not_found，尚未创建token |
+| 源迁移路由 | 正常DNS HTTPS `accounts.svc.plus` 指向104.105.141.213，迁移plan路径HTTP404，TLS=0 |
+| 目标迁移路由 | 正常DNS HTTPS `accounts-selfhost-prod-v6.svc.plus` 指向172.237.24.232，同路径HTTP404，TLS=0 |
+| JOB_UUID / snapshot ID / plan ID | 尚未发行或生成，不伪造占位成功回执 |
+| 当前状态 | `PRECHECK_BLOCKED`：token和独立listener/路由尚未交付，未完成transfer-api快照/预览，更未apply |
+
+后续每次真实签发/续签记录日期标识、job UUID、source/target audience、scope、opaque operator ID、UTC签发/到期时间、KV版本和签发owner/run；每次迁移另记固定CLI/镜像摘要、snapshot/plan ID与SHA、源快照边界、目标baseline/schema/identity、退出码及业务验收结果。公开记录不保存JWT、signing/staging key、DSN、用户记录或凭据散列。
 
 ## 7. 用户操作：一个简化的快照预览命令
 
@@ -143,13 +213,13 @@ source DB 必须 readonly_release、无写/序列变更/成员关系/管理权�
   set +x
   export VAULT_ADDR="https://vault.svc.plus"
   : "${MIGRATECTL_BIN:?已校验的固定二进制}"
-  : "${JOB_ID:?GitOps批准且与两端token绑定的job UUID}"
+  RUN_ID="2026-11-02"  # 同日独立执行用 2026-11-02-r2 等新标识
 
   "$MIGRATECTL_BIN" transfer-api \
     --source-url https://accounts.svc.plus \
     --target-url https://accounts-selfhost-prod-v6.svc.plus \
-    --source-auth-kv "kv/prod/accounts/migration/jobs/${JOB_ID}/source-auth" \
-    --target-auth-kv "kv/prod/accounts/migration/jobs/${JOB_ID}/target-preview-auth"
+    --source-auth-kv "kv/prod/accounts/migration/jobs/${RUN_ID}/source-auth" \
+    --target-auth-kv "kv/prod/accounts/migration/jobs/${RUN_ID}/target-preview-auth"
 )
 ```
 
@@ -162,7 +232,7 @@ source DB 必须 readonly_release、无写/序列变更/成员关系/管理权�
 ```bash
 "$MIGRATECTL_BIN" transfer-api --status \
   --target-url https://accounts-selfhost-prod-v6.svc.plus \
-  --target-auth-kv "kv/prod/accounts/migration/jobs/${JOB_ID}/target-preview-auth" \
+  --target-auth-kv "kv/prod/accounts/migration/jobs/${RUN_ID}/target-preview-auth" \
   --plan-id "$PLAN_ID"
 ```
 
@@ -178,7 +248,7 @@ source DB 必须 readonly_release、无写/序列变更/成员关系/管理权�
 # 仅在无冲突计划、真实恢复证明和目标隔离条件全部通过后运行。
 "$MIGRATECTL_BIN" transfer-api --apply \
   --target-url https://accounts-selfhost-prod-v6.svc.plus \
-  --target-auth-kv "kv/prod/accounts/migration/jobs/${JOB_ID}/target-apply-auth" \
+  --target-auth-kv "kv/prod/accounts/migration/jobs/${RUN_ID}/target-apply-auth" \
   --plan-id "$PLAN_ID" --plan-sha256 "$REVIEWED_PLAN_SHA256"
 ```
 
