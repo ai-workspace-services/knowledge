@@ -4,6 +4,15 @@
 
 ## 实施进度与今晚切换要求（2026-11-02）
 
+### SSH 发布准备与 V5 发布线兼容（2026-11-02，最新）
+
+Accounts #291 已合并为 `ba673c014c9e630c3cae815040035ac4d852828f`。GHCR已核实固定镜像 `ghcr.io/ai-workspace-services/accounts:sha-ba673c014c9e630c3cae815040035ac4d852828f@sha256:52110a5d5a3c23d0a468eea583e608133d39e1d6e6a89940ca81e1ecaad54cf6`。已通过SSH分别在V5/V6执行 `k3s ctr -n k8s.io images pull <固定引用>`，两个节点退出码均0；这是镜像预拉取，不是业务Deployment已更新。
+
+现场确认V5当前Accounts源为 `b1ea07695b448c6527eb612d0cd7e0dba41c0e03`，属于 `release/v2026.11.02-registration`，配置 `DATABASE_RUNTIME_ROLE=primary`；不是main发布线。为避免main完整native检查点与现有 `2026102002` 库不兼容，已提交 [Accounts回补PR #292](https://github.com/ai-workspace-services/accounts/pull/292)（`d107bdff`），仅新增管理员认证endpoint、对应测试及一条路由，不改SQL/runtime/catalog/业务配置。发布线管理员/auth回归通过。需先合并并核实该发布线的固定构件，才能替换V5普通Accounts；独立迁移listener可使用上面的main镜像。
+
+V6当前Accounts仍为 `3ef09c82…`，计划选择上述main固定构件；普通服务更新仍需核对备份和启动/数据库行为。当前两个业务Deployment镜像尚未修改，未暂停服务、未迁移数据库、未切换DNS、未派发部署流水线。旧服务继续运行，不能将image pull退出码0写成发布验收完成。
+
+
 最新构件状态：Accounts #289 已合并到 `677fb48ef92be426904864f8f849a1e9ac044bab`。已通过GHCR回读和run-bound manifest核实镜像 `ghcr.io/ai-workspace-services/accounts:sha-677fb48ef92be426904864f8f849a1e9ac044bab@sha256:be8e7ebb8017e453006a042e83a97c8e7f4ddb60503fe38837bd515dd44621e6`，平台linux/amd64，source_sha一致。已在本机拉取固定digest并核对OCI revision为该合并SHA，容器内transfer-api help可用。只读取既有发布结果，未派发部署工作流、未SSH更新节点。独立CLI新release尚未发布，旧CLI不能当作本次修复构件。
 
 部署前限制：该修复仅处理源迁移API的检查点兼容；V5现有应用配置 `DATABASE_RUNTIME_ROLE=primary`，普通Accounts的 `VerifiedNativeRuntimeVersion` 仍使用当前完整native契约，不接受 `2026102002`。因此不能将上述tag直接改到V5普通Accounts并宣称可启动；需要独立兼容验证/修复，或先仅将同构件用于独立迁移listener。GitOps镜像选择待此条件满足后提交生效，不使用浮动tag、不伪造digest。
