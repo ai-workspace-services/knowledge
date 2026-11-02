@@ -769,7 +769,9 @@ Accounts #300 的 `6c7c48ab` 增加目标侧触发器兼容 SQL：仅 `accounts_
 
 新增待处理项：迁移范围中 `finance_operation_events.id` 与 `referral_campaign_revisions.revision` 使用序列。隔离验证表明非 owner 即便具备序列 USAGE/SELECT/UPDATE，也不能执行当前使用的 `ALTER SEQUENCE ... RESTART`；初次迁移还需覆盖两条序列。必须设计权限受控、避免并发回退且满足回滚语义的序列推进，不能通过授予迁移账号业务表所有权绕过。
 
-**序列及非 owner API 隔离验证更新（2026-11-03 北京时间）**：Accounts #300 的 `d5bce170` 增加目标 owner 安装、限定两条序列的 `SECURITY DEFINER` 函数；专用 `accounts_migration` 登录只调用通过源码摘要、owner、ACL 和执行设置检查的函数，事务内先锁序列再按现有值与已导入最大值推进。隔离测试覆盖回滚、并发 `nextval` 等锁、额外授权与函数篡改拒绝，业务登录不能调用。真实非 owner 登录还贯穿隔离 HTTPS API 的只读源快照、首次导入及用户更新追齐；验证其不拥有 public 业务表、无业务 DELETE 和 schema CREATE 权限，并核对用户行及两条序列。测试使用合成备份门禁和数据库，不是线上验收；新实现仍为 Draft，未在 V6 安装，规模测试尚未覆盖此提交。
+**序列及非 owner API 隔离验证更新（2026-11-03 北京时间）**：Accounts #300 的 `d5bce170` 增加目标 owner 安装、限定两条序列的 `SECURITY DEFINER` 函数；专用 `accounts_migration` 登录只调用通过源码摘要、owner、ACL 和执行设置检查的函数，事务内先锁序列再按现有值与已导入最大值推进。隔离测试覆盖回滚、并发 `nextval` 等锁、额外授权与函数篡改拒绝，业务登录不能调用。真实非 owner 登录还贯穿隔离 HTTPS API 的只读源快照、首次导入及用户更新追齐；验证其不拥有 public 业务表、无业务 DELETE 和 schema CREATE 权限，并核对用户行及两条序列。测试使用合成备份门禁和数据库，不是线上验收；新实现仍为 Draft，未在 V6 安装。
+
+补充回归：`d5bce170` 在本机对 92143 条合成账本及同量级流量记录完成规模测试，耗时约 245 秒；`818f2512` 将内存传输路径也接入两条序列推进，并补测非 owner 对同一追齐回执的精确重试，常规完整回归通过。规模测试未覆盖后者，且两者均未在 V6 节点运行；由于迁移 API 请求限时五分钟，不能依据本机结果推断 V6 有足够余量。
 
 
 - 迁移前 V6 业务写者、后台任务、真实支付和通知受控。
