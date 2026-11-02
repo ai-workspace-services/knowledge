@@ -739,6 +739,14 @@ V5 财务汇总均为 CNY，发票 `19000`、付款 `19000`、退款 `4000`，�
 
 现有 `migratectl init` 只接受空库，bounded `migrate` 依赖既有干净版本检查点；不能给已有业务对象的库直接补造检查点，也不能使用空表占位。先固定源码和 schema 版本，比较表、列、约束、索引、RLS 及数据，准备可回滚的增量兼容方案，并通过有数据的隔离备份恢复验证。再以最小权限迁移身份连接业务库，重新生成绑定业务库身份和基线的预览，核对账单与冲突；源库始终只读。
 
+**业务库 schema 追加核对（2026-11-03 02:33 北京时间）**：对 V6 `account` 做仅 schema 的只读导出（SHA-256 `a7e57da55253c6876b15c7f01df1381de2e7efc8a743f1a0ce485fafdd0b8de7`），在本机隔离 PostgreSQL 17 与 [Accounts #300](https://github.com/ai-workspace-services/accounts/pull/300) 头部 `0fdb9b46` 的 `accounts-native.sql`（SHA-256 `80ca865a9b93f1e63ca4c4c76e7a08e69458245ec63f1bba5667e28c4409a619`）对照。现场再次确认 42 张迁移表缺 21 张，且缺少 `schema_migrations`。
+
+以全部 51 张共同的 public 表为范围，按列名、类型、可空、默认值及 identity 属性比较，共有 5 个原生列缺失：`email_blacklist.uuid` 和 `sessions` 的 `uuid`、`updated_at`、`version`、`origin_node`；另有 2 个同名列定义差异：`admin_settings.uuid` 的原生默认值为 `gen_random_uuid()`，以及业务库 `users.email` 不允许 NULL。这个范围比上表的候选库 483 个同名字段比较更广，口径不同。
+
+共同表中按约束定义比较，原生独有 12 项、业务库独有 5 项；其中 `email_blacklist` 和 `sessions` 的主键不同，`overlay_devices` 的复合主键列顺序不同，多个外键与 `users` 检查约束也有差异。此结果不证明约束语义必然冲突，仍需结合索引、数据和调用方逐项审查，不能直接替换主键或补造迁移检查点。
+
+隔离实例未安装 `pgmq`，仅为结构比较从导入副本移除了该扩展的创建和注释语句；没有导出或恢复业务行，不能作为有数据的备份恢复证明。本次未更改 V5/V6 数据、业务 schema、listener 连接或 `migrate.sh`；真实目标预览和迁移仍待完成。
+
 
 - 迁移前 V6 业务写者、后台任务、真实支付和通知受控。
 - 迁移源连接只读；V5 原业务写入方保留。
