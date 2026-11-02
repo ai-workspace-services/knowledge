@@ -839,6 +839,8 @@ Accounts #300 的 `6c7c48ab` 增加目标侧触发器兼容 SQL：仅 `accounts_
 
 **V6 冲突关联范围只读检查（2026-11-03）**：`account` 库当时仍有 3 个用户；在单个 `REPEATABLE READ READ ONLY` 事务中，检查明确指向 `users.uuid` 的单列外键，以及 public 表中 UUID 类型的 `user_uuid`、`account_uuid`、`owner_uuid`、`actor_uuid`、`created_by`、`updated_by` 字段，未发现引用这 3 个用户的行。另以当前 `billing_plans` 为范围，检查其他 public 表中 text 类型的 `plan_id` 和 `stripe_price_id` 与现有套餐的连接，未发现匹配行。两项均只覆盖所列数据库字段与当时快照，不覆盖文本/JSON 隐含引用、其他字段、外部系统、认证会话或未来写入，不能据此自动删除或覆盖。用户身份与套餐冲突的业务处理仍待明确。
 
+**预览脱敏反馈交付（2026-11-03）**：[Accounts #304](https://github.com/ai-workspace-services/accounts/pull/304) 已合并至 `356b9d9aa1d1c6702fa6a6d6ca1e13eeecceaf00`。以原 listener 镜像为基础，仅替换 `migratectl` 构建手工固定镜像 `ghcr.io/ai-workspace-services/accounts:migration-356b9d9aa1d1-901b825ab8df@sha256:901b825ab8dfd34ddd63628e50a6266a48ca69cf0bd751b1b1a7e763df851ea5`；节点拉取及 [GitOps #764](https://github.com/ai-workspace-infra/gitops/pull/764) Flux 调谐完成，listener 滚动更新并运行。业务库连接和预览模式保持不变，未启用 apply。使用本机 port-forward 复测原有效快照和原请求 ID，客户端显示 `HTTP 409`、`target_unique_conflict`、`table=users`，转发随后关闭。此变更仅改善冲突诊断；用户身份和套餐的处理策略仍待确认，不代表数据已导入。
+
 
 - 迁移前 V6 业务写者、后台任务、真实支付和通知受控。
 - 迁移源连接只读；V5 原业务写入方保留。
