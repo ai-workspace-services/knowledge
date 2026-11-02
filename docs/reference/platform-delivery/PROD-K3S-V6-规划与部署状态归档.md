@@ -821,6 +821,8 @@ Accounts #300 的 `6c7c48ab` 增加目标侧触发器兼容 SQL：仅 `accounts_
 
 随后执行 [Playbooks #960](https://github.com/ai-workspace-infra/playbooks/pull/960) 的业务目标 `permissions` 阶段：`accounts_migration` 已经由 PostgreSQL Service 路径验证正确密码可登录、错误密码被拒，42 表角色读取行数与管理员一致；角色非超级用户、无 CREATEDB/CREATEROLE/REPLICATION/BYPASSRLS，无继承，不拥有 public 表且无 DELETE/TRUNCATE 权限。行数相同不能独立证明逐行身份或内容一致。`web-saas-prod` 四个业务 Pod 和现有迁移 listener 在检查时就绪；listener 仍指向候选库，尚未加载业务目标 Secret。未安装追齐所需触发器兼容和受限序列辅助函数，也未发布新 listener 镜像、执行业务库预览、账单对账或 V5→V6 数据写入。旧记录中“业务库尚未执行 schema/身份”的表述仅代表当时状态，以本段为准。
 
+**schema 和身份交付后的新备份（2026-11-03）**：重新流式加密保存 `account` custom-format 数据、含 ACL 的 schema 和 PostgreSQL globals，备份 ID `v6-post-schema-20261102T204953Z-2fa58d8d-25f7-46a8-af97-3681a0a54d16`；对应密文 SHA-256 分别为 `fdc50b00d852951e5006d094fba2f87ec3c52c60ae7c7b54060cd954afb8a4fc`、`daa21940f34b487e3d4521bf3ce0494dab5261d4310dc7a528418ef0ab1b4d28`、`d655caf850542ce15595414a1006fefb45bcb81865e7aaa4c103b163ac1a189b`。三个文件均解密验证，独立 PostgreSQL 17 私有 socket 集群恢复 globals、schema/ACL 和数据后，与 V6 分别取只读快照对比：72 表行数及 SHA-256 整行摘要一致，展开后的 711 项 public 表/序列等关系对象有效 ACL 一致；恢复装载期间禁用触发器，事后检查 53 个 public 外键无违例。恢复库已撤销 PUBLIC CONNECT 并停止。三个备份与两端比对不是跨库原子快照，数据库级及函数/schema ACL、业务登录和 migration plan 绑定仍未完整验收；此备份未授权导入 V5 数据。
+
 
 - 迁移前 V6 业务写者、后台任务、真实支付和通知受控。
 - 迁移源连接只读；V5 原业务写入方保留。
