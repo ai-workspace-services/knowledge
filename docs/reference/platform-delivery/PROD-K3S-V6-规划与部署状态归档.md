@@ -789,6 +789,8 @@ Accounts #300 的 `6c7c48ab` 增加目标侧触发器兼容 SQL：仅 `accounts_
 
 **业务库事务回滚演练（2026-11-03）**：对 V6 `postgresql-prod/account`，以管理员经 Kubernetes exec 执行 [Accounts #303](https://github.com/ai-workspace-services/accounts/pull/303) 的增量 SQL（SHA-256 `cb5eb5371b85fb65cd4bc735fb0a47091eab9a61586726448828a7ac2f9eb8a4`），预先绑定现场 PostgreSQL system identifier 与数据库 OID，替换末尾 `COMMIT` 为 `ROLLBACK`。全部 SQL 成功并收到回滚确认；随后检查仍有 51 张 public 表，`finance_invoices` 与 `schema_migrations` 均不存在。演练短时持有 SQL 定义的表锁，但未提交 schema 或迁移数据。现场查询还确认 `account_lifecycle_events`、`rbac_permissions`、`rbac_role_permissions`、`rbac_roles` 和 `users` 没有用户定义触发器；与原生目标存在的九项触发器差异仍需业务语义审查。回滚演练不替代备份、真实角色验证和绑定实际业务库的迁移预览。
 
+**触发器差异影响核对（2026-11-03）**：原生 schema 的九项分别为生命周期事件防 UPDATE/DELETE 和 TRUNCATE 各一、用户防 DELETE 和 TRUNCATE 各一、RBAC 三张表自动更新时间各一，以及用户自动更新版本和时间各一。迁移追齐代码将生命周期事件列为不可变事实并比较完整行摘要；这只约束迁移路径，不为其他业务写者提供缺失的数据库约束。增量 SQL 不补装这九项，也不代表业务库与原生 schema 行为等价。Accounts #303 的 `efa7a251` 已在隔离 PostgreSQL 测试中模拟九项均缺失，并验证增量 SQL 不会改变现有表的触发器状态。后续引入这些触发器需要评估业务更新行为和追齐行摘要，不在此次 SQL 中静默改变。
+
 
 - 迁移前 V6 业务写者、后台任务、真实支付和通知受控。
 - 迁移源连接只读；V5 原业务写入方保留。
