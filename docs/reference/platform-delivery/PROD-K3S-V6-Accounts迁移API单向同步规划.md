@@ -44,6 +44,21 @@ V5 数据库仍使用既有 `2026102002` 运行契约。此次 #292 回补未改
 因此部署只能使用发布线固定镜像；不能将主干完整 native runtime 镜像直接替换到 V5。GitOps PR #749
 合并前不进行在线镜像补丁，以免 Flux 回写造成漂移。
 
+### 迁移验证现场核对（2026-11-02）
+
+通过 HTTPS（TLS 校验通过）检查 V5 `accounts.svc.plus` 与 V6
+`accounts-selfhost-prod-v6.svc.plus`：`POST /api/admin/migration/authorize` 和
+`GET /api/migrations/v1/plans/<测试UUID>` 均返回 `404`。V5 Accounts 仍运行 `d906d85`；
+V6 Accounts Pod `1/1 Running`，镜像为
+`sha-1b1fadf707958e59ff97701b1b86549e44446c53@sha256:d453e66232653a388c10ba8f8d0909ea997bfc7e47cf632bf5374a08425633d4`。
+两端迁移 API 目前均未就绪，未发起快照或预览，也未执行 apply、数据库写入、停服或 DNS 切换。
+
+V6 节点 `/root/migrate.sh` 初始为 `0644`，含内联 Accounts token，且目标 URL 行缺少 shell 续行符；
+脚本未执行。已移除脚本内 token 值，改为从调用 shell 环境读取两端 token、修正续行并设为 `0700`，
+`bash -n` 通过；V6 节点尚未安装 `migratectl`。由于旧文件曾允许其他本机用户读取，相关 Accounts token
+应按可能暴露处理并轮换。当前脚本仅用于默认快照与预览，明确不含 `--apply`；须待 API 路由部署并使用
+受控客户端后再执行验证。
+
 用户要求GitOps只保存声明，PR检查只做声明格式及敏感信息检测。已关闭被主线业务namespace互通策略覆盖的 [GitOps #728](https://github.com/ai-workspace-infra/gitops/pull/728)；[GitOps #747](https://github.com/ai-workspace-infra/gitops/pull/747) 将自动检查从11项收敛为YAML声明校验和gitleaks两项，移除IaC/IAM及业务/运行态自动PR检查。两个保留检查已本地验证，PR提交范围gitleaks无泄露，#747已合并且两项检查均通过；未修改生产声明或分支保护，main原本没有required status contexts/额外rulesets。
 
 
