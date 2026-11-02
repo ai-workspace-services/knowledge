@@ -769,6 +769,8 @@ Accounts #300 的 `6c7c48ab` 增加目标侧触发器兼容 SQL：仅 `accounts_
 
 新增待处理项：迁移范围中 `finance_operation_events.id` 与 `referral_campaign_revisions.revision` 使用序列。隔离验证表明非 owner 即便具备序列 USAGE/SELECT/UPDATE，也不能执行当前使用的 `ALTER SEQUENCE ... RESTART`；初次迁移还需覆盖两条序列。必须设计权限受控、避免并发回退且满足回滚语义的序列推进，不能通过授予迁移账号业务表所有权绕过。
 
+**序列及非 owner API 隔离验证更新（2026-11-03 北京时间）**：Accounts #300 的 `d5bce170` 增加目标 owner 安装、限定两条序列的 `SECURITY DEFINER` 函数；专用 `accounts_migration` 登录只调用通过源码摘要、owner、ACL 和执行设置检查的函数，事务内先锁序列再按现有值与已导入最大值推进。隔离测试覆盖回滚、并发 `nextval` 等锁、额外授权与函数篡改拒绝，业务登录不能调用。真实非 owner 登录还贯穿隔离 HTTPS API 的只读源快照、首次导入及用户更新追齐；验证其不拥有 public 业务表、无业务 DELETE 和 schema CREATE 权限，并核对用户行及两条序列。测试使用合成备份门禁和数据库，不是线上验收；新实现仍为 Draft，未在 V6 安装，规模测试尚未覆盖此提交。
+
 
 - 迁移前 V6 业务写者、后台任务、真实支付和通知受控。
 - 迁移源连接只读；V5 原业务写入方保留。
