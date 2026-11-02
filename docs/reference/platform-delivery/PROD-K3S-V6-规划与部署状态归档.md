@@ -803,6 +803,8 @@ Accounts #300 的 `6c7c48ab` 增加目标侧触发器兼容 SQL：仅 `accounts_
 
 **固定工具构件准备（2026-11-03）**：从干净的 Accounts main 提交 `97f8c92ff9c191755a0d80717f64e3c85898d6eb` 手动构建 Linux amd64、CGO 禁用的 `migratectl`，SHA-256 `882d6eaf29ef969d71be07fc477d9f7e0e21fa2db44d6913369f439e7aa00229`；传至 V6 的 `/var/lib/accounts-migration/artifacts/97f8c92ff9c191755a0d80717f64e3c85898d6eb/migratectl` 后核对 checksum 一致，`--help` 包含 `transfer-api` 和 `catchup-api`。该独立构件尚未替换现有系统命令或 listener 镜像，也未改写 `/root/migrate.sh`；服务端部署、业务库目标、预览与数据写入尚未完成。构件来源以干净源码提交和构建记录绑定；Go 构件元数据未提供 VCS revision，不将其误报为内嵌证明。
 
+**listener 镜像发布准备（2026-11-03）**：使用 `crane` 以当前 listener 的固定基础镜像 `ghcr.io/ai-workspace-services/accounts@sha256:c7786e2ca360e9b69e521f503213f1c65dff9b06221e520429080aeaf9d255fa` 加入上述固定 `migratectl` 层，生成本机 Linux amd64 镜像归档。归档内该二进制 SHA-256 与构建结果一致，镜像 manifest digest 为 `sha256:272e09a7306a44b0bd30e499242f9be34729eadf03da2b698117ef806836636d`；专用标签只标注迁移工具源码 revision，不代表基础镜像内其他程序来自该 revision。本机 GHCR 凭据对 `ai-workspace-services/accounts` 上传请求返回 403，镜像尚未推送、未进入 GitOps、未部署；digest 是本地归档结果，不能作为远端可拉取证明。需要获得该包写入权限后推送并核对远端 digest，再声明和调谐。
+
 
 - 迁移前 V6 业务写者、后台任务、真实支付和通知受控。
 - 迁移源连接只读；V5 原业务写入方保留。
