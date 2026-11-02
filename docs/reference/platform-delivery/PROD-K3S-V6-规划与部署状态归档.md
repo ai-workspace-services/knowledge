@@ -4,6 +4,8 @@
 
 本节记录 `prod-k3s-v6`（`web-saas-prod` / `postgresql-prod`）在 [GitOps PR #730](https://github.com/ai-workspace-infra/gitops/pull/730)（`200d8b7`）、[PR #732](https://github.com/ai-workspace-infra/gitops/pull/732)（`d0651b0`）、[PR #738](https://github.com/ai-workspace-infra/gitops/pull/738)（`ba748b0`）、[PR #739](https://github.com/ai-workspace-infra/gitops/pull/739)（`88adbe5`）、[PR #740](https://github.com/ai-workspace-infra/gitops/pull/740)（`8d8d245`）以及本轮 [GitOps PR #741](https://github.com/ai-workspace-infra/gitops/pull/741)（合并提交 `4405e986703fab53421e6460603b61676d5f843c`）和 [Playbooks PR #957](https://github.com/ai-workspace-infra/playbooks/pull/957)（合并提交 `5fb10d8063703ecfa71a0eb836f33a65e0812f5c`）合并并调谐后的线上验收结果。
 
+**本轮范围：只解决当前环境问题。** 沿用手动操作 / Ansible Playbooks + GitOps + Flux、Caddy + K3s ServiceLB；Traefik/Flagger 迁移、流水线建设、全面 rootless 和数据库身份体系重做不属于本轮改造。以下最新复核优先于本文后续各时点的历史状态，不因旧条目写有“未就绪”而重复处理已经修复的问题。
+
 ### 1. 集群 Source、Chart 与固定镜像版本
 
 - **Flux GitRepository 与 Kustomization 调谐状态**：
@@ -56,6 +58,29 @@
 | SMTP / 注册验证 | 仍按前节列为独立交付与收发验证任务 | 本轮未验收 |
 
 本轮仅做合并记录核查、状态读取、健康 HTTP 请求和数据库只读查询；没有重放 Playbooks、修改数据库对象或触发新一轮部署。四个业务应用就绪不代表 V6 全部集群服务或生产切换验收通过。
+
+### 5. 对照平台交付文档的当前偏差（2026-11-02 12:20—12:24，北京时间）
+
+**当前待解决的具体环境问题：**
+
+| 项目 | 现场事实 | 处理边界与完成条件 |
+| --- | --- | --- |
+| Caddy / V6 域名与入口 | Caddy 已声明 Console、Accounts、Billing 三个 V6 Host 路由，但 LoadBalancer 地址仍 pending，未见 ServiceLB Pod，节点 443 无法建立连接；Console、Accounts、Billing、Vault、Observability 五个规划域名在节点 DNS 查询均未解析 | 完成现有 Caddy + ServiceLB 节点 443 及三个业务域名，再核对 TLS/SNI、证书链和后端路由；Vault/Observability 仍按受限管理通道处理，不新增其公网 Caddy 路由。不切换 V5/canonical DNS，不更换网关 |
+| Datakit 资源和调谐 | 最近终止原因 OOMKilled，累计重启 9 次；request/limit 为 64Mi/128Mi，抽样使用约 127Mi；HelmRelease 和 Observability Kustomization 均 False | 按当前采集配置核对资源需求，修复后重试调谐并观察无新增 OOM，确认遥测接收；不能只重置失败状态后判通过 |
+| 审计用户读取秘密的错误授权 | 使用 `/home/auditor/.kube/config` 的真实身份 `auditor`（`system:authenticated`）执行权限自检：`get secrets -n vault-prod` 返回 yes；`k3s-auditor-read-only` ClusterRole 明确包含 Secret 的 get/list/watch。工作负载读取允许，exec/Deployment patch 拒绝。未读取任何 Secret 内容 | 与审计身份禁止读取管理秘密的既定要求不符，属于当前 RBAC 配置问题；最小收敛现有规则后，用同一真实身份重新验证状态读取允许、Secret/写入/exec 拒绝 |
+| SMTP / 注册邮件 | `kv/prod/platform/smtp/google` 的字段已记录，但本轮没有完成 ESO/应用配置交付与邮件收发证明 | 按现有 Accounts 配置接入并使用受控测试邮箱验收，不把 Pod Ready 当作注册验证完成 |
+
+**已确认的现状与后续验收边界，不据此扩大为本轮改造：**
+
+- **配置 pin：** 管理 source 固定在 `3d8f3cbc…`，五个服务 source 当前跟踪 `branch: main`，周期为 1 分钟；这是本轮调试现状，与长期“每单元独立固定配置版本”的目标有差距。镜像/chart digest 已固定。记录此差距，不在本轮扩展版本发布机制。
+- **身份例外：** Accounts 主进程与 Console Node/master 仍为 UID 0，Console worker 为 UID 33；Billing 为 UID 100，Content 为 UID 10001。应用使用临时 PostgreSQL `postgres` 超级用户连接的既有例外仍未退出。全面 rootless 和业务 DML 角色交付保留为独立任务，当前不宣称三权分立全部通过。
+- **当前网络选择：** 五个业务 namespace 的所有端口入站互通是用户已确认的配置，WireGuard 的 `v5v6` 接口及对端 Pod 网段路由仍存在。本轮不重构网络策略，不因应用就绪就移除迁移隧道；断开条件仍按原记录单独验收。
+- **存储与恢复：** 独立 ext4 数据盘已挂载 `/data`，现有三项 Bound PV 的实际目录均在 `/data/k3s/storage`，回收策略为 Delete；另有旧 Vault Released/Retain PV。此状态不等于备份恢复已通过，不自动删除旧卷或更改回收策略；业务数据迁移前仍需证明恢复路径。
+- **容量：** 2C4G 节点抽样内存使用约 71%；Pod CPU requests 为 81%、memory requests 为 65%，limits 分别合计约 329%/199%。超额 limits 不是单独的故障证明，但结合 Datakit OOM，完整滚动峰值与恢复余量尚未验收；本轮不自动扩容。
+- **数据：** 51 张表满足当前已验证启动路径；完整原生 schema 仍缺 23 张表及迁移元数据、其他对象，V5→V6 业务迁移、含业务数据的备份恢复与写者切换仍未完成，继续保留原服务。
+- **已通过的主机事实：** root SSH 密码认证禁用，auditor 无 sudo；operator/auditor kubeconfig 的符号链接目标均为对应用户所有的 0600 文件，父目录为 0700。符号链接显示的 0777 不代表凭据文件本身可被其他用户读取。云防火墙来源限制与完整拒绝测试仍需其 owner 证据，不能仅凭监听地址推断公网开放。
+
+本节是偏差记录与当前处理范围确认，没有执行 RBAC、网关、DNS、资源、存储或身份变更。
 
 ## Accounts 应用根账号 bootstrap 字段（2026-11-01，北京时间）
 

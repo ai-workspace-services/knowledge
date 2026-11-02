@@ -2,6 +2,8 @@
 
 本目录汇集专项参考文档和跨组件总体架构。规划和目标图不代表代码已实现或线上已验收；运行状态以各文档标注的观察时间和回执为准。
 
+**当前 V6 处理范围（2026-11-02）：** 以 [V6 最新状态与偏差清单](PROD-K3S-V6-规划与部署状态归档.md) 为入口，只处理现有环境的部署、配置和验收问题。沿用手动操作 / Ansible Playbooks + GitOps + Flux、Caddy + K3s ServiceLB；流水线草案及总体架构中的后续演进不作为本轮必须实施的改造。四个 Web SaaS 应用已就绪，当前重点为 Caddy 节点 HTTPS 与批次域名、Datakit OOM/调谐失败，以及实际发现的审计身份 Secret 读取授权问题。
+
 ## 总体架构
 
 - [OpenplatForm Delivery Architecture](OpenplatForm-Delivery-Architecture.md) — 基础运行环境、统一架构图、多环境发布、观测与安全边界。

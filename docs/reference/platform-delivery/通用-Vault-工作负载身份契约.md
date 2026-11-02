@@ -2,15 +2,17 @@
 
 状态：通用身份契约仍为设计，尚未完成通用声明及调用方实现。本文不自动授权写入 Vault、切换 Flux、迁移凭据或删除旧资源。
 
-**最新执行记录（2026-11-01，北京时间）：** 经用户明确要求，公共 Vault 的旧 `jwt-prod-k3s-v6` mount 已停用，其下旧 TLS reader role 随之删除，mount 签发的 token 已撤销；同名 reader policy 保留。当前 V6 SecretStore 仍引用旧 mount，证书同步失败。新集群专用 mount、role 和通用 GitOps 引用尚未创建或切换；执行前配置快照及脱敏操作记录由操作方保管。详见 [V6 最新部署状态](PROD-K3S-V6-规划与部署状态归档.md)。
+**最新现场记录（2026-11-02，北京时间）：** 本批次由用户显式分配 `clusterId=prod-k3s-v6`，当前各 SecretStore 使用 `jwt-prod-k3s-prod-k3s-v6`，ESO Secret 同步已恢复。TLS 引导实际使用 role/policy `prod-k3s-tls-reader`、audience `vault-prod-k3s-tls`、ServiceAccount `vault-prod/vault-tls-reader`，SecretStore 名为 `shared-vault-tls-bootstrap`，目标 Secret 为 `vault-prod/vault-server-tls`。它与 Ingress、数据库及应用的独立 reader 分别授权。详见 [V6 最新部署状态](PROD-K3S-V6-规划与部署状态归档.md)。本轮只修复当前环境，不因命名包含批次字符串而改名或复制实现。
+
+**历史记录（2026-11-01）：** 公共 Vault 的旧 `jwt-prod-k3s-v6` mount 曾被停用，旧 TLS reader role 随 mount 删除，签发 token 被撤销；当时仍引用旧 mount 的 SecretStore 同步失败。该状态已由上述新 mount 与调用方配置修复，不能作为当前故障结论。
 
 ## 创建命令与脚本记录
 
-**状态：以下为待执行的 Vault CLI 命令模板，不是创建或验证成功的记录。** 执行前核验 GitOps 声明、CMDB、实际 cluster UID 和节点 UID、SSH host key、issuer 及集群签名公钥。使用受限、短期的 Vault 管理身份；token 通过受控环境提供，不写入命令参数、脚本、仓库、日志或回执。准备 `jq` 和经过核验的公钥 PEM 文件，不使用私钥。
+**状态：以下保留当前批次已采用参数的创建命令模板，不是本次执行回执；当前 mount 已存在，不应重跑创建或覆盖配置。** 新目标执行前核验 GitOps 声明、CMDB、实际 cluster UID 和节点 UID、SSH host key、issuer 及集群签名公钥。使用受限、短期的 Vault 管理身份；token 通过受控环境提供，不写入命令参数、脚本、仓库、日志或回执。准备 `jq` 和经过核验的公钥 PEM 文件，不使用私钥。
 
 ```bash
 export VAULT_ADDR="https://vault.svc.plus"
-CLUSTER_ID="<已声明并核验的集群ID>"
+CLUSTER_ID="prod-k3s-v6"
 MOUNT="jwt-prod-k3s-${CLUSTER_ID}"
 ROLE="prod-k3s-tls-reader"
 POLICY="prod-k3s-tls-reader"
@@ -91,7 +93,7 @@ ESO controller 的运行 ServiceAccount 与 SecretStore 引用的 Vault reader S
 
 ## 集群身份与职责
 
-外部 Vault 服务独立于业务集群部署。每个实际集群显式声明不可变、非敏感的 `clusterId`，该标识在同一环境和 Vault 实例内唯一，不包含代际或节点版本，也不从 hostname 推导。即使重建后的集群沿用 hostname，也须分配新的 ID。通过 IaC/CMDB 证据及经认证的 cluster UID、node UID 将声明与实际目标绑定；名称本身不能证明身份。运行时 UID、密钥和 token 不提交到仓库。
+外部 Vault 服务独立于业务集群部署。每个实际集群显式声明不可变、非敏感的 `clusterId`，该标识在同一环境和 Vault 实例内唯一，不由代码从 hostname 或版本推导。本批次用户已显式选择 `prod-k3s-v6`；它是当前配置事实。未来独立集群使用独立 ID 与 mount；集群重建时须重新核验 cluster UID、node UID 和 JWT 签名信任，不能仅凭同名复用已有信任。通过 IaC/CMDB 证据及经过认证的实际身份绑定目标；运行时 UID、密钥和 token 不提交到仓库。
 
 GitOps 声明环境、集群 ID、Vault 地址、JWT mount、工作负载身份、精确 KV 路径及预期 audience；Playbooks 负责 Vault 和集群身份操作；Flux 负责 Kubernetes ServiceAccount、SecretStore 和 ExternalSecret 声明；IaC 提供目标事实和 CMDB。人工执行也须使用同一固定 GitOps 声明及其证据，不要求使用流水线。
 
@@ -102,7 +104,7 @@ GitOps 声明环境、集群 ID、Vault 地址、JWT mount、工作负载身份�
 | 声明项 | 作用和范围 | 规划命名或示例 |
 | --- | --- | --- |
 | 环境 | 隔离生产、预发布和测试的身份与授权 | `prod`、`uat`、`sit` |
-| 集群 ID | 同一 Vault 和环境内标识一个实际集群；重建时分配新 ID | `clusterId: <cluster-id>`；随机生成且不含版本号 |
+| 集群 ID | 同一 Vault 和环境内标识一个实际集群；显式分配，重建时重新验证身份与签名信任 | 本批次 `clusterId: prod-k3s-v6`；未来独立集群不复用该 ID |
 | Vault 地址 | 外部 Vault 的 HTTPS 地址，与集群部署位置无关 | `https://vault.svc.plus` |
 | JWT auth mount | 每个实际集群的独立签名信任边界 | `jwt-<environment>-k3s-<cluster-id>`，例如 `jwt-prod-k3s-a7f39c` |
 | 工作负载 namespace | ServiceAccount 所在 Kubernetes namespace | TLS 引导示例：`vault-prod` |
