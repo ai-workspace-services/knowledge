@@ -787,6 +787,8 @@ Accounts #300 的 `6c7c48ab` 增加目标侧触发器兼容 SQL：仅 `accounts_
 
 **业务库身份暂存（2026-11-03）**：使用上述固定 GitOps 修订执行 Playbooks `secrets` 阶段，生成或复用 `kv/prod/accounts/migration/v5-to-v6/business-target` 中的目标数据库凭据，创建 `accounts-migration/migration-listener-business`，暂存密钥沿用既有路径。该阶段未创建数据库角色、未更改当前 listener Secret 或目标连接。随后业务库只读核对仍为 51 张 public 表、3 个用户，`schema_migrations` 不存在。业务 schema 补齐、真实角色登录、业务库预览及迁移写入均尚未完成。
 
+**业务库事务回滚演练（2026-11-03）**：对 V6 `postgresql-prod/account`，以管理员经 Kubernetes exec 执行 [Accounts #303](https://github.com/ai-workspace-services/accounts/pull/303) 的增量 SQL（SHA-256 `cb5eb5371b85fb65cd4bc735fb0a47091eab9a61586726448828a7ac2f9eb8a4`），预先绑定现场 PostgreSQL system identifier 与数据库 OID，替换末尾 `COMMIT` 为 `ROLLBACK`。全部 SQL 成功并收到回滚确认；随后检查仍有 51 张 public 表，`finance_invoices` 与 `schema_migrations` 均不存在。演练短时持有 SQL 定义的表锁，但未提交 schema 或迁移数据。现场查询还确认 `account_lifecycle_events`、`rbac_permissions`、`rbac_role_permissions`、`rbac_roles` 和 `users` 没有用户定义触发器；与原生目标存在的九项触发器差异仍需业务语义审查。回滚演练不替代备份、真实角色验证和绑定实际业务库的迁移预览。
+
 
 - 迁移前 V6 业务写者、后台任务、真实支付和通知受控。
 - 迁移源连接只读；V5 原业务写入方保留。
