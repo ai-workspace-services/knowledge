@@ -827,6 +827,10 @@ Accounts #300 的 `6c7c48ab` 增加目标侧触发器兼容 SQL：仅 `accounts_
 
 **业务库 listener 发布与首次预览（2026-11-03）**：使用 Vault `kv/CICD` 中既有 GHCR 凭据推送目标 listener 镜像，远端与本地 manifest digest 均为 `sha256:272e09a7306a44b0bd30e499242f9be34729eadf03da2b698117ef806836636d`，V6 节点拉取成功；上传权限空探针获 202，取消请求返回 405，未将该探针记作业务发布。GitOps [#762](https://github.com/ai-workspace-infra/gitops/pull/762) 固定镜像、引用 `migration-listener-business` 并启用 `--allow-unversioned-target`，不启用回执初始化。首次调谐时 listener 因业务 PostgreSQL 5432 不可达重启；[GitOps #763](https://github.com/ai-workspace-infra/gitops/pull/763) 增加仅 `accounts-migration` 的 listener Pod 到 `postgresql-prod` PostgreSQL Pod TCP 5432 入站规则，Flux 应用 `48aef96025bd2f8a0aaaacb00f03bba032cc5171` 后 listener 运行且无重启。先以旧 snapshot `c79af158-d045-47cc-b2ac-5f1f2c6cc2f3` 请求得到 HTTP 410，旧候选库 plan 不可用于业务库；已重新发起只读快照和业务库预览。客户端以获授权的本机 Kubernetes port-forward 访问目标，保留目标 HTTPS 域名和证书校验；未更改 `/root/migrate.sh`。新预览、账单冲突及数据写入结果以后续回执为准。
 
+**业务库快照冲突诊断（2026-11-03，最新）**：新 snapshot `f61b87a6-8e8e-4789-a36c-ad6a93cc6371` 的 42 表、201 个分片全部已加密暂存在目标，plan 请求 ID `07bda5f2-98e1-48d1-969c-c80db975b3fd`；目标返回 HTTP 409，未产生可审核 plan。以真实 `accounts_migration` 身份对 42 表目录、可见性及目标基线诊断通过；使用这些加密分片、临时表和始终回滚的诊断事务，发现 `users` 有 3 对同用户名、同邮箱但不同 UUID 的冲突，3 对 Proxy UUID 和密码哈希均不同，2 对角色相同。该统计不输出身份或凭据，不能仅凭邮箱判定身份合并。
+
+在仅作汇总的诊断中，`billing_plans` 有 16 条同主键但内容不同、4 条源侧待插入；16 条均有创建/更新时间差异，9 条 Stripe Price ID、2 条 features、1 条 sort_order 不同。快照中另有 37 条用户、7 条订阅、13 条订阅记录、92143 条账本、92141 条流量桶、5 条发票、5 条付款、2 条退款等源记录标为待插入统计，但这不是已批准的迁移计划，也不证明全部业务语义可合并。用户身份与套餐冲突需在 V6 侧明确处理后重新预览；未导入业务数据，V5 数据库未修改。诊断使用的本机端口转发已关闭。
+
 
 - 迁移前 V6 业务写者、后台任务、真实支付和通知受控。
 - 迁移源连接只读；V5 原业务写入方保留。
