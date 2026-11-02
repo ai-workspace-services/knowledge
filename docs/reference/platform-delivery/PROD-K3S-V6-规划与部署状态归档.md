@@ -807,6 +807,8 @@ Accounts #300 的 `6c7c48ab` 增加目标侧触发器兼容 SQL：仅 `accounts_
 
 **业务 schema 事务门禁准备（2026-11-03）**：[Playbooks #961](https://github.com/ai-workspace-infra/playbooks/pull/961) Draft 提供 SQL 门禁生成器：绑定 PostgreSQL system identifier 和数据库 OID，事务内锁定恢复基线覆盖的表，并检查 public 表集合、每表行数及 SHA-256 行摘要。隔离 PostgreSQL 回归覆盖身份、数据和表范围漂移拒绝及并发写入的锁超时。该生成器尚未接入生产执行器，也不自行验证备份来源、恢复库可信性、schema、序列、扩展、角色或 ACL；不产生迁移写入回执。业务库未应用该门禁或增量 SQL。
 
+**事务门禁与固定 SQL 组合演练（2026-11-03）**：Playbooks #961 的 `c8de7196` 增加固定 SQL SHA-256 校验及同一事务组合，支持将最终 COMMIT 替换为 ROLLBACK 的演练。隔离测试确认门禁拒绝数据漂移时不创建 schema；使用异机恢复库的 51 表摘要和 Accounts #303 固定 SQL 完成组合回滚演练，之后恢复库仍为 51 张表且没有 `finance_invoices`。异机 PostgreSQL 演练结束后已停止。此结果不证明线上目标在执行时仍与备份一致；生产执行器、可信备份来源、schema/序列/ACL 证明、实际身份和迁移计划绑定仍待完成。
+
 
 - 迁移前 V6 业务写者、后台任务、真实支付和通知受控。
 - 迁移源连接只读；V5 原业务写入方保留。
