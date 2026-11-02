@@ -843,6 +843,8 @@ Accounts #300 的 `6c7c48ab` 增加目标侧触发器兼容 SQL：仅 `accounts_
 
 **追齐能力隔离复测（2026-11-03）**：在本机临时 PostgreSQL 17 夹具上，以 Accounts `356b9d9aa1d1c6702fa6a6d6ca1e13eeecceaf00` 执行 `go test ./internal/migrate ./cmd/migratectl -run 'TestMigrationAPIPostgres17|TestClassifyCatchup|TestCatchup' -count=1`，两包通过。测试覆盖提交基线后的源变更、目标漂移/冲突拒绝、重复请求以及触发器防护；临时数据库已停止清理。首次夹具执行因测试要求数据库管理员名为 `postgres` 而失败，改用全新隔离夹具后通过。此为夹具证据，不是 V5/V6 线上追齐验收；线上尚无首次迁移提交基线，不能执行实际追齐。
 
+**业务库提交前置核查（2026-11-03）**：只读检查 V6 `account` 库的 PostgreSQL 系统目录，未发现 `accounts_migration_api` schema；当前运行的目标 listener 参数中没有 `--backup-receipt-file`，仅提供预览，尚不具备受控 apply 条件。提交前需以专用 owner 按已审查流程初始化回执并验证 executor 的必要权限；备份及独立恢复证明须满足工具要求，并与最终审核计划的目标实例、schema 和基线指纹一致且未过期。现有归档备份或测试通过本身不等于已完成该绑定。用户和套餐冲突处理后须重新预览，并重新核对提交前置条件；本次核查未改库、未启用写入。
+
 
 - 迁移前 V6 业务写者、后台任务、真实支付和通知受控。
 - 迁移源连接只读；V5 原业务写入方保留。
