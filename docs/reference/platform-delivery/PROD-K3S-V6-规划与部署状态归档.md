@@ -815,6 +815,8 @@ Accounts #300 的 `6c7c48ab` 增加目标侧触发器兼容 SQL：仅 `accounts_
 
 **角色和 ACL 加密备份及异机恢复（2026-11-03）**：额外以 `pg_dumpall --globals-only` 和 `pg_dump --schema-only` 分别经流加密保存 PostgreSQL 全局角色、schema owner 和 ACL；未输出明文。两个加密文件 SHA-256 分别为 `0011881019afe2747903b8650c5f67ef765651b658ad6d302ae7b76352cc87c1db70343558c926e93`、`0e65814da8c214edfb40dc92b367e1cf7034da499de1078b1a708896ccc2084b`，均验证可解密。独立 PostgreSQL 17 私有 socket 集群中先恢复全局角色及 schema/ACL，首次数据恢复因外键装载顺序失败并保留现场；在新库以数据恢复期间禁用触发器方式重试成功，随后逐项核验 20 个 public 外键无违例。与当前 V6 读取快照比较：51 表行摘要一致；52 个 public 表、视图及序列对象展开为 411 项有效 owner/ACL 权限，一致；4 个源非系统角色属性一致；3 项内建角色成员关系的成员与选项一致，但 grantor 因独立集群初始化用户不同而不同；1 个 public 序列 last_value 一致。比较事务并非跨库原子快照，未比较密码原值、所有数据库和函数/schema ACL、默认权限或业务连接，不构成完整生产恢复认证。异机数据库已撤销 PUBLIC CONNECT 并停止，恢复库及失败日志保留；这些新备份与旧数据备份取样时间不同，尚未绑定实时迁移预览。
 
+**真实恢复库 schema 与角色演练（2026-11-03）**：在上述包含业务数据、角色和 ACL 的异机恢复库，以目标身份、51 表行摘要和目标 catalog 事务门禁执行 Accounts #303 固定 SQL 并实际提交，之后有 72 张 public 表且无伪造检查点；原 51 表摘要与提交前一致，原 52 个 public 关系对象的 411 项展开有效 owner/ACL 与 V6 当前读取结果一致。随后以模拟 Vault 凭据和 SSH、在该恢复库真实执行 Playbooks #960 业务角色授权 SQL，42 张目标表均有 SELECT/INSERT/UPDATE 且无 DELETE；`SET ROLE accounts_migration` 与管理员读取的 42 表行数相同。真实 Service 密码登录在该演练中被模拟，行数一致也不是逐行可见性的完整证明。异机 PostgreSQL 已停止；此演练未改 V6 业务库，也不等于目标 listener 预览或迁移写入通过。
+
 
 - 迁移前 V6 业务写者、后台任务、真实支付和通知受控。
 - 迁移源连接只读；V5 原业务写入方保留。
