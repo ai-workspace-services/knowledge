@@ -817,6 +817,10 @@ Accounts #300 的 `6c7c48ab` 增加目标侧触发器兼容 SQL：仅 `accounts_
 
 **真实恢复库 schema 与角色演练（2026-11-03）**：在上述包含业务数据、角色和 ACL 的异机恢复库，以目标身份、51 表行摘要和目标 catalog 事务门禁执行 Accounts #303 固定 SQL 并实际提交，之后有 72 张 public 表且无伪造检查点；原 51 表摘要与提交前一致，原 52 个 public 关系对象的 411 项展开有效 owner/ACL 与 V6 当前读取结果一致。随后以模拟 Vault 凭据和 SSH、在该恢复库真实执行 Playbooks #960 业务角色授权 SQL，42 张目标表均有 SELECT/INSERT/UPDATE 且无 DELETE；`SET ROLE accounts_migration` 与管理员读取的 42 表行数相同。真实 Service 密码登录在该演练中被模拟，行数一致也不是逐行可见性的完整证明。异机 PostgreSQL 已停止；此演练未改 V6 业务库，也不等于目标 listener 预览或迁移写入通过。
 
+**V6 业务库 schema 与迁移身份实际交付（2026-11-03，最新）**：[Playbooks #961](https://github.com/ai-workspace-infra/playbooks/pull/961) 已合并至 `166e170efce9bcb4111943f20f8c0c3b4b71d60d`。经固定 GitOps/Accounts 修订、三份加密备份 SHA-256、异机数据及角色/ACL 恢复演练、目标物理身份、目标 catalog、51 表基线和事务锁门禁，执行固定增量 SQL 并提交，受限回执结果为 `schema_applied`。实际 `account` 现有 72 张 public 表，其中 42 张迁移范围表齐全；未伪造 `schema_migrations`，原 51 表行 SHA-256 摘要与独立恢复基线一致。该阶段新增 schema，不导入 V5 数据。
+
+随后执行 [Playbooks #960](https://github.com/ai-workspace-infra/playbooks/pull/960) 的业务目标 `permissions` 阶段：`accounts_migration` 已经由 PostgreSQL Service 路径验证正确密码可登录、错误密码被拒，42 表角色读取行数与管理员一致；角色非超级用户、无 CREATEDB/CREATEROLE/REPLICATION/BYPASSRLS，无继承，不拥有 public 表且无 DELETE/TRUNCATE 权限。行数相同不能独立证明逐行身份或内容一致。`web-saas-prod` 四个业务 Pod 和现有迁移 listener 在检查时就绪；listener 仍指向候选库，尚未加载业务目标 Secret。未安装追齐所需触发器兼容和受限序列辅助函数，也未发布新 listener 镜像、执行业务库预览、账单对账或 V5→V6 数据写入。旧记录中“业务库尚未执行 schema/身份”的表述仅代表当时状态，以本段为准。
+
 
 - 迁移前 V6 业务写者、后台任务、真实支付和通知受控。
 - 迁移源连接只读；V5 原业务写入方保留。
