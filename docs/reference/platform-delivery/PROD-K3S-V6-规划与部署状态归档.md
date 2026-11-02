@@ -708,6 +708,21 @@ V6 验收仍需确认上述路径的 Vault 实存与字段合同、ESO 映射和
 
 ### 8.2.1 V5 → V6 业务库直接迁移预检（2026-11-03）
 
+**在线账单只读对比（2026-11-03 01:34–01:35 北京时间）**：V5 使用 `readonly_release`、`REPEATABLE READ READ ONLY`；V6 业务库使用只读事务。两库分别取快照，时间点不完全相同；下表是数量汇总，不证明逐行或金额一致。
+
+| 对象 | V5 在线 | V6 业务库 |
+| --- | ---: | ---: |
+| users | 37 | 3 |
+| subscriptions | 7 | 0 |
+| subscription_records | 13 | 0 |
+| billing_plans | 20 | 19 |
+| billing_ledger | 92143 | 0 |
+| account_quota_states | 37 | 0 |
+| traffic_minute_buckets | 92141 | 0 |
+| finance_invoices / finance_payments / finance_refunds | 5 / 5 / 2 | 相关表不存在 |
+
+V5 财务汇总均为 CNY，发票 `19000`、付款 `19000`、退款 `4000`，单位为 `amount_minor`（分）。V6 财务表不存在，不能把缺表解释为零金额。以上汇总为迁移前差异，业务库目标 preview、逐行冲突、数据补齐和导入后校验仍未完成。
+
 **候选库预览与重试记录（2026-11-03 北京时间）**：Accounts [#301](https://github.com/ai-workspace-services/accounts/pull/301) 合并提交 `cacfef07365983f5f32163c72290c84dda1cbadb`，由该提交手动构建 V6 Linux `migratectl`，二进制 SHA-256 `816005306b85b7e65606119d969558438e7a8558d61623d271d0ef3748b40c8d`；旧二进制保留回退副本。V6 本机使用 `127.0.0.1:18443` port-forward 和 `MIGRATION_TARGET_LOCAL_PORT=18443`，目标证书校验通过，跨节点仍用公共 HTTPS；`/root/migrate.sh` 未修改。
 
 新 snapshot `c79af158-d045-47cc-b2ac-5f1f2c6cc2f3`、plan `3b81ddc7-f0e7-4a5a-8d07-35183602e908` 对 **候选库** 预览成功，42 张表、待插入 184538 行、匹配 0、冲突 0，plan SHA-256 `8cca866b2cc54c6069164827848318926645129c56917f94fb051a4cc45f556a`。以相同 snapshot/plan ID 再次调用返回同一 hash 和计数；回执有到期时间，不可视为永久可重用。此记录不表示业务库已预览、数据已导入或跨快照追齐已验证。指定 ID 的 `migrate.sh` 环境变量支持另见 [Accounts #302](https://github.com/ai-workspace-services/accounts/pull/302)，合并前不可视为已交付。
