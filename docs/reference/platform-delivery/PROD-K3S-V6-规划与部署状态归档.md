@@ -805,6 +805,8 @@ Accounts #300 的 `6c7c48ab` 增加目标侧触发器兼容 SQL：仅 `accounts_
 
 **listener 镜像发布准备（2026-11-03）**：使用 `crane` 以当前 listener 的固定基础镜像 `ghcr.io/ai-workspace-services/accounts@sha256:c7786e2ca360e9b69e521f503213f1c65dff9b06221e520429080aeaf9d255fa` 加入上述固定 `migratectl` 层，生成本机 Linux amd64 镜像归档。归档内该二进制 SHA-256 与构建结果一致，镜像 manifest digest 为 `sha256:272e09a7306a44b0bd30e499242f9be34729eadf03da2b698117ef806836636d`；专用标签只标注迁移工具源码 revision，不代表基础镜像内其他程序来自该 revision。本机 GHCR 凭据对 `ai-workspace-services/accounts` 上传请求返回 403，镜像尚未推送、未进入 GitOps、未部署；digest 是本地归档结果，不能作为远端可拉取证明。需要获得该包写入权限后推送并核对远端 digest，再声明和调谐。
 
+**业务 schema 事务门禁准备（2026-11-03）**：[Playbooks #961](https://github.com/ai-workspace-infra/playbooks/pull/961) Draft 提供 SQL 门禁生成器：绑定 PostgreSQL system identifier 和数据库 OID，事务内锁定恢复基线覆盖的表，并检查 public 表集合、每表行数及 SHA-256 行摘要。隔离 PostgreSQL 回归覆盖身份、数据和表范围漂移拒绝及并发写入的锁超时。该生成器尚未接入生产执行器，也不自行验证备份来源、恢复库可信性、schema、序列、扩展、角色或 ACL；不产生迁移写入回执。业务库未应用该门禁或增量 SQL。
+
 
 - 迁移前 V6 业务写者、后台任务、真实支付和通知受控。
 - 迁移源连接只读；V5 原业务写入方保留。
