@@ -4,20 +4,41 @@
 
 ## 实施进度与今晚切换要求（2026-11-02）
 
-### SSH 发布准备与 V5 发布线兼容（2026-11-02，最新）
+### V5 Accounts 发布状态（2026-11-02，最新）
 
-Accounts #291 已合并为 `ba673c014c9e630c3cae815040035ac4d852828f`。GHCR已核实固定镜像 `ghcr.io/ai-workspace-services/accounts:sha-ba673c014c9e630c3cae815040035ac4d852828f@sha256:52110a5d5a3c23d0a468eea583e608133d39e1d6e6a89940ca81e1ecaad54cf6`。已通过SSH分别在V5/V6执行 `k3s ctr -n k8s.io images pull <固定引用>`，两个节点退出码均0；这是镜像预拉取，不是业务Deployment已更新。
+Accounts [PR #292](https://github.com/ai-workspace-services/accounts/pull/292) 已合并到
+`release/v2026.11.02-registration`，合并提交为 `aec6c28bee4a8820da1a88c6cec81648a7ca50e0`。
+该版本只回补管理员迁移认证 endpoint、对应测试及路由；不改 SQL/runtime/catalog/业务配置。
+发布构建成功，GHCR 固定引用为
+`ghcr.io/ai-workspace-services/accounts:sha-aec6c28bee4a8820da1a88c6cec81648a7ca50e0@sha256:a316e9d08e89462935b8cb795d6a9b89991df341b61fd1dd3865489c2af7b4df`。
 
-现场确认V5当前Accounts源为 `b1ea07695b448c6527eb612d0cd7e0dba41c0e03`，属于 `release/v2026.11.02-registration`，配置 `DATABASE_RUNTIME_ROLE=primary`；不是main发布线。为避免main完整native检查点与现有 `2026102002` 库不兼容，已提交 [Accounts回补PR #292](https://github.com/ai-workspace-services/accounts/pull/292)（`d107bdff`），仅新增管理员认证endpoint、对应测试及一条路由，不改SQL/runtime/catalog/业务配置。发布线管理员/auth回归通过。需先合并并核实该发布线的固定构件，才能替换V5普通Accounts；独立迁移listener可使用上面的main镜像。
+V5 当前仍运行旧镜像 `sha-d906d85d133a35ae0b9e1e1d82e201927791501b`，副本 `1/1`；
+公网 `/api/ping` 返回 `HTTP 200`、TLS 校验通过并报告旧版本。已从 V5 节点 SSH 预拉取上述固定镜像，
+退出码为 0。此操作未替换业务 Pod。V5 HelmRelease 由 Flux 管理，因此先提交了
+[GitOps PR #749](https://github.com/ai-workspace-infra/gitops/pull/749)，只更新
+`services/distributed-web-saas-fullstack/prod/values.yaml` 中 Accounts `workload.image` 与
+运行时 `IMAGE` 两处为同一固定摘要。PR 的 YAML-only 声明校验与 gitleaks 均通过，待合并后再从
+V5 节点触发 Flux 调谐并验收。
 
-V6当前Accounts仍为 `3ef09c82…`，计划选择上述main固定构件；普通服务更新仍需核对备份和启动/数据库行为。当前两个业务Deployment镜像尚未修改，未暂停服务、未迁移数据库、未切换DNS、未派发部署流水线。旧服务继续运行，不能将image pull退出码0写成发布验收完成。
+本轮尚未更新 V5 Deployment；未操作 V6；未暂停服务、执行数据迁移/预览/业务写入、切换 DNS，
+也未派发部署工作流。发布验收需在 GitOps 合并后核对 Pod 固定摘要、`/api/ping` 的 image/tag/commit、
+readiness，以及迁移认证 endpoint 的未认证拒绝行为。镜像拉取成功或 PR 合并均不等于运行验收完成。
 
+### 较早的主干构件核验记录
 
-最新构件状态：Accounts #289 已合并到 `677fb48ef92be426904864f8f849a1e9ac044bab`。已通过GHCR回读和run-bound manifest核实镜像 `ghcr.io/ai-workspace-services/accounts:sha-677fb48ef92be426904864f8f849a1e9ac044bab@sha256:be8e7ebb8017e453006a042e83a97c8e7f4ddb60503fe38837bd515dd44621e6`，平台linux/amd64，source_sha一致。已在本机拉取固定digest并核对OCI revision为该合并SHA，容器内transfer-api help可用。只读取既有发布结果，未派发部署工作流、未SSH更新节点。独立CLI新release尚未发布，旧CLI不能当作本次修复构件。
+Accounts #291 主干合并提交 `ba673c014c9e630c3cae815040035ac4d852828f` 的固定镜像为
+`ghcr.io/ai-workspace-services/accounts:sha-ba673c014c9e630c3cae815040035ac4d852828f@sha256:52110a5d5a3c23d0a468eea583e608133d39e1d6e6a89940ca81e1ecaad54cf6`。
+该构件用于独立迁移 listener 的后续部署评估，不替代 V5 现有 release 分支应用镜像。
+Accounts #289 的早期源端兼容构件 `677fb48ef92be426904864f8f849a1e9ac044bab` 与其镜像仅作历史记录，
+不作为本次 V5 普通 Accounts 发布目标。
 
-部署前限制：该修复仅处理源迁移API的检查点兼容；V5现有应用配置 `DATABASE_RUNTIME_ROLE=primary`，普通Accounts的 `VerifiedNativeRuntimeVersion` 仍使用当前完整native契约，不接受 `2026102002`。因此不能将上述tag直接改到V5普通Accounts并宣称可启动；需要独立兼容验证/修复，或先仅将同构件用于独立迁移listener。GitOps镜像选择待此条件满足后提交生效，不使用浮动tag、不伪造digest。
+### 当前部署门禁
 
-用户要求GitOps只保存声明，PR检查只做声明格式及敏感信息检测。已关闭被主线业务namespace互通策略覆盖的 [GitOps #728](https://github.com/ai-workspace-infra/gitops/pull/728)；[GitOps #747](https://github.com/ai-workspace-infra/gitops/pull/747) 将自动检查从11项收敛为YAML声明校验和gitleaks两项，移除IaC/IAM及业务/运行态自动PR检查。两个保留检查已本地验证，PR提交范围gitleaks无泄露，#747线上仅出现这两项且均通过。工作流变更尚待合并；未修改生产声明或分支保护，main原本没有required status contexts/额外rulesets。
+V5 数据库仍使用既有 `2026102002` 运行契约。此次 #292 回补未改数据库或普通 Accounts 的版本检查，
+因此部署只能使用发布线固定镜像；不能将主干完整 native runtime 镜像直接替换到 V5。GitOps PR #749
+合并前不进行在线镜像补丁，以免 Flux 回写造成漂移。
+
+用户要求GitOps只保存声明，PR检查只做声明格式及敏感信息检测。已关闭被主线业务namespace互通策略覆盖的 [GitOps #728](https://github.com/ai-workspace-infra/gitops/pull/728)；[GitOps #747](https://github.com/ai-workspace-infra/gitops/pull/747) 将自动检查从11项收敛为YAML声明校验和gitleaks两项，移除IaC/IAM及业务/运行态自动PR检查。两个保留检查已本地验证，PR提交范围gitleaks无泄露，#747已合并且两项检查均通过；未修改生产声明或分支保护，main原本没有required status contexts/额外rulesets。
 
 
 用户已明确允许 V5 Accounts 直接更新满足迁移要求的固定版本，不再要求 cherry-pick；V6 同步使用最新且已验收的固定构件。目标是今晚完成 V5 → V6 数据迁移及业务切换。本次只读线上盘点之后尚未部署或改写现网。
