@@ -110,5 +110,23 @@ team:
   selectLabel: "Select team"
   newTeamLabel: "New team"
   statusLabel: "Access status"
+plans:
+  title: "Choose your connection plan"
+  benefitLabel: "Benefits"
+  names: ["Shared Basic", "Premium Configuration", "Dedicated IP & Team Plans"]
+  rows:
+    - label: "Price"
+      values: ["¥20/month · ¥200/year", "¥50/month · ¥500/year", "From ¥80/month · From ¥800/year"]
+    - label: "Data"
+      values: ["20GB per calendar month, 240GB annual total; personal use only", "50GB per calendar month, 600GB annual total; special offer: unlimited data with annual billing (personal use only)", "Base plan includes a total data allowance of 1 TB/month; custom upgrades available on demand"]
+    - label: "Resources"
+      values: ["Shared resource pool", "Separate resource pool, personalized configuration", "Exclusive resources and node"]
+    - label: "Exit IP"
+      values: ["Shared IP", "Premium IP resources", "Exclusive IP"]
+    - label: "IP changes"
+      values: ["—", "—", "One free change per month, then ¥10/change"]
+    - label: "Support"
+      values: ["Environment maintenance and technical support", "Environment maintenance and technical support", "Environment maintenance and technical support; custom team nodes, member limits, and service validity"]
+
 
 ---
