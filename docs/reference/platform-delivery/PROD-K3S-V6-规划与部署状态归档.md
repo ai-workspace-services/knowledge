@@ -2,6 +2,14 @@
 
 ## Accounts 迁移 API 单向快照规划（2026-11-02）
 
+SSH发布准备最新记录：Accounts认证实现#291已合并为 `ba673c014c9e630c3cae815040035ac4d852828f`，固定镜像digest `sha256:52110a5d5a3c23d0a468eea583e608133d39e1d6e6a89940ca81e1ecaad54cf6` 已在两个节点通过SSH预拉取。V5实际发布线为 `release/v2026.11.02-registration`，为保持现有数据库契约，最小认证endpoint回补另见 [Accounts #292](https://github.com/ai-workspace-services/accounts/pull/292)，不是直接给V5普通应用部署main。当前业务Pod未替换、迁移未执行；具体版本与验证边界见规划的最新发布准备章节。
+
+
+代码实施：复用Accounts管理员认证的服务端修改已提交 [Accounts #291](https://github.com/ai-workspace-services/accounts/pull/291)（`dca13426`），完整隔离PG17迁移API套件及管理员/auth回归通过；尚未更新两端服务，当前镜像677fb48e不包含此新认证模式。
+
+认证契约更新：客户端直接使用V5/V6现有Accounts root/admin token，不再要求日期JOB token KV路径、专用迁移JWT或数据库DSN；有效期与撤销由Accounts决定。服务端新增管理员授权接口并逐请求委托校验，schema、快照、冲突和备份门禁保留。日期2026-11-02用于回执标签。旧方案两条KV路径not_found和两端迁移路径404仅是历史预检事实；新认证代码尚未部署，不能声称线上迁移成功。
+
+
 构件及仓库治理最新记录：Accounts #289 已合并为 `677fb48ef92be426904864f8f849a1e9ac044bab`，GHCR固定镜像digest核实为 `sha256:be8e7ebb8017e453006a042e83a97c8e7f4ddb60503fe38837bd515dd44621e6`（linux/amd64）。未派发部署流水线或更新节点；V5普通Accounts managed runtime检查点兼容仍须先验证，不能把API读取兼容当作普通服务可升级证明。GitOps旧PR #728已关闭；PR #747仅精简PR检查为声明格式与敏感信息扫描，未改变应用声明。详见下链规划的最新进度。
 
 

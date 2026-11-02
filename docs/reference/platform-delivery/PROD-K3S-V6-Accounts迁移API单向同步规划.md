@@ -4,11 +4,70 @@
 
 ## 实施进度与今晚切换要求（2026-11-02）
 
-最新构件状态：Accounts #289 已合并到 `677fb48ef92be426904864f8f849a1e9ac044bab`。已通过GHCR回读和run-bound manifest核实镜像 `ghcr.io/ai-workspace-services/accounts:sha-677fb48ef92be426904864f8f849a1e9ac044bab@sha256:be8e7ebb8017e453006a042e83a97c8e7f4ddb60503fe38837bd515dd44621e6`，平台linux/amd64，source_sha一致。已在本机拉取固定digest并核对OCI revision为该合并SHA，容器内transfer-api help可用。只读取既有发布结果，未派发部署工作流、未SSH更新节点。独立CLI新release尚未发布，旧CLI不能当作本次修复构件。
+### 2026-11-02 服务 token 发布准备（最新）
 
-部署前限制：该修复仅处理源迁移API的检查点兼容；V5现有应用配置 `DATABASE_RUNTIME_ROLE=primary`，普通Accounts的 `VerifiedNativeRuntimeVersion` 仍使用当前完整native契约，不接受 `2026102002`。因此不能将上述tag直接改到V5普通Accounts并宣称可启动；需要独立兼容验证/修复，或先仅将同构件用于独立迁移listener。GitOps镜像选择待此条件满足后提交生效，不使用浮动tag、不伪造digest。
+Accounts #296、#298 已合并，V5 合并提交 `85263b78bc4398ff11acc19a1097b99bd2cc628e`，V6 合并提交 `a0a867f0c7b9bf9480f5db42a4b7aec316daa9fb`。两端固定镜像已核验并经 SSH 预拉取成功；GitOps 镜像声明分别提交 [#750](https://github.com/ai-workspace-infra/gitops/pull/750) 和 [#751](https://github.com/ai-workspace-infra/gitops/pull/751)，声明与密钥检查通过，待合并。两端业务 Pod 尚未由本次操作更新。两端现有 `web-saas-secrets` 均包含 `INTERNAL_SERVICE_TOKEN` 字段，未读取字段值。
 
-用户要求GitOps只保存声明，PR检查只做声明格式及敏感信息检测。已关闭被主线业务namespace互通策略覆盖的 [GitOps #728](https://github.com/ai-workspace-infra/gitops/pull/728)；[GitOps #747](https://github.com/ai-workspace-infra/gitops/pull/747) 将自动检查从11项收敛为YAML声明校验和gitleaks两项，移除IaC/IAM及业务/运行态自动PR检查。两个保留检查已本地验证，PR提交范围gitleaks无泄露，#747线上仅出现这两项且均通过。工作流变更尚待合并；未修改生产声明或分支保护，main原本没有required status contexts/额外rulesets。
+
+Accounts #297 已合并，迁移授权改用 `INTERNAL_SERVICE_TOKEN`。现场 V5 与 V6 分别运行独立 email-union 发布线，不能直接用 main 镜像替换。V5 回补 [Accounts #296](https://github.com/ai-workspace-services/accounts/pull/296) 已更新，V6 回补 [Accounts #298](https://github.com/ai-workspace-services/accounts/pull/298) 已提交；两者定向授权测试及 gitleaks 检查通过，已合并并发布固定镜像。当前两端业务 Deployment 尚未因本次变更更新。共享 token 可授权全部迁移 scope，不能区分个人操作者；备份、schema 和冲突门禁仍适用。
+
+
+### V5 Accounts 发布状态（2026-11-02，最新）
+
+Accounts [PR #292](https://github.com/ai-workspace-services/accounts/pull/292) 已合并到
+`release/v2026.11.02-registration`，合并提交为 `aec6c28bee4a8820da1a88c6cec81648a7ca50e0`。
+该版本只回补管理员迁移认证 endpoint、对应测试及路由；不改 SQL/runtime/catalog/业务配置。
+发布构建成功，GHCR 固定引用为
+`ghcr.io/ai-workspace-services/accounts:sha-aec6c28bee4a8820da1a88c6cec81648a7ca50e0@sha256:a316e9d08e89462935b8cb795d6a9b89991df341b61fd1dd3865489c2af7b4df`。
+
+V5 当前运行 PR #294 合入 `release/v2026.11.02-email-union-v5` 的镜像
+`sha-d906d85d133a35ae0b9e1e1d82e201927791501b`，副本 `1/1`；公网 `/api/ping` 返回
+`HTTP 200`、TLS 校验通过并报告该版本。该提交是 Accounts #292 目标分支的兄弟提交；#292 的直接产物
+若用于 V5 会遗漏当前 email-union 功能，因此其镜像不能直接部署。
+
+已关闭错误指向该兄弟分支构件的 [GitOps PR #749](https://github.com/ai-workspace-infra/gitops/pull/749)。
+现将 #292 的最小认证改动回补到 V5 实际发布线，提交
+[Accounts PR #296](https://github.com/ai-workspace-services/accounts/pull/296)，目标为
+`release/v2026.11.02-email-union-v5`，基于现网 `d906d85`。定向 `go test ./api -run
+'TestMigrationAccounts|TestAdmin|TestLogin|TestToken' -count=1` 与 `git diff --check` 通过，PR 的 gitleaks
+检查通过；PR 尚未合并，固定构件尚未生成。V5 HelmRelease 由 Flux 管理，待 #296 合并并核验该确切
+合并 SHA 的镜像后，再更新 GitOps 的 Accounts `workload.image` 与运行时 `IMAGE` 两处为同一摘要。
+
+本轮尚未更新 V5 Deployment；未操作 V6；未暂停服务、执行数据迁移/预览/业务写入、切换 DNS，
+也未派发部署工作流。后续依次完成 Accounts 发布线回补、镜像固定摘要核验、GitOps 声明合并，再由
+V5 节点 SSH 触发 Flux 调谐；运行验收需核对 Pod 固定摘要、`/api/ping` 的 image/tag/commit、readiness，
+以及迁移认证 endpoint 的未认证拒绝行为。镜像拉取成功或 PR 合并均不等于运行验收完成。
+
+### 较早的主干构件核验记录
+
+Accounts #291 主干合并提交 `ba673c014c9e630c3cae815040035ac4d852828f` 的固定镜像为
+`ghcr.io/ai-workspace-services/accounts:sha-ba673c014c9e630c3cae815040035ac4d852828f@sha256:52110a5d5a3c23d0a468eea583e608133d39e1d6e6a89940ca81e1ecaad54cf6`。
+该构件用于独立迁移 listener 的后续部署评估，不替代 V5 现有 release 分支应用镜像。
+Accounts #289 的早期源端兼容构件 `677fb48ef92be426904864f8f849a1e9ac044bab` 与其镜像仅作历史记录，
+不作为本次 V5 普通 Accounts 发布目标。
+
+### 当前部署门禁
+
+V5 数据库仍使用既有 `2026102002` 运行契约。此次 #292 回补未改数据库或普通 Accounts 的版本检查，
+因此部署只能使用发布线固定镜像；不能将主干完整 native runtime 镜像直接替换到 V5。GitOps PR #749
+合并前不进行在线镜像补丁，以免 Flux 回写造成漂移。
+
+### 迁移验证现场核对（2026-11-02）
+
+通过 HTTPS（TLS 校验通过）检查 V5 `accounts.svc.plus` 与 V6
+`accounts-selfhost-prod-v6.svc.plus`：`POST /api/admin/migration/authorize` 和
+`GET /api/migrations/v1/plans/<测试UUID>` 均返回 `404`。V5 Accounts 仍运行 `d906d85`；
+V6 Accounts Pod `1/1 Running`，镜像为
+`sha-1b1fadf707958e59ff97701b1b86549e44446c53@sha256:d453e66232653a388c10ba8f8d0909ea997bfc7e47cf632bf5374a08425633d4`。
+两端迁移 API 目前均未就绪，未发起快照或预览，也未执行 apply、数据库写入、停服或 DNS 切换。
+
+V6 节点 `/root/migrate.sh` 初始为 `0644`，含内联 Accounts token，且目标 URL 行缺少 shell 续行符；
+脚本未执行。已移除脚本内 token 值，改为从调用 shell 环境读取两端 token、修正续行并设为 `0700`，
+`bash -n` 通过；V6 节点尚未安装 `migratectl`。由于旧文件曾允许其他本机用户读取，相关 Accounts token
+应按可能暴露处理并轮换。当前脚本仅用于默认快照与预览，明确不含 `--apply`；须待 API 路由部署并使用
+受控客户端后再执行验证。
+
+用户要求GitOps只保存声明，PR检查只做声明格式及敏感信息检测。已关闭被主线业务namespace互通策略覆盖的 [GitOps #728](https://github.com/ai-workspace-infra/gitops/pull/728)；[GitOps #747](https://github.com/ai-workspace-infra/gitops/pull/747) 将自动检查从11项收敛为YAML声明校验和gitleaks两项，移除IaC/IAM及业务/运行态自动PR检查。两个保留检查已本地验证，PR提交范围gitleaks无泄露，#747已合并且两项检查均通过；未修改生产声明或分支保护，main原本没有required status contexts/额外rulesets。
 
 
 用户已明确允许 V5 Accounts 直接更新满足迁移要求的固定版本，不再要求 cherry-pick；V6 同步使用最新且已验收的固定构件。目标是今晚完成 V5 → V6 数据迁移及业务切换。本次只读线上盘点之后尚未部署或改写现网。
@@ -35,7 +94,7 @@ Accounts [PR #289](https://github.com/ai-workspace-services/accounts/pull/289)�
 
 ## 1. 简化后的操作契约
 
-Mac 只通过 HTTPS 调用 `migratectl transfer-api`，从 Vault 读取专用短期迁移 token；不读取两端 DATABASE_URL，不直接连接 PostgreSQL。监听器在各自集群内使用专用数据库身份，执行源一致性只读快照、结构验证、分片传输、目标预览和受保护的事务写入。
+Mac 只通过 HTTPS 调用 `migratectl transfer-api`，使用两端现有 Accounts 管理员 token；不管理专用迁移JWT，不读取两端 DATABASE_URL，不直接连接 PostgreSQL。监听器在各自集群内使用专用数据库身份，执行源一致性只读快照、结构验证、分片传输、目标预览和受保护的事务写入。
 
 源快照、传输和预览无需暂停 V5/V6 服务。目标预览会创建事务内临时表并回滚，不修改持久业务表；临时数据、排序/临时磁盘、锁等待和容量仍需核算。目标业务写入会使计划基线过期，apply 此时应拒绝并重新预览。第一轮迁移优先使用独立候选库及独立迁移 Pod，保持 V6 现有应用在线，又避免后台任务改变候选基线。
 
@@ -65,7 +124,7 @@ Mac 只通过 HTTPS 调用 `migratectl transfer-api`，从 Vault 读取专用短
 - 同一发布版本按平台选择各自摘要，不要求 Darwin 与 Linux 字节相同。两端 listener 固定同一个 Linux 构件/镜像源版本，客户端固定同源发布；不在节点编译，不用浮动 latest。
 - `cmd/migratectl/api.go`：serve、migration-token、transfer-api 参数及内存 Vault `token` 读取。
 - `internal/migrate/api_data.go`：范围、源只读身份、实际 schema 指纹、物理数据库身份。
-- `api_transport.go`：HS256 token、job/audience/operator 绑定、TLS、CIDR、HTTP 和计划处理。
+- `api_transport.go`：服务端pair/job与actor绑定、TLS、CIDR、HTTP和计划处理；新模式委托Accounts认证，原HS256迁移JWT仅保留为互斥的旧模式。
 - `api_chunks.go` / `api_chunk_apply.go`：加密分片、断点恢复、临时表比较和事务插入。
 - `api_backup.go`：目标备份恢复证明校验。
 
@@ -114,63 +173,65 @@ flowchart LR
 - Caddy 只信任已配置的代理，CIDR 检查不能信任任意客户端 X-Forwarded-For；关闭/脱敏迁移请求 body、Authorization 和快照响应 body 日志。
 - Job UUID 必须绑定这次两端。服务名和实现不带代际；`clusterId` 与 audience 是参数，例如 `accounts-migration-prod-k3s-v5`、`accounts-migration-prod-k3s-v6`，下一代只换声明。
 
-## 6. Vault 与认证规划
+## 6. 认证：直接复用现有 Accounts 管理员 token
 
-以下为待创建/审核的新路径，不代表已写入。统一使用现有 Vault 服务 `https://vault.svc.plus` 作为迁移材料来源；两端 ESO 各使用本集群 JWT 身份、只读各自精确路径，不能复用 V5 集群 JWT 给 V6。
+实现已提交 [Accounts PR #291](https://github.com/ai-workspace-services/accounts/pull/291)，代码 `dca13426`。单元/API管理员回归、Accounts授权器race检测及完整隔离PG17迁移API套件通过；覆盖普通Accounts token快照预览、无备份拒绝apply、显式测试门禁后的apply/幂等重试、另一有效管理员读取计划拒绝、账号停用及session撤销。测试用容器已移除。当前为代码PR已交付、未部署，不是线上迁移完成。
 
-| KV CLI 路径模板 | 字段 | 允许消费者 |
-|---|---|---|
-| `kv/prod/accounts/migration/listeners/<clusterId>/database` | `dsn` | 本集群对应 listener；V5 使用真实 readonly_release，V6 使用候选库专用迁移身份 |
-| `kv/prod/accounts/migration/listeners/<clusterId>/signing` | `key_base64` | 本 listener 验签与受控 token 签发 owner |
-| `kv/prod/accounts/migration/listeners/<clusterId>/staging` | `key_base64` | 仅本 listener，加密持久分片/计划；重启后保持一致 |
-| `kv/prod/accounts/migration/jobs/<JOB_ID>/source-auth` | `token` | 授权操作人客户端，source.read |
-| `kv/prod/accounts/migration/jobs/<JOB_ID>/target-preview-auth` | `token` | 授权操作人客户端，target.plan |
-| `kv/prod/accounts/migration/jobs/<JOB_ID>/target-apply-auth` | `token` | 写入阶段授权操作人，target.plan,target.apply |
 
-KV v2 ACL 路径在 `kv/` 后加 `data/`。监听器和客户端分别精确授权，Mac 无需读数据库、signing/staging key。每个 endpoint 的 signing key 和 staging key 各为独立随机 32 字节 base64，源目标也独立；不复用 Accounts JWT、INTERNAL_SERVICE_TOKEN 或 Vault 登录 token。
+本轮改为复用V5/V6各自现有Accounts认证，取消客户端专用迁移JWT、日期JOB token KV路径和数据库DSN要求。源/目标token的格式、有效期、刷新及撤销由各自Accounts服务决定，迁移工具不额外限制15分钟，不签发或刷新token。普通用户、operator、只读/demo账户和INTERNAL_SERVICE_TOKEN不能替代管理员登录。
 
-当前实现是独立 HS256 迁移 JWT，不是由公共 Vault JWT auth 自动签发。`migratectl migration-token` 由受控签发 owner 运行，以命令替换/管道保存在内存并写到对应 KV 的 token 字段，不输出到终端或参数。JWT 绑定 source_audience、target_audience、job_id 与同一不透明 operator subject；source/target token 必须同一操作人/同一 job。TTL 建议 10 分钟，最大 15 分钟。续签保留 subject/job/pair。对象 TTL 默认 1 小时，最大 24 小时；token 续签不延长快照或计划 TTL。
+| 客户端输入 | 应提供内容 |
+|---|---|
+| source-url | `https://accounts.svc.plus` |
+| target-url | `https://accounts-selfhost-prod-v6.svc.plus` |
+| SOURCE_ACCOUNTS_TOKEN | V5现有有效root/admin Accounts token，运行时注入 |
+| TARGET_ACCOUNTS_TOKEN | V6现有有效root/admin Accounts token，运行时注入 |
 
-source DB 必须 readonly_release、无写/序列变更/成员关系/管理权限、完整 RLS 可见；两端均需 EXECUTE pg_control_system() 和足够 catalog 读取来验证物理库身份。目标预览需 SELECT 与 TEMP，apply 另需精确表 INSERT、必要序列及私有回执权限，不能为省事授予超级用户。源只读连接和目标迁移连接由节点内材料解析，应用 DSN 仅作来源盘点。
+CLI使用token-env引用，避免token值进入进程参数/命令历史；原有auth-kv选项保留为可选秘密存储适配器，但不再强制创建迁移专用KV记录或专用JWT。不得向聊天、文档或公开回执提交token。
 
-## 7. 用户操作：一个简化的快照预览命令
+服务端新增 `POST /api/admin/migration/authorize`：复用Accounts现有JWT/session校验，按当前用户状态重新确认active root/admin，返回脱敏本地actor及获准操作。独立listener使用 `--accounts-auth-url <本端Accounts HTTPS origin>`，每个请求实时委托认证，不缓存授权、不跟随重定向、不读取环境代理；与旧 `--auth-key-env` 模式互斥，不在认证失败后回退旧JWT。
 
-以下是监听器和专用认证交付后的运行模板，当前请求仍会得到 404，不应现在当作可部署脚本。`MIGRATECTL_BIN` 指向经过校验的受保护绝对路径；使用同源 release 的 SHA256SUMS 和 manifest 校验后运行。source/target KV token 须由受控签发者提前写入，操作人不自行读取签名密钥。
+源快照保留源管理员归属，目标计划/加密stage/回执由目标管理员持有；两端管理员可不同，无需同邮箱/同用户UUID。源目标pair/job仍为服务端运行绑定，不作为客户端JWT配置要求；日期 `2026-11-02` 只用于迁移记录标签。不同目标管理员不能凭plan ID读取其他管理员的计划。
+
+数据库身份、只读源连接、完整schema校验、分片加密和备份恢复门禁仍在服务端。删除客户端DSN要求不等于服务端不需要访问数据库；监听器数据库与staging材料由部署owner交付，Mac不持有这些材料。此次变更不允许管理员token绕过冲突、物理库身份、备份或事务校验。
+
+## 7. 简化后的快照预览命令
+
+以下模板待两端包含新认证代码的Accounts/迁移listener及路由实际部署后使用。SOURCE_ACCOUNTS_TOKEN/TARGET_ACCOUNTS_TOKEN已由现有Accounts登录流程或受控凭据通道注入环境；不在命令中粘贴真实值。
 
 ```bash
 (
   set -euo pipefail
   set +x
-  export VAULT_ADDR="https://vault.svc.plus"
   : "${MIGRATECTL_BIN:?已校验的固定二进制}"
-  : "${JOB_ID:?GitOps批准且与两端token绑定的job UUID}"
-
+  : "${SOURCE_ACCOUNTS_TOKEN:?V5现有Accounts管理员token}"
+  : "${TARGET_ACCOUNTS_TOKEN:?V6现有Accounts管理员token}"
+  export SOURCE_ACCOUNTS_TOKEN TARGET_ACCOUNTS_TOKEN
   "$MIGRATECTL_BIN" transfer-api \
     --source-url https://accounts.svc.plus \
     --target-url https://accounts-selfhost-prod-v6.svc.plus \
-    --source-auth-kv "kv/prod/accounts/migration/jobs/${JOB_ID}/source-auth" \
-    --target-auth-kv "kv/prod/accounts/migration/jobs/${JOB_ID}/target-preview-auth"
+    --source-token-env SOURCE_ACCOUNTS_TOKEN \
+    --target-token-env TARGET_ACCOUNTS_TOKEN
 )
 ```
 
-默认只做不可变快照、加密传输及目标预览，不 apply。不需要 DSN、`--writers-paused`、`--schema-sha256` 或 Billing hash；结构检查没有取消，而是由两端 listener 使用实际数据库结构、迁移 checkpoint、完整字段契约和物理身份执行。不能把直接 DSN 命令参数搬到 transfer-api。
+不需要VAULT_ADDR、JOB_ID、DSN、schema hash或writers-paused。默认只生成一致性快照、传输并预览；schema校验由服务端继续执行。认证token的生命周期与snapshot/plan TTL独立，快照/计划过期仍需重新预览。
 
-第一次预览前最好生成并保存非敏感 `SNAPSHOT_ID` 与 `PLAN_ID`（canonical 小写 UUID），加上 `--snapshot-id "$SNAPSHOT_ID" --plan-id "$PLAN_ID"`；它们不是 job UUID。回执及 ID 文件保存在 0700 目录、0600 文件，CLI 错误返回的恢复 ID 也要保留。中断后用同一组 ID 和同一 subject/job 的新 token 重试。`--transfer-only` 只验证及缓存分片，不能当作预览/应用通过。
-
-预览通过后可查询状态，无需源 token：
+记录生成的snapshot ID、plan ID及SHA；中断后通过原ID恢复，token失效时由Accounts现有流程取得新token，同一目标管理员可继续读取其计划。状态查询只需目标token：
 
 ```bash
 "$MIGRATECTL_BIN" transfer-api --status \
   --target-url https://accounts-selfhost-prod-v6.svc.plus \
-  --target-auth-kv "kv/prod/accounts/migration/jobs/${JOB_ID}/target-preview-auth" \
-  --plan-id "$PLAN_ID"
+  --target-token-env TARGET_ACCOUNTS_TOKEN --plan-id "$PLAN_ID"
 ```
+
+本次迁移记录标签为 `2026-11-02`。此前两条日期KV token路径实测not_found，这些是旧方案记录，新模式不再要求创建。两端迁移路径最近实测仍为404、TLS=0，状态PRECHECK_BLOCKED；新增认证代码的测试属于隔离验证，不是线上预览通过。后续记录两端部署构件、日期、源/目标脱敏操作者、授权结果、snapshot/plan ID与SHA、实际快照边界、schema/identity/baseline指纹、退出码和验收状态；不记录凭据或用户数据。
 
 ## 8. 事务写入与在线条件
 
 不暂停线上 V5/V6 应用的第一轮 apply 指向隔离候选库，普通应用及财务后台不会连接该库。目标 API 自行锁定范围内表、验证计划基线、插入缺失行并在同一事务提交回执；不能承诺零锁等待。若以后选择在线 V6 活跃库，必须先证明该范围无竞争后台/财务写者、计划可稳定，并在超时/漂移时安全停止，不能把“命令没有暂停参数”作为可以无条件在线 apply 的证据。
 
-顺序：保存预览 → owner 对目标做加密备份并在隔离库恢复 → 验证 baseline/schema/identity 一致 → 产生保护的 backup receipt → 在迁移开启配置中初始化私有 receipts schema → 重新预览并确认 plan 与 receipt 仍匹配 → 单独启用 target.apply token。`--initialize-receipts` 自身会增加独立 schema，schema 指纹若因此变化必须重出预览/回执；部署 owner 需核实真实稳定性，不能伪造恢复证明。
+顺序：保存预览 → owner 对目标做加密备份并在隔离库恢复 → 验证 baseline/schema/identity 一致 → 产生保护的 backup receipt → 在迁移开启配置中初始化私有 receipts schema → 重新预览并确认 plan 与 receipt 仍匹配 → 单独启用目标写入门禁。`--initialize-receipts` 自身会增加独立 schema，schema 指纹若因此变化必须重出预览/回执；部署 owner 需核实真实稳定性，不能伪造恢复证明。
 
 目标启动默认 preview/status；启用 apply 需要只读挂载 owner 发行的 `--backup-receipt-file`。回执绑定 backup SHA、目标物理 identity/schema/baseline、真实隔离恢复摘要、验证时间与不超过24小时的有效期，0600 且父目录符合所有权限制。首次 receipts 初始化需显式 `--initialize-receipts --receipt-owner-role accounts_migration_executor`，该名称是规划身份，尚未创建；执行所需受限 CREATE 权限由 DB owner 审核，不能常驻授予应用。
 
@@ -178,7 +239,7 @@ source DB 必须 readonly_release、无写/序列变更/成员关系/管理权�
 # 仅在无冲突计划、真实恢复证明和目标隔离条件全部通过后运行。
 "$MIGRATECTL_BIN" transfer-api --apply \
   --target-url https://accounts-selfhost-prod-v6.svc.plus \
-  --target-auth-kv "kv/prod/accounts/migration/jobs/${JOB_ID}/target-apply-auth" \
+  --target-token-env TARGET_ACCOUNTS_TOKEN \
   --plan-id "$PLAN_ID" --plan-sha256 "$REVIEWED_PLAN_SHA256"
 ```
 
