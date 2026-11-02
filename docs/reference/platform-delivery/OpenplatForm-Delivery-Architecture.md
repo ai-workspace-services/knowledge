@@ -4,6 +4,8 @@
 >
 > **状态边界：** 本文是目标架构与发布契约，不代表所有组件已部署、调谐或验收。GitOps 数量是规划基线，V6 运行事实以其状态归档顶部最新记录为准。本文变更仅为文档。
 
+> **当前 V6 范围（2026-11-02）：** 用户明确要求只解决现有环境问题。当前交付使用手动操作 / Ansible Playbooks + GitOps + Flux，入口沿用 Caddy + K3s ServiceLB；本文的 Traefik、Flagger 和流水线路线不属于本轮改造任务，也不据此判定当前环境部署失败。现有身份授权错误、资源故障和入口不通仍需按实际配置处理。
+
 ## 1. 设计目标与原则
 
 平台使用同一套声明式交付模型连接基础设施、节点初始化、集群配置、业务发布与运行观测，同时保持环境和服务单元隔离。
@@ -66,7 +68,7 @@
 | `web-saas-prod-config` | Web SaaS 业务服务 |
 | `ingress-prod-config` | Traefik 与 Flagger |
 
-当前 V6 归档仍记录 Vault 未就绪、PostgreSQL 镜像授权及 SecretStore 依赖失败、Observability 凭据/资源问题、Ingress 和业务未调谐等阻塞。以上基线只指导目标规划；发布状态须引用新的调谐与运行回执。
+2026-11-02 现场已确认 Vault、PostgreSQL 和四个 Web SaaS 应用就绪，相关 ESO 同步成功；早期镜像授权、旧 mount 与应用 CrashLoop 记录属于历史问题。当前仍有 Datakit OOM/调谐失败及 Caddy 节点 443、V6 域名未交付等问题，详见 V6 归档。现场对象数量为 6 个 GitRepository、10 个 Kustomization（包含 `cluster-identities`）和 8 个 HelmRelease，不应再用上述 9 个 Kustomization 的规划数作为实际回执。
 
 ## 3. 统一平台架构
 
