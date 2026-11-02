@@ -799,7 +799,9 @@ Accounts #300 的 `6c7c48ab` 增加目标侧触发器兼容 SQL：仅 `accounts_
 
 **异机恢复重试（2026-11-03）**：从上述 V6 固定镜像的运行容器读取 `pgmq.control` 和 `pgmq--1.8.0.sql`（SHA-256 分别为 `6ef558ab4e2637aa11503f0fbdb88f359e482507753ca61f60a2193c2dfca03b` 和 `59ea03e89bf01ebb6f97a2a5203cc2e34f6a05b532c40b6e53d4f4694195c20a`），未覆盖现有文件，安装到操作端 PostgreSQL 17 扩展目录；随后在独立集群的全新数据库重试加密备份恢复成功，确认 `pgcrypto 1.3`、`pgmq 1.8.0`。首次行摘要对比因两端会话时区不同报告 7 表不一致；将双方时区统一为 UTC、日期和浮点输出格式统一后，51 张 public 表行数及排序整行摘要均一致。两边使用独立只读事务，非跨库原子快照；独立库已撤销 PUBLIC CONNECT 并停止，保留失败和成功现场。此演练不包含数据库角色和 ACL 恢复、应用连接、全部扩展行为或真实迁移 plan/target baseline 绑定，不能直接当作写入门禁回执。
 
-[Accounts #300](https://github.com/ai-workspace-services/accounts/pull/300) 随后合并到 main（`97f8c92ff9c191755a0d80717f64e3c85898d6eb`），追齐代码尚未构建、部署至 listener 或在业务库执行。
+[Accounts #300](https://github.com/ai-workspace-services/accounts/pull/300) 随后合并到 main（`97f8c92ff9c191755a0d80717f64e3c85898d6eb`）；当时追齐代码尚未构建、部署至 listener 或在业务库执行。
+
+**固定工具构件准备（2026-11-03）**：从干净的 Accounts main 提交 `97f8c92ff9c191755a0d80717f64e3c85898d6eb` 手动构建 Linux amd64、CGO 禁用的 `migratectl`，SHA-256 `882d6eaf29ef969d71be07fc477d9f7e0e21fa2db44d6913369f439e7aa00229`；传至 V6 的 `/var/lib/accounts-migration/artifacts/97f8c92ff9c191755a0d80717f64e3c85898d6eb/migratectl` 后核对 checksum 一致，`--help` 包含 `transfer-api` 和 `catchup-api`。该独立构件尚未替换现有系统命令或 listener 镜像，也未改写 `/root/migrate.sh`；服务端部署、业务库目标、预览与数据写入尚未完成。构件来源以干净源码提交和构建记录绑定；Go 构件元数据未提供 VCS revision，不将其误报为内嵌证明。
 
 
 - 迁移前 V6 业务写者、后台任务、真实支付和通知受控。
