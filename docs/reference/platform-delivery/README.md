@@ -18,3 +18,7 @@
 6. [通用 Vault 工作负载身份契约](通用-Vault-工作负载身份契约.md) — 外部 Vault、ESO 和工作负载之间的身份、Secret 引用与跨集群迁移设计。
 
 前五份专项参考来源于 `ai-workspace-infra/docs` 的 `archives/2026-10-30`；其中流水线草案与 V6 状态归档包含归档时尚未提交的工作树更新。K3s role 清单中的日期和运行状态反映其原始记录；当前 V6 状态以 V6 归档中最新核对条目为准。
+
+## 当前执行交接
+
+- [V6 ServiceLB、Caddy 与 Datakit 修复提示词](PROD-K3S-V6-ServiceLB-Caddy与Datakit修复提示词.md) — 参考 V5，采用 Playbooks + GitOps + Flux，仅处理本批配置问题。
