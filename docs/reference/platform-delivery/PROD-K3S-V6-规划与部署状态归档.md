@@ -793,6 +793,8 @@ Accounts #300 的 `6c7c48ab` 增加目标侧触发器兼容 SQL：仅 `accounts_
 
 **备份恢复数据再次比对（2026-11-03）**：在线 `account` 与此前从加密副本恢复的 `accounts_migration_encrypted_restore_20261103` 分别在只读 `REPEATABLE READ` 事务中对在线库的 51 张 public 表计算行数及排序后的整行摘要，51 张一致、0 张不同；未输出原始行。两个库在同一 PostgreSQL 实例，两个事务独立取快照，并非跨库原子比较；恢复库已用于增量 schema 演练，因此此结果只覆盖原有表数据，不证明 schema、序列、角色或 ACL 完整一致，也不构成正式变更时的实时备份门禁。
 
+**追齐实现与主线集成（2026-11-03）**：[Accounts #303](https://github.com/ai-workspace-services/accounts/pull/303) 已合并至 `8a2fce38cb0968083157f4154de2ee59a61f5887`；[Accounts #300](https://github.com/ai-workspace-services/accounts/pull/300) 头部 `5826900ca897f93139c747a263b771402ee79e10` 已整合该主线，在本机隔离 PostgreSQL 17 通过目标兼容、追齐冲突和触发器保护测试，以及 `TestMigrationAPIPostgres17`。#300 此时仍为 Draft，未发布或部署；测试使用隔离数据和合成备份证明，不能作为真实业务库预览或写入回执。真实备份证明、目标 schema 和身份绑定仍待交付。
+
 
 - 迁移前 V6 业务写者、后台任务、真实支付和通知受控。
 - 迁移源连接只读；V5 原业务写入方保留。
