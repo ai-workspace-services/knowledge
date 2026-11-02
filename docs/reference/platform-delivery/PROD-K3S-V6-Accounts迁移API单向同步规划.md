@@ -12,17 +12,23 @@ Accounts [PR #292](https://github.com/ai-workspace-services/accounts/pull/292) �
 发布构建成功，GHCR 固定引用为
 `ghcr.io/ai-workspace-services/accounts:sha-aec6c28bee4a8820da1a88c6cec81648a7ca50e0@sha256:a316e9d08e89462935b8cb795d6a9b89991df341b61fd1dd3865489c2af7b4df`。
 
-V5 当前仍运行旧镜像 `sha-d906d85d133a35ae0b9e1e1d82e201927791501b`，副本 `1/1`；
-公网 `/api/ping` 返回 `HTTP 200`、TLS 校验通过并报告旧版本。已从 V5 节点 SSH 预拉取上述固定镜像，
-退出码为 0。此操作未替换业务 Pod。V5 HelmRelease 由 Flux 管理，因此先提交了
-[GitOps PR #749](https://github.com/ai-workspace-infra/gitops/pull/749)，只更新
-`services/distributed-web-saas-fullstack/prod/values.yaml` 中 Accounts `workload.image` 与
-运行时 `IMAGE` 两处为同一固定摘要。PR 的 YAML-only 声明校验与 gitleaks 均通过，待合并后再从
-V5 节点触发 Flux 调谐并验收。
+V5 当前运行 PR #294 合入 `release/v2026.11.02-email-union-v5` 的镜像
+`sha-d906d85d133a35ae0b9e1e1d82e201927791501b`，副本 `1/1`；公网 `/api/ping` 返回
+`HTTP 200`、TLS 校验通过并报告该版本。该提交是 Accounts #292 目标分支的兄弟提交；#292 的直接产物
+若用于 V5 会遗漏当前 email-union 功能，因此其镜像不能直接部署。
+
+已关闭错误指向该兄弟分支构件的 [GitOps PR #749](https://github.com/ai-workspace-infra/gitops/pull/749)。
+现将 #292 的最小认证改动回补到 V5 实际发布线，提交
+[Accounts PR #296](https://github.com/ai-workspace-services/accounts/pull/296)，目标为
+`release/v2026.11.02-email-union-v5`，基于现网 `d906d85`。定向 `go test ./api -run
+'TestMigrationAccounts|TestAdmin|TestLogin|TestToken' -count=1` 与 `git diff --check` 通过，PR 的 gitleaks
+检查通过；PR 尚未合并，固定构件尚未生成。V5 HelmRelease 由 Flux 管理，待 #296 合并并核验该确切
+合并 SHA 的镜像后，再更新 GitOps 的 Accounts `workload.image` 与运行时 `IMAGE` 两处为同一摘要。
 
 本轮尚未更新 V5 Deployment；未操作 V6；未暂停服务、执行数据迁移/预览/业务写入、切换 DNS，
-也未派发部署工作流。发布验收需在 GitOps 合并后核对 Pod 固定摘要、`/api/ping` 的 image/tag/commit、
-readiness，以及迁移认证 endpoint 的未认证拒绝行为。镜像拉取成功或 PR 合并均不等于运行验收完成。
+也未派发部署工作流。后续依次完成 Accounts 发布线回补、镜像固定摘要核验、GitOps 声明合并，再由
+V5 节点 SSH 触发 Flux 调谐；运行验收需核对 Pod 固定摘要、`/api/ping` 的 image/tag/commit、readiness，
+以及迁移认证 endpoint 的未认证拒绝行为。镜像拉取成功或 PR 合并均不等于运行验收完成。
 
 ### 较早的主干构件核验记录
 
