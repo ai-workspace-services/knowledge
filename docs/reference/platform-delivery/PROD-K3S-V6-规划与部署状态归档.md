@@ -1,8 +1,54 @@
 # PROD-K3S-V6 独立节点、集群冷启动规划与部署状态归档
 
+## Web SaaS 运行状态与配置修复交付（2026-11-02，北京时间）
+
+本节记录 `prod-k3s-v6`（`web-saas-prod` / `postgresql-prod`）在 [GitOps PR #730](https://github.com/ai-workspace-infra/gitops/pull/730)（`200d8b7`）、[PR #732](https://github.com/ai-workspace-infra/gitops/pull/732)（`d0651b0`）、[PR #738](https://github.com/ai-workspace-infra/gitops/pull/738)（`ba748b0`）、[PR #739](https://github.com/ai-workspace-infra/gitops/pull/739)（`88adbe5`）、[PR #740](https://github.com/ai-workspace-infra/gitops/pull/740)（`8d8d245`）以及本轮 [GitOps PR #741](https://github.com/ai-workspace-infra/gitops/pull/741)（合并提交 `4405e986703fab53421e6460603b61676d5f843c`）和 [Playbooks PR #957](https://github.com/ai-workspace-infra/playbooks/pull/957)（合并提交 `5fb10d8063703ecfa71a0eb836f33a65e0812f5c`）合并并调谐后的线上验收结果。
+
+### 1. 集群 Source、Chart 与固定镜像版本
+
+- **Flux GitRepository 与 Kustomization 调谐状态**：
+  - `GitRepository/web-saas-prod-config`：`Ready=True`，`stored artifact for revision 'main@sha1:4405e986703fab53421e6460603b61676d5f843c'`。
+  - `Kustomization/web-saas-prod`：`Ready=True`，`Applied revision: main@sha1:4405e986703fab53421e6460603b61676d5f843c`。
+  - `HelmRelease/web-saas-prod`：`Ready=True`，`Helm upgrade succeeded for release web-saas-prod/web-saas.v8 with chart distributed-web-saas-fullstack@0.2.13+5ca7c0415e3a`。
+- **Helm Chart 固定制品**：`oci://ghcr.io/ai-workspace-infra/distributed-web-saas-fullstack`，运行版本 `0.2.13+5ca7c0415e3a`，digest `sha256:5ca7c0415e3a0739cc9f014f0a495f89d35bfe47eb5b2057a7a07c030c85e76f`。
+- **应用固定镜像与源码修订**：
+  - **Accounts**：`ghcr.io/ai-workspace-services/accounts:sha-3ef09c82f46152096bfc16edc9ba767f128a197f@sha256:b5bf111a64ca2f2ed5e74d2ab1f87e0e164d09869a32832368fb43e577fdf37b`（源码 commit `3ef09c82f46152096bfc16edc9ba767f128a197f`）。
+  - **Billing**：`ghcr.io/ai-workspace-services/billing-service@sha256:14bbaee5ba37d85ddf243272ee2c3bed25603ee26ffd5c0b8d685cfe0e7a85a0`（OCI revision `77557d796a66dcd3373d7731125890bd91ebc5d3`，`daily-build-2026.10.23-r101`）。
+  - **Console**：`ghcr.io/ai-workspace-services/console@sha256:06775cfa5582fb83bae336c4c4befe1fbd4f7747d526653b80736e3e4862e666`（对应 Portal commit `691b7dcc9870d4ba14b10f4b8dadc4e6d873ca0e`，`daily-build-2026.10.24-r106`）。
+  - **Content**：`ghcr.io/ai-workspace-services/docs@sha256:e6e791437bd3b57a4dec0bc9dc2527b681dd52960b6f692be6ff16322018788e`。
+
+### 2. Secret 同步与四个工作负载调谐后状态
+
+- **ESO 状态**：`web-saas-prod` 中 `SecretStore/app-database-reader` 与 `SecretStore/web-saas-secrets-reader` 均 `Valid=True`；`accounts-bootstrap`、`accounts-db-runtime`、`billing-db-runtime`、`web-saas-secrets` 四个 `ExternalSecret` 全部 `SecretSynced=True`。
+- **工作负载与探针实测结果**：
+
+| 工作负载 | 当前状态 | 根因与修复内容 | 线上实测证据 |
+| --- | --- | --- | --- |
+| `web-saas-accounts` | `1/1 Running`（`restartCount=0`） | 保持原运行配置不变；通过 [Playbooks PR #957](https://github.com/ai-workspace-infra/playbooks/pull/957) 增量补齐 `subscriptions`、`subscription_records` 等表。 | Pod `web-saas-accounts-657c66cbff-fj7s8`（`10.52.0.59:8080`），`/healthz`、`/readyz`、`/api/ping` 均返回 `200 OK`；后台 `subscription-access` 对账器输出 `subscription access reconciliation processed accounts (accounts=3)`，缺表告警已消除。 |
+| `web-saas-content` | `1/1 Running`（`restartCount=0`） | 保持原运行配置不变。 | Pod `web-saas-content-d8b7f786b-v6hbg`（`10.52.0.58:8080`），`/healthz` 返回 `200 OK`。 |
+| `web-saas-billing` | `1/1 Running`（`restartCount=0`） | [GitOps PR #741](https://github.com/ai-workspace-infra/gitops/pull/741) 声明 `startupProbe`/`livenessProbe` 使用 `/api/ping`、`readinessProbe` 使用 `/readyz`，显式设置 `BILLING_INGEST_MODE=push`、`DEFAULT_REGION=jp`、`IMAGE`（未收到推送快照前 `/healthz` 的 `503 degraded` 保留为业务监控信号，不触发 kubelet 重启）。 | Pod `web-saas-billing-c9b854fc-j2gfq`（`10.52.0.60:8080`），旧 ReplicaSet 已自动缩容为 0；`/readyz` 返回 `200 {"database":"ok","status":"ready"}`，`/api/ping` 返回 `200 {"image":"ghcr.io/ai-workspace-services/billing-service@sha256:14bbaee5..."}`。 |
+| `web-saas-console` | `1/1 Running`（`restartCount=0`） | [GitOps PR #741](https://github.com/ai-workspace-infra/gitops/pull/741) 挂载 `ConfigMap/web-saas-console-nginx` 与 `/tmp` `emptyDir`（日志输出至 `stderr`/`/dev/stdout`，移除 `sites-enabled/default` 80 端口，`/healthz` 代理至 `127.0.0.1:3000/api/ping`），并在 `postRenderer` 将容器 `PORT` 设为 `3000`（不添加 `DAC_OVERRIDE` 或 `privileged`）。 | Pod `web-saas-console-568c4f7946-mxvtb`（`10.52.0.61:8080`），旧 ReplicaSet 已自动缩容为 0；Pod 内 `nginx -t` 成功，`/healthz` 与 `/api/ping` 返回 Node 生成的 `200 OK` JSON，`/` 返回 `200 OK`（71,236 bytes），日志正常进入容器 `stdout`/`stderr`。 |
+
+### 3. Accounts / Billing 数据库 Schema 已完成与未完成边界
+
+- **已完成对象与自举数据**：
+  - 原启动链路创建 47 张表后，已通过 [Playbooks PR #957](https://github.com/ai-workspace-infra/playbooks/pull/957)（`initialize-web-saas-schemas.yml`，commit `5fb10d80`）在单事务（`lock_timeout=15s`、`statement_timeout=5min`、`pg_advisory_xact_lock(2026092801)`）中非破坏性地补齐了 `pgcrypto` 扩展、`users` 12 个生命周期/订阅列，以及 `subscriptions`、`subscription_records`、`subscription_lifecycle_states`、`account_lifecycle_events` 4 张表，并灌入付费套餐目录种子。
+  - 当前 `account` 库 `public` 下共 **51 张表**；已有数据完整保留：`users` **3 行**（1 `root` + 2 `readonly`）、`tenants` **1 行**（`svc-plus-xworkmate`）、`tenant_domains` **1 行**（`svc.plus`）、`rbac_roles` **4 行**、`rbac_permissions` **12 行**、`rbac_role_permissions` **12 行**、`billing_plans` **19 行**（含 `PRO-MONTHLY`）。
+- **未完成对象（待后续 V5→V6 数据迁移维护窗口闭环）**：
+  - 对照固定镜像内置 `migratectl native-schema`（`accounts-native-pg17-v1`，`migration_version: 2026102002`，`schema_sha256: f45db2423f11d9dcc7f3cc58c72b52228a27d7b6ccfc717faf2bbb56fa0498b1`）的 74 张 Accounts 原生表 + `schema_migrations` + Billing `cloud_vendor_costs`，仍剩余 **23 张未由运行态自举创建的扩展业务表**（`identities`、`nodes`、`overlay_config_acks`、`overlay_nodes`、`bridge_credentials`、`referral_*` 7 张、`finance_*` 5 张、`password_recovery_challenges`、`mfa_recovery_codes`、`network_teams`、`network_team_members`、`team_agent_enrollments`、`subscription_extension_ledger`）、`schema_migrations`、`cloud_vendor_costs`，以及 `users`/`sessions`/`email_blacklist`/`overlay_devices` 的 `attnum` 列序与附加触发器/RLS 策略对齐。在执行 V5→V6 `migratectl` 全量业务数据迁移前，须在受控维护窗口完成完整 `accounts-native.sql` 对齐。
+- **独立待验收项与回退范围**：
+  - 入口 443、批次域名 DNS/TLS、SMTP 注册验证邮件（`kv/prod/platform/smtp/google` 尚未配置 ESO 同步与应用挂载）及 V5→V6 业务数据迁移属于独立验收项，不因上述 4 个工作负载 `1/1 Ready` 视为全部生产验收通过。
+  - **回退范围**：GitOps 配置可通过 revert [PR #741](https://github.com/ai-workspace-infra/gitops/pull/741)（`4405e98`）并重新调谐 `web-saas-prod` 无状态回退；数据库增量补齐的 4 张表与 `billing_plans` 种子不修改原有 6 张自举表数据。
+
 ## Accounts 应用根账号 bootstrap 字段（2026-11-01，北京时间）
 
 用户已在 `kv/prod/Accounts-service` 添加 `ROOT_BOOTSTRAP_EMAIL` 和 `ROOT_BOOTSTRAP_PASSWORD`。只读检查确认两字段非空，bootstrap 密码与 PostgreSQL admin 密码不同，未记录字段值。[GitOps PR #732](https://github.com/ai-workspace-infra/gitops/pull/732) 已转为可审查状态，将字段交付到 `web-saas-prod/accounts-bootstrap`，仅供 Accounts 使用；复用只允许读取该 KV 记录的现有 JWT 身份。合并、SecretSynced、根账号初始化和 Accounts 业务就绪尚待验证；bootstrap 字段不是数据库用户凭据。
+
+## Accounts 共享租户域名（2026-11-02，北京时间）
+
+V6 的 Accounts 使用可配置的明文环境变量 `XWORKMATE_SHARED_TENANT_DOMAIN=svc.plus`，由 GitOps 的 `web-saas-prod` HelmRelease 声明。该值用于初始化 XWorkmate 共享租户域名，也是生成随机租户域名的后缀；V5 使用相同值。GitOps 合并、Flux 调谐、Accounts 启动及租户解析尚待验证。该声明不创建 DNS 记录，也不切换流量；生成的租户子域名仍需单独验证 DNS、TLS 和入口。
+
+身份声明检查发现 `web-saas-secrets-reader` 的操作声明仍引用旧 mount，而实际 SecretStore 已使用 `jwt-prod-k3s-prod-k3s-v6`。[GitOps PR #740](https://github.com/ai-workspace-infra/gitops/pull/740) 对齐操作声明，并声明新 mount 的精确 role 管理权限；尚未合并或向 Vault 写入。旧权限暂时保留，清理前需核对消费者。
 
 ## 注册验证 SMTP 凭据来源（2026-11-02，北京时间）
 
