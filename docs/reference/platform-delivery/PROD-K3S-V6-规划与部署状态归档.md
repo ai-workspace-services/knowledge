@@ -795,6 +795,8 @@ Accounts #300 的 `6c7c48ab` 增加目标侧触发器兼容 SQL：仅 `accounts_
 
 **追齐实现与主线集成（2026-11-03）**：[Accounts #303](https://github.com/ai-workspace-services/accounts/pull/303) 已合并至 `8a2fce38cb0968083157f4154de2ee59a61f5887`；[Accounts #300](https://github.com/ai-workspace-services/accounts/pull/300) 头部 `5826900ca897f93139c747a263b771402ee79e10` 已整合该主线，在本机隔离 PostgreSQL 17 通过目标兼容、追齐冲突和触发器保护测试，以及 `TestMigrationAPIPostgres17`。#300 此时仍为 Draft，未发布或部署；测试使用隔离数据和合成备份证明，不能作为真实业务库预览或写入回执。真实备份证明、目标 schema 和身份绑定仍待交付。
 
+**异机独立恢复尝试（2026-11-03）**：在操作端 FileVault 加密磁盘创建独立 PostgreSQL 17.11 集群，仅监听权限为 `0700` 的 Unix socket；校验加密文件 SHA-256 与既有备份回执一致后，从 Vault 通过进程管道提供解密密钥并流式 `pg_restore --no-owner --no-acl`。恢复在 `CREATE EXTENSION pgmq` 时失败：操作端 PostgreSQL 缺少 `pgmq.control`，未完成恢复或业务行比对。首次启动另因 Unix socket 路径超过系统限制失败，改用受限短路径后启动成功。失败的部分恢复目录和日志保留，数据库进程已停止；不把它记作恢复通过。V6 运行镜像为 `ghcr.io/ai-workspace-services/postgresql@sha256:56f4179bafafa52061ac21003dc80c1a0b7ceb63fffb2c7bd05f29237b62b85e`，后续需要在独立环境使用具有相同扩展能力的受控构件完成完整恢复及验证；备份不含角色和 ACL 的既有边界仍然适用。
+
 
 - 迁移前 V6 业务写者、后台任务、真实支付和通知受控。
 - 迁移源连接只读；V5 原业务写入方保留。
