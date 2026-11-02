@@ -4,6 +4,31 @@
 
 ## 实施进度与今晚切换要求（2026-11-02）
 
+### 2026-11-02 listener 与候选库交付准备（最新）
+
+[Playbooks #959](https://github.com/ai-workspace-infra/playbooks/pull/959) 交付 Secret、迁移数据库身份与空候选初始化 owner；[GitOps #752](https://github.com/ai-workspace-infra/gitops/pull/752) 声明两端 `accounts-migration` namespace、listener/Service、加密 staging PVC、V6 独立 PostgreSQL17/PVC，以及 Caddy 的 `/api/migrations/v1` 和 `/api/migrations/v1/*` 精确 TLS 路由。两个 PR 尚待合并，本轮尚未创建数据库身份、候选库或 Secret，也未执行快照/预览。
+
+| 项目 | V5 source | V6 target |
+| --- | --- | --- |
+| Vault 材料路径 | `kv/prod/accounts/migration/v5-to-v6/source` | `kv/prod/accounts/migration/v5-to-v6/target` |
+| 凭据字段 | `database_password`、`staging_key` | `database_password`、`staging_key`、`admin_password` |
+| 迁移角色 | `readonly_release`，限定读取 | `accounts_migration`，仅候选库的范围内 DML/TEMP |
+| 数据库 | 现有 V5 `account`，不改业务数据 | 新实例 `migration-candidate` 的空 `account`，独立 2Gi PVC |
+| 暂存 | 独立 1Gi PVC，0700 目录，独立加密 key | 独立 1Gi PVC，0700 目录，独立加密 key |
+| 运行材料 | `migration-listener`、`migration-tls` Secret | 同左，另有候选 admin/init Secret |
+
+既有 `readonly_release` 密码已设置，当前观察到 0 个连接；这不能证明没有离线消费者。执行 owner 对源密码切换保留显式批准参数。候选初始化使用固定镜像内的 native initializer，仅接受空库；Job 不由 Flux 自动运行。实施顺序为合并 owner 与声明 → Secret → 候选启动 → 显式空库初始化 → 两端 scoped permissions → listener 调谐 → 实际身份允许/拒绝验证 → 快照/预览。未配置 backup receipt、apply 或 receipt 初始化。
+
+静态验收：两个集群根和 source/target Kustomize 构建、Ansible syntax-check、Python 编译、diff 与敏感信息扫描通过；新的两端 Caddy 配置已在现网容器内只读 `validate` 通过，未加载。V6 节点经 WireGuard `10.254.250.1:443` 访问 V5 Accounts 返回 200 且 TLS 校验通过；实际 listener Pod 路径和迁移运行验证仍待部署。V6 当次内存使用约 71%，新增服务的 requests/limits 已显式限制，执行时需复核容量。
+
+
+### 2026-11-02 Accounts 服务 token 授权发布验收（最新）
+
+GitOps [#750](https://github.com/ai-workspace-infra/gitops/pull/750)、[#751](https://github.com/ai-workspace-infra/gitops/pull/751) 已合并，Flux 自动调谐完成。V5 Accounts 固定提交 `85263b78bc4398ff11acc19a1097b99bd2cc628e`，V6 固定提交 `a0a867f0c7b9bf9480f5db42a4b7aec316daa9fb`，两端 Pod 均 `1/1 Running`、滚动更新成功，公网 `/api/ping` 报告的提交和镜像与声明一致。
+
+从各节点使用各自 Secret 内的 `INTERNAL_SERVICE_TOKEN` 验证 `POST /api/admin/migration/authorize` 的 `source.read`，均返回 `200`；错误 token 均返回 `401`，未输出凭据。两端 `GET /api/migrations/v1/plans/<测试UUID>` 仍返回 `404`，迁移 listener/路由尚未验收；本次没有执行快照、预览或迁移写入。
+
+
 ### 2026-11-02 服务 token 发布准备（最新）
 
 Accounts #296、#298 已合并，V5 合并提交 `85263b78bc4398ff11acc19a1097b99bd2cc628e`，V6 合并提交 `a0a867f0c7b9bf9480f5db42a4b7aec316daa9fb`。两端固定镜像已核验并经 SSH 预拉取成功；GitOps 镜像声明分别提交 [#750](https://github.com/ai-workspace-infra/gitops/pull/750) 和 [#751](https://github.com/ai-workspace-infra/gitops/pull/751)，声明与密钥检查通过，待合并。两端业务 Pod 尚未由本次操作更新。两端现有 `web-saas-secrets` 均包含 `INTERNAL_SERVICE_TOKEN` 字段，未读取字段值。
