@@ -837,6 +837,8 @@ Accounts #300 的 `6c7c48ab` 增加目标侧触发器兼容 SQL：仅 `accounts_
 
 **快照有效期与拒绝范围（2026-11-03）**：从 V5 以授权只读请求再次取得 snapshot `f61b87a6-8e8e-4789-a36c-ad6a93cc6371` 的 manifest：创建于 `2026-11-02T21:09:27Z`，到期于 `2026-11-02T22:09:27Z`，42 表、201 分片。到期后需重新获取快照并重新对目标预览，不能沿用过期计划。Accounts #304 的 `23f870fb` 进一步将客户端的冲突详情识别限制在目标 preview POST，源端或其他路径返回的相同文本仍视为通用 HTTP 拒绝；隔离测试通过，具体部署状态以 PR 为准。
 
+**V6 冲突关联范围只读检查（2026-11-03）**：`account` 库当时仍有 3 个用户；在单个 `REPEATABLE READ READ ONLY` 事务中，检查明确指向 `users.uuid` 的单列外键，以及 public 表中 UUID 类型的 `user_uuid`、`account_uuid`、`owner_uuid`、`actor_uuid`、`created_by`、`updated_by` 字段，未发现引用这 3 个用户的行。另以当前 `billing_plans` 为范围，检查其他 public 表中 text 类型的 `plan_id` 和 `stripe_price_id` 与现有套餐的连接，未发现匹配行。两项均只覆盖所列数据库字段与当时快照，不覆盖文本/JSON 隐含引用、其他字段、外部系统、认证会话或未来写入，不能据此自动删除或覆盖。用户身份与套餐冲突的业务处理仍待明确。
+
 
 - 迁移前 V6 业务写者、后台任务、真实支付和通知受控。
 - 迁移源连接只读；V5 原业务写入方保留。
