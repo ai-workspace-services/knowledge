@@ -797,6 +797,10 @@ Accounts #300 的 `6c7c48ab` 增加目标侧触发器兼容 SQL：仅 `accounts_
 
 **异机独立恢复尝试（2026-11-03）**：在操作端 FileVault 加密磁盘创建独立 PostgreSQL 17.11 集群，仅监听权限为 `0700` 的 Unix socket；校验加密文件 SHA-256 与既有备份回执一致后，从 Vault 通过进程管道提供解密密钥并流式 `pg_restore --no-owner --no-acl`。恢复在 `CREATE EXTENSION pgmq` 时失败：操作端 PostgreSQL 缺少 `pgmq.control`，未完成恢复或业务行比对。首次启动另因 Unix socket 路径超过系统限制失败，改用受限短路径后启动成功。失败的部分恢复目录和日志保留，数据库进程已停止；不把它记作恢复通过。V6 运行镜像为 `ghcr.io/ai-workspace-services/postgresql@sha256:56f4179bafafa52061ac21003dc80c1a0b7ceb63fffb2c7bd05f29237b62b85e`，后续需要在独立环境使用具有相同扩展能力的受控构件完成完整恢复及验证；备份不含角色和 ACL 的既有边界仍然适用。
 
+**异机恢复重试（2026-11-03）**：从上述 V6 固定镜像的运行容器读取 `pgmq.control` 和 `pgmq--1.8.0.sql`（SHA-256 分别为 `6ef558ab4e2637aa11503f0fbdb88f359e482507753ca61f60a2193c2dfca03b` 和 `59ea03e89bf01ebb6f97a2a5203cc2e34f6a05b532c40b6e53d4f4694195c20a`），未覆盖现有文件，安装到操作端 PostgreSQL 17 扩展目录；随后在独立集群的全新数据库重试加密备份恢复成功，确认 `pgcrypto 1.3`、`pgmq 1.8.0`。首次行摘要对比因两端会话时区不同报告 7 表不一致；将双方时区统一为 UTC、日期和浮点输出格式统一后，51 张 public 表行数及排序整行摘要均一致。两边使用独立只读事务，非跨库原子快照；独立库已撤销 PUBLIC CONNECT 并停止，保留失败和成功现场。此演练不包含数据库角色和 ACL 恢复、应用连接、全部扩展行为或真实迁移 plan/target baseline 绑定，不能直接当作写入门禁回执。
+
+[Accounts #300](https://github.com/ai-workspace-services/accounts/pull/300) 随后合并到 main（`97f8c92ff9c191755a0d80717f64e3c85898d6eb`），追齐代码尚未构建、部署至 listener 或在业务库执行。
+
 
 - 迁移前 V6 业务写者、后台任务、真实支付和通知受控。
 - 迁移源连接只读；V5 原业务写入方保留。
