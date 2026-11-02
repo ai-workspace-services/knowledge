@@ -851,6 +851,17 @@ Accounts #300 的 `6c7c48ab` 增加目标侧触发器兼容 SQL：仅 `accounts_
 
 **显式 apply 拒绝（2026-11-03）**：使用固定 `migratectl` 版本 `356b9d9aa1d1c6702fa6a6d6ca1e13eeecceaf00` 执行 `bash /root/migrate.sh --apply`，退出码 1，提示 `apply requires exact --plan-id and --plan-sha256`。当前尚无可审核的无冲突计划，因此该拒绝未执行业务数据写入；仍需完成已授权冲突处置、重新预览、回执初始化及绑定目标基线的备份证明。
 
+**V6 数据重置与服务恢复（2026-11-03，最新）**：用户进一步确认 V6 业务库数据均可丢弃、以 V5 为准。临时暂停 `web-saas-prod` HelmRelease 调谐并将 Accounts/Billing 缩容为 0，避免重置期间自动写入。新加密备份 `v6-before-reset-20261102T233431Z-ff3c0a68-d2d8-401a-8b4a-d7fb13be8145` 密文 SHA-256 为 `cce8e9aa09e48a74329b120098b2f5711eaddfd4627f8cecdbd82426b6ee1023`；独立 PostgreSQL 17 恢复首次因 RLS 策略角色缺失失败，补齐隔离角色后恢复成功，UTC 下 72 张 public 表的行数和整行摘要与目标一致。此演练不证明全部角色密码或 ACL 的恢复。
+
+目标事务锁定 72 表并重新验证备份基线后清空数据、重置序列；首次因财务不可变触发器拒绝而回滚，重试仅在该事务内设置 `session_replication_role=replica`，提交成功。没有永久禁用触发器，未改源库。固定 SQL 的 SHA-256 为 `0a4683ee6949f4d76f05c62c3b23914b1929d89437369c7d51eea6df1b65fbea`。现有 `postgres` 管理身份随后按受控 SQL 安装回执表和受限序列辅助函数，listener 继续使用非管理员 `accounts_migration`；用户已确认迁移可使用 postgres，operator 业务权限补全尚待执行。
+
+暂停业务后，listener 原有 Accounts 认证回调返回 HTTP 503。已合并 [Accounts #305](https://github.com/ai-workspace-services/accounts/pull/305)，提供显式 `--internal-service-token-env`，与其他认证方式互斥，沿用既有内部令牌的身份与权限范围；允许/拒绝及 API/CLI 认证测试通过。手工发布并通过 [GitOps #765](https://github.com/ai-workspace-infra/gitops/pull/765) 调谐镜像 `migration-bc32fac4846c-2089183b2179@sha256:2089183b2179b1594e7a354c576b1a2a481e44c59b7dbe419ad811b0fd1da0e6`。令牌保留在 Vault `kv/prod/accounts/migration/v5-to-v6/business-target` 的 `internal_service_token` 字段及现有 listener Secret；Playbooks 后续重新交付 Secret 时也须保留该认证字段，当前自动交付支持仍需补齐。
+
+空目标预览计划 `1f447554-93e9-444f-a810-ab832b427e81` 通过：42 表、184538 条待插入、0 匹配、0 冲突，计划 SHA-256 `33705114f936839e9312eb0559e7457d3d856cab49e24358c57fbea0affeb02f`。另生成并隔离恢复空目标备份 `v6-empty-target-20261102T234606Z-53a8255f-6217-4f6e-9621-788539921458`，密文 SHA-256 `0b47bd9efcefba837a81c0dbace2f917a95a441d4fec1ac1307bb860e1a7092f`；72 表均为空且 public 用户触发器定义和启用状态与现场一致。实际数据导入仍未执行。
+
+用户随后要求恢复服务：Accounts 和 Billing 已恢复各 1 副本并 rollout 成功，均 `1/1 Running`、0 重启，HelmRelease `suspend=false`、`Ready=True`。启动后业务库已有 3 个用户、3 条套餐，空目标计划基线已改变，不能继续用该计划提交；[GitOps #766](https://github.com/ai-workspace-infra/gitops/pull/766) 的 apply 声明保留草稿、未调谐。独立恢复库已停止；后续迁移须重新核对冲突及备份基线。
+
+
 
 - 迁移前 V6 业务写者、后台任务、真实支付和通知受控。
 - 迁移源连接只读；V5 原业务写入方保留。
