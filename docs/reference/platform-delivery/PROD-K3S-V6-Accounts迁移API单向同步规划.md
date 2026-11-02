@@ -35,7 +35,7 @@ Accounts [PR #289](https://github.com/ai-workspace-services/accounts/pull/289)�
 
 ## 1. 简化后的操作契约
 
-Mac 只通过 HTTPS 调用 `migratectl transfer-api`，从 Vault 读取专用短期迁移 token；不读取两端 DATABASE_URL，不直接连接 PostgreSQL。监听器在各自集群内使用专用数据库身份，执行源一致性只读快照、结构验证、分片传输、目标预览和受保护的事务写入。
+Mac 只通过 HTTPS 调用 `migratectl transfer-api`，使用两端现有 Accounts 管理员 token；不管理专用迁移JWT，不读取两端 DATABASE_URL，不直接连接 PostgreSQL。监听器在各自集群内使用专用数据库身份，执行源一致性只读快照、结构验证、分片传输、目标预览和受保护的事务写入。
 
 源快照、传输和预览无需暂停 V5/V6 服务。目标预览会创建事务内临时表并回滚，不修改持久业务表；临时数据、排序/临时磁盘、锁等待和容量仍需核算。目标业务写入会使计划基线过期，apply 此时应拒绝并重新预览。第一轮迁移优先使用独立候选库及独立迁移 Pod，保持 V6 现有应用在线，又避免后台任务改变候选基线。
 
@@ -65,7 +65,7 @@ Mac 只通过 HTTPS 调用 `migratectl transfer-api`，从 Vault 读取专用短
 - 同一发布版本按平台选择各自摘要，不要求 Darwin 与 Linux 字节相同。两端 listener 固定同一个 Linux 构件/镜像源版本，客户端固定同源发布；不在节点编译，不用浮动 latest。
 - `cmd/migratectl/api.go`：serve、migration-token、transfer-api 参数及内存 Vault `token` 读取。
 - `internal/migrate/api_data.go`：范围、源只读身份、实际 schema 指纹、物理数据库身份。
-- `api_transport.go`：HS256 token、job/audience/operator 绑定、TLS、CIDR、HTTP 和计划处理。
+- `api_transport.go`：服务端pair/job与actor绑定、TLS、CIDR、HTTP和计划处理；新模式委托Accounts认证，原HS256迁移JWT仅保留为互斥的旧模式。
 - `api_chunks.go` / `api_chunk_apply.go`：加密分片、断点恢复、临时表比较和事务插入。
 - `api_backup.go`：目标备份恢复证明校验。
 
@@ -114,133 +114,65 @@ flowchart LR
 - Caddy 只信任已配置的代理，CIDR 检查不能信任任意客户端 X-Forwarded-For；关闭/脱敏迁移请求 body、Authorization 和快照响应 body 日志。
 - Job UUID 必须绑定这次两端。服务名和实现不带代际；`clusterId` 与 audience 是参数，例如 `accounts-migration-prod-k3s-v5`、`accounts-migration-prod-k3s-v6`，下一代只换声明。
 
-## 6. Vault 与认证规划
+## 6. 认证：直接复用现有 Accounts 管理员 token
 
-以下为待创建/审核的新路径，不代表已写入。统一使用现有 Vault 服务 `https://vault.svc.plus` 作为迁移材料来源；两端 ESO 各使用本集群 JWT 身份、只读各自精确路径，不能复用 V5 集群 JWT 给 V6。
+实现已提交 [Accounts PR #291](https://github.com/ai-workspace-services/accounts/pull/291)，代码 `dca13426`。单元/API管理员回归、Accounts授权器race检测及完整隔离PG17迁移API套件通过；覆盖普通Accounts token快照预览、无备份拒绝apply、显式测试门禁后的apply/幂等重试、另一有效管理员读取计划拒绝、账号停用及session撤销。测试用容器已移除。当前为代码PR已交付、未部署，不是线上迁移完成。
 
-| KV CLI 路径模板 | 字段 | 允许消费者 |
-|---|---|---|
-| `kv/prod/accounts/migration/listeners/<clusterId>/database` | `dsn` | 本集群对应 listener；V5 使用真实 readonly_release，V6 使用候选库专用迁移身份 |
-| `kv/prod/accounts/migration/listeners/<clusterId>/signing` | `key_base64` | 本 listener 验签与受控 token 签发 owner |
-| `kv/prod/accounts/migration/listeners/<clusterId>/staging` | `key_base64` | 仅本 listener，加密持久分片/计划；重启后保持一致 |
-| `kv/prod/accounts/migration/jobs/<RUN_ID>/source-auth` | `token` | 授权操作人客户端，source.read |
-| `kv/prod/accounts/migration/jobs/<RUN_ID>/target-preview-auth` | `token` | 授权操作人客户端，target.plan |
-| `kv/prod/accounts/migration/jobs/<RUN_ID>/target-apply-auth` | `token` | 写入阶段授权操作人，target.plan,target.apply |
 
-KV v2 ACL 路径在 `kv/` 后加 `data/`。监听器和客户端分别精确授权，Mac 无需读数据库、signing/staging key。每个 endpoint 的 signing key 和 staging key 各为独立随机 32 字节 base64，源目标也独立；不复用 Accounts JWT、INTERNAL_SERVICE_TOKEN 或 Vault 登录 token。
+本轮改为复用V5/V6各自现有Accounts认证，取消客户端专用迁移JWT、日期JOB token KV路径和数据库DSN要求。源/目标token的格式、有效期、刷新及撤销由各自Accounts服务决定，迁移工具不额外限制15分钟，不签发或刷新token。普通用户、operator、只读/demo账户和INTERNAL_SERVICE_TOKEN不能替代管理员登录。
 
-当前实现是独立 HS256 迁移 JWT，不是由公共 Vault JWT auth 自动签发。`migratectl migration-token` 由受控签发 owner 运行，以命令替换/管道保存在内存并写到对应 KV 的 token 字段，不输出到终端或参数。JWT 绑定 source_audience、target_audience、job_id 与同一不透明 operator subject；source/target token 必须同一操作人/同一 job。TTL 建议 10 分钟，最大 15 分钟。续签保留 subject/job/pair。对象 TTL 默认 1 小时，最大 24 小时；token 续签不延长快照或计划 TTL。
-
-source DB 必须 readonly_release、无写/序列变更/成员关系/管理权限、完整 RLS 可见；两端均需 EXECUTE pg_control_system() 和足够 catalog 读取来验证物理库身份。目标预览需 SELECT 与 TEMP，apply 另需精确表 INSERT、必要序列及私有回执权限，不能为省事授予超级用户。源只读连接和目标迁移连接由节点内材料解析，应用 DSN 仅作来源盘点。
-
-### 日期路径与 token 字段填写契约（2026-11-02）
-
-操作者看到的 `RUN_ID` 使用日期 `2026-11-02`；同日独立运行按 `2026-11-02-r2` 递增。它只是 Vault 路径和回执的批次标签。listener/JWT 内部 `job_id` 仍必须是 canonical 小写 UUID，命名为 `JOB_UUID`，不改成日期；两端 listener、签发的JWT及快照绑定同一个已批准JOB_UUID。日期、job UUID、snapshot ID、plan ID分别记录，不互相代替。
-
-| 命令参数及本次完整 CLI 路径 | Vault 字段 | 应填写的值 / 权限 |
-|---|---|---|
-| `--source-auth-kv kv/prod/accounts/migration/jobs/2026-11-02/source-auth` | `token` | V5 source listener 专用 signing key 签发的迁移 JWT；aud=`accounts-migration-prod-k3s-v5`，scopes=`source.read` |
-| `--target-auth-kv kv/prod/accounts/migration/jobs/2026-11-02/target-preview-auth` | `token` | V6 target listener 专用 signing key 签发的迁移 JWT；aud=`accounts-migration-prod-k3s-v6`，scopes=`target.plan`（仅预览/状态） |
-
-两条token均绑定 `source_audience=accounts-migration-prod-k3s-v5`、`target_audience=accounts-migration-prod-k3s-v6`、相同 `job_id=JOB_UUID`、相同不透明operator `sub`，TTL建议10分钟、最大15分钟。字段值是完整签名JWT字符串，由受控签发owner运行 `migratectl migration-token` 生成；不填写Vault登录token、Accounts普通登录JWT、密码、DATABASE_URL、signing key或手工拼接的字符串。操作者不需要在聊天或文档填写真实token。
-
-客户端代码 `cmd/migratectl/api.go:migrationCredential` 实际运行 `vault kv get -field=token <路径>`，捕获到内存；参数本身只传路径。KV v2 ACL/API分别为 `kv/data/prod/accounts/migration/jobs/2026-11-02/source-auth` 与 `kv/data/prod/accounts/migration/jobs/2026-11-02/target-preview-auth`。Mac的Vault身份仅需精确read；签发owner才有对应写权限和signing key读取权限，目标预览token不授予target.apply。
-
-#### 由签发 owner 写入的命令模板
-
-仅在两端listener签名密钥、audience和JOB_UUID已实际配置后执行；下面尚未运行。运行环境已通过Vault受控解析得到各自独立32字节base64 signing key，Mac日常调用不持有这些key。`vault kv put ... token=-` 从stdin接收字段值；首次创建使用CAS=0，拒绝覆盖已有记录。续签由owner核对版本后使用明确CAS版本更新，保持同一subject/job/pair，不盲目覆盖或换job。
-
-```bash
-(
-  set -euo pipefail
-  set +x
-  export VAULT_ADDR="https://vault.svc.plus"
-  RUN_ID="2026-11-02"
-  : "${MIGRATECTL_BIN:?已校验的固定二进制}"
-  : "${JOB_UUID:?已配置在两端listener的任务UUID}"
-  : "${OPERATOR_ID:?两端token共用的不透明操作者ID}"
-  : "${SOURCE_MIGRATION_SIGNING_KEY:?仅签发owner运行环境持有}"
-  : "${TARGET_MIGRATION_SIGNING_KEY:?仅签发owner运行环境持有}"
-  export SOURCE_MIGRATION_SIGNING_KEY TARGET_MIGRATION_SIGNING_KEY
-
-  SOURCE_TOKEN="$("$MIGRATECTL_BIN" migration-token \
-    --auth-key-env SOURCE_MIGRATION_SIGNING_KEY \
-    --audience accounts-migration-prod-k3s-v5 \
-    --source-audience accounts-migration-prod-k3s-v5 \
-    --target-audience accounts-migration-prod-k3s-v6 \
-    --job-id "$JOB_UUID" --subject "$OPERATOR_ID" \
-    --scopes source.read --ttl 10m)"
-  test -n "$SOURCE_TOKEN"
-  printf '%s' "$SOURCE_TOKEN" \
-    | vault kv put -cas=0 "kv/prod/accounts/migration/jobs/${RUN_ID}/source-auth" token=-
-
-  TARGET_TOKEN="$("$MIGRATECTL_BIN" migration-token \
-    --auth-key-env TARGET_MIGRATION_SIGNING_KEY \
-    --audience accounts-migration-prod-k3s-v6 \
-    --source-audience accounts-migration-prod-k3s-v5 \
-    --target-audience accounts-migration-prod-k3s-v6 \
-    --job-id "$JOB_UUID" --subject "$OPERATOR_ID" \
-    --scopes target.plan --ttl 10m)"
-  test -n "$TARGET_TOKEN"
-  printf '%s' "$TARGET_TOKEN" \
-    | vault kv put -cas=0 "kv/prod/accounts/migration/jobs/${RUN_ID}/target-preview-auth" token=-
-)
-```
-
-签发命令先成功取得非空token，再通过shell内建printf管道写入；签发失败时停止，不创建空token记录。预览用上述target-preview-auth；真实apply需另行签发到target-apply-auth，只有scope不足的预览token不能写入业务数据。token写入KV后不会自动部署listener、配置数据库身份或改变路由。
-
-#### 本次实际迁移记录
-
-| 记录项 | 本次事实 |
+| 客户端输入 | 应提供内容 |
 |---|---|
-| 日期标识 | `2026-11-02`，方向V5 → V6 |
-| Vault会话 | 本机 `https://vault.svc.plus` 已认证，只输出认证是否成功 |
-| 两条日期路径 | 对上述source-auth / target-preview-auth的实际读取均为not_found，尚未创建token |
-| 源迁移路由 | 正常DNS HTTPS `accounts.svc.plus` 指向104.105.141.213，迁移plan路径HTTP404，TLS=0 |
-| 目标迁移路由 | 正常DNS HTTPS `accounts-selfhost-prod-v6.svc.plus` 指向172.237.24.232，同路径HTTP404，TLS=0 |
-| JOB_UUID / snapshot ID / plan ID | 尚未发行或生成，不伪造占位成功回执 |
-| 当前状态 | `PRECHECK_BLOCKED`：token和独立listener/路由尚未交付，未完成transfer-api快照/预览，更未apply |
+| source-url | `https://accounts.svc.plus` |
+| target-url | `https://accounts-selfhost-prod-v6.svc.plus` |
+| SOURCE_ACCOUNTS_TOKEN | V5现有有效root/admin Accounts token，运行时注入 |
+| TARGET_ACCOUNTS_TOKEN | V6现有有效root/admin Accounts token，运行时注入 |
 
-后续每次真实签发/续签记录日期标识、job UUID、source/target audience、scope、opaque operator ID、UTC签发/到期时间、KV版本和签发owner/run；每次迁移另记固定CLI/镜像摘要、snapshot/plan ID与SHA、源快照边界、目标baseline/schema/identity、退出码及业务验收结果。公开记录不保存JWT、signing/staging key、DSN、用户记录或凭据散列。
+CLI使用token-env引用，避免token值进入进程参数/命令历史；原有auth-kv选项保留为可选秘密存储适配器，但不再强制创建迁移专用KV记录或专用JWT。不得向聊天、文档或公开回执提交token。
 
-## 7. 用户操作：一个简化的快照预览命令
+服务端新增 `POST /api/admin/migration/authorize`：复用Accounts现有JWT/session校验，按当前用户状态重新确认active root/admin，返回脱敏本地actor及获准操作。独立listener使用 `--accounts-auth-url <本端Accounts HTTPS origin>`，每个请求实时委托认证，不缓存授权、不跟随重定向、不读取环境代理；与旧 `--auth-key-env` 模式互斥，不在认证失败后回退旧JWT。
 
-以下是监听器和专用认证交付后的运行模板，当前请求仍会得到 404，不应现在当作可部署脚本。`MIGRATECTL_BIN` 指向经过校验的受保护绝对路径；使用同源 release 的 SHA256SUMS 和 manifest 校验后运行。source/target KV token 须由受控签发者提前写入，操作人不自行读取签名密钥。
+源快照保留源管理员归属，目标计划/加密stage/回执由目标管理员持有；两端管理员可不同，无需同邮箱/同用户UUID。源目标pair/job仍为服务端运行绑定，不作为客户端JWT配置要求；日期 `2026-11-02` 只用于迁移记录标签。不同目标管理员不能凭plan ID读取其他管理员的计划。
+
+数据库身份、只读源连接、完整schema校验、分片加密和备份恢复门禁仍在服务端。删除客户端DSN要求不等于服务端不需要访问数据库；监听器数据库与staging材料由部署owner交付，Mac不持有这些材料。此次变更不允许管理员token绕过冲突、物理库身份、备份或事务校验。
+
+## 7. 简化后的快照预览命令
+
+以下模板待两端包含新认证代码的Accounts/迁移listener及路由实际部署后使用。SOURCE_ACCOUNTS_TOKEN/TARGET_ACCOUNTS_TOKEN已由现有Accounts登录流程或受控凭据通道注入环境；不在命令中粘贴真实值。
 
 ```bash
 (
   set -euo pipefail
   set +x
-  export VAULT_ADDR="https://vault.svc.plus"
   : "${MIGRATECTL_BIN:?已校验的固定二进制}"
-  RUN_ID="2026-11-02"  # 同日独立执行用 2026-11-02-r2 等新标识
-
+  : "${SOURCE_ACCOUNTS_TOKEN:?V5现有Accounts管理员token}"
+  : "${TARGET_ACCOUNTS_TOKEN:?V6现有Accounts管理员token}"
+  export SOURCE_ACCOUNTS_TOKEN TARGET_ACCOUNTS_TOKEN
   "$MIGRATECTL_BIN" transfer-api \
     --source-url https://accounts.svc.plus \
     --target-url https://accounts-selfhost-prod-v6.svc.plus \
-    --source-auth-kv "kv/prod/accounts/migration/jobs/${RUN_ID}/source-auth" \
-    --target-auth-kv "kv/prod/accounts/migration/jobs/${RUN_ID}/target-preview-auth"
+    --source-token-env SOURCE_ACCOUNTS_TOKEN \
+    --target-token-env TARGET_ACCOUNTS_TOKEN
 )
 ```
 
-默认只做不可变快照、加密传输及目标预览，不 apply。不需要 DSN、`--writers-paused`、`--schema-sha256` 或 Billing hash；结构检查没有取消，而是由两端 listener 使用实际数据库结构、迁移 checkpoint、完整字段契约和物理身份执行。不能把直接 DSN 命令参数搬到 transfer-api。
+不需要VAULT_ADDR、JOB_ID、DSN、schema hash或writers-paused。默认只生成一致性快照、传输并预览；schema校验由服务端继续执行。认证token的生命周期与snapshot/plan TTL独立，快照/计划过期仍需重新预览。
 
-第一次预览前最好生成并保存非敏感 `SNAPSHOT_ID` 与 `PLAN_ID`（canonical 小写 UUID），加上 `--snapshot-id "$SNAPSHOT_ID" --plan-id "$PLAN_ID"`；它们不是 job UUID。回执及 ID 文件保存在 0700 目录、0600 文件，CLI 错误返回的恢复 ID 也要保留。中断后用同一组 ID 和同一 subject/job 的新 token 重试。`--transfer-only` 只验证及缓存分片，不能当作预览/应用通过。
-
-预览通过后可查询状态，无需源 token：
+记录生成的snapshot ID、plan ID及SHA；中断后通过原ID恢复，token失效时由Accounts现有流程取得新token，同一目标管理员可继续读取其计划。状态查询只需目标token：
 
 ```bash
 "$MIGRATECTL_BIN" transfer-api --status \
   --target-url https://accounts-selfhost-prod-v6.svc.plus \
-  --target-auth-kv "kv/prod/accounts/migration/jobs/${RUN_ID}/target-preview-auth" \
-  --plan-id "$PLAN_ID"
+  --target-token-env TARGET_ACCOUNTS_TOKEN --plan-id "$PLAN_ID"
 ```
+
+本次迁移记录标签为 `2026-11-02`。此前两条日期KV token路径实测not_found，这些是旧方案记录，新模式不再要求创建。两端迁移路径最近实测仍为404、TLS=0，状态PRECHECK_BLOCKED；新增认证代码的测试属于隔离验证，不是线上预览通过。后续记录两端部署构件、日期、源/目标脱敏操作者、授权结果、snapshot/plan ID与SHA、实际快照边界、schema/identity/baseline指纹、退出码和验收状态；不记录凭据或用户数据。
 
 ## 8. 事务写入与在线条件
 
 不暂停线上 V5/V6 应用的第一轮 apply 指向隔离候选库，普通应用及财务后台不会连接该库。目标 API 自行锁定范围内表、验证计划基线、插入缺失行并在同一事务提交回执；不能承诺零锁等待。若以后选择在线 V6 活跃库，必须先证明该范围无竞争后台/财务写者、计划可稳定，并在超时/漂移时安全停止，不能把“命令没有暂停参数”作为可以无条件在线 apply 的证据。
 
-顺序：保存预览 → owner 对目标做加密备份并在隔离库恢复 → 验证 baseline/schema/identity 一致 → 产生保护的 backup receipt → 在迁移开启配置中初始化私有 receipts schema → 重新预览并确认 plan 与 receipt 仍匹配 → 单独启用 target.apply token。`--initialize-receipts` 自身会增加独立 schema，schema 指纹若因此变化必须重出预览/回执；部署 owner 需核实真实稳定性，不能伪造恢复证明。
+顺序：保存预览 → owner 对目标做加密备份并在隔离库恢复 → 验证 baseline/schema/identity 一致 → 产生保护的 backup receipt → 在迁移开启配置中初始化私有 receipts schema → 重新预览并确认 plan 与 receipt 仍匹配 → 单独启用目标写入门禁。`--initialize-receipts` 自身会增加独立 schema，schema 指纹若因此变化必须重出预览/回执；部署 owner 需核实真实稳定性，不能伪造恢复证明。
 
 目标启动默认 preview/status；启用 apply 需要只读挂载 owner 发行的 `--backup-receipt-file`。回执绑定 backup SHA、目标物理 identity/schema/baseline、真实隔离恢复摘要、验证时间与不超过24小时的有效期，0600 且父目录符合所有权限制。首次 receipts 初始化需显式 `--initialize-receipts --receipt-owner-role accounts_migration_executor`，该名称是规划身份，尚未创建；执行所需受限 CREATE 权限由 DB owner 审核，不能常驻授予应用。
 
@@ -248,7 +180,7 @@ source DB 必须 readonly_release、无写/序列变更/成员关系/管理权�
 # 仅在无冲突计划、真实恢复证明和目标隔离条件全部通过后运行。
 "$MIGRATECTL_BIN" transfer-api --apply \
   --target-url https://accounts-selfhost-prod-v6.svc.plus \
-  --target-auth-kv "kv/prod/accounts/migration/jobs/${RUN_ID}/target-apply-auth" \
+  --target-token-env TARGET_ACCOUNTS_TOKEN \
   --plan-id "$PLAN_ID" --plan-sha256 "$REVIEWED_PLAN_SHA256"
 ```
 

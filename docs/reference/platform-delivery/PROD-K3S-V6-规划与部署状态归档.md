@@ -2,7 +2,9 @@
 
 ## Accounts 迁移 API 单向快照规划（2026-11-02）
 
-认证填写与预检记录：迁移客户端路径使用日期标签 `2026-11-02`，即 `kv/prod/accounts/migration/jobs/2026-11-02/{source-auth,target-preview-auth}`，两者均只需字段 `token`，分别由源/目标独立迁移签名密钥签发，scope为source.read和target.plan。内部JOB_UUID仍为两端一致的UUID，不用日期替代。实际读取两条日期路径均not_found；本机Vault登录有效，但两端迁移路径仍404、TLS验证通过，当前PRECHECK_BLOCKED，未完成快照/预览/apply。签发、有效期、CAS写入命令与脱敏回执要求已补充到规划文档。
+代码实施：复用Accounts管理员认证的服务端修改已提交 [Accounts #291](https://github.com/ai-workspace-services/accounts/pull/291)（`dca13426`），完整隔离PG17迁移API套件及管理员/auth回归通过；尚未更新两端服务，当前镜像677fb48e不包含此新认证模式。
+
+认证契约更新：客户端直接使用V5/V6现有Accounts root/admin token，不再要求日期JOB token KV路径、专用迁移JWT或数据库DSN；有效期与撤销由Accounts决定。服务端新增管理员授权接口并逐请求委托校验，schema、快照、冲突和备份门禁保留。日期2026-11-02用于回执标签。旧方案两条KV路径not_found和两端迁移路径404仅是历史预检事实；新认证代码尚未部署，不能声称线上迁移成功。
 
 
 构件及仓库治理最新记录：Accounts #289 已合并为 `677fb48ef92be426904864f8f849a1e9ac044bab`，GHCR固定镜像digest核实为 `sha256:be8e7ebb8017e453006a042e83a97c8e7f4ddb60503fe38837bd515dd44621e6`（linux/amd64）。未派发部署流水线或更新节点；V5普通Accounts managed runtime检查点兼容仍须先验证，不能把API读取兼容当作普通服务可升级证明。GitOps旧PR #728已关闭；PR #747仅精简PR检查为声明格式与敏感信息扫描，未改变应用声明。详见下链规划的最新进度。
