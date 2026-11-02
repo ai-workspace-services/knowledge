@@ -706,6 +706,21 @@ V6 验收仍需确认上述路径的 Vault 实存与字段合同、ESO 映射和
 
 ### 8.2 数据迁移与恢复要求
 
+### 8.2.1 V5 → V6 业务库直接迁移预检（2026-11-03）
+
+本节为最新现场记录。常规迁移保留独立 `accounts-migration-listener`，目标为 `postgresql-prod` 中现有业务库；可选候选 PostgreSQL 用于 schema 差异较大时的隔离验证。业务 Accounts 与迁移 listener 分开。GitOps [#760](https://github.com/ai-workspace-infra/gitops/pull/760) 已拆分 listener 与候选库声明，当前 Flux 仍运行候选模式，未切换连接。
+
+| 检查 | 结果 |
+| --- | --- |
+| V6 业务 PostgreSQL | 17.11；业务 `account` 库存在数据 |
+| 迁移范围表 | 42 张中缺少 21 张：`finance_invoices`、`finance_operation_events`、`finance_operations`、`finance_payments`、`finance_refunds`、`identities`、`mfa_recovery_codes`、`network_team_members`、`network_teams`、`referral_campaign_revisions`、`referral_codes`、`referral_payment_risks`、`referral_reward_campaign_snapshots`、`referral_reward_events`、`referral_rewards`、`referral_settlement_items`、`referral_settlements`、`referral_verified_invoices`、`referrals`、`subscription_extension_ledger`、`team_agent_enrollments` |
+| 业务库检查点 | `public.schema_migrations` 和 `public.accounts_controlled_migration_history` 不存在；前者为当前迁移 API 所需的干净 schema 检查点 |
+| 候选库与业务库列对比 | 483 个同名字段中 1 个定义不同：`users.email` 业务库 `NOT NULL`、候选库允许 `NULL`；候选库多 247 列。此检查不覆盖约束、索引、函数、触发器和权限 |
+| 当前写入状态 | 尚未完成业务库预览、账单对账、导入或可重复追齐；不能使用候选库 preview 回执授权业务库导入 |
+
+现有 `migratectl init` 只接受空库，bounded `migrate` 依赖既有干净版本检查点；不能给已有业务对象的库直接补造检查点，也不能使用空表占位。先固定源码和 schema 版本，比较表、列、约束、索引、RLS 及数据，准备可回滚的增量兼容方案，并通过有数据的隔离备份恢复验证。再以最小权限迁移身份连接业务库，重新生成绑定业务库身份和基线的预览，核对账单与冲突；源库始终只读。
+
+
 - 迁移前 V6 业务写者、后台任务、真实支付和通知受控。
 - 迁移源连接只读；V5 原业务写入方保留。
 - 固定工具版本、源快照边界、目标身份、SQL schema 和迁移范围。
