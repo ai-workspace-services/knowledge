@@ -841,6 +841,8 @@ Accounts #300 的 `6c7c48ab` 增加目标侧触发器兼容 SQL：仅 `accounts_
 
 **预览脱敏反馈交付（2026-11-03）**：[Accounts #304](https://github.com/ai-workspace-services/accounts/pull/304) 已合并至 `356b9d9aa1d1c6702fa6a6d6ca1e13eeecceaf00`。以原 listener 镜像为基础，仅替换 `migratectl` 构建手工固定镜像 `ghcr.io/ai-workspace-services/accounts:migration-356b9d9aa1d1-901b825ab8df@sha256:901b825ab8dfd34ddd63628e50a6266a48ca69cf0bd751b1b1a7e763df851ea5`；节点拉取及 [GitOps #764](https://github.com/ai-workspace-infra/gitops/pull/764) Flux 调谐完成，listener 滚动更新并运行。业务库连接和预览模式保持不变，未启用 apply。使用本机 port-forward 复测原有效快照和原请求 ID，客户端显示 `HTTP 409`、`target_unique_conflict`、`table=users`，转发随后关闭。此变更仅改善冲突诊断；用户身份和套餐的处理策略仍待确认，不代表数据已导入。
 
+**追齐能力隔离复测（2026-11-03）**：在本机临时 PostgreSQL 17 夹具上，以 Accounts `356b9d9aa1d1c6702fa6a6d6ca1e13eeecceaf00` 执行 `go test ./internal/migrate ./cmd/migratectl -run 'TestMigrationAPIPostgres17|TestClassifyCatchup|TestCatchup' -count=1`，两包通过。测试覆盖提交基线后的源变更、目标漂移/冲突拒绝、重复请求以及触发器防护；临时数据库已停止清理。首次夹具执行因测试要求数据库管理员名为 `postgres` 而失败，改用全新隔离夹具后通过。此为夹具证据，不是 V5/V6 线上追齐验收；线上尚无首次迁移提交基线，不能执行实际追齐。
+
 
 - 迁移前 V6 业务写者、后台任务、真实支付和通知受控。
 - 迁移源连接只读；V5 原业务写入方保留。
