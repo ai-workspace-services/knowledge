@@ -1,5 +1,13 @@
 # PROD-K3S-V6 独立节点、集群冷启动规划与部署状态归档
 
+## Accounts 迁移 API 单向快照规划（2026-11-02）
+
+本轮选择 [Accounts 独立迁移 API + migratectl transfer-api](PROD-K3S-V6-Accounts迁移API单向同步规划.md)：Mac 从 Vault 读取专用短期 token，经 HTTPS 获取 V5 一致性快照并在 V6 候选库预览；快照/预览无需暂停服务。源/目标 listener 使用各自集群内的独立数据库身份，不把应用 DATABASE_URL 交给 Mac。当前API固定42表，缺失记录插入、同键内容变化冲突即停，不等于持续覆盖或全库复制。
+
+只读现场盘点：V5 PostgreSQL17.11、76张public表、干净checkpoint `2026102002`，存在无成员关系的 `readonly_release`；V6 PostgreSQL17.11、51张public表、缺少schema_migrations。两端未发现迁移工作负载和Caddy迁移路由，指定SNI的迁移路径探测404、TLS=0。固定发布及所查main的API版本守卫尚不接受V5检查点，V6需独立完整候选schema；以上为规划与阻断记录，未部署listener、未采集快照或复制数据。
+
+应用KV来源已确认：V5 `kv/prod/services/web-saas-k3s-v5/database` 小写字段 `database_url`；V6 `kv/prod/Accounts-service` 大写字段 `DATABASE_URL`。这些是现有应用凭据，不作为API客户端认证；新迁移token/KV路径仍待交付。具体版本、认证、网络、命令、文件owner和验收顺序见规划文档。本节仅更新迁移事项，不改变后续历史部署记录。
+
 ## V6 三个业务批次域名 DNS 交付（2026-11-02 14:51，北京时间）
 
 用户反馈 `console-selfhost-prod-v6.svc.plus` 浏览器报 `ERR_NAME_NOT_RESOLVED`。只读核对确认权威 DNS 为 NXDOMAIN，而 `curl --noproxy '*' --resolve` 访问 V6 节点 443 的首页为 HTTP 200、TLS 校验结果 0。此前的强制解析验收不能替代真实 DNS 交付。
