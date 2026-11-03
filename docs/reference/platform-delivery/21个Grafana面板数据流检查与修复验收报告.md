@@ -249,8 +249,8 @@ kubectl -n postgresql-prod logs -l app.kubernetes.io/name=prometheus-postgres-ex
 
 ### 7.3 后续架构加固建议
 
-1. **SG 节点 SSH 凭据与权限治理**：
-   - 现场核查发现 SG 节点（`172.237.78.174`）存在公钥未分发问题（`Permission denied (publickey)`），建议安全团队通过统一 Ansible 角色重新分发合规运维密钥。
+1. **SG 节点下线与陈旧声明清理（已完成）**：
+   - 现场排查确认 SG 节点（`172.237.78.174`）公网 SSH 鉴权失败且无活跃监控流推送，属于陈旧下线节点。已通过 [GitOps PR #777](https://github.com/ai-workspace-infra/gitops/pull/777) 从 `topology/prod/selfhost/xconnect-regional-pools.yaml`、`resources/svc.plus/prod/akamai/xconnect.yaml` 及监控基线中彻底清理下线，保持生产基础设施声明与真实运行环境严格一致。
 2. **CMDB PostgreSQL 只读数据源接入**：
    - 推动资产管理平台评估向 Grafana 提供只读访问视图的可行性，若合规通过，可通过正式的 GitOps PR 引入 `cmdb_postgres` 数据源定义，恢复 `cmdb-resource-overview` 大盘展示。
 3. **针对 Process Exporter 建立抓取超时预警**：
