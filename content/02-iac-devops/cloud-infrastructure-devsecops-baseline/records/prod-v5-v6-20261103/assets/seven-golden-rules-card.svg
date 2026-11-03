@@ -1,0 +1,131 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 500" width="1200" height="500">
+  <defs>
+    <style>
+      .title { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; font-size: 22px; font-weight: 700; fill: #0F172A; }
+      .subtitle { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; font-size: 13px; fill: #64748B; }
+      .rule-num { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 13px; font-weight: 800; }
+      .rule-title { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; font-size: 13px; font-weight: 700; fill: #1E293B; }
+      .rule-desc { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; font-size: 11px; fill: #475569; line-height: 1.4; }
+    </style>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="115%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#0F172A" flood-opacity="0.05"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="500" fill="#F8FAFC" rx="16"/>
+
+  <!-- Header -->
+  <g transform="translate(50, 35)">
+    <rect x="0" y="2" width="4" height="22" fill="#7C3AED" rx="2"/>
+    <text x="16" y="18" class="title">从 V1 到 V6 悟出的七大工程生存铁律 (SRE 与架构师必读)</text>
+    <text x="16" y="38" class="subtitle">在资源极度受限（2C4G）的现实约束下，追求高可用、零数据丢失与极致自愈的架构心法</text>
+  </g>
+
+  <!-- Rules Grid (7 Rules across 2 rows) -->
+  <!-- Row 1: 4 items -->
+  <!-- Rule 1 -->
+  <g transform="translate(50, 85)">
+    <rect width="260" height="175" rx="12" fill="#FFFFFF" stroke="#E2E8F0" filter="url(#shadow)"/>
+    <rect x="14" y="14" width="24" height="24" rx="6" fill="#EFF6FF"/>
+    <text x="26" y="30" text-anchor="middle" class="rule-num" fill="#2563EB">01</text>
+    <text x="46" y="31" class="rule-title">不可变构件是定海神针</text>
+    
+    <text x="14" y="60" class="rule-desc">• 严禁使用 latest、dev 浮动标签</text>
+    <text x="14" y="80" class="rule-desc">• 镜像必须锁定 SHA-256 Digest</text>
+    <text x="14" y="100" class="rule-desc">• 配置、脚本严格对齐 Git Commit</text>
+    <text x="14" y="120" class="rule-desc">• 保障每一次交付均可 100% 还原</text>
+    <rect x="14" y="138" width="232" height="22" rx="4" fill="#EFF6FF"/>
+    <text x="130" y="153" text-anchor="middle" class="rule-desc" fill="#1D4ED8" font-weight="600">消除环境不可重现风险</text>
+  </g>
+
+  <!-- Rule 2 -->
+  <g transform="translate(330, 85)">
+    <rect width="260" height="175" rx="12" fill="#FFFFFF" stroke="#E2E8F0" filter="url(#shadow)"/>
+    <rect x="14" y="14" width="24" height="24" rx="6" fill="#F0FDF4"/>
+    <text x="26" y="30" text-anchor="middle" class="rule-num" fill="#16A34A">02</text>
+    <text x="46" y="31" class="rule-title">数据迁移永远单向晋级</text>
+    
+    <text x="14" y="60" class="rule-desc">• 严格源端只读 ➔ 目标端候选写入</text>
+    <text x="14" y="80" class="rule-desc">• 写入前强制挂起目标端后台写者</text>
+    <text x="14" y="100" class="rule-desc">• 单事务批处理 + 状态回读幂等</text>
+    <text x="14" y="120" class="rule-desc">• 绝不搞脆弱的双向热同步对写</text>
+    <rect x="14" y="138" width="232" height="22" rx="4" fill="#F0FDF4"/>
+    <text x="130" y="153" text-anchor="middle" class="rule-desc" fill="#15803D" font-weight="600">从根源杜绝数据脏写与裂脑</text>
+  </g>
+
+  <!-- Rule 3 -->
+  <g transform="translate(610, 85)">
+    <rect width="260" height="175" rx="12" fill="#FFFFFF" stroke="#E2E8F0" filter="url(#shadow)"/>
+    <rect x="14" y="14" width="24" height="24" rx="6" fill="#FEF3C7"/>
+    <text x="26" y="30" text-anchor="middle" class="rule-num" fill="#D97706">03</text>
+    <text x="46" y="31" class="rule-title">配置模板绝不写“假数据”</text>
+    
+    <text x="14" y="60" class="rule-desc">• 杜绝在模板留示例 Token/空凭据</text>
+    <text x="14" y="80" class="rule-desc">• 避免静态模板优先级覆盖系统环境变量</text>
+    <text x="14" y="100" class="rule-desc">• 生产注入遵循明确唯一的优先级</text>
+    <text x="14" y="120" class="rule-desc">• 避免引发如 JP Agent 401 隐蔽险情</text>
+    <rect x="14" y="138" width="232" height="22" rx="4" fill="#FEF3C7"/>
+    <text x="130" y="153" text-anchor="middle" class="rule-desc" fill="#B45309" font-weight="600">保证 Vault 注入绝对有效</text>
+  </g>
+
+  <!-- Rule 4 -->
+  <g transform="translate(890, 85)">
+    <rect width="260" height="175" rx="12" fill="#FFFFFF" stroke="#E2E8F0" filter="url(#shadow)"/>
+    <rect x="14" y="14" width="24" height="24" rx="6" fill="#FDF2F8"/>
+    <text x="26" y="30" text-anchor="middle" class="rule-num" fill="#DB2777">04</text>
+    <text x="46" y="31" class="rule-title">对端口连通保持高度怀疑</text>
+    
+    <text x="14" y="60" class="rule-desc">• TCP Connect 通只代表收到 SYN 包</text>
+    <text x="14" y="80" class="rule-desc">• 不等于后端数据库或业务可用</text>
+    <text x="14" y="100" class="rule-desc">• 必须验证 pg_isready 握手探针</text>
+    <text x="14" y="120" class="rule-desc">• 必须验证 HTTP 返回内容与可信 TLS</text>
+    <rect x="14" y="138" width="232" height="22" rx="4" fill="#FDF2F8"/>
+    <text x="130" y="153" text-anchor="middle" class="rule-desc" fill="#BE185D" font-weight="600">协议级验收才算真实通过</text>
+  </g>
+
+  <!-- Row 2: 3 items -->
+  <!-- Rule 5 -->
+  <g transform="translate(50, 280)">
+    <rect width="350" height="185" rx="12" fill="#FFFFFF" stroke="#E2E8F0" filter="url(#shadow)"/>
+    <rect x="14" y="14" width="24" height="24" rx="6" fill="#F3E8FF"/>
+    <text x="26" y="30" text-anchor="middle" class="rule-num" fill="#7C3AED">05</text>
+    <text x="46" y="31" class="rule-title">禁在迁移窗口“顺便膨胀架构”</text>
+    
+    <text x="14" y="60" class="rule-desc">• 遇到 US 单节点 custom 兼容问题时，坚决复用主线已合并特性</text>
+    <text x="14" y="80" class="rule-desc">• 切忌为单一功能临时引入“多虚拟节点”或复杂网格全家桶</text>
+    <text x="14" y="100" class="rule-desc">• 迁移窗口以最小化修复、尽快收敛上线为唯一目标</text>
+    <text x="14" y="120" class="rule-desc">• 控制系统的认知负荷与资源开销</text>
+    <rect x="14" y="145" width="322" height="24" rx="4" fill="#F3E8FF"/>
+    <text x="175" y="161" text-anchor="middle" class="rule-desc" fill="#6D28D9" font-weight="600">克制是高阶工程师的第一美德</text>
+  </g>
+
+  <!-- Rule 6 -->
+  <g transform="translate(425, 280)">
+    <rect width="350" height="185" rx="12" fill="#FFFFFF" stroke="#E2E8F0" filter="url(#shadow)"/>
+    <rect x="14" y="14" width="24" height="24" rx="6" fill="#F0FDFA"/>
+    <text x="26" y="30" text-anchor="middle" class="rule-num" fill="#0D9488">06</text>
+    <text x="46" y="31" class="rule-title">真实验练过的备份才叫备份</text>
+    
+    <text x="14" y="60" class="rule-desc">• 永远不要相信未在异机沙箱独立解密还原过的“备份快照”</text>
+    <text x="14" y="80" class="rule-desc">• 数据库必须演练真实导入与 Schema/序列/行数完整性对齐</text>
+    <text x="14" y="100" class="rule-desc">• Vault 快照迁移必须执行前置 inspect 与摘要严格比对</text>
+    <text x="14" y="120" class="rule-desc">• 沉淀标准化的故障恢复 Runbook</text>
+    <rect x="14" y="145" width="322" height="24" rx="4" fill="#F0FDFA"/>
+    <text x="175" y="161" text-anchor="middle" class="rule-desc" fill="#0F766E" font-weight="600">没有经过恢复演练的 Snapshot 只是磁盘垃圾</text>
+  </g>
+
+  <!-- Rule 7 -->
+  <g transform="translate(800, 280)">
+    <rect width="350" height="185" rx="12" fill="#FFFFFF" stroke="#E2E8F0" filter="url(#shadow)"/>
+    <rect x="14" y="14" width="24" height="24" rx="6" fill="#FEF2F2"/>
+    <text x="26" y="30" text-anchor="middle" class="rule-num" fill="#DC2626">07</text>
+    <text x="46" y="31" class="rule-title">客观记录未决事项，拥抱诚实</text>
+    
+    <text x="14" y="60" class="rule-desc">• 如实记录用户“US 已出现”为登录态页面核验，不夸大为全量压测</text>
+    <text x="14" y="80" class="rule-desc">• 无法连接历史主机即标注 BLOCKED，严禁违规私自提权</text>
+    <text x="14" y="100" class="rule-desc">• 增量追齐未二次写入即标注 PARTIAL，保留差异事实</text>
+    <text x="14" y="120" class="rule-desc">• 忠实呈现系统的真实边界，不搞虚假全绿</text>
+    <rect x="14" y="145" width="322" height="24" rx="4" fill="#FEF2F2"/>
+    <text x="175" y="161" text-anchor="middle" class="rule-desc" fill="#B91C1C" font-weight="600">工程的尽头是诚实与客观存证</text>
+  </g>
+</svg>

@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 480" width="1200" height="480">
+  <defs>
+    <style>
+      .title { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; font-size: 22px; font-weight: 700; fill: #0F172A; }
+      .subtitle { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; font-size: 13px; fill: #64748B; }
+      .box-title { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; font-size: 16px; font-weight: 700; fill: #1E293B; }
+      .text-body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; font-size: 12px; fill: #475569; }
+      .pill { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 11px; font-weight: 600; }
+    </style>
+    <filter id="card-shadow" x="-5%" y="-5%" width="110%" height="115%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#0F172A" flood-opacity="0.05"/>
+    </filter>
+    <linearGradient id="flow-line" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="50%" stop-color="#10B981"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="480" fill="#F8FAFC" rx="16"/>
+
+  <!-- Header -->
+  <g transform="translate(50, 35)">
+    <rect x="0" y="2" width="4" height="22" fill="#059669" rx="2"/>
+    <text x="16" y="18" class="title">2C4G 吞吐 92 万级账本原子迁移防线：客户端超时与幂等自愈</text>
+    <text x="16" y="38" class="subtitle">370 用户 · 921,430 条核心计费流水 · 42 表单事务原子写入 · 内存水位始终维持在 75% 以下</text>
+  </g>
+
+  <!-- Flow Line with arrow -->
+  <path d="M 120 230 L 1080 230" stroke="url(#flow-line)" stroke-width="4" stroke-dasharray="8 6"/>
+
+  <!-- Step 1: V5 Source -->
+  <g transform="translate(50, 110)">
+    <rect width="210" height="260" rx="12" fill="#FFFFFF" stroke="#E2E8F0" filter="url(#card-shadow)"/>
+    <rect x="14" y="14" width="70" height="20" rx="6" fill="#F1F5F9"/>
+    <text x="49" y="28" text-anchor="middle" class="pill" fill="#475569">源端冻结</text>
+    <text x="14" y="60" class="box-title">V5 PostgreSQL</text>
+    <text x="14" y="80" class="subtitle">只读快照保护</text>
+
+    <line x1="14" y1="95" x2="196" y2="95" stroke="#F1F5F9"/>
+    <text x="14" y="120" class="text-body">• 严格锁定 42 张表</text>
+    <text x="14" y="142" class="text-body">• Schema dirty=false</text>
+    <text x="14" y="164" class="text-body">• 抽取 370 位用户数据</text>
+    <text x="14" y="186" class="text-body">• 抽取 921,430 条流水</text>
+    <text x="14" y="208" class="text-body">• 绝不产生源端脏写</text>
+
+    <rect x="14" y="222" width="182" height="26" rx="6" fill="#F8FAFC"/>
+    <text x="105" y="239" text-anchor="middle" class="pill" fill="#64748B">Source: 104.105.141.213</text>
+  </g>
+
+  <!-- Step 2: migratectl Controller -->
+  <g transform="translate(300, 110)">
+    <rect width="260" height="260" rx="12" fill="#FFFFFF" stroke="#E2E8F0" filter="url(#card-shadow)"/>
+    <rect x="14" y="14" width="95" height="20" rx="6" fill="#EFF6FF"/>
+    <text x="61" y="28" text-anchor="middle" class="pill" fill="#2563EB">迁移协议控制器</text>
+    <text x="14" y="60" class="box-title">migratectl transfer-api</text>
+    <text x="14" y="80" class="subtitle">零落盘加密流式管道</text>
+
+    <line x1="14" y1="95" x2="246" y2="95" stroke="#F1F5F9"/>
+    <text x="14" y="120" class="text-body">• 经 WireGuard P2P 隧道传输</text>
+    <text x="14" y="142" class="text-body">• 操作端内存临时加密暂存</text>
+    <text x="14" y="164" class="text-body">• 受限目录 0700/0600 权限存证</text>
+    <text x="14" y="186" class="text-body">• 前置冲突预览与白名单检测</text>
+    <text x="14" y="208" class="text-body">• 发送批量原子写入指令</text>
+
+    <rect x="14" y="222" width="232" height="26" rx="6" fill="#EFF6FF"/>
+    <text x="130" y="239" text-anchor="middle" class="pill" fill="#1D4ED8">单事务边界保护</text>
+  </g>
+
+  <!-- Step 3: Timeout Crisis & Resolution (Highlighted) -->
+  <g transform="translate(600, 100)">
+    <rect width="280" height="280" rx="14" fill="#FFFBEB" stroke="#F59E0B" stroke-width="2" filter="url(#card-shadow)"/>
+    <rect x="14" y="14" width="105" height="22" rx="6" fill="#FEF3C7"/>
+    <text x="66" y="29" text-anchor="middle" class="pill" fill="#B45309">生死防线处置</text>
+    <text x="14" y="62" class="box-title" fill="#B45309">客户端 HTTP 超时挑战</text>
+    <text x="14" y="82" class="subtitle" style="color:#D97706;">92W 账本建索引与刷盘耗时</text>
+
+    <line x1="14" y1="98" x2="266" y2="98" stroke="#FDE68A"/>
+    <text x="14" y="122" class="text-body" style="font-weight:600; color:#DC2626;">• 现象：客户端 HTTP 超时断开</text>
+    <text x="14" y="144" class="text-body">• 铁律：禁杀进程，禁盲目重放！</text>
+    <text x="14" y="166" class="text-body">• 受控回读：PG 后台完成 WAL 刷盘</text>
+    <text x="14" y="188" class="text-body">• 事务原子提交：COMMIT 成功</text>
+    <text x="14" y="210" class="text-body">• 幂等重跑：state=applied 命中！</text>
+
+    <rect x="14" y="230" width="252" height="36" rx="8" fill="#10B981"/>
+    <text x="140" y="253" text-anchor="middle" class="pill" fill="#FFFFFF" style="font-size:12px; font-weight:700;">幂等保障：0 脏写 · 0 重复</text>
+  </g>
+
+  <!-- Step 4: V6 Target -->
+  <g transform="translate(920, 110)">
+    <rect width="230" height="260" rx="12" fill="#FFFFFF" stroke="#E2E8F0" filter="url(#card-shadow)"/>
+    <rect x="14" y="14" width="70" height="20" rx="6" fill="#F0FDF4"/>
+    <text x="49" y="28" text-anchor="middle" class="pill" fill="#15803D">目标就绪</text>
+    <text x="14" y="60" class="box-title">V6 PostgreSQL</text>
+    <text x="14" y="80" class="subtitle">挂载 100G 独立数据盘</text>
+
+    <line x1="14" y1="95" x2="216" y2="95" stroke="#F1F5F9"/>
+    <text x="14" y="120" class="text-body">• 370 个真实用户对齐</text>
+    <text x="14" y="142" class="text-body">• 921,430 条计费账本入库</text>
+    <text x="14" y="164" class="text-body">• 7 活跃订阅 / 13 历史订阅</text>
+    <text x="14" y="186" class="text-body">• 20 个产品套餐对齐</text>
+    <text x="14" y="208" class="text-body">• 内存占用最高仅 72%</text>
+
+    <rect x="14" y="222" width="202" height="26" rx="6" fill="#F0FDF4"/>
+    <text x="115" y="239" text-anchor="middle" class="pill" fill="#15803D">Target: 172.237.24.232</text>
+  </g>
+</svg>
