@@ -8,6 +8,19 @@
 
 - [OpenplatForm Delivery Architecture](OpenplatForm-Delivery-Architecture.md) — 基础运行环境、统一架构图、多环境发布、观测与安全边界。
 
+## Pro Custom 工作台与 Grafana 升级规划（2026-11-03）
+
+本组先交付独立文档，完整记录用户确认的方案；尚未执行面板恢复、数据库迁移或客户功能上线。上文 V6 基础服务和入口切换完成，不代表本专项的 Grafana 面板完整性或租户隔离已验收。需求与文档交付由 [Knowledge #351](https://github.com/ai-workspace-services/knowledge/issues/351) 跟踪。
+
+| 文档 | 内容 |
+| --- | --- |
+| [完整规划总述](Pro-Custom与Grafana升级完整规划.md) | 完整保留决策、V5/V6 固定源码证据、存储分层、GitOps、恢复、隔离、四页面及验收 |
+| [Pro Custom 专属资源工作台](Pro-Custom专属资源工作台规划.md) | 功能边界、权益与归属、创建任务、资源列表、Grafana 入口和密钥占位 |
+| [Grafana 独立 PostgreSQL 与 GitOps 持久化](Grafana独立PostgreSQL与GitOps持久化规划.md) | 数据生命周期、身份、面板发布契约、备份演练和 SQLite 迁移 |
+| [Grafana 面板丢失排查与恢复](Grafana面板丢失排查与恢复规划.md) | 已核实声明缺口、假设、只读排查、恢复来源和运行验收 |
+| [Grafana 租户隔离与 Portal 嵌入](Grafana租户隔离与Portal嵌入规划.md) | 客户组织、受限数据源、指标归属、同源认证和跨租户拒绝测试 |
+| [分阶段交付与验收](Pro-Custom与Grafana分阶段交付验收规划.md) | 仓库 owner、阶段依赖、验收矩阵、回执、观察与回退 |
+
 ## 专项参考
 
 1. [环境与业务发布解析：最小实施草案](环境与业务发布解析-最小实施草案.md)
