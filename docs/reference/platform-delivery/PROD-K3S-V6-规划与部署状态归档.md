@@ -1,5 +1,11 @@
 # PROD-K3S-V6 独立节点、集群冷启动规划与部署状态归档
 
+## 生命周期变更：解除 V5 删除保护（2026-11-03）
+
+用户明确授权后，使用已认证的 Linode CLI 核对 `web-saas-k3s-v5` 实例及其 `cannot_delete_with_subresources` 资源锁，随后仅删除该锁。回读确认 V5 无剩余资源锁、实例仍为 `running`；`prod-k3s-v6` 的 `cannot_delete` 保护锁保持原状。本次授权和执行范围为解除保护，未删除、重建或关闭实例，也未清理磁盘、备份或 DNS。
+
+执行命令为 `linode-cli resource-locks delete "$V5_LOCK_ID"`，锁 ID 先与实例 ID、标签和地址核对。完整变更前记录与脱敏执行回执保存于控制端受限目录 `handoffs/v5-delete-protection-unlock-20261103/`，未通过实际删除实例来测试解除结果。V5 资源退役、最终数据保留和实例删除仍需分别明确授权。
+
 ## 最新回执：V6 Agent 认证及 Console 路由恢复（2026-11-03）
 
 canonical DNS 切换后，JP Edge Agent 请求已到达 V6 Accounts，但用户列表、事件流和状态上报返回 `401 invalid_token`。现场确认 Agent 配置中的 Token 与 V5/V6 Accounts 的 `INTERNAL_SERVICE_TOKEN` 一致；V6 当前镜像的 Accounts 模板另含一条示例 Agent 凭据，启动时显式凭据优先于环境变量，因此实际注册表未使用已注入的 Token。未输出或记录任何凭据值。
