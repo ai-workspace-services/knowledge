@@ -1,6 +1,76 @@
 # PROD-K3S-V6 独立节点、集群冷启动规划与部署状态归档
 
 
+## 最新回执：Vault V5 → V6 快照追齐与域名修复（2026-11-03）
+
+已完成一次 **V5 最新 Raft 快照 → HTTPS 上传到 V6 → 正常快照恢复 → 运行验证**。此次恢复整体替换 V6 Vault 状态，不是 KV 增量合并；V5 Vault 未恢复、未替换。`vault.svc.plus` 等 canonical DNS 仍指向 V5。
+
+### 1. 执行前核对与回退点
+
+- V5 `104.105.141.213`、V6 `172.237.24.232` 均为 Vault `1.21.4`、Raft、Shamir `1/1`，执行前均 initialized、unsealed。
+- 两端 KV metadata 清单：V5 153 条路径、V6 146 条，未发现 V6 独有 KV 路径；策略 V5 多 9 条、V6 无独有策略。这只证明名称集合，未将其误称为所有历史版本逐条相等。
+- 直接向 V6 IP 使用 canonical Host/SNI、正常校验证书，发现 V6 缺少 `kv/prod/Accounts-service`、`kv/CICD/observability/grafana-admin` 和 `kv/prod/accounts/migration/v5-to-v6/business-target`。因此先修 Vault，不能只凭 health 200 切换公共 Vault DNS。
+- 操作端受限备份目录：`/Users/shenlan/.local/share/accounts-migration/backups/vault-v5-to-v6-20261103T002414Z-74271ca5-dad0-4e3d-8002-cf58dc3a86ad/`，目录 0700、快照文件 0600；凭据只在已登录 CLI/进程内存使用，未写入记录。
+
+| 文件 | 用途 | SHA-256 | inspect Index |
+| --- | --- | --- | ---: |
+| `v5-source.snap` | 本次最新 V5 源快照 | `df27a6449d1d9d1e35dddc99fccf2643dc9222beee9e6424d040ab9df4ea1087` | 315185 |
+| `v6-before.snap` | 导入前 V6 回退快照 | `a2271c962e979b9aab97b571c8c6aa0765413884032b6cd5e02af88cf200cf32` | 266759 |
+
+### 2. 实际操作顺序
+
+1. 使用已登录 Vault CLI 的当前会话，在内存读取认证材料；分别对指定 V5/V6 IP 发起 HTTPS `GET /v1/sys/storage/raft/snapshot`，Host/SNI 为 `vault.svc.plus`，保留完整证书校验。返回流保存为上述两个受限快照文件。
+2. 对两个文件执行 `vault operator raft snapshot inspect <file>`，均退出 0，并计算 SHA-256。此次导入以 `v5-source.snap` 的上述摘要固定输入。
+3. 读取并再次验证源快照 SHA-256，通过 HTTPS 将快照字节流上传到 **V6 `172.237.24.232`**，调用 `POST /v1/sys/storage/raft/snapshot`。这是实际传输和导入方式；未执行 scp，也未声称先把文件落到 V6 节点磁盘。V5 请求只导出快照。
+4. 正常 restore API 返回 **204**。本次没有使用 `snapshot-force` 或 `-force`，未重新 init，也未改 seal 配置。204 仅表示接受快照，随后继续观察异步恢复状态，不能在此处宣称完成。
+5. V6 Vault 日志在北京时间约 08:26 出现 `post-unseal setup complete`；seal-status `initialized=true`、`sealed=false`，Pod `vault-0` 为 `1/1 Running`、0 重启。本次无需再次提交 unseal share，未读取或输出其内容。
+6. 通过 V6 实际工作负载的 ServiceAccount TokenRequest，对候选 Vault 验证 9 个 SecretStore 身份：JWT 登录全部 200，各抽查的精确 KV 读取全部 200。当前 ESO 声明仍引用公共 `vault.svc.plus`，因此这是候选端认证/读取验收，不是切换后 ESO 调谐的替代证明。
+7. 用认证读取对比下表 8 条关键 KV，两端均 200、版本一致、内容摘要一致，不输出凭据值。脱敏操作回执为备份目录内 `restore-receipt.json`、`post-restore-kv-verification.json`。
+
+| 核查 KV CLI 路径 | V5/V6 版本 | 读取与内容摘要 |
+| --- | ---: | --- |
+| `kv/prod/Accounts-service` | 6 / 6 | 一致 |
+| `kv/prod/accounts/runtime` | 3 / 3 | 一致 |
+| `kv/prod/platform/smtp/google` | 3 / 3 | 一致 |
+| `kv/CICD/domains/svc.plus` | 6 / 6 | 一致 |
+| `kv/CICD/domains/xworktech.com` | 1 / 1 | 一致 |
+| `kv/CICD/observability/grafana-admin` | 1 / 1 | 一致 |
+| `kv/datakit/shared/dataway` | 2 / 2 | 一致 |
+| `kv/prod/accounts/migration/v5-to-v6/business-target` | 2 / 2 | 一致 |
+
+### 3. 等价 CLI 与工具选择
+
+以下是供后续受控执行的等价 CLI 示例；本次实际执行器是上节的 HTTPS API 流，不能把示例记为额外执行。源/目标地址分别设置，恢复前必须另存目标回退快照并核对输入摘要；不要把 token 或 unseal share 写入命令参数。
+
+```bash
+# 源快照与检查
+VAULT_ADDR=https://vault.svc.plus vault operator raft snapshot save v5-latest.snap
+vault operator raft snapshot inspect v5-latest.snap
+shasum -a 256 v5-latest.snap
+
+# 目标回退点与正常恢复；这是整体替换，不能当成增量同步。
+VAULT_ADDR=https://vault-selfhost-prod-v6.svc.plus vault operator raft snapshot save v6-before.snap
+VAULT_ADDR=https://vault-selfhost-prod-v6.svc.plus vault operator raft snapshot restore v5-latest.snap
+VAULT_ADDR=https://vault-selfhost-prod-v6.svc.plus vault status
+```
+
+- 当前 Raft → Raft 一次性迁移采用内建 `operator raft snapshot save/inspect/restore` 对应 API；正常恢复保留 seal 一致性检查。[官方 Raft API](https://developer.hashicorp.com/vault/api-docs/system/storage/raft)
+- `operator migrate` 用于离线存储后端迁移，会覆盖目的存储，且在源存储写入迁移锁，不作为此次在线 V5 源端只读快照追齐工具。[官方命令](https://developer.hashicorp.com/vault/docs/commands/operator/migrate)
+- Raft join 是加入同一集群，仍需 quorum；Enterprise DR/Performance Replication 是持续跨集群复制。此次没有启用这些能力。[官方复制说明](https://developer.hashicorp.com/vault/docs/enterprise/replication)
+
+### 4. Vault 批次域名与 DNS 切换边界
+
+已新增 `vault-selfhost-prod-v6.svc.plus A 172.237.24.232`，TTL 300、DNS-only；复用 create-only Ansible 操作，Vault 中读取 Cloudflare 凭据，任务 no_log。Cloudflare 回读通过，canonical 前后快照相同。执行材料为 `/Users/shenlan/workspaces/ai-workspace-infra/handoffs/v6-vault-dns-20261103/`，其中 `configure-receipt.json`、`canonical-before.json`、`canonical-after.json` 均为脱敏记录。
+
+公网 DoH 与 V6 节点上，不带 `--resolve`、不带 `-k` 访问该域名，均正常跳转 `/ui/` 并返回 HTTP 200、TLS 校验 0、remote IP `172.237.24.232`。操作端 Mac 上已复现：`dig` 返回正确 A 记录，但系统 `getaddrinfo` 与普通 curl 仍解析失败，Chrome 为 `ERR_NAME_NOT_RESOLVED`；系统解析绑定 VPN utun6。DoH 与 V6 节点正常，尚不能宣称该 Mac 浏览器已恢复。无 sudo 的 `dscacheutil -flushcache` 无效，`sudo -n` 返回需要密码；系统 DNS 守护进程刷新须由本机管理员执行 `sudo dscacheutil -flushcache` 和 `sudo killall -HUP mDNSResponder` 后再复验，未改 hosts、VPN 或浏览器安全策略。
+
+用户选定的后续切换方式：`xworktech.com` 使用 A 指向 V6 节点；`console/accounts/billing/vault/observability/postgresql.svc.plus` 使用 CNAME 指向对应 `*-selfhost-prod-v6.svc.plus`。当前只创建 Vault 批次 A 记录，**尚未切换这些 canonical 名称**；Observability/PostgreSQL 的批次名称此前仍 NXDOMAIN，需要先交付。PostgreSQL 不是 HTTP/HTTPS 站点，数据库或 TLS 隧道验收单独进行。
+
+### 5. 同轮 Accounts 追齐预览（只预览，未追加写入）
+
+`catchup-api` 新快照 `f4fa5460-d1b7-469e-a0c8-8077c6023e4f`、请求 `be0db9dd-098e-4589-8c64-400c8bfb1259`，报告摘要 `7d9243e60e00f500153e81c5e30053ec76099e5cb1e36af87a4f66f7c1cf46e4`，退出 0。全 42 表无新增、无源删除、无冲突；`users` 有 1 条源变更、1 条目的变更、35 条匹配；其余目的变化共 30 条，来自目标启动生成的 RBAC/tenant 记录。源变更尚未 apply，目的独有事实保留，不能据行数相同宣称实时完全一致。原 V5 业务仍可写，最终写入方交接、业务登录/邮件回调及导入后恢复演练仍需验收。
+
+
 ## 最新回执：V5 → V6 首次核心数据导入完成（2026-11-03）
 
 本节替代下方历史段落中“迁移未执行”“预览未通过”的当前状态描述。已从 V5 的一致性快照向 V6 **业务 PostgreSQL `account` 库**单向导入；本次只覆盖迁移契约的 42 表，不代表整个 V5 数据库复制或业务流量切换。V5 数据库及 schema 未修改，canonical DNS 未切换。
