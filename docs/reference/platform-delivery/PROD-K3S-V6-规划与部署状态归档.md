@@ -1,5 +1,39 @@
 # PROD-K3S-V6 独立节点、集群冷启动规划与部署状态归档
 
+
+## 最新回执：V5 → V6 首次核心数据导入完成（2026-11-03）
+
+本节替代下方历史段落中“迁移未执行”“预览未通过”的当前状态描述。已从 V5 的一致性快照向 V6 **业务 PostgreSQL `account` 库**单向导入；本次只覆盖迁移契约的 42 表，不代表整个 V5 数据库复制或业务流量切换。V5 数据库及 schema 未修改，canonical DNS 未切换。
+
+- 快照 `f0675c01-55a3-41e0-a778-1a07124033e7`；实际提交计划 `d6720a3a-18ca-41e0-b7bf-72574f433841`，SHA-256 `692000173cc61415400f75f0af5318e7eeb21ba645b26923824ffa40de4f5583`。预览 184538 行待插入、0 冲突；`bash /root/migrate.sh --apply --plan-id ... --plan-sha256 ...` 已提交。
+- 首次提交客户端响应超时，但数据库已存在事务回执。随后 `--status` 返回 `state=applied`，**同一计划精确重复 `--apply` 退出码 0 并返回同一 applied 回执**，数据库回执仍仅 1 条。不是根据 Pod Running 推断迁移完成。
+- 本次实际使用固定工具 Accounts `bc32fac4846cea5281e9e764c5224a581dff1ed1`，Linux 二进制 SHA-256 `71fa4a8a40ba8d828f3ec6cef78f4c3f2ca87ebebea85f08db93ed09ae3d9c5e`，已安装到 V6 `/usr/local/bin/migratectl`。listener 固定镜像及独立内部凭据认证见 [Accounts #305](https://github.com/ai-workspace-services/accounts/pull/305)、[GitOps #765](https://github.com/ai-workspace-infra/gitops/pull/765)。
+
+| V6 导入及恢复服务后核验 | 数量 / 金额 |
+| --- | ---: |
+| 用户 | 37 |
+| 订阅 / 订阅记录 | 7 / 13 |
+| 账本 | 92143 |
+| 套餐 | 20 |
+| 发票 / 付款 / 退款 | 5 / 5 / 2 |
+| 发票 / 付款 / 退款汇总，CNY `amount_minor` | 19000 / 19000 / 4000 |
+
+Accounts、Billing 已恢复各 1 副本并通过 rollout，四个业务 Pod 均 `1/1 Running`、0 重启，`web-saas-prod` HelmRelease `suspend=false`、`Ready=True`。外部两端 V6 `/readyz` 均 HTTP 200、TLS 校验 0。这不代替用户密码/MFA 登录和支付操作验收；V6 当前使用导入的 V5 用户资料，不能把重置期间临时 bootstrap 密码当成现有用户密码。
+
+### 本次重试、备份和提交保护
+
+用户已明确允许 V6 数据丢弃并以 V5 为准。服务第一次恢复后又产生 3 个用户和 3 条套餐，因此最终提交前再次暂时停止 V6 写者、生成加密备份 `v6-pre-import-20261102T235307Z-8e768dc3-c66b-4f42-9362-6049105e08a3`（密文 `40fad9fe9f2c6ae881c5d6fa5f3337a1d4a5176d72c9ee2e99a3fdbd9beca212`），独立恢复并以 UTC 对比 72 表行数和整行摘要，验证通过后锁表重验并清理目标。重置 SQL SHA-256 `21131ad7cbedfa9824595ac274b2f26c0d1fc56928f42574ef921c51e4aae8b2`；只在受控重置事务内抑制普通触发器，未永久禁用。
+
+提交前另保存并恢复最新空目标备份 `v6-final-empty-20261103T000222Z-3b9daaf6-6470-4d20-bc49-825583474435`，密文 `8310ea3f7fafaa15e00966b146faebe330a16e65577ad06aee2dfe6cfc06813a`。包含 owner/ACL 的恢复执行成功，以迁移身份读得恢复数据基线 `2f9b8f3b4d3e2fa1c53ec7ccf89c5e37214471a84e5fd518bccd63eb0a7c75c1`，与审核计划一致；恢复环境全函数 schema 指纹与目标不同，未宣称全 catalog 指纹相同。该备份是导入前回退点，**导入后的有数据恢复演练仍待补充**。
+
+旧空库计划曾返回 409：实查目标实例及数据基线一致，但初始化迁移 helper 后 schema 指纹已变化，故拒绝发生在写入前；重新预览后才提交。另一次启动因 fsGroup 将备份证明改为 0660 失败，[GitOps #767](https://github.com/ai-workspace-infra/gitops/pull/767) 已补齐 initContainer 恢复指定证明文件 0600 的行为。实际提交窗口见 [#766](https://github.com/ai-workspace-infra/gitops/pull/766)；提交和精确重试成功后，[#770](https://github.com/ai-workspace-infra/gitops/pull/770) 已移除一次性启动证明参数并完成 listener 滚动更新，避免证明到期阻塞服务重启。已提交回执的状态读取与重试保留；后续新增写入需重新绑定当前备份和预览。 listener 滚动更新后再次使用脚本读取同一计划，确认仍返回 `state=applied`。
+
+### operator 权限与剩余验收
+
+- 业务库 `operator` 已获 CONNECT、public schema USAGE、现有表 SELECT/INSERT/UPDATE/DELETE、序列 USAGE/SELECT；补齐 postgres/root 后续对象的默认权限，以及现有 public RLS 表上显式的 operator 策略。角色仍非 SUPERUSER/CREATEDB/CREATEROLE/REPLICATION/BYPASSRLS。`SET ROLE operator` 的有效权限核验可见 37 用户、5 发票、92143 账本；这不是使用其独立密码完成登录的证明，也未把业务应用连接自动切换至 operator。
+- [GitOps #769](https://github.com/ai-workspace-infra/gitops/pull/769) 已交付 Kubernetes 的集群 Pod get/list/watch。`/home/operator/.kube/config` 保持本人身份、原 symlink 及 0600 owner 权限；真实 operator `get pods -A` 成功。23 项允许/拒绝检查通过，Secret/exec/Pod 写入等拒绝；原命名空间 deployment scale 权限保留。证据见 [Issue #768](https://github.com/ai-workspace-infra/gitops/issues/768#issuecomment-6591695076)。
+- 首次迁移加密追齐基线已落盘：201 个 baseline page、1 个 index。持续新增数据的 catchup-api 现场预览/追齐、业务登录及已填充数据库恢复演练仍需继续验收；不能将本次快照提交视为实时持续同步完成。Playbooks 重新交付 listener Secret 时必须保留新认证字段，该自动交付支持仍待补齐。
+
 ## Accounts 迁移 API 单向快照规划（2026-11-02）
 
 SSH发布准备最新记录：Accounts认证实现#291已合并为 `ba673c014c9e630c3cae815040035ac4d852828f`，固定镜像digest `sha256:52110a5d5a3c23d0a468eea583e608133d39e1d6e6a89940ca81e1ecaad54cf6` 已在两个节点通过SSH预拉取。V5实际发布线为 `release/v2026.11.02-registration`，为保持现有数据库契约，最小认证endpoint回补另见 [Accounts #292](https://github.com/ai-workspace-services/accounts/pull/292)，不是直接给V5普通应用部署main。当前业务Pod未替换、迁移未执行；具体版本与验证边界见规划的最新发布准备章节。
