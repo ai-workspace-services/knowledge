@@ -1,17 +1,18 @@
-# 云基础设施 DevSecOps 基线与代际演进目录索引 (PROD V2 - V5)
+# 云基础设施 DevSecOps 基线与代际演进目录索引 (PROD V2 - V6)
 
-部署记录完整链路：[既有统一流程](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md) → [跨代基线、逐轮回执、专项故障、固定源码 case 与重验](records/generation-deployment-evidence-index-20261025.zh.md)。V5 VPS / Compose 与 V5 K3s PROD 独立采样；字段缺失、旧 OPEN PR 与新回执替代关系也在该证据索引中逐项列明。
+部署记录完整链路：[既有统一流程](https://github.com/ai-workspace-services/.github/blob/main/docs/control-plane-deployment-and-migration.zh.md) → [跨代基线、逐轮回执、专项故障、固定源码 case 与重验](records/generation-deployment-evidence-index-20261025.zh.md) → [V5→V6 复盘总述](18-prod-v5-v6-deployment-and-migration-retrospective.zh.md)。V5 VPS / Compose 与 V5 K3s PROD 独立采样；字段缺失、旧 OPEN PR 与新回执替代关系也在该证据索引中逐项列明。
 
 ## 1. 概述与代际演进规格
 
-本目录归档 `cloud-infrastructure-devsecops-baseline` 系列核心文档，涵盖跨多云环境的 DevSecOps 底层基线、多云编排蓝图、OIDC 身份契约，以及生产环境全生命周期的代际演进（**PROD V2 → V3 → V4 → V5**）运行基线、快照证据、升级复盘与事故修复回执。
+本目录归档 `cloud-infrastructure-devsecops-baseline` 系列核心文档，涵盖跨多云环境的 DevSecOps 底层基线、多云编排蓝图、OIDC 身份契约，以及生产环境全生命周期的代际演进（**PROD V2 → V3 → V4 → V5 → V6**）运行基线、快照证据、升级复盘与事故修复回执。
 
 - **基础设施范围**：Akamai Cloud (Linode)、AWS、GCP、Cloudflare 及本地自建环境。
 - **架构演进脉络**：
   - **V2**：单机高配容器化控制面（Caddy + Next.js Console + Accounts/Billing + PostgreSQL），确立不可变构件与增量迁移恢复基线。
   - **V2 → V3**：全量代际快照冷备、跨主机恢复与平滑切库演练，修复 SNI、服务 Token 与传输路由，建立故障归档机制。
   - **V3 → V4**：Console/Accounts/Billing 正式域名接流、品牌域名补齐、双链路 OTel 可观测性方案落地与 P0 回归测试集。
-  - **V4 → V5**：净室全新环境部署验证、用户三轮幂等对账、前端路由修复、实时业务流量追加与修复后环境全量快照。
+  - **V4 → V5**：净室全新环境部署验证、用户三轮幂等对账、前端路由修复、实时业务流量追加与修复后环境全量快照；后汇聚为 V5 K3s all-in-one（一台 Linode 2C4G）。
+  - **V5 → V6**：从 V5 K3s 演进为独立全新 K3s v1.37.1 集群（挂载 100GB 独立数据卷、独立 Pod/Service CIDR），外部 Vault Raft 状态流式恢复，Accounts 42 表单向迁移与事务一致性，ServiceLB 与 Caddy 网关修复，7 域名 canonical DNS 切流，单节点 custom 等级边缘 Agent 接入恢复。
 - **安全与对账准则**：所有代际升级与恢复严格遵循“单向数据流动、不可变快照存证、最小权限访问、零数据丢失”原则。
 
 ---
@@ -135,3 +136,19 @@ GitHub 与新 Vault 的[30 角色 / 11 策略矩阵及复用待办](records/prod
 - [Dev K3s V5：SIT / UAT 环境快照与发布缺口（2026-10-27）](records/dev-k3s-v5-20261027/environment-snapshot.zh.md)
 
 - [Dev V5 职责调整：临时 SIT、持久 Serverless UAT、2C4G](records/dev-k3s-v5-20261027/sit-only-serverless-uat-transition.zh.md)
+
+---
+
+## 8. PROD V5 → V6 迁移、K3s 修复与代际演进复盘 (2026-11-03)
+
+记录 2026-11-01 至 2026-11-03 从 V5 K3s all-in-one（`104.105.141.213`）向独立全新 PROD-K3S-V6（`172.237.24.232`，Debian 13，独立 100GB `/data` 数据盘）迁移的完整复盘、架构演进、故障排障、验收矩阵与标准化运行手册。
+
+| 编号 | 文档名称 / 标题 | 相对路径与链接 | 文档类型 | 核心范围与说明 |
+| :---: | :--- | :--- | :---: | :--- |
+| **01** | **PROD V5 → V6：部署架构演进、核心控制面迁移与故障复盘** | [`18-prod-v5-v6-deployment-and-migration-retrospective.zh.md`](18-prod-v5-v6-deployment-and-migration-retrospective.zh.md) | 总索引 / 架构复盘 | 总体叙事、架构对照、三幅 Mermaid 架构与数据流图、核心经验总结 |
+| **02** | **PROD V5 → V6 迁移、K3s 修复与代际演进归档总述** | [`records/prod-v5-v6-20261103/README.md`](records/prod-v5-v6-20261103/README.md) | 归档说明 | 2026-11-03 归档原则、安全红线（独立只读身份、零状态变更）及文件导航 |
+| **03** | **PROD V5 → V6 基线参数、网络拓扑与全景时间线** | [`records/prod-v5-v6-20261103/baseline-and-timeline.zh.md`](records/prod-v5-v6-20261103/baseline-and-timeline.zh.md) | 权威基线 / 时间线 | 硬件/存储/网络 CIDR 对比，WireGuard 隧道角色，双时区全景执行时间线 |
+| **04** | **PROD V5 → V6 证据索引、跨仓 PR 与不可变构件清单** | [`records/prod-v5-v6-20261103/evidence-and-pr-index.zh.md`](records/prod-v5-v6-20261103/evidence-and-pr-index.zh.md) | 证据索引 | GitOps/Playbooks/Accounts 跨仓 PR、不可变镜像 Digest、快照存证与校验和 |
+| **05** | **PROD V5 → V6 故障根因分析与纠正措施复盘** | [`records/prod-v5-v6-20261103/root-cause-and-corrective-actions.zh.md`](records/prod-v5-v6-20261103/root-cause-and-corrective-actions.zh.md) | 故障深度复盘 | GHCR 403、Datakit OOM、ServiceLB、Nginx 权限、Caddy reload 等 9 项故障八步法复盘 |
+| **06** | **PROD V5 → V6 验收状态与未决事项矩阵** | [`records/prod-v5-v6-20261103/acceptance-and-todo-matrix.zh.md`](records/prod-v5-v6-20261103/acceptance-and-todo-matrix.zh.md) | 验收矩阵 | 23 项细粒度验收状态分类表（PASS/PARTIAL/BLOCKED/NOT_RUN），线上与用户确认事实 |
+| **07** | **控制面代际迁移与 K3s 部署标准化运行手册** | [`records/prod-v5-v6-20261103/migration-runbook.zh.md`](records/prod-v5-v6-20261103/migration-runbook.zh.md) | 标准化 Runbook | 提炼标准化 7 阶段操作手册，供后续代际演进、容灾恢复演练复用 |

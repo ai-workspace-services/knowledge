@@ -1,5 +1,12 @@
 # PROD-K3S-V6 独立节点、集群冷启动规划与部署状态归档
 
+> [!NOTE]
+> **归档与替代说明 (2026-11-03)**：
+> 本文是 2026-11-01 至 2026-11-03 期间 V6 冷启动、多次故障排查、配置修复与 DNS 切换的现场记录归档，保留各阶段的时点采样数据与历史原貌。
+> 针对本次代际演进的**最终架构对照、交付与身份链拓扑图、故障复盘、当前验收矩阵与标准化运行手册**，请以最新发布的 DevSecOps 基线总篇与归档库为准：
+> - 总体架构与演进复盘：[PROD V5 → V6 部署架构演进、核心控制面迁移与故障复盘](../../../content/02-iac-devops/cloud-infrastructure-devsecops-baseline/18-prod-v5-v6-deployment-and-migration-retrospective.zh.md)
+> - 完整证据与结构化归档：[PROD V5 → V6 迁移、K3s 修复与代际演进归档库](../../../content/02-iac-devops/cloud-infrastructure-devsecops-baseline/records/prod-v5-v6-20261103/README.md)
+
 ## 最新回执：单节点 Custom 恢复及 Accounts/Console 更新（2026-11-03）
 
 US 单节点配置为 `resourceClass: custom`、三人邮箱名单、`customAllowFree: true`，但 V6 旧 Accounts 镜像返回 `400 agent_scope_invalid`，允许等级列表中缺少 custom。已核对历史实现和最新 main：这些单节点能力已有代码，本轮通过版本更新交付，未启用多虚拟节点。

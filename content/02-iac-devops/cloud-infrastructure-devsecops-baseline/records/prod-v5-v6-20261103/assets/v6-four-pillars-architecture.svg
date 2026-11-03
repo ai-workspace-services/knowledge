@@ -1,0 +1,200 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" width="1200" height="600">
+  <defs>
+    <style>
+      .main-title { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; font-size: 24px; font-weight: 700; fill: #0F172A; }
+      .main-sub { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; font-size: 14px; fill: #64748B; }
+      .col-title { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; font-size: 18px; font-weight: 700; }
+      .col-sub { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; font-size: 12px; fill: #64748B; }
+      .item-title { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; font-size: 13px; font-weight: 600; fill: #1E293B; }
+      .item-desc { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; font-size: 12px; fill: #475569; line-height: 1.4; }
+      .tag { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 11px; font-weight: 600; }
+    </style>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="112%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#0F172A" flood-opacity="0.05"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="600" fill="#F8FAFC" rx="20"/>
+
+  <!-- Header -->
+  <g transform="translate(50, 40)">
+    <rect x="0" y="2" width="4" height="24" fill="#2563EB" rx="2"/>
+    <text x="16" y="20" class="main-title">PROD-K3S-V6 架构四大核心支柱：2C4G 上的现代化工业底座</text>
+    <text x="16" y="42" class="main-sub">轻量级三权分立 · FluxCD GitOps 零漂移 · 6 大 Namespace 隔离 · 外部商业化观测云集成</text>
+  </g>
+
+  <!-- Pillar 1: 三权分立 -->
+  <g transform="translate(50, 110)">
+    <rect width="260" height="440" rx="14" fill="#FFFFFF" stroke="#E2E8F0" filter="url(#shadow)"/>
+    
+    <!-- Header banner -->
+    <rect x="0" y="0" width="260" height="50" rx="14" fill="#EFF6FF"/>
+    <rect x="16" y="14" width="22" height="22" rx="6" fill="#2563EB"/>
+    <text x="27" y="29" text-anchor="middle" fill="#FFFFFF" style="font-weight:700; font-size:12px;">1</text>
+    <text x="46" y="30" class="col-title" fill="#1E40AF">轻量级三权分立</text>
+
+    <!-- Content Blocks -->
+    <!-- Host Block -->
+    <g transform="translate(16, 65)">
+      <rect width="228" height="100" rx="10" fill="#F8FAFC" stroke="#E2E8F0"/>
+      <rect x="12" y="12" width="60" height="18" rx="4" fill="#DBEAFE"/>
+      <text x="42" y="25" text-anchor="middle" class="tag" fill="#1D4ED8">主机 OS 层</text>
+      <text x="12" y="48" class="item-title">admin / operator / auditor</text>
+      <text x="12" y="68" class="item-desc">只读 auditor (uid=1001) 专用于巡检</text>
+      <text x="12" y="86" class="item-desc">严禁通用 sudo，无写权只读取证</text>
+    </g>
+
+    <!-- Cluster Block -->
+    <g transform="translate(16, 180)">
+      <rect width="228" height="110" rx="10" fill="#F8FAFC" stroke="#E2E8F0"/>
+      <rect x="12" y="12" width="70" height="18" rx="4" fill="#E0E7FF"/>
+      <text x="47" y="25" text-anchor="middle" class="tag" fill="#4338CA">K3s 集群层</text>
+      <text x="12" y="48" class="item-title">受限 Auditor Kubeconfig</text>
+      <text x="12" y="68" class="item-desc">仅限 get/list/watch 状态资源</text>
+      <text x="12" y="86" class="item-desc">禁 exec/attach/proxy，禁造 Pod/Token</text>
+      <text x="12" y="102" class="item-desc" style="color:#059669; font-weight:600;">封存 cluster-admin 管理凭据</text>
+    </g>
+
+    <!-- DB Block -->
+    <g transform="translate(16, 305)">
+      <rect width="228" height="115" rx="10" fill="#F8FAFC" stroke="#E2E8F0"/>
+      <rect x="12" y="12" width="66" height="18" rx="4" fill="#FEF3C7"/>
+      <text x="45" y="25" text-anchor="middle" class="tag" fill="#B45309">数据库层</text>
+      <text x="12" y="48" class="item-title">db_readonly 只读角色</text>
+      <text x="12" y="68" class="item-desc">遵循 3-role-security 规范</text>
+      <text x="12" y="86" class="item-desc">管理、业务写者、只读审计严格分离</text>
+      <text x="12" y="104" class="item-desc" style="color:#DC2626;">禁业务写账号人工直接登录</text>
+    </g>
+  </g>
+
+  <!-- Pillar 2: FluxCD GitOps -->
+  <g transform="translate(330, 110)">
+    <rect width="260" height="440" rx="14" fill="#FFFFFF" stroke="#E2E8F0" filter="url(#shadow)"/>
+    
+    <rect x="0" y="0" width="260" height="50" rx="14" fill="#F0FDF4"/>
+    <rect x="16" y="14" width="22" height="22" rx="6" fill="#16A34A"/>
+    <text x="27" y="29" text-anchor="middle" fill="#FFFFFF" style="font-weight:700; font-size:12px;">2</text>
+    <text x="46" y="30" class="col-title" fill="#15803D">FluxCD GitOps 闭环</text>
+
+    <!-- Declarative Source -->
+    <g transform="translate(16, 65)">
+      <rect width="228" height="100" rx="10" fill="#F8FAFC" stroke="#E2E8F0"/>
+      <rect x="12" y="12" width="75" height="18" rx="4" fill="#DCFCE7"/>
+      <text x="49" y="25" text-anchor="middle" class="tag" fill="#15803D">Git 权威来源</text>
+      <text x="12" y="48" class="item-title">不可变 Commit / Digest</text>
+      <text x="12" y="68" class="item-desc">所有 Deployment/Config 必须入库</text>
+      <text x="12" y="86" class="item-desc">绑定固定 Commit SHA 与 OCI Digest</text>
+    </g>
+
+    <!-- Auto Reconcile -->
+    <g transform="translate(16, 180)">
+      <rect width="228" height="110" rx="10" fill="#F8FAFC" stroke="#E2E8F0"/>
+      <rect x="12" y="12" width="80" height="18" rx="4" fill="#DCFCE7"/>
+      <text x="52" y="25" text-anchor="middle" class="tag" fill="#15803D">声明式自动对账</text>
+      <text x="12" y="48" class="item-title">消灭任何环境漂移</text>
+      <text x="12" y="68" class="item-desc">集群每分钟轮询 GitOps 仓库</text>
+      <text x="12" y="86" class="item-desc">手工临时 kubectl 变更将被无情覆写</text>
+      <text x="12" y="102" class="item-desc" style="color:#16A34A; font-weight:600;">保持 HelmRelease Ready=True</text>
+    </g>
+
+    <!-- Promotion PR Gate -->
+    <g transform="translate(16, 305)">
+      <rect width="228" height="115" rx="10" fill="#F8FAFC" stroke="#E2E8F0"/>
+      <rect x="12" y="12" width="80" height="18" rx="4" fill="#DCFCE7"/>
+      <text x="52" y="25" text-anchor="middle" class="tag" fill="#15803D">PR 门禁审计链</text>
+      <text x="12" y="48" class="item-title">变更 100% 可回溯</text>
+      <text x="12" y="68" class="item-desc">线上排障（#743~#773）全走 PR 合并</text>
+      <text x="12" y="86" class="item-desc">从代码审核到集群落地全自动化闭环</text>
+      <text x="12" y="104" class="item-desc" style="color:#047857; font-weight:600;">杜绝任何人肉口头通知</text>
+    </g>
+  </g>
+
+  <!-- Pillar 3: 多 Namespace 隔离 -->
+  <g transform="translate(610, 110)">
+    <rect width="260" height="440" rx="14" fill="#FFFFFF" stroke="#E2E8F0" filter="url(#shadow)"/>
+    
+    <rect x="0" y="0" width="260" height="50" rx="14" fill="#FAF5FF"/>
+    <rect x="16" y="14" width="22" height="22" rx="6" fill="#9333EA"/>
+    <text x="27" y="29" text-anchor="middle" fill="#FFFFFF" style="font-weight:700; font-size:12px;">3</text>
+    <text x="46" y="30" class="col-title" fill="#7E22CE">多 Namespace 隔离</text>
+
+    <!-- Namespaces Grid -->
+    <g transform="translate(16, 65)">
+      <rect width="228" height="58" rx="8" fill="#F8FAFC" stroke="#E2E8F0"/>
+      <text x="12" y="24" class="item-title" fill="#9333EA">web-saas-prod</text>
+      <text x="12" y="44" class="item-desc">Console / Accounts / Billing / Content</text>
+    </g>
+
+    <g transform="translate(16, 130)">
+      <rect width="228" height="58" rx="8" fill="#F8FAFC" stroke="#E2E8F0"/>
+      <text x="12" y="24" class="item-title" fill="#2563EB">ingress-prod</text>
+      <text x="12" y="44" class="item-desc">Caddy 边缘反代 / ServiceLB 443 转发</text>
+    </g>
+
+    <g transform="translate(16, 195)">
+      <rect width="228" height="58" rx="8" fill="#F8FAFC" stroke="#E2E8F0"/>
+      <text x="12" y="24" class="item-title" fill="#D97706">vault-prod</text>
+      <text x="12" y="44" class="item-desc">Vault Server Raft 独立单节点密钥库</text>
+    </g>
+
+    <g transform="translate(16, 260)">
+      <rect width="228" height="58" rx="8" fill="#F8FAFC" stroke="#E2E8F0"/>
+      <text x="12" y="24" class="item-title" fill="#059669">postgresql-prod</text>
+      <text x="12" y="44" class="item-desc">PostgreSQL StatefulSet / 挂载 100G 盘</text>
+    </g>
+
+    <g transform="translate(16, 325)">
+      <rect width="228" height="58" rx="8" fill="#F8FAFC" stroke="#E2E8F0"/>
+      <text x="12" y="24" class="item-title" fill="#0284C7">observability-prod</text>
+      <text x="12" y="44" class="item-desc">Datakit 采集探针 / 轻量汇聚管道</text>
+    </g>
+
+    <g transform="translate(16, 390)">
+      <rect width="228" height="42" rx="8" fill="#FFFBEB" stroke="#FDE68A"/>
+      <text x="12" y="18" class="item-title" fill="#B45309" style="font-size:11px;">accounts-migration</text>
+      <text x="12" y="32" class="item-desc" style="font-size:11px;">专用迁移监听器 (任务结束即受控休眠)</text>
+    </g>
+  </g>
+
+  <!-- Pillar 4: 外部观测云 SaaS -->
+  <g transform="translate(890, 110)">
+    <rect width="260" height="440" rx="14" fill="#FFFFFF" stroke="#E2E8F0" filter="url(#shadow)"/>
+    
+    <rect x="0" y="0" width="260" height="50" rx="14" fill="#F0FDFA"/>
+    <rect x="16" y="14" width="22" height="22" rx="6" fill="#0D9488"/>
+    <text x="27" y="29" text-anchor="middle" fill="#FFFFFF" style="font-weight:700; font-size:12px;">4</text>
+    <text x="46" y="30" class="col-title" fill="#0F766E">外部观测云 SaaS</text>
+
+    <!-- Anti-pattern comparison -->
+    <g transform="translate(16, 65)">
+      <rect width="228" height="85" rx="10" fill="#FEF2F2" stroke="#FECACA"/>
+      <text x="12" y="24" class="item-title" fill="#DC2626">传统反模式 (自建全家桶)</text>
+      <text x="12" y="44" class="item-desc">本地塞 Prometheus+ES+Loki+Grafana</text>
+      <text x="12" y="62" class="item-desc" style="color:#991B1B; font-weight:600;">吞噬 3GB+ 内存，业务频繁 OOM</text>
+    </g>
+
+    <!-- Lightweight Edge Datakit -->
+    <g transform="translate(16, 160)">
+      <rect width="228" height="120" rx="10" fill="#F0FDFA" stroke="#CCFBF1"/>
+      <rect x="12" y="12" width="75" height="18" rx="4" fill="#CCFBF1"/>
+      <text x="49" y="25" text-anchor="middle" class="tag" fill="#0F766E">边缘极轻探针</text>
+      <text x="12" y="48" class="item-title">Datakit 仅占 180Mi</text>
+      <text x="12" y="68" class="item-desc">内存上限放宽至 128/512Mi 根除 OOM</text>
+      <text x="12" y="86" class="item-desc">从 Vault 获取 Dataway 凭据直传</text>
+      <text x="12" y="104" class="item-desc" style="color:#0D9488; font-weight:600;">已稳定运行 22h+ 无一次重启</text>
+    </g>
+
+    <!-- SaaS Benefits -->
+    <g transform="translate(16, 290)">
+      <rect width="228" height="130" rx="10" fill="#F8FAFC" stroke="#E2E8F0"/>
+      <rect x="12" y="12" width="85" height="18" rx="4" fill="#E0F2FE"/>
+      <text x="54" y="25" text-anchor="middle" class="tag" fill="#0369A1">SaaS 四两拨千斤</text>
+      <text x="12" y="48" class="item-title">企业级可观测大盘</text>
+      <text x="12" y="68" class="item-desc">• 本地 0 历史日志存储负担</text>
+      <text x="12" y="86" class="item-desc">• 秒级 APM 链路与网络拓扑</text>
+      <text x="12" y="104" class="item-desc">• 智能告警与数月冷热指标分析</text>
+      <text x="12" y="120" class="item-desc" style="color:#0369A1; font-weight:600;">100% 算力归还业务</text>
+    </g>
+  </g>
+</svg>

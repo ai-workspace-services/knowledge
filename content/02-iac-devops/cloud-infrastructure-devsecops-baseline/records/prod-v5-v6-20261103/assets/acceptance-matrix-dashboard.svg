@@ -1,0 +1,127 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 520" width="1200" height="520">
+  <defs>
+    <style>
+      .title { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; font-size: 22px; font-weight: 700; fill: #0F172A; }
+      .subtitle { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; font-size: 13px; fill: #64748B; }
+      .group-title { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; font-size: 15px; font-weight: 700; }
+      .item-text { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; font-size: 12px; fill: #334155; }
+      .badge-text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 11px; font-weight: 800; }
+    </style>
+    <filter id="card-shadow" x="-5%" y="-5%" width="110%" height="115%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="3" stdDeviation="6" flood-color="#0F172A" flood-opacity="0.05"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="520" fill="#F8FAFC" rx="16"/>
+
+  <!-- Header -->
+  <g transform="translate(50, 35)">
+    <rect x="0" y="2" width="4" height="22" fill="#2563EB" rx="2"/>
+    <text x="16" y="18" class="title">PROD-K3S-V6 验收事实与边界矩阵大盘 (真实审计存证)</text>
+    <text x="16" y="38" class="subtitle">遵规只读审计取证 · 杜绝虚构全绿 · 明确区分现场核验、用户确认与待办未决事项</text>
+  </g>
+
+  <!-- Pass Group (Left Column, wide) -->
+  <g transform="translate(50, 90)">
+    <rect width="700" height="390" rx="14" fill="#FFFFFF" stroke="#E2E8F0" filter="url(#card-shadow)"/>
+    
+    <!-- Title bar -->
+    <rect x="0" y="0" width="700" height="46" rx="14" fill="#F0FDF4"/>
+    <rect x="16" y="12" width="60" height="22" rx="6" fill="#16A34A"/>
+    <text x="46" y="27" text-anchor="middle" class="badge-text" fill="#FFFFFF">PASS</text>
+    <text x="86" y="28" class="group-title" fill="#15803D">已闭环现场审计核验项目 (8 大核心指标)</text>
+
+    <!-- Pass Items 2 columns inside -->
+    <!-- Col 1 -->
+    <g transform="translate(20, 60)">
+      <circle cx="8" cy="14" r="5" fill="#10B981"/>
+      <text x="22" y="18" class="item-text" font-weight="600">物理节点与 OS</text>
+      <text x="22" y="34" class="subtitle" style="font-size:11px;">Debian 13 (Linux 6.12) / Linode 2C4G</text>
+
+      <circle cx="8" cy="64" r="5" fill="#10B981"/>
+      <text x="22" y="68" class="item-text" font-weight="600">独立挂载持久化存储</text>
+      <text x="22" y="84" class="subtitle" style="font-size:11px;">100GB 独立云块存储(/data) 根分区解耦</text>
+
+      <circle cx="8" cy="114" r="5" fill="#10B981"/>
+      <text x="22" y="118" class="item-text" font-weight="600">K3s v1.37.1 控制面</text>
+      <text x="22" y="134" class="subtitle" style="font-size:11px;">Ready,control-plane,etcd / 0 重启</text>
+
+      <circle cx="8" cy="164" r="5" fill="#10B981"/>
+      <text x="22" y="168" class="item-text" font-weight="600">Vault Raft 状态流式恢复</text>
+      <text x="22" y="184" class="subtitle" style="font-size:11px;">post-unseal complete / 9 个 SA-JWT 认证 100%</text>
+
+      <circle cx="8" cy="214" r="5" fill="#10B981"/>
+      <text x="22" y="218" class="item-text" font-weight="600">42 表业务数据原子晋级</text>
+      <text x="22" y="234" class="subtitle" style="font-size:11px; fill:#059669; font-weight:700;">370 用户 / 921,430 账本 / 幂等 state=applied</text>
+    </g>
+
+    <!-- Col 2 -->
+    <g transform="translate(360, 60)">
+      <circle cx="8" cy="14" r="5" fill="#10B981"/>
+      <text x="22" y="18" class="item-text" font-weight="600">Web-SaaS 四大核心服务</text>
+      <text x="22" y="34" class="subtitle" style="font-size:11px;">Console / Accounts / Billing / Content 全部就绪</text>
+
+      <circle cx="8" cy="64" r="5" fill="#10B981"/>
+      <text x="22" y="68" class="item-text" font-weight="600">Datakit 外部观测云集成</text>
+      <text x="22" y="84" class="subtitle" style="font-size:11px;">配额升至 128/512Mi，连续运行 22h+ 0 重启</text>
+
+      <circle cx="8" cy="114" r="5" fill="#10B981"/>
+      <text x="22" y="118" class="item-text" font-weight="600">7 大 canonical 域名切流</text>
+      <text x="22" y="134" class="subtitle" style="font-size:11px;">Cloudflare API 更新，公共 DNS (1.1.1.1) 生效</text>
+
+      <circle cx="8" cy="164" r="5" fill="#10B981"/>
+      <text x="22" y="168" class="item-text" font-weight="600">跨国边缘 Agent 自愈同步</text>
+      <text x="22" y="184" class="subtitle" style="font-size:11px;">JP (12 客户端) / US (3 客户端白名单) 正常心跳</text>
+
+      <!-- User Confirmation Banner -->
+      <g transform="translate(8, 205)">
+        <rect width="310" height="50" rx="8" fill="#EFF6FF" stroke="#BFDBFE"/>
+        <text x="12" y="22" class="item-text" fill="#1D4ED8" font-weight="700">★ 用户登录态可见性验收</text>
+        <text x="12" y="38" class="subtitle" style="font-size:11px; fill:#1E40AF;">用户反馈：“US 已出现”，登录态页面核验通过</text>
+      </g>
+    </g>
+
+    <!-- Bottom security bar -->
+    <rect x="20" y="335" width="660" height="36" rx="8" fill="#F8FAFC" stroke="#E2E8F0"/>
+    <text x="350" y="357" text-anchor="middle" class="item-text" style="font-size:11px; fill:#64748B;">
+      V5 删除保护锁安全解锁（仍运行） · V6 cannot_delete 保护锁激活生效
+    </text>
+  </g>
+
+  <!-- Non-Pass / Boundaries (Right Column) -->
+  <g transform="translate(775, 90)">
+    <!-- Partial Card -->
+    <rect width="375" height="115" rx="12" fill="#FFFFFF" stroke="#FEF3C7" filter="url(#card-shadow)"/>
+    <rect x="14" y="12" width="75" height="20" rx="6" fill="#FEF3C7"/>
+    <text x="51" y="26" text-anchor="middle" class="badge-text" fill="#B45309">PARTIAL</text>
+    <text x="100" y="27" class="group-title" fill="#92400E" style="font-size:14px;">部分完成 / 存在未决项</text>
+
+    <text x="14" y="54" class="item-text">• <tspan font-weight="600">增量追齐预览</tspan>：1条源变更/30条目标变更，未二次写入</text>
+    <text x="14" y="74" class="item-text">• <tspan font-weight="600">postgresql.svc.plus</tspan>：TCP 通但原生 5432 协议未开放公网</text>
+    <text x="14" y="94" class="subtitle" style="font-size:11px; color:#B45309;">遵循最小暴露原则，内部保持 ClusterIP 隔离</text>
+
+    <!-- Blocked Card -->
+    <g transform="translate(0, 130)">
+      <rect width="375" height="115" rx="12" fill="#FFFFFF" stroke="#FEE2E2" filter="url(#card-shadow)"/>
+      <rect x="14" y="12" width="75" height="20" rx="6" fill="#FEE2E2"/>
+      <text x="51" y="26" text-anchor="middle" class="badge-text" fill="#DC2626">BLOCKED</text>
+      <text x="100" y="27" class="group-title" fill="#991B1B" style="font-size:14px;">安全规约只读阻断项</text>
+
+      <text x="14" y="54" class="item-text">• <tspan font-weight="600">V5 历史主机现场只读连接超时</tspan></text>
+      <text x="14" y="74" class="item-text">• 遵规严格禁止盲目提权或绕过 HostKey 检查</text>
+      <text x="14" y="94" class="subtitle" style="font-size:11px; color:#DC2626;">诚实转用仓库已有脱敏回执存证，不伪造全通</text>
+    </g>
+
+    <!-- Not Run Card -->
+    <g transform="translate(0, 260)">
+      <rect width="375" height="120" rx="12" fill="#FFFFFF" stroke="#E2E8F0" filter="url(#card-shadow)"/>
+      <rect x="14" y="12" width="80" height="20" rx="6" fill="#F1F5F9"/>
+      <text x="54" y="26" text-anchor="middle" class="badge-text" fill="#475569">NOT_RUN</text>
+      <text x="105" y="27" class="group-title" fill="#334155" style="font-size:14px;">受控未执行规划项</text>
+
+      <text x="14" y="54" class="item-text">• <tspan font-weight="600">WireGuard 隧道即刻下线</tspan>（保留为迁移期通道）</text>
+      <text x="14" y="74" class="item-text">• <tspan font-weight="600">破坏性整机故障注入演练</tspan>（生产期严禁执行）</text>
+      <text x="14" y="96" class="subtitle" style="font-size:11px; color:#64748B;">待业务平稳运行 14 天观察期满后，再行退役回收</text>
+    </g>
+  </g>
+</svg>

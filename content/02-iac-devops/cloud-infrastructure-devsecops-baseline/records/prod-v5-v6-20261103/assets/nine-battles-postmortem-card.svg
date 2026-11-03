@@ -1,0 +1,163 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 580" width="1200" height="580">
+  <defs>
+    <style>
+      .main-title { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; font-size: 24px; font-weight: 700; fill: #0F172A; }
+      .main-sub { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; font-size: 14px; fill: #64748B; }
+      .battle-title { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; font-size: 14px; font-weight: 700; fill: #1E293B; }
+      .battle-desc { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; font-size: 12px; fill: #475569; line-height: 1.4; }
+      .pr-badge { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 11px; font-weight: 700; fill: #2563EB; }
+      .num-tag { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 11px; font-weight: 800; }
+    </style>
+    <filter id="card-shadow" x="-5%" y="-5%" width="110%" height="115%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="3" stdDeviation="6" flood-color="#0F172A" flood-opacity="0.05"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="580" fill="#F8FAFC" rx="18"/>
+
+  <!-- Header -->
+  <g transform="translate(50, 35)">
+    <rect x="0" y="2" width="4" height="24" fill="#DC2626" rx="2"/>
+    <text x="16" y="20" class="main-title">72 小时拆弹实录：PROD-K3S-V6 九大真实排障战役全景雷达</text>
+    <text x="16" y="42" class="main-sub">拒绝纸上谈兵，按“症状 ➔ 根因 ➔ 最小修改 ➔ GitOps 声明式合并 ➔ 调谐验证”八步法归档</text>
+  </g>
+
+  <!-- 3x3 Grid of Battles -->
+  <!-- Row 1: Battle 1, 2, 3 -->
+  <!-- Battle 1 -->
+  <g transform="translate(50, 95)">
+    <rect width="345" height="135" rx="12" fill="#FFFFFF" stroke="#E2E8F0" filter="url(#card-shadow)"/>
+    <circle cx="28" cy="26" r="12" fill="#FEE2E2"/>
+    <text x="28" y="30" text-anchor="middle" class="num-tag" fill="#DC2626">1</text>
+    <text x="48" y="30" class="battle-title">GHCR 镜像拉取报 403 阻断</text>
+    
+    <text x="16" y="58" class="battle-desc"><tspan fill="#DC2626" font-weight="600">根因：</tspan>K3s 拉取私有包缺少 ImagePullSecret</text>
+    <text x="16" y="78" class="battle-desc"><tspan fill="#16A34A" font-weight="600">破局：</tspan>改换公开 OCI 包路径，锁定不可变 Digest</text>
+    
+    <rect x="16" y="96" width="105" height="24" rx="6" fill="#EFF6FF"/>
+    <text x="68" y="112" text-anchor="middle" class="pr-badge">GitOps #743</text>
+    <text x="135" y="112" class="battle-desc" style="font-size:11px; fill:#059669; font-weight:600;">✓ 秒级拉取成功</text>
+  </g>
+
+  <!-- Battle 2 -->
+  <g transform="translate(425, 95)">
+    <rect width="345" height="135" rx="12" fill="#FFFFFF" stroke="#E2E8F0" filter="url(#card-shadow)"/>
+    <circle cx="28" cy="26" r="12" fill="#FEE2E2"/>
+    <text x="28" y="30" text-anchor="middle" class="num-tag" fill="#DC2626">2</text>
+    <text x="48" y="30" class="battle-title">Datakit 128Mi 内存 OOMKilled</text>
+    
+    <text x="16" y="58" class="battle-desc"><tspan fill="#DC2626" font-weight="600">根因：</tspan>日志指标聚合突发越限，退出码 137</text>
+    <text x="16" y="78" class="battle-desc"><tspan fill="#16A34A" font-weight="600">破局：</tspan>修正 Secret，配额调优至 128/512Mi</text>
+    
+    <rect x="16" y="96" width="105" height="24" rx="6" fill="#EFF6FF"/>
+    <text x="68" y="112" text-anchor="middle" class="pr-badge">GitOps #750</text>
+    <text x="135" y="112" class="battle-desc" style="font-size:11px; fill:#059669; font-weight:600;">✓ 稳定运行 22h+ 0重启</text>
+  </g>
+
+  <!-- Battle 3 -->
+  <g transform="translate(805, 95)">
+    <rect width="345" height="135" rx="12" fill="#FFFFFF" stroke="#E2E8F0" filter="url(#card-shadow)"/>
+    <circle cx="28" cy="26" r="12" fill="#FEE2E2"/>
+    <text x="28" y="30" text-anchor="middle" class="num-tag" fill="#DC2626">3</text>
+    <text x="48" y="30" class="battle-title">ServiceLB 禁用导致 IP Pending</text>
+    
+    <text x="16" y="58" class="battle-desc"><tspan fill="#DC2626" font-weight="600">根因：</tspan>K3s 安装传参误加 --disable servicelb</text>
+    <text x="16" y="78" class="battle-desc"><tspan fill="#16A34A" font-weight="600">破局：</tspan>恢复内置 ServiceLB，自动代理 443 端口</text>
+    
+    <rect x="16" y="96" width="115" height="24" rx="6" fill="#EFF6FF"/>
+    <text x="73" y="112" text-anchor="middle" class="pr-badge">Playbooks #958</text>
+    <text x="145" y="112" class="battle-desc" style="font-size:11px; fill:#059669; font-weight:600;">✓ 宿主 443 成功接流</text>
+  </g>
+
+  <!-- Row 2: Battle 4, 5, 6 -->
+  <!-- Battle 4 -->
+  <g transform="translate(50, 250)">
+    <rect width="345" height="135" rx="12" fill="#FFFFFF" stroke="#E2E8F0" filter="url(#card-shadow)"/>
+    <circle cx="28" cy="26" r="12" fill="#FEE2E2"/>
+    <text x="28" y="30" text-anchor="middle" class="num-tag" fill="#DC2626">4</text>
+    <text x="48" y="30" class="battle-title">Console Nginx 特权目录权限 500</text>
+    
+    <text x="16" y="58" class="battle-desc"><tspan fill="#DC2626" font-weight="600">根因：</tspan>非 root 容器试图写 /var/cache/nginx 报拒绝</text>
+    <text x="16" y="78" class="battle-desc"><tspan fill="#16A34A" font-weight="600">破局：</tspan>重定向客户端缓存与临时文件至 /tmp/nginx</text>
+    
+    <rect x="16" y="96" width="105" height="24" rx="6" fill="#EFF6FF"/>
+    <text x="68" y="112" text-anchor="middle" class="pr-badge">GitOps #747</text>
+    <text x="135" y="112" class="battle-desc" style="font-size:11px; fill:#059669; font-weight:600;">✓ 前端探针返回 200</text>
+  </g>
+
+  <!-- Battle 5 -->
+  <g transform="translate(425, 250)">
+    <rect width="345" height="135" rx="12" fill="#FFFFFF" stroke="#E2E8F0" filter="url(#card-shadow)"/>
+    <circle cx="28" cy="26" r="12" fill="#FEE2E2"/>
+    <text x="28" y="30" text-anchor="middle" class="num-tag" fill="#DC2626">5</text>
+    <text x="48" y="30" class="battle-title">Caddy ConfigMap 变更未热加载</text>
+    
+    <text x="16" y="58" class="battle-desc"><tspan fill="#DC2626" font-weight="600">根因：</tspan>K8s 挂载异步且 Caddy 不自动监听 inotify</text>
+    <text x="16" y="78" class="battle-desc"><tspan fill="#16A34A" font-weight="600">破局：</tspan>确立网关规范：变更必绑 Reload / 滚动重启</text>
+    
+    <rect x="16" y="96" width="105" height="24" rx="6" fill="#F3E8FF"/>
+    <text x="68" y="112" text-anchor="middle" class="pr-badge" fill="#7E22CE">Runbook 规约</text>
+    <text x="135" y="112" class="battle-desc" style="font-size:11px; fill:#059669; font-weight:600;">✓ 新路由立即生效</text>
+  </g>
+
+  <!-- Battle 6 -->
+  <g transform="translate(805, 250)">
+    <rect width="345" height="135" rx="12" fill="#FFFFFF" stroke="#F59E0B" stroke-width="1.5" filter="url(#card-shadow)"/>
+    <circle cx="28" cy="26" r="12" fill="#FEF3C7"/>
+    <text x="28" y="30" text-anchor="middle" class="num-tag" fill="#B45309">6</text>
+    <text x="48" y="30" class="battle-title" fill="#B45309">静态模板覆盖 Token ➔ JP 401</text>
+    
+    <text x="16" y="58" class="battle-desc"><tspan fill="#DC2626" font-weight="600">根因：</tspan>模板硬编码示例凭据，优先级高于环境变量</text>
+    <text x="16" y="78" class="battle-desc"><tspan fill="#16A34A" font-weight="600">破局：</tspan>清除示例，升级 Vault KV v7，ESO 重新注入</text>
+    
+    <rect x="16" y="96" width="105" height="24" rx="6" fill="#EFF6FF"/>
+    <text x="68" y="112" text-anchor="middle" class="pr-badge">GitOps #771</text>
+    <text x="135" y="112" class="battle-desc" style="font-size:11px; fill:#059669; font-weight:600;">✓ JP 12 客户端恢复</text>
+  </g>
+
+  <!-- Row 3: Battle 7, 8, 9 -->
+  <!-- Battle 7 -->
+  <g transform="translate(50, 405)">
+    <rect width="345" height="135" rx="12" fill="#FFFFFF" stroke="#10B981" stroke-width="1.5" filter="url(#card-shadow)"/>
+    <circle cx="28" cy="26" r="12" fill="#D1FAE5"/>
+    <text x="28" y="30" text-anchor="middle" class="num-tag" fill="#047857">7</text>
+    <text x="48" y="30" class="battle-title" fill="#065F46">Custom 资源等级被拒 ➔ US 400</text>
+    
+    <text x="16" y="58" class="battle-desc"><tspan fill="#DC2626" font-weight="600">根因：</tspan>旧镜像未合入单节点 custom 等级校验支持</text>
+    <text x="16" y="78" class="battle-desc"><tspan fill="#16A34A" font-weight="600">破局：</tspan>复用主线已合并单节点代码，禁盲目膨胀架构</text>
+    
+    <rect x="16" y="96" width="105" height="24" rx="6" fill="#EFF6FF"/>
+    <text x="68" y="112" text-anchor="middle" class="pr-badge">GitOps #772</text>
+    <text x="135" y="112" class="battle-desc" style="font-size:11px; fill:#059669; font-weight:600;">✓ US 3 人名单下发</text>
+  </g>
+
+  <!-- Battle 8 -->
+  <g transform="translate(425, 405)">
+    <rect width="345" height="135" rx="12" fill="#FFFFFF" stroke="#E2E8F0" filter="url(#card-shadow)"/>
+    <circle cx="28" cy="26" r="12" fill="#FEE2E2"/>
+    <text x="28" y="30" text-anchor="middle" class="num-tag" fill="#DC2626">8</text>
+    <text x="48" y="30" class="battle-title">Console 默认 Cloud Run 认证地址</text>
+    
+    <text x="16" y="58" class="battle-desc"><tspan fill="#DC2626" font-weight="600">根因：</tspan>构建默认回退外部域名，跨云网络延迟高</text>
+    <text x="16" y="78" class="battle-desc"><tspan fill="#16A34A" font-weight="600">破局：</tspan>显式注入内部 K8s Service ClusterIP 地址</text>
+    
+    <rect x="16" y="96" width="105" height="24" rx="6" fill="#EFF6FF"/>
+    <text x="68" y="112" text-anchor="middle" class="pr-badge">GitOps #773</text>
+    <text x="135" y="112" class="battle-desc" style="font-size:11px; fill:#059669; font-weight:600;">✓ 跨容器延迟降至 2ms</text>
+  </g>
+
+  <!-- Battle 9 -->
+  <g transform="translate(805, 405)">
+    <rect width="345" height="135" rx="12" fill="#FFFFFF" stroke="#E2E8F0" filter="url(#card-shadow)"/>
+    <circle cx="28" cy="26" r="12" fill="#FEE2E2"/>
+    <text x="28" y="30" text-anchor="middle" class="num-tag" fill="#DC2626">9</text>
+    <text x="48" y="30" class="battle-title">Console Team 分配接口纯文本 404</text>
+    
+    <text x="16" y="58" class="battle-desc"><tspan fill="#DC2626" font-weight="600">根因：</tspan>前端路径缺前缀，Caddy 转发 Accounts 丢失</text>
+    <text x="16" y="78" class="battle-desc"><tspan fill="#16A34A" font-weight="600">破局：</tspan>网关增加精确路径重写至 /api/auth/admin/...</text>
+    
+    <rect x="16" y="96" width="105" height="24" rx="6" fill="#EFF6FF"/>
+    <text x="68" y="112" text-anchor="middle" class="pr-badge">Caddy 重写</text>
+    <text x="135" y="112" class="battle-desc" style="font-size:11px; fill:#059669; font-weight:600;">✓ 前端弹窗报错根治</text>
+  </g>
+</svg>
