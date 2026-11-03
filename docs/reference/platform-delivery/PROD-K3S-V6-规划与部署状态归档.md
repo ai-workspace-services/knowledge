@@ -1,7 +1,31 @@
 # PROD-K3S-V6 独立节点、集群冷启动规划与部署状态归档
 
+## 最新回执：canonical DNS 切换到 V6（2026-11-03）
+
+用户确认后，已将 7 个 canonical 域名切换到 `prod-k3s-v6`。Cloudflare API 回读确认记录正确；1.1.1.1、8.8.8.8 与 Cloudflare DoH 均已解析至 V6。记录为 DNS-only，未启用代理。控制端及 V6 节点普通系统解析在切换后短时间仍缓存旧 V5 的 Vault/Accounts 地址；DoH 请求已直达 V6，需待旧 TTL 到期后再复查系统解析。
+
+| canonical 域名 | 切换后的记录 | DNS 验收 |
+| --- | --- | --- |
+| `xworktech.com` | A → V6 节点公网地址 | 公共解析器均返回 V6；首页 HTTP 200、TLS=0 |
+| `vault.svc.plus` | CNAME → `vault-selfhost-prod-v6.svc.plus` | 公共解析器均返回 V6；`/v1/sys/health` HTTP 200、TLS=0 |
+| `console.svc.plus` | CNAME → `console-selfhost-prod-v6.svc.plus` | 公共解析器均返回 V6；`/api/ping` HTTP 200、TLS=0 |
+| `accounts.svc.plus` | CNAME → `accounts-selfhost-prod-v6.svc.plus` | 公共解析器均返回 V6；`/readyz` HTTP 200、TLS=0 |
+| `billing.svc.plus` | CNAME → `billing-selfhost-prod-v6.svc.plus` | 公共解析器均返回 V6；`/readyz` HTTP 200、TLS=0 |
+| `observability.svc.plus` | CNAME → `observability-selfhost-prod-v6.svc.plus` | 新增对应 V6 批次 A 记录；公共解析器均返回 V6；`/api/health` HTTP 200、TLS=0 |
+| `postgresql.svc.plus` | A → V6 节点公网地址 | 公共解析器均返回 V6；这只完成 DNS 指向，不代表 PostgreSQL 服务或 TLS 隧道验收通过 |
+
+切换前 `xworktech.com` 的唯一 A 记录指向 V5；其 Google MX 与 SPF TXT 记录未改动。`postgresql.svc.plus` 从 V5 CNAME 改为 A 记录，以符合用户确认的方案。DNS 变更本身不改主机端口规则；同轮 TCP 探测与 PostgreSQL 协议探测结果不一致，见下文，不能据 DNS 记录推断端口状态。切换操作及完整权威记录前后回执保存在控制端受限目录 `handoffs/v6-canonical-dns-cutover-20261103/`，该目录权限为 0700、回执为 0600；DNS 凭据从 Vault CLI 会话在进程内存读取，没有写入脚本或回执。
+
+HTTPS 验收使用 Cloudflare DoH 与正常域名、不跳过证书校验；六个 HTTPS 入口均返回 HTTP 200、TLS 校验 0、远端地址为 V6。切换后立刻通过系统解析访问时，Vault 与 Accounts 仍有请求命中 V5；系统 `getaddrinfo` 也返回旧地址。这与 DNS-only 记录已更新、公共解析器已返回 V6 的事实并存，属于递归/本机缓存观察项。需在原有 CNAME TTL 到期后复查；若仍旧，应单独检查该客户端或节点的 DNS 缓存/转发器，不能据此回滚权威记录。
+
+PostgreSQL 网络探针结果不一致：外部 `pg_isready` 对节点 5432 报无响应，但 TCP connect 探测成功；V6 节点没有 5432/15432 主机监听，Kubernetes PostgreSQL Service 为 ClusterIP。当前只记录 DNS 已切换；数据库协议访问、TLS 隧道和网络路径仍需独立排查，不能把 TCP connect 成功表述为 PostgreSQL 可用，也不能把数据库服务认定为已对公网开放。
+
+回退映射已保存在受限目录的变更前权威记录快照中：将五条 CNAME 恢复到其原 V5 目标、恢复 `xworktech.com` 的原 A 地址，并将 `postgresql.svc.plus` 恢复为原 V5 CNAME。回退前仍应核对当前记录 ID 与快照，避免覆盖后续 DNS 修改。
+
 
 ## 最新回执：Vault V5 → V6 快照追齐与域名修复（2026-11-03）
+
+> 本节记录 Vault 快照恢复时的 DNS 状态；canonical DNS 后续已在上方“最新回执：canonical DNS 切换到 V6”中完成切换，本文较早的“尚未切换”描述均为历史状态。
 
 已完成一次 **V5 最新 Raft 快照 → HTTPS 上传到 V6 → 正常快照恢复 → 运行验证**。此次恢复整体替换 V6 Vault 状态，不是 KV 增量合并；V5 Vault 未恢复、未替换。`vault.svc.plus` 等 canonical DNS 仍指向 V5。
 
@@ -64,7 +88,7 @@ VAULT_ADDR=https://vault-selfhost-prod-v6.svc.plus vault status
 
 公网 DoH 与 V6 节点上，不带 `--resolve`、不带 `-k` 访问该域名，均正常跳转 `/ui/` 并返回 HTTP 200、TLS 校验 0、remote IP `172.237.24.232`。操作端 Mac 上已复现：`dig` 返回正确 A 记录，但系统 `getaddrinfo` 与普通 curl 仍解析失败，Chrome 为 `ERR_NAME_NOT_RESOLVED`；系统解析绑定 VPN utun6。DoH 与 V6 节点正常，尚不能宣称该 Mac 浏览器已恢复。无 sudo 的 `dscacheutil -flushcache` 无效，`sudo -n` 返回需要密码；系统 DNS 守护进程刷新须由本机管理员执行 `sudo dscacheutil -flushcache` 和 `sudo killall -HUP mDNSResponder` 后再复验，未改 hosts、VPN 或浏览器安全策略。
 
-用户选定的后续切换方式：`xworktech.com` 使用 A 指向 V6 节点；`console/accounts/billing/vault/observability/postgresql.svc.plus` 使用 CNAME 指向对应 `*-selfhost-prod-v6.svc.plus`。当前只创建 Vault 批次 A 记录，**尚未切换这些 canonical 名称**；Observability/PostgreSQL 的批次名称此前仍 NXDOMAIN，需要先交付。PostgreSQL 不是 HTTP/HTTPS 站点，数据库或 TLS 隧道验收单独进行。
+在快照恢复回执生成时，切换方案已确定但 canonical DNS 尚未变更；当时仅存在 Vault、Console、Accounts、Billing 的 V6 批次 A 记录，Observability 批次记录尚缺。之后的 DNS 实际切换与当前解析结果，以文档顶部最新回执为准。PostgreSQL 不是 HTTP/HTTPS 站点，数据库或 TLS 隧道验收单独进行。
 
 ### 5. 同轮 Accounts 追齐预览（只预览，未追加写入）
 
