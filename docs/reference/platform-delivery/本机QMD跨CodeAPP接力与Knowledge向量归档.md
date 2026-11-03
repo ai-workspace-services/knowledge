@@ -54,7 +54,7 @@ QMD 使用 `models.embed: qwen3-embedding:0.6b` 与 `QMD_EMBED_API_BASE_URL=http
 
 PG 记忆模块另需同步 `QMD_EMBED_MODEL=qwen3-embedding:0.6b`。本次修复了该模块覆盖回默认提供商的接线问题。现有 PostgreSQL 17.11、pgvector 0.8.1 正常；接入前向量表为空，已有任务和 4 条默认 namespace 的记忆保留，并已生成受保护的 QMD 数据库备份。新文档导入独立 namespace `knowledge-platform-delivery`，与任务状态和既有默认记忆分开。
 
-统一本机 CLI 为 `~/.local/bin/qmd`，复用桌面服务的私有配置。QMD 原生服务与 Ollama 均作为当前桌面用户的服务自启，标签分别为 `plus.svc.qmd-local`、`plus.svc.ollama-local`；Ollama 监听 `127.0.0.1:11434`。Ollama 的自有 LaunchAgent 保留系统 DNS 设置，避免 Homebrew 重新生成服务文件时丢失修复。QMD 本地部署来自 PR #12 的修复版 `df20ec3`，不把尚未合并的修复宣称为上游正式发行。14 项针对性测试和 TypeScript 构建通过；真实索引验收见下文。
+统一本机 CLI 为 `~/.local/bin/qmd`，复用桌面服务的私有配置。QMD 原生服务与 Ollama 均作为当前桌面用户的服务自启，标签分别为 `plus.svc.qmd-local`、`plus.svc.ollama-local`；Ollama 监听 `127.0.0.1:11434`。Ollama 的自有 LaunchAgent 保留系统 DNS 设置，避免 Homebrew 重新生成服务文件时丢失修复。QMD 本地部署来自 PR #12 的修复版 `1a3477c`，不把尚未合并的修复宣称为上游正式发行。14 项针对性测试和 TypeScript 构建通过；真实索引验收见下文。
 
 标准顺序：
 
@@ -103,6 +103,8 @@ done
 | 四个 Code APP 配置 | Codex、Claude、Antigravity、OpenCode 各自的真实 MCP 启动命令均经独立进程验证，读到同一实际接力任务并暴露记忆读写工具 |
 
 此回执补入 Knowledge 后继续按新 commit 增量导入；最新索引来源与计数保存在共享任务回执。本次只向量化平台交付这 19 份文档，未宣称其他既有 collection 已全部重建。真实 GUI 中已启动的旧 MCP 进程仍需重连；协议客户端验证不冒充 GUI 操作验收。
+
+索引更新命令曾用默认提供商而非实际配置模型统计缺失向量，已同步修复。当前全局仍有 196 份其他文档待向量化，与本集合已完成不是同一口径。PG 导入新版本会保留旧内容 hash 的向量缓存；验收统计与查询均以当前 active 文档所引用的向量为准，不将保留缓存计成当前片段数。
 
 ## 回退与本次边界
 
