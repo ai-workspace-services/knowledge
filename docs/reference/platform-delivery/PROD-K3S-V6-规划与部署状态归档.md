@@ -1,5 +1,17 @@
 # PROD-K3S-V6 独立节点、集群冷启动规划与部署状态归档
 
+## 最新回执：V6 Agent 认证及 Console 路由恢复（2026-11-03）
+
+canonical DNS 切换后，JP Edge Agent 请求已到达 V6 Accounts，但用户列表、事件流和状态上报返回 `401 invalid_token`。现场确认 Agent 配置中的 Token 与 V5/V6 Accounts 的 `INTERNAL_SERVICE_TOKEN` 一致；V6 当前镜像的 Accounts 模板另含一条示例 Agent 凭据，启动时显式凭据优先于环境变量，因此实际注册表未使用已注入的 Token。未输出或记录任何凭据值。
+
+- 从 V6 现有镜像模板生成配置，只将 `agents.credentials` 改为空列表，其余配置经结构比较保持一致；在 V6 Vault `kv/prod/Accounts-service` 增加 `ACCOUNTS_CONTROLLER_CONFIG_TEMPLATE` 字段，KV v2 版本由 6 变为 7。使用现有 `app-database-reader` SecretStore 同步为 `web-saas-prod/accounts-controller-config`，状态 `SecretSynced`。
+- Accounts Deployment 挂载该模板，继续由镜像原入口渲染配置并使用现有 `INTERNAL_SERVICE_TOKEN` 回退认证。先作现场滚动修复，再通过 [GitOps #771](https://github.com/ai-workspace-infra/gitops/pull/771) 合并并由 Flux 调谐；`web-saas-prod` 和 `ingress-prod` 均应用合并提交 `69afa51a94d96a5bb9cddc8e56b8a68741aae844`，HelmRelease 均 `Ready=True`。
+- JP Agent 事件流恢复，Xray 配置同步显示 12 个客户端；V6 Accounts 用户列表请求返回 200，状态上报返回 204。V6 数据库 `agents` 表对应节点健康心跳已更新，抽查客户端数 12。未修改 JP 节点的 `init.sh`。
+- Console 页面请求 `/api/admin/agents/team-enrollments` 时，旧 Caddy 路由将其原路径交给 Accounts，返回纯文本 404；前端按 JSON 解析产生报错。三个 Console 主机现对该精确路径转发至 Accounts 的 `/api/auth/admin/agents/team-enrollments`。Caddy ConfigMap 更新后执行滚动重启以加载配置；未携带登录态的请求均返回 JSON 格式 401、TLS 校验通过。登录态下的 Team 分配页面与区域池显示仍需由浏览器会话复验。
+- DNS 传播复查：操作端系统解析及 V6 节点对 Accounts/Vault 均已返回 V6 地址，替代下节切换初期的旧缓存观察。
+
+用户提供的操作记录中曾包含 Vault Token 和共享服务 Token。归档不记录其值；应按消费者清单协调轮换和撤销，避免直接停用共享 Token 造成已恢复的 Agent 中断。
+
 ## 最新回执：canonical DNS 切换到 V6（2026-11-03）
 
 用户确认后，已将 7 个 canonical 域名切换到 `prod-k3s-v6`。Cloudflare API 回读确认记录正确；1.1.1.1、8.8.8.8 与 Cloudflare DoH 均已解析至 V6。记录为 DNS-only，未启用代理。控制端及 V6 节点普通系统解析在切换后短时间仍缓存旧 V5 的 Vault/Accounts 地址；DoH 请求已直达 V6，需待旧 TTL 到期后再复查系统解析。
