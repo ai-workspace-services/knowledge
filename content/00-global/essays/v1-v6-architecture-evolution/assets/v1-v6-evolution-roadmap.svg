@@ -1,0 +1,195 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 540" width="1200" height="540">
+  <defs>
+    <style>
+      .title { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; font-size: 26px; font-weight: 700; fill: #0F172A; }
+      .subtitle { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; font-size: 14px; fill: #64748B; }
+      .card-title { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; font-size: 16px; font-weight: 700; fill: #1E293B; }
+      .card-tag { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 11px; font-weight: 600; }
+      .card-desc { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; font-size: 12px; fill: #475569; line-height: 1.5; }
+      .metric-num { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 18px; font-weight: 800; }
+      .metric-label { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; font-size: 11px; fill: #64748B; }
+    </style>
+    <filter id="card-shadow" x="-5%" y="-5%" width="110%" height="115%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#0F172A" flood-opacity="0.06"/>
+    </filter>
+    <linearGradient id="header-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#06B6D4"/>
+    </linearGradient>
+    <linearGradient id="v6-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#EFF6FF"/>
+      <stop offset="100%" stop-color="#F0FDF4"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="540" fill="#F8FAFC" rx="20"/>
+
+  <!-- Top Decorative Bar -->
+  <rect x="0" y="0" width="1200" height="6" fill="url(#header-grad)" rx="3"/>
+
+  <!-- Header Section -->
+  <g transform="translate(50, 45)">
+    <rect x="0" y="2" width="4" height="26" fill="#2563EB" rx="2"/>
+    <text x="16" y="22" class="title">从 V1 到 V6：核心控制面六代演进全景路线图</text>
+    <text x="16" y="44" class="subtitle">在单台 2C4G 极限资源约束下，实现从裸机手工作坊到现代化 GitOps 净室与微内核轻量集群的跃迁</text>
+
+    <!-- Top Stats Badges -->
+    <g transform="translate(850, 5)">
+      <rect x="0" y="0" width="120" height="38" rx="8" fill="#FFFFFF" stroke="#E2E8F0" filter="url(#card-shadow)"/>
+      <text x="60" y="16" text-anchor="middle" class="metric-label">承载用户规模</text>
+      <text x="60" y="32" text-anchor="middle" class="metric-num" fill="#2563EB">370 Users</text>
+
+      <rect x="135" y="0" width="130" height="38" rx="8" fill="#FFFFFF" stroke="#E2E8F0" filter="url(#card-shadow)"/>
+      <text x="200" y="16" text-anchor="middle" class="metric-label">单事务账本规模</text>
+      <text x="200" y="32" text-anchor="middle" class="metric-num" fill="#059669">92.1W+ 条</text>
+    </g>
+  </g>
+
+  <!-- Flow Connecting Line -->
+  <path d="M 140 300 L 1060 300" stroke="#CBD5E1" stroke-width="3" stroke-dasharray="6 6"/>
+
+  <!-- Timeline Cards: V1 to V6 -->
+  <!-- V1 Card -->
+  <g transform="translate(50, 140)">
+    <rect width="165" height="330" rx="14" fill="#FFFFFF" stroke="#E2E8F0" filter="url(#card-shadow)"/>
+    <rect x="14" y="16" width="38" height="20" rx="6" fill="#F1F5F9"/>
+    <text x="33" y="30" text-anchor="middle" class="card-tag" fill="#475569">V1</text>
+    <text x="14" y="60" class="card-title">裸机手工作坊</text>
+    <text x="14" y="80" class="subtitle" style="font-size:12px;">2024~2025</text>
+
+    <line x1="14" y1="95" x2="151" y2="95" stroke="#F1F5F9"/>
+
+    <text x="14" y="120" class="card-desc">• 裸机直接跑进程</text>
+    <text x="14" y="142" class="card-desc">• 手写 Bash 运维</text>
+    <text x="14" y="164" class="card-desc">• 凭据直接明文硬编码</text>
+    <text x="14" y="186" class="card-desc">• 环境严重配置漂移</text>
+
+    <!-- Node Dot -->
+    <circle cx="82" cy="160" r="7" fill="#94A3B8" stroke="#FFFFFF" stroke-width="3"/>
+
+    <rect x="14" y="270" width="137" height="42" rx="8" fill="#FEF2F2"/>
+    <text x="82" y="287" text-anchor="middle" class="card-desc" fill="#DC2626" style="font-weight:600;">核心阵痛</text>
+    <text x="82" y="303" text-anchor="middle" class="card-desc" fill="#991B1B" style="font-size:11px;">单点故障，不可复现</text>
+  </g>
+
+  <!-- V2 Card -->
+  <g transform="translate(230, 140)">
+    <rect width="165" height="330" rx="14" fill="#FFFFFF" stroke="#E2E8F0" filter="url(#card-shadow)"/>
+    <rect x="14" y="16" width="38" height="20" rx="6" fill="#EFF6FF"/>
+    <text x="33" y="30" text-anchor="middle" class="card-tag" fill="#2563EB">V2</text>
+    <text x="14" y="60" class="card-title">单机容器化</text>
+    <text x="14" y="80" class="subtitle" style="font-size:12px;">2026-10-19</text>
+
+    <line x1="14" y1="95" x2="151" y2="95" stroke="#F1F5F9"/>
+
+    <text x="14" y="120" class="card-desc">• Docker Compose</text>
+    <text x="14" y="142" class="card-desc">• 确立不可变构件</text>
+    <text x="14" y="164" class="card-desc">• 每日结构化冷备</text>
+    <text x="14" y="186" class="card-desc">• 经受7重连环断门</text>
+
+    <!-- Node Dot -->
+    <circle cx="82" cy="160" r="7" fill="#3B82F6" stroke="#FFFFFF" stroke-width="3"/>
+
+    <rect x="14" y="270" width="137" height="42" rx="8" fill="#F0FDF4"/>
+    <text x="82" y="287" text-anchor="middle" class="card-desc" fill="#16A34A" style="font-weight:600;">核心突破</text>
+    <text x="82" y="303" text-anchor="middle" class="card-desc" fill="#15803D" style="font-size:11px;">首证零数据丢失自愈</text>
+  </g>
+
+  <!-- V3 Card -->
+  <g transform="translate(410, 140)">
+    <rect width="165" height="330" rx="14" fill="#FFFFFF" stroke="#E2E8F0" filter="url(#card-shadow)"/>
+    <rect x="14" y="16" width="38" height="20" rx="6" fill="#F0FDFA"/>
+    <text x="33" y="30" text-anchor="middle" class="card-tag" fill="#0D9488">V3</text>
+    <text x="14" y="60" class="card-title">异机冷备演练</text>
+    <text x="14" y="80" class="subtitle" style="font-size:12px;">2026-10-20</text>
+
+    <line x1="14" y1="95" x2="151" y2="95" stroke="#F1F5F9"/>
+
+    <text x="14" y="120" class="card-desc">• 异机全量恢复实测</text>
+    <text x="14" y="142" class="card-desc">• 沉淀恢复 Runbook</text>
+    <text x="14" y="164" class="card-desc">• 统一服务 Token</text>
+    <text x="14" y="186" class="card-desc">• Vector P0 入口排障</text>
+
+    <!-- Node Dot -->
+    <circle cx="82" cy="160" r="7" fill="#14B8A6" stroke="#FFFFFF" stroke-width="3"/>
+
+    <rect x="14" y="270" width="137" height="42" rx="8" fill="#F0FDFA"/>
+    <text x="82" y="287" text-anchor="middle" class="card-desc" fill="#0D9488" style="font-weight:600;">核心突破</text>
+    <text x="82" y="303" text-anchor="middle" class="card-desc" fill="#115E59" style="font-size:11px;">不信任未经恢复的备份</text>
+  </g>
+
+  <!-- V4 Card -->
+  <g transform="translate(590, 140)">
+    <rect width="165" height="330" rx="14" fill="#FFFFFF" stroke="#E2E8F0" filter="url(#card-shadow)"/>
+    <rect x="14" y="16" width="38" height="20" rx="6" fill="#FDF4FF"/>
+    <text x="33" y="30" text-anchor="middle" class="card-tag" fill="#A855F7">V4</text>
+    <text x="14" y="60" class="card-title">品牌域与 OTel</text>
+    <text x="14" y="80" class="subtitle" style="font-size:12px;">2026-10-21</text>
+
+    <line x1="14" y1="95" x2="151" y2="95" stroke="#F1F5F9"/>
+
+    <text x="14" y="120" class="card-desc">• 接入 canonical 品牌域</text>
+    <text x="14" y="142" class="card-desc">• 双链路 OTel 追踪</text>
+    <text x="14" y="164" class="card-desc">• 边缘网关流上报</text>
+    <text x="14" y="186" class="card-desc">• P0 自动化回归集</text>
+
+    <!-- Node Dot -->
+    <circle cx="82" cy="160" r="7" fill="#C084FC" stroke="#FFFFFF" stroke-width="3"/>
+
+    <rect x="14" y="270" width="137" height="42" rx="8" fill="#FAF5FF"/>
+    <text x="82" y="287" text-anchor="middle" class="card-desc" fill="#9333EA" style="font-weight:600;">核心突破</text>
+    <text x="82" y="303" text-anchor="middle" class="card-desc" fill="#7E22CE" style="font-size:11px;">正式接流与端到端观测</text>
+  </g>
+
+  <!-- V5 Card -->
+  <g transform="translate(770, 140)">
+    <rect width="165" height="330" rx="14" fill="#FFFFFF" stroke="#E2E8F0" filter="url(#card-shadow)"/>
+    <rect x="14" y="16" width="38" height="20" rx="6" fill="#FEF3C7"/>
+    <text x="33" y="30" text-anchor="middle" class="card-tag" fill="#D97706">V5</text>
+    <text x="14" y="60" class="card-title">2C4G 极限汇聚</text>
+    <text x="14" y="80" class="subtitle" style="font-size:12px;">2026-10-25</text>
+
+    <line x1="14" y1="95" x2="151" y2="95" stroke="#F1F5F9"/>
+
+    <text x="14" y="120" class="card-desc">• K3s all-in-one 架构</text>
+    <text x="14" y="142" class="card-desc">• 控制面降本大决战</text>
+    <text x="14" y="164" class="card-desc">• 引入 Flux v2 GitOps</text>
+    <text x="14" y="186" class="card-desc">• Vault 30角色/11策略</text>
+
+    <!-- Node Dot -->
+    <circle cx="82" cy="160" r="7" fill="#F59E0B" stroke="#FFFFFF" stroke-width="3"/>
+
+    <rect x="14" y="270" width="137" height="42" rx="8" fill="#FFFBEB"/>
+    <text x="82" y="287" text-anchor="middle" class="card-desc" fill="#D97706" style="font-weight:600;">降本收益</text>
+    <text x="82" y="303" text-anchor="middle" class="card-desc" fill="#B45309" style="font-size:11px;">单台 VPS 整合核心面</text>
+  </g>
+
+  <!-- V6 Card (Featured Final) -->
+  <g transform="translate(950, 130)">
+    <rect width="200" height="350" rx="16" fill="url(#v6-grad)" stroke="#3B82F6" stroke-width="2" filter="url(#card-shadow)"/>
+
+    <!-- Top badge -->
+    <rect x="14" y="16" width="68" height="22" rx="6" fill="#2563EB"/>
+    <text x="48" y="31" text-anchor="middle" class="card-tag" fill="#FFFFFF">PROD V6</text>
+
+    <text x="14" y="64" class="card-title" style="font-size:18px; fill:#1E3A8A;">现代生产终态</text>
+    <text x="14" y="84" class="subtitle" style="font-size:12px; color:#3B82F6;">2026-11-03 落地</text>
+
+    <line x1="14" y1="98" x2="186" y2="98" stroke="#BFDBFE"/>
+
+    <text x="14" y="122" class="card-desc" style="font-weight:600; fill:#1E40AF;">• 独立 100GB 数据卷(/data)</text>
+    <text x="14" y="144" class="card-desc" style="font-weight:600; fill:#1E40AF;">• 轻量级三权分立 (主机/K8s/DB)</text>
+    <text x="14" y="166" class="card-desc" style="font-weight:600; fill:#1E40AF;">• FluxCD GitOps 零漂移</text>
+    <text x="14" y="188" class="card-desc" style="font-weight:600; fill:#1E40AF;">• 6 大 Namespace 物理隔离</text>
+    <text x="14" y="210" class="card-desc" style="font-weight:600; fill:#1E40AF;">• 外部观测云 SaaS 集成</text>
+    <text x="14" y="232" class="card-desc" style="font-weight:600; fill:#1E40AF;">• 92W+ 账本单事务晋级</text>
+
+    <!-- Node Dot -->
+    <circle cx="100" cy="170" r="9" fill="#2563EB" stroke="#FFFFFF" stroke-width="4"/>
+
+    <rect x="14" y="275" width="172" height="58" rx="10" fill="#2563EB"/>
+    <text x="100" y="298" text-anchor="middle" class="card-desc" fill="#FFFFFF" style="font-weight:700; font-size:13px;">工业级成熟终态</text>
+    <text x="100" y="318" text-anchor="middle" class="card-desc" fill="#BFDBFE" style="font-size:11px;">安全闭环 · 单向晋级 · 零数据丢失</text>
+  </g>
+</svg>

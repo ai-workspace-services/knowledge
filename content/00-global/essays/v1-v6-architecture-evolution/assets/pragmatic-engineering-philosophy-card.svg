@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 480" width="1200" height="480">
+  <defs>
+    <style>
+      .title { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; font-size: 22px; font-weight: 700; fill: #0F172A; }
+      .subtitle { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; font-size: 13px; fill: #64748B; }
+      .col-header { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; font-size: 16px; font-weight: 700; }
+      .item-bold { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; font-size: 13px; font-weight: 600; }
+      .item-desc { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; font-size: 12px; fill: #475569; line-height: 1.4; }
+      .badge { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 11px; font-weight: 700; }
+    </style>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="115%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="3" stdDeviation="6" flood-color="#0F172A" flood-opacity="0.05"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="480" fill="#F8FAFC" rx="16"/>
+
+  <!-- Header -->
+  <g transform="translate(50, 35)">
+    <rect x="0" y="2" width="4" height="22" fill="#0284C7" rx="2"/>
+    <text x="16" y="18" class="title">实战经验派的工程选型哲学：深度了解前沿，但绝不盲目随波逐流</text>
+    <text x="16" y="38" class="subtitle">拒绝“简历驱动开发” · 以业务确定性与系统韧性为唯一导向 · 2C4G 是最好的奥卡姆剃刀</text>
+  </g>
+
+  <!-- Left: 盲目追新派 (Anti-Pattern) -->
+  <g transform="translate(50, 85)">
+    <rect width="530" height="360" rx="14" fill="#FFFFFF" stroke="#FEE2E2" filter="url(#shadow)"/>
+
+    <!-- Header banner -->
+    <rect x="0" y="0" width="530" height="46" rx="14" fill="#FEF2F2"/>
+    <rect x="16" y="12" width="90" height="22" rx="6" fill="#FCA5A5"/>
+    <text x="61" y="27" text-anchor="middle" class="badge" fill="#991B1B">盲目随波逐流</text>
+    <text x="116" y="28" class="col-header" fill="#DC2626">简历驱动开发 (Hype-Driven)</text>
+
+    <!-- Content Rows -->
+    <g transform="translate(20, 65)">
+      <circle cx="8" cy="14" r="5" fill="#EF4444"/>
+      <text x="22" y="18" class="item-bold" fill="#991B1B">网关层：盲目引入 Traefik + Flagger 金丝雀全家桶</text>
+      <text x="22" y="36" class="item-desc">小流量场景硬上复杂网格，内存暴增 800MB，CRD 复杂度翻倍</text>
+
+      <circle cx="8" cy="74" r="5" fill="#EF4444"/>
+      <text x="22" y="78" class="item-bold" fill="#991B1B">观测层：本地强行自建 Prometheus + ES + Loki</text>
+      <text x="22" y="96" class="item-desc">单机 4GB 内存被监控组件吃掉 3GB，业务容器三天两头被 OOM 击杀</text>
+
+      <circle cx="8" cy="134" r="5" fill="#EF4444"/>
+      <text x="22" y="138" class="item-bold" fill="#991B1B">特性支持：遇到单节点不兼容，直接推倒搞“多虚拟节点”</text>
+      <text x="22" y="156" class="item-desc">在迁移关键期随意膨胀系统边界，引入更多未经验证的未知变量</text>
+
+      <circle cx="8" cy="194" r="5" fill="#EF4444"/>
+      <text x="22" y="198" class="item-bold" fill="#991B1B">交付体系：沉迷于大而全但脆弱的复杂流水线</text>
+      <text x="22" y="216" class="item-desc">一出问题需要排查 20 个关联插件，凌晨排错犹如大海捞针</text>
+
+      <rect x="0" y="240" width="490" height="34" rx="8" fill="#FEF2F2"/>
+      <text x="245" y="261" text-anchor="middle" class="item-bold" fill="#DC2626" style="font-size:12px;">代价：账单虚高、排障极难、复杂度失控、系统脆弱</text>
+    </g>
+  </g>
+
+  <!-- Right: 实战经验派 (Pragmatic Engineering) -->
+  <g transform="translate(620, 85)">
+    <rect width="530" height="360" rx="14" fill="#FFFFFF" stroke="#BBF7D0" filter="url(#shadow)"/>
+
+    <!-- Header banner -->
+    <rect x="0" y="0" width="530" height="46" rx="14" fill="#F0FDF4"/>
+    <rect x="16" y="12" width="80" height="22" rx="6" fill="#86EFAC"/>
+    <text x="56" y="27" text-anchor="middle" class="badge" fill="#14532D">实战经验派</text>
+    <text x="106" y="28" class="col-header" fill="#15803D">以终为始 · 一切从实用出发</text>
+
+    <!-- Content Rows -->
+    <g transform="translate(20, 65)">
+      <circle cx="8" cy="14" r="5" fill="#10B981"/>
+      <text x="22" y="18" class="item-bold" fill="#14532D">网关层：坚持 K3s ServiceLB + Caddy 极简反代</text>
+      <text x="22" y="36" class="item-desc">自动管理 Let's Encrypt，内存仅占 30MB，稳定支撑 7 大子域</text>
+
+      <circle cx="8" cy="74" r="5" fill="#10B981"/>
+      <text x="22" y="78" class="item-bold" fill="#14532D">观测层：轻量 Datakit 探针 + 外部观测云 SaaS</text>
+      <text x="22" y="96" class="item-desc">仅占 180Mi 内存，获得企业级秒级拓扑、长期存储与智能告警</text>
+
+      <circle cx="8" cy="134" r="5" fill="#10B981"/>
+      <text x="22" y="138" class="item-bold" fill="#14532D">特性支持：克制克制再克制，复用已合并单节点代码</text>
+      <text x="22" y="156" class="item-desc">用一个轻量的 custom 等级补丁精准解决 US 节点接入，零架构冗余</text>
+
+      <circle cx="8" cy="194" r="5" fill="#10B981"/>
+      <text x="22" y="198" class="item-bold" fill="#14532D">交付体系：Playbooks 初始化 + FluxCD GitOps 闭环</text>
+      <text x="22" y="216" class="item-desc">声明式版本锁定，所有排障沉淀为不可变 PR，自愈且无环境漂移</text>
+
+      <rect x="0" y="240" width="490" height="34" rx="8" fill="#F0FDF4"/>
+      <text x="245" y="261" text-anchor="middle" class="item-bold" fill="#15803D" style="font-size:12px;">收益：2C4G 稳定承载 92W 账本、内存富余、自愈高韧性</text>
+    </g>
+  </g>
+</svg>
