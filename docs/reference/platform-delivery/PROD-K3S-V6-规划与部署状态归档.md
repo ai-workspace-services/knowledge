@@ -7,6 +7,7 @@ canonical DNS 切换后，JP Edge Agent 请求已到达 V6 Accounts，但用户�
 - 从 V6 现有镜像模板生成配置，只将 `agents.credentials` 改为空列表，其余配置经结构比较保持一致；在 V6 Vault `kv/prod/Accounts-service` 增加 `ACCOUNTS_CONTROLLER_CONFIG_TEMPLATE` 字段，KV v2 版本由 6 变为 7。使用现有 `app-database-reader` SecretStore 同步为 `web-saas-prod/accounts-controller-config`，状态 `SecretSynced`。
 - Accounts Deployment 挂载该模板，继续由镜像原入口渲染配置并使用现有 `INTERNAL_SERVICE_TOKEN` 回退认证。先作现场滚动修复，再通过 [GitOps #771](https://github.com/ai-workspace-infra/gitops/pull/771) 合并并由 Flux 调谐；`web-saas-prod` 和 `ingress-prod` 均应用合并提交 `69afa51a94d96a5bb9cddc8e56b8a68741aae844`，HelmRelease 均 `Ready=True`。
 - JP Agent 事件流恢复，Xray 配置同步显示 12 个客户端；V6 Accounts 用户列表请求返回 200，状态上报返回 204。V6 数据库 `agents` 表对应节点健康心跳已更新，抽查客户端数 12。未修改 JP 节点的 `init.sh`。
+- Xray 的 OCSP 警告来自所用证书缺少 OCSP responder URI；现场证书检查显示签发者为 Let's Encrypt YE2，有效期至 2027-01-05。该日志表示无法按该证书执行 OCSP 检查，不能单独据此判定 TLS 连接失败；本次未完成真实客户端代理链路验收。
 - Console 页面请求 `/api/admin/agents/team-enrollments` 时，旧 Caddy 路由将其原路径交给 Accounts，返回纯文本 404；前端按 JSON 解析产生报错。三个 Console 主机现对该精确路径转发至 Accounts 的 `/api/auth/admin/agents/team-enrollments`。Caddy ConfigMap 更新后执行滚动重启以加载配置；未携带登录态的请求均返回 JSON 格式 401、TLS 校验通过。登录态下的 Team 分配页面与区域池显示仍需由浏览器会话复验。
 - DNS 传播复查：操作端系统解析及 V6 节点对 Accounts/Vault 均已返回 V6 地址，替代下节切换初期的旧缓存观察。
 
