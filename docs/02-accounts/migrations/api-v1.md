@@ -1,5 +1,10 @@
 # Migration API v1
 
+For reuse of existing Accounts administrator tokens, see
+[Accounts-authenticated migration](accounts-auth.md). The dedicated migration
+JWT signing/token examples below describe the retained legacy mode; they are
+not required in Accounts-authenticated mode.
+
 Task: accepted migration API/CLI implementation, 2026-10-23.
 
 This is an opt-in, separate `migratectl serve` listener. Existing Accounts API,
@@ -53,6 +58,12 @@ primary-key content conflicts return a persisted HTTP 200 preview with
 `state=conflict`, nonzero `conflict_rows` and no apply eligibility. No identifying
 values or driver errors are returned. Authentication errors are 401/403, expired
 objects 410, malformed/oversized JSON requests 400, unsupported endpoints 404/405.
+For a PostgreSQL unique-key collision while comparing source and target facts,
+preview returns HTTP 409 with `target_unique_conflict` and the reviewed table
+name. It does not return the conflicting values, keys or raw database error.
+Other preview failures keep the generic refusal; neither response is an approved
+plan or authorizes a write. The client accepts this detail only for a reviewed
+table and otherwise reports the HTTP status without echoing the response body.
 A busy listener returns 503; retry the same request IDs. Only missing chunk
 downloads have a bounded automatic retry (at most two attempts); mutation requests
 are not automatically retried. Authenticated requests are also rate limited per
@@ -236,3 +247,24 @@ databases. They do not read any application DSN or use existing service database
 Deployment integration is a separate commit. Neither this API nor its CLI stops
 writers, changes traffic, deploys, merges or approves a cutover. Operators must
 retain independently verified backups before applying to an existing target.
+
+## Reviewed predecessor source checkpoint
+
+The source listener may capture the reviewed `2026102002` predecessor in an
+explicit read-only transaction. This exception is source-only: target preview
+and apply retain the current native checkpoint guard. It does not change either
+database's migration version or relax source role, RLS, column/type, projection,
+full-row hash, conflict, or backup checks. The extended referral tables absent
+from that predecessor are accepted only through the existing optional-table
+contract; unknown columns and dirty or other unreviewed versions still fail.
+
+To qualify against the immutable predecessor artifact, export
+`sql/init/accounts-native.sql` from commit
+`b1ea07695b448c6527eb612d0cd7e0dba41c0e03` to a local file. The test checks SHA-256
+`f45db2423f11d9dcc7f3cc58c72b52228a27d7b6ccfc717faf2bbb56fa0498b1` before using it.
+With an isolated loopback PG17 fixture, set `MIGRATECTL_API_PREDECESSOR_SQL` to
+that file and `MIGRATECTL_API_TEST_DSN` to the fixture's `postgres` database, then
+run `go test ./internal/migrate -run '^TestMigrationAPIPredecessorArtifact$'`.
+It creates random fixture databases, copies synthetic user/subscription/quota
+records to the current target, checks preserved identities and exact >2^53 quota,
+and drops only its new fixture databases. No production DSN or rows are used.
