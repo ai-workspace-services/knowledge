@@ -1,5 +1,25 @@
 # PROD-K3S-V6 独立节点、集群冷启动规划与部署状态归档
 
+## 最新回执：单节点 Custom 恢复及 Accounts/Console 更新（2026-11-03）
+
+US 单节点配置为 `resourceClass: custom`、三人邮箱名单、`customAllowFree: true`，但 V6 旧 Accounts 镜像返回 `400 agent_scope_invalid`，允许等级列表中缺少 custom。已核对历史实现和最新 main：这些单节点能力已有代码，本轮通过版本更新交付，未启用多虚拟节点。
+
+| 服务 | 固定来源提交 | 部署 digest | 交付 |
+| --- | --- | --- | --- |
+| Accounts | `bc32fac4846cea5281e9e764c5224a581dff1ed1` | `sha256:f57e46a2624f554b92bd4983aede203c5cfcb0d2b83f3be33836cc715ec6eed4` | [GitOps #772](https://github.com/ai-workspace-infra/gitops/pull/772) |
+| Console | `32695533eeb39f1af351cc3b4876aa9d23150c62` | `sha256:5ee55a96a8184074ea4186cf38b426a0d368b686866afc345d2991b0eb02e8b9` | [GitOps #773](https://github.com/ai-workspace-infra/gitops/pull/773) |
+
+Accounts 镜像 OCI revision 与来源提交一致，Console 构件的 SLSA provenance 包含其来源提交。使用现有固定构件，手动触发 Flux 调谐；本次未派发构建或部署流水线。Console 显式使用 V6 Accounts Service 作为运行认证/Zero 地址，并从同一固定镜像引用设置 `FRONTEND_IMAGE`，避免沿用镜像内 Cloud Run 默认认证地址。
+
+执行前取得 V6 `account` 一致性 pg_dump，并仅在内存处理明文后加密保存；密文 SHA-256 为 `11b00a96cfd9d0a8606c9ea496283e2d921a4404f7b4abda0b0a190add49f0af`，归档目录可读取验证通过，**本轮未作完整恢复演练**。受限备份目录为操作端 `accounts-migration/backups/v6-pre-latest-20261103T014352Z/`。保留两服务旧 digest 作为应用版本回退点。
+
+验收结果：
+
+- Accounts 的 API、Agent registry 回归测试通过，包括 Custom Free opt-in 和私有区域可见性规则；Console 区域筛选与 Team 分配 12 项测试通过。
+- US 事件流恢复，持续同步 3 个客户端。使用相同节点身份与配置查询 V6，HTTP 200，scope 为 custom、`customAllowFree=true`；下发邮箱集合与节点三人名单完全一致，名单外为 0，未输出 token、代理 UUID 或邮箱值。US 节点配置及初始化脚本未修改。
+- Accounts `/api/ping` 与 Console `/healthz` 报告的镜像和提交均匹配表中固定构件；Console `/panel`、`/login` 均 HTTP 200，TLS 校验通过。两个 Pod 均 Ready、0 重启，HelmRelease Ready，Flux 应用提交 `16b4bc8f419debfd70fbcd2c7920825cadcc543e` 且健康检查通过；JP 仍同步 12 个客户端。
+- 已请求使用名单内账号刷新浏览器核对 US 区域显示。登录态页面可见性与真实代理流量尚待用户会话复验；服务端名单检查和源代码授权回归不能替代该结果。
+
 ## 生命周期变更：解除 V5 删除保护（2026-11-03）
 
 用户明确授权后，使用已认证的 Linode CLI 核对 `web-saas-k3s-v5` 实例及其 `cannot_delete_with_subresources` 资源锁，随后仅删除该锁。回读确认 V5 无剩余资源锁、实例仍为 `running`；`prod-k3s-v6` 的 `cannot_delete` 保护锁保持原状。本次授权和执行范围为解除保护，未删除、重建或关闭实例，也未清理磁盘、备份或 DNS。
