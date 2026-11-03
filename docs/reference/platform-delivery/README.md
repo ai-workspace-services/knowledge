@@ -12,12 +12,14 @@
 
 本组先交付独立文档，完整记录用户确认的方案；尚未执行面板恢复、数据库迁移或客户功能上线。上文 V6 基础服务和入口切换完成，不代表本专项的 Grafana 面板完整性或租户隔离已验收。需求与文档交付由 [Knowledge #351](https://github.com/ai-workspace-services/knowledge/issues/351) 跟踪。
 
+后续现场与修复（2026-11-03）：V5 保留 21 个面板、V6 原为 0，已由 [GitOps #775](https://github.com/ai-workspace-infra/gitops/pull/775) 恢复全部 21 个 UID，并经公网登录态 API 核对；部分代表指标仍为空，完整图表数据及客户隔离未验收。PostgreSQL 方案已澄清为可共用业务实例、独立 `grafana` 数据库与账户。见[恢复回执](Grafana面板丢失排查与恢复规划.md#75-随后执行的最小恢复与结果)。
+
 | 文档 | 内容 |
 | --- | --- |
 | [完整规划总述](Pro-Custom与Grafana升级完整规划.md) | 完整保留决策、V5/V6 固定源码证据、存储分层、GitOps、恢复、隔离、四页面及验收 |
 | [Pro Custom 专属资源工作台](Pro-Custom专属资源工作台规划.md) | 功能边界、权益与归属、创建任务、资源列表、Grafana 入口和密钥占位 |
-| [Grafana 独立 PostgreSQL 与 GitOps 持久化](Grafana独立PostgreSQL与GitOps持久化规划.md) | 数据生命周期、身份、面板发布契约、备份演练和 SQLite 迁移 |
-| [Grafana 面板丢失排查与恢复](Grafana面板丢失排查与恢复规划.md) | 已核实声明缺口、假设、只读排查、恢复来源和运行验收 |
+| [Grafana 独立 PostgreSQL 与 GitOps 持久化](Grafana独立PostgreSQL与GitOps持久化规划.md) | 可共用业务 PostgreSQL 实例、独立 grafana 数据库与账户，数据生命周期、发布、备份和 SQLite 迁移 |
+| [Grafana 面板丢失排查与恢复](Grafana面板丢失排查与恢复规划.md) | 声明与现场差异：V5 保留 21 个 Dashboard，V6 为 0；迁移缺项、恢复来源和运行验收 |
 | [Grafana 租户隔离与 Portal 嵌入](Grafana租户隔离与Portal嵌入规划.md) | 客户组织、受限数据源、指标归属、同源认证和跨租户拒绝测试 |
 | [分阶段交付与验收](Pro-Custom与Grafana分阶段交付验收规划.md) | 仓库 owner、阶段依赖、验收矩阵、回执、观察与回退 |
 
