@@ -62,7 +62,7 @@ VAULT_ADDR=https://vault-selfhost-prod-v6.svc.plus vault status
 
 已新增 `vault-selfhost-prod-v6.svc.plus A 172.237.24.232`，TTL 300、DNS-only；复用 create-only Ansible 操作，Vault 中读取 Cloudflare 凭据，任务 no_log。Cloudflare 回读通过，canonical 前后快照相同。执行材料为 `/Users/shenlan/workspaces/ai-workspace-infra/handoffs/v6-vault-dns-20261103/`，其中 `configure-receipt.json`、`canonical-before.json`、`canonical-after.json` 均为脱敏记录。
 
-公网 DoH 与 V6 节点上，不带 `--resolve`、不带 `-k` 访问该域名，均正常跳转 `/ui/` 并返回 HTTP 200、TLS 校验 0、remote IP `172.237.24.232`。操作端系统解析器可能仍缓存此前 NXDOMAIN，应区分公共 DNS 生效与本机负缓存。
+公网 DoH 与 V6 节点上，不带 `--resolve`、不带 `-k` 访问该域名，均正常跳转 `/ui/` 并返回 HTTP 200、TLS 校验 0、remote IP `172.237.24.232`。操作端 Mac 上已复现：`dig` 返回正确 A 记录，但系统 `getaddrinfo` 与普通 curl 仍解析失败，Chrome 为 `ERR_NAME_NOT_RESOLVED`；系统解析绑定 VPN utun6。DoH 与 V6 节点正常，尚不能宣称该 Mac 浏览器已恢复。无 sudo 的 `dscacheutil -flushcache` 无效，`sudo -n` 返回需要密码；系统 DNS 守护进程刷新须由本机管理员执行 `sudo dscacheutil -flushcache` 和 `sudo killall -HUP mDNSResponder` 后再复验，未改 hosts、VPN 或浏览器安全策略。
 
 用户选定的后续切换方式：`xworktech.com` 使用 A 指向 V6 节点；`console/accounts/billing/vault/observability/postgresql.svc.plus` 使用 CNAME 指向对应 `*-selfhost-prod-v6.svc.plus`。当前只创建 Vault 批次 A 记录，**尚未切换这些 canonical 名称**；Observability/PostgreSQL 的批次名称此前仍 NXDOMAIN，需要先交付。PostgreSQL 不是 HTTP/HTTPS 站点，数据库或 TLS 隧道验收单独进行。
 
