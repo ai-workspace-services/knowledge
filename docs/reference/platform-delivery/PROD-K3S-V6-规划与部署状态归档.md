@@ -26,7 +26,7 @@ Accounts、Billing 已恢复各 1 副本并通过 rollout，四个业务 Pod 均
 
 提交前另保存并恢复最新空目标备份 `v6-final-empty-20261103T000222Z-3b9daaf6-6470-4d20-bc49-825583474435`，密文 `8310ea3f7fafaa15e00966b146faebe330a16e65577ad06aee2dfe6cfc06813a`。包含 owner/ACL 的恢复执行成功，以迁移身份读得恢复数据基线 `2f9b8f3b4d3e2fa1c53ec7ccf89c5e37214471a84e5fd518bccd63eb0a7c75c1`，与审核计划一致；恢复环境全函数 schema 指纹与目标不同，未宣称全 catalog 指纹相同。该备份是导入前回退点，**导入后的有数据恢复演练仍待补充**。
 
-旧空库计划曾返回 409：实查目标实例及数据基线一致，但初始化迁移 helper 后 schema 指纹已变化，故拒绝发生在写入前；重新预览后才提交。另一次启动因 fsGroup 将备份证明改为 0660 失败，[GitOps #767](https://github.com/ai-workspace-infra/gitops/pull/767) 已补齐 initContainer 恢复指定证明文件 0600 的行为。实际提交窗口见 [#766](https://github.com/ai-workspace-infra/gitops/pull/766)；提交和精确重试成功后，[#770](https://github.com/ai-workspace-infra/gitops/pull/770) 已移除一次性启动证明参数并完成 listener 滚动更新，避免证明到期阻塞服务重启。已提交回执的状态读取与重试保留；后续新增写入需重新绑定当前备份和预览。
+旧空库计划曾返回 409：实查目标实例及数据基线一致，但初始化迁移 helper 后 schema 指纹已变化，故拒绝发生在写入前；重新预览后才提交。另一次启动因 fsGroup 将备份证明改为 0660 失败，[GitOps #767](https://github.com/ai-workspace-infra/gitops/pull/767) 已补齐 initContainer 恢复指定证明文件 0600 的行为。实际提交窗口见 [#766](https://github.com/ai-workspace-infra/gitops/pull/766)；提交和精确重试成功后，[#770](https://github.com/ai-workspace-infra/gitops/pull/770) 已移除一次性启动证明参数并完成 listener 滚动更新，避免证明到期阻塞服务重启。已提交回执的状态读取与重试保留；后续新增写入需重新绑定当前备份和预览。 listener 滚动更新后再次使用脚本读取同一计划，确认仍返回 `state=applied`。
 
 ### operator 权限与剩余验收
 
