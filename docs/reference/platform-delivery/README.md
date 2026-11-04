@@ -36,6 +36,10 @@
 
 ## 当前执行交接与代际演进
 
+- [本机 QMD 跨 Code APP 接力与 Knowledge 向量归档](本机QMD跨CodeAPP接力与Knowledge向量归档.md) — 本机免密任务读写、同一线程接力、Ollama embedding 和归档后检索验收。
+
+- [Antigravity：21 个 Grafana 面板数据流检查与修复提示词](Antigravity-21个Grafana面板数据流检查与修复提示词.md) — 三个 Agent Proxy 与 V6、五组 sub-agent、Dashboard 模型保护、逐 panel 数据验收及 Knowledge → QMD 归档检索流程。
+
 - [PROD V5 → V6 复盘与演进总述](../../../content/02-iac-devops/cloud-infrastructure-devsecops-baseline/18-prod-v5-v6-deployment-and-migration-retrospective.zh.md) — 总体叙事、架构对照、三幅拓扑图与复盘经验。
 - [控制面代际迁移标准化运行手册](../../../content/02-iac-devops/cloud-infrastructure-devsecops-baseline/records/prod-v5-v6-20261103/migration-runbook.zh.md) — 标准化 7 阶段迁移与恢复操作手册。
 - [V6 ServiceLB、Caddy 与 Datakit 修复提示词](PROD-K3S-V6-ServiceLB-Caddy与Datakit修复提示词.md) — 历史现场排障参考。
