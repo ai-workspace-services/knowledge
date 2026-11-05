@@ -31,17 +31,17 @@
 
 ## 二、SIT-K3S-V6 环境分配的域名规划与路由映射
 
-严格执行生产零触碰原则（严禁修改或污染生产权威 DNS `*.svc.plus`），SIT 环境统一以 **`onwalk.net`** 为基础根域名（采用 `*.sit.onwalk.net` 为规范主域名），并同时保留 `*-sit.onwalk.net` 兼容别名：
+严格执行生产零触碰原则（严禁修改或污染生产权威 DNS `*.svc.plus`），SIT 环境统一以 **`onwalk.net`** 为基础根域名。为彻底避免三级子域名（多级嵌套）导致的泛域名证书跨级不匹配及解析复杂度，全平台统一微调采用直属二级子域 **`*-sit.onwalk.net`** 作为规范主域名，全面适配 `*.onwalk.net` 通配符证书，并平滑保留旧域名兼容别名：
 
-| 访问服务 | 规范主域名 (Primary) | 兼容别名 (Aliases) | 后端转发目标服务 | 协议 / 端口 | 说明 |
+| 访问服务 | 规范主域名 (Primary - 直属二级子域) | 兼容别名 (Aliases) | 后端转发目标服务 | 协议 / 端口 | 说明 |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **全量可观测控制台** | `http://grafana.sit.onwalk.net` | `grafana-sit.onwalk.net` | `observability-observability-stack:3000` | HTTP / 80 | 完整访问所有平台、数据库、系统 21 个监控面板 |
-| **AI 基础设施运维代理**| `http://mcp.sit.onwalk.net` | `mcp-sit.onwalk.net` | `infrastructure-mcp-server:8080` | HTTP / 80 | 提供 MCP 规范的 Agent 工具调用入口 |
-| **Web SaaS 基线前端** | `http://app.sit.onwalk.net` | `console.sit.onwalk.net`<br/>`app-sit.onwalk.net` | `web-saas-console:80` | HTTP / 80 | 常驻测试基线界面 |
-| **Web SaaS 统一 API** | `http://app.sit.onwalk.net/api/*`<br/>`http://accounts.sit.onwalk.net` | `accounts-sit.onwalk.net` | `web-saas-accounts:80` | HTTP / 80 | 账户、认证与会话后端接口 |
-| **Web SaaS 计费接口** | `http://billing.sit.onwalk.net` | `billing-sit.onwalk.net` | `web-saas-billing:80` | HTTP / 80 | 计费与订阅后端接口 |
-| **Per-Feature 特性泳道**| `http://feat-<pr_id>.sit.onwalk.net` | `feat-<pr_id>-sit.onwalk.net` | `web-saas-console.feature-<pr_id>-sit:80` | HTTP / 80 | 动态拉取的独立 PR 验证环境 |
-| **网关健康检查** | `http://172.237.9.58/healthz` | `http://172.237.9.58/` (Ready探针) | Caddy 本地内置响应 | HTTP / 80 | 返回 HTTP 200 "ok" / "SIT Platform Gateway Ready" |
+| **全量可观测控制台** | `https://grafana-sit.onwalk.net` | `grafana.sit.onwalk.net` | `observability-observability-stack:3000` | HTTPS 443 / HTTP 80 | 完整访问所有平台、数据库、系统 21 个监控面板 |
+| **AI 基础设施运维代理**| `https://mcp-sit.onwalk.net` | `mcp.sit.onwalk.net` | `infrastructure-mcp-server:8080` | HTTPS 443 / HTTP 80 | 提供 MCP 规范的 Agent 工具调用入口 |
+| **Web SaaS 控制台前端**| `https://console-sit.onwalk.net` | `app-sit.onwalk.net`<br/>`console.sit.onwalk.net`<br/>`app.sit.onwalk.net` | `web-saas-console:80` | HTTPS 443 / HTTP 80 | Web SaaS 控制台测试基线界面 |
+| **Web SaaS 统一 API** | `https://accounts-sit.onwalk.net` | `accounts.sit.onwalk.net` | `web-saas-accounts:80` | HTTPS 443 / HTTP 80 | 账户、认证与会话后端接口 |
+| **Web SaaS 计费接口** | `https://billing-sit.onwalk.net` | `billing.sit.onwalk.net` | `web-saas-billing:80` | HTTPS 443 / HTTP 80 | 计费与订阅后端接口 |
+| **Per-Feature 特性泳道**| `https://feat-<pr_id>-sit.onwalk.net` | `feat-<pr_id>.sit.onwalk.net` | `web-saas-console.feature-<pr_id>-sit:80` | HTTPS 443 / HTTP 80 | 动态拉取的独立 PR 验证环境 |
+| **网关健康检查** | `http://172.237.9.58/healthz` | `http://172.237.9.58/` (Ready探针) | Caddy 本地内置响应 | HTTP 80 / HTTPS 443 | 返回 HTTP 200 "ok" / "SIT Platform Gateway Ready" |
 
 ---
 
@@ -277,18 +277,20 @@ gitops/
 * **PostgreSQL (1/1 Running)**：PostgreSQL 17 + `postgres-exporter` 正常运行，配置 `appArmorProfile: { type: Unconfined }` 规避 Linux 7.3 内核信号阻断。
 * **Web SaaS (4/4 Pod Running)**：Accounts + Billing + Console + Content 全部正常运行，响应 `/healthz`、`/api/ping`。
 
-### 3. HTTP 路由端到端实测验证 (`onwalk.net` 规范域名 100% 验证通过)
+### 3. HTTP 路由端到端实测验证 (`*-sit.onwalk.net` 规范主域名 100% 验证通过)
 * `curl -sI http://172.237.9.58/` $\rightarrow$ **HTTP 200 OK** (`SIT Platform Gateway Ready`)
-* `curl -sI -H 'Host: app.sit.onwalk.net' http://172.237.9.58/` $\rightarrow$ **HTTP 200 OK** (Web SaaS Console 前端完整渲染)
-* `curl -s -o /dev/null -w "%{http_code}" -H 'Host: accounts.sit.onwalk.net' http://172.237.9.58/healthz` $\rightarrow$ **HTTP 200 OK** (Accounts 认证服务就绪)
-* `curl -sI -H 'Host: billing.sit.onwalk.net' http://172.237.9.58/api/ping` $\rightarrow$ **HTTP 200 OK** (Billing 结算服务就绪)
-* `curl -sI -H 'Host: grafana.sit.onwalk.net' http://172.237.9.58/login` $\rightarrow$ **HTTP 200 OK** (Grafana 13.2.4 控制台就绪)
-* `curl -s -H 'Host: mcp.sit.onwalk.net' http://172.237.9.58/healthz` $\rightarrow$ **HTTP 200 OK** (`{"service":"infrastructure-mcp-server","status":"healthy"}`)
-* `curl -sI -H 'Host: console.sit.onwalk.net' http://172.237.9.58/` $\rightarrow$ **HTTP 200 OK** (别名访问就绪)
-* `curl -sI -H 'Host: accounts-sit.onwalk.net' http://172.237.9.58/healthz` $\rightarrow$ **HTTP 200 OK** (别名访问就绪)
+* `curl -sI -H 'Host: console-sit.onwalk.net' http://172.237.9.58/` $\rightarrow$ **HTTP 200 OK** (Web SaaS Console 前端完整渲染)
+* `curl -s -o /dev/null -w "%{http_code}" -H 'Host: accounts-sit.onwalk.net' http://172.237.9.58/healthz` $\rightarrow$ **HTTP 200 OK** (Accounts 认证服务就绪)
+* `curl -s -o /dev/null -w "%{http_code}" -H 'Host: billing-sit.onwalk.net' http://172.237.9.58/healthz` $\rightarrow$ **HTTP 200 OK** (Billing 结算服务就绪)
+* `curl -sI -H 'Host: grafana-sit.onwalk.net' http://172.237.9.58/login` $\rightarrow$ **HTTP 200 OK** (Grafana 13.2.4 控制台就绪)
+* `curl -s -H 'Host: mcp-sit.onwalk.net' http://172.237.9.58/healthz` $\rightarrow$ **HTTP 200 OK** (`{"service":"infrastructure-mcp-server","status":"healthy"}`)
+* `curl -sI -H 'Host: app-sit.onwalk.net' http://172.237.9.58/` $\rightarrow$ **HTTP 200 OK** (别名访问就绪)
+* `curl -sI -H 'Host: console.sit.onwalk.net' http://172.237.9.58/` $\rightarrow$ **HTTP 200 OK** (旧域名兼容别名就绪)
 
 ### 4. HTTPS / TLS 证书与 ESO 对账实测验证 (`console-tls` 证书加载 100% 验证通过)
 * **ESO 对账状态**：`kubectl get externalsecret -n ingress-sit` $\rightarrow$ `console-tls`, `accounts-tls`, `billing-tls` 全部处于 **`STATUS: SecretSynced`** 与 **`READY: True`**。
-* **TLS 握手实测**：`curl -ksI https://172.237.9.58/ --resolve 'console.sit.onwalk.net:443:172.237.9.58'` $\rightarrow$ **HTTP/2 200 OK** (ALPN h2, TLSv1.3, Server Certificate: `CN=*.sit.onwalk.net`)。
-* **业务前端 TLS 实测**：`curl -ksI https://172.237.9.58/ --resolve 'app.sit.onwalk.net:443:172.237.9.58'` $\rightarrow$ **HTTP/2 200 OK**。
-* **认证服务 TLS 实测**：`curl -ksI https://172.237.9.58/ --resolve 'accounts.sit.onwalk.net:443:172.237.9.58'` $\rightarrow$ **HTTP/2 200 OK**。
+* **TLS 握手实测 (主控制台)**：`curl -ksI https://172.237.9.58/ --resolve 'console-sit.onwalk.net:443:172.237.9.58'` $\rightarrow$ **HTTP/2 200 OK** (ALPN h2, TLSv1.3, Server Certificate: `CN=*.onwalk.net`)。
+* **认证服务 TLS 实测**：`curl -ksI https://172.237.9.58/healthz --resolve 'accounts-sit.onwalk.net:443:172.237.9.58'` $\rightarrow$ **HTTP/2 200 OK**。
+* **计费服务 TLS 实测**：`curl -ksI https://172.237.9.58/healthz --resolve 'billing-sit.onwalk.net:443:172.237.9.58'` $\rightarrow$ **HTTP/2 200 OK**。
+* **监控看板 TLS 实测**：`curl -ksI https://172.237.9.58/login --resolve 'grafana-sit.onwalk.net:443:172.237.9.58'` $\rightarrow$ **HTTP/2 200 OK**。
+* **MCP 运维网关 TLS 实测**：`curl -ksI https://172.237.9.58/healthz --resolve 'mcp-sit.onwalk.net:443:172.237.9.58'` $\rightarrow$ **HTTP/2 200 OK**。
