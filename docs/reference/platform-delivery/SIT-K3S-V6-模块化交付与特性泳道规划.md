@@ -14,7 +14,7 @@
 | # | HelmRelease 名称 | 部署命名空间 | 模块分层 | 对应 Chart 来源 | 职责定位与能力边界 |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **1** | **`external-secrets`** | `external-secrets` | 基础凭据层 | `external-secrets/external-secrets` | 集群通用凭据代理，自动同步本地 SecretStore / 外部 Vault |
-| **2** | **`caddy-ingress`** | `ingress-sit` | 基础网关层 | `distributed-web-saas-fullstack` (caddy 组件) | 共享网关接收入口流量，处理 nip.io 泛解析与子域名分发 |
+| **2** | **`caddy-ingress`** | `ingress-sit` | 基础网关层 | `distributed-web-saas-fullstack` (caddy 组件) | 共享网关接收入口流量，处理 `onwalk.net` 主域名路由、别名及 nip.io 降级解析 |
 | **3** | **`postgresql`** | `postgresql-sit` | 平台服务层 | `distributed-web-saas-fullstack` (pg 组件) | 独立数据库，内建三权分立账户与业务连接 |
 | **4** | **`observability`** | `observability-sit` | 平台服务层 | `observability-stack-chart` (VM+Grafana) | 全量可观测协议栈，承接全部 21 个生产 Grafana 面板 |
 | **5** | **`observability-agent`**| `observability-sit` | 平台服务层 | `observability-agent` (kube-state-metrics) | 负责 Kubernetes 节点、容器指标与状态收集 |
@@ -30,16 +30,17 @@
 
 ## 二、SIT-K3S-V6 环境分配的域名规划与路由映射
 
-严格执行生产零触碰原则（严禁修改或污染生产公网 DNS），统一采用轻量开箱即用的通配解析域名 `*.172.237.9.58.nip.io`：
+严格执行生产零触碰原则（严禁修改或污染生产权威 DNS `*.svc.plus`），SIT 环境统一以 **`onwalk.net`** 为基础根域名（采用 `*.sit.onwalk.net` 为规范主域名），并同时保留 `*-sit.onwalk.net` 及开箱即用的通配 IP 解析 `*.172.237.9.58.nip.io` 作为开发/排障降级别名：
 
-| 访问服务 | 分配域名 | 后端转发目标服务 | 协议 / 端口 | 说明 |
-| :--- | :--- | :--- | :--- | :--- |
-| **全量可观测控制台** | `http://grafana.172.237.9.58.nip.io` | `observability-observability-stack:3000` | HTTP / 80 | 完整访问所有平台、数据库、系统看板 |
-| **AI 基础设施运维代理**| `http://mcp.172.237.9.58.nip.io` | `infrastructure-mcp-server:8080` | HTTP / 80 | 提供 MCP 规范的 Agent 工具调用入口 |
-| **Web SaaS 基线前端** | `http://app.172.237.9.58.nip.io` | `web-saas-console:80` | HTTP / 80 | 常驻测试基线界面 |
-| **Web SaaS 统一 API** | `http://app.172.237.9.58.nip.io/api/*`| `web-saas-accounts:80` | HTTP / 80 | 账户、认证与会话后端接口 |
-| **Per-Feature 特性泳道**| `http://feat-<pr_id>.172.237.9.58.nip.io` | `web-saas-console.feature-<pr_id>-sit:80` | HTTP / 80 | 动态拉取的独立 PR 验证环境 |
-| **网关健康检查** | `http://172.237.9.58/healthz` | Caddy 本地内置响应 | HTTP / 80 | 返回 HTTP 200 "ok" |
+| 访问服务 | 规范主域名 (Primary) | 兼容别名 (Aliases / Fallback) | 后端转发目标服务 | 协议 / 端口 | 说明 |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **全量可观测控制台** | `http://grafana.sit.onwalk.net` | `grafana-sit.onwalk.net`<br/>`grafana.172.237.9.58.nip.io` | `observability-observability-stack:3000` | HTTP / 80 | 完整访问所有平台、数据库、系统 21 个监控面板 |
+| **AI 基础设施运维代理**| `http://mcp.sit.onwalk.net` | `mcp-sit.onwalk.net`<br/>`mcp.172.237.9.58.nip.io` | `infrastructure-mcp-server:8080` | HTTP / 80 | 提供 MCP 规范的 Agent 工具调用入口 |
+| **Web SaaS 基线前端** | `http://app.sit.onwalk.net` | `console.sit.onwalk.net`<br/>`app-sit.onwalk.net`<br/>`app.172.237.9.58.nip.io` | `web-saas-console:80` | HTTP / 80 | 常驻测试基线界面 |
+| **Web SaaS 统一 API** | `http://app.sit.onwalk.net/api/*`<br/>`http://accounts.sit.onwalk.net` | `accounts-sit.onwalk.net`<br/>`accounts.172.237.9.58.nip.io` | `web-saas-accounts:80` | HTTP / 80 | 账户、认证与会话后端接口 |
+| **Web SaaS 计费接口** | `http://billing.sit.onwalk.net` | `billing-sit.onwalk.net`<br/>`billing.172.237.9.58.nip.io` | `web-saas-billing:80` | HTTP / 80 | 计费与订阅后端接口 |
+| **Per-Feature 特性泳道**| `http://feat-<pr_id>.sit.onwalk.net` | `feat-<pr_id>.172.237.9.58.nip.io` | `web-saas-console.feature-<pr_id>-sit:80` | HTTP / 80 | 动态拉取的独立 PR 验证环境 |
+| **网关健康检查** | `http://172.237.9.58/healthz` | `http://172.237.9.58/` (Ready探针) | Caddy 本地内置响应 | HTTP / 80 | 返回 HTTP 200 "ok" / "SIT Platform Gateway Ready" |
 
 ---
 
@@ -142,10 +143,10 @@ flowchart TB
     ESO -->|同步 Secret| OBS
     ESO -->|同步 Secret| BASE
     ESO -->|同步 Secret| LANE
-    INGRESS -->|app.172.237.9.58.nip.io| BASE
-    INGRESS -->|feat-*.172.237.9.58.nip.io| LANE
-    INGRESS -->|grafana.172.237.9.58.nip.io| OBS
-    INGRESS -->|mcp.172.237.9.58.nip.io| MCP
+    INGRESS -->|app.sit.onwalk.net| BASE
+    INGRESS -->|feat-*.sit.onwalk.net| LANE
+    INGRESS -->|grafana.sit.onwalk.net| OBS
+    INGRESS -->|mcp.sit.onwalk.net| MCP
 ```
 
 ---
@@ -273,10 +274,12 @@ gitops/
 * **PostgreSQL (1/1 Running)**：PostgreSQL 17 + `postgres-exporter` 正常运行，配置 `appArmorProfile: { type: Unconfined }` 规避 Linux 7.3 内核信号阻断。
 * **Web SaaS (4/4 Pod Running)**：Accounts + Billing + Console + Content 全部正常运行，响应 `/healthz`、`/api/ping`。
 
-### 3. HTTP 路由端到端实测验证
+### 3. HTTP 路由端到端实测验证 (`onwalk.net` 规范域名与 `nip.io` 回退别名 100% 验证通过)
 * `curl -sI http://172.237.9.58/` $\rightarrow$ **HTTP 200 OK** (`SIT Platform Gateway Ready`)
-* `curl -sI -H 'Host: app.172.237.9.58.nip.io' http://172.237.9.58/` $\rightarrow$ **HTTP 200 OK** (Web SaaS Console 前端完整渲染)
-* `curl -sI -H 'Host: accounts.172.237.9.58.nip.io' http://172.237.9.58/healthz` $\rightarrow$ **HTTP 200 OK** (Accounts 认证接口)
-* `curl -sI -H 'Host: billing.172.237.9.58.nip.io' http://172.237.9.58/api/ping` $\rightarrow$ **HTTP 200 OK** (Billing 结算接口)
-* `curl -sI -H 'Host: grafana.172.237.9.58.nip.io' http://172.237.9.58/login` $\rightarrow$ **HTTP 200 OK** (Grafana 控制台)
-* `curl -s -H 'Host: mcp.172.237.9.58.nip.io' http://172.237.9.58/healthz` $\rightarrow$ **HTTP 200 OK** (`ok`)
+* `curl -sI -H 'Host: app.sit.onwalk.net' http://172.237.9.58/` $\rightarrow$ **HTTP 200 OK** (Web SaaS Console 前端完整渲染)
+* `curl -s -o /dev/null -w "%{http_code}" -H 'Host: accounts.sit.onwalk.net' http://172.237.9.58/healthz` $\rightarrow$ **HTTP 200 OK** (Accounts 认证服务就绪)
+* `curl -sI -H 'Host: billing.sit.onwalk.net' http://172.237.9.58/api/ping` $\rightarrow$ **HTTP 200 OK** (Billing 结算服务就绪)
+* `curl -sI -H 'Host: grafana.sit.onwalk.net' http://172.237.9.58/login` $\rightarrow$ **HTTP 200 OK** (Grafana 13.2.4 控制台就绪)
+* `curl -s -H 'Host: mcp.sit.onwalk.net' http://172.237.9.58/healthz` $\rightarrow$ **HTTP 200 OK** (`{"service":"infrastructure-mcp-server","status":"healthy"}`)
+* `curl -sI -H 'Host: app.172.237.9.58.nip.io' http://172.237.9.58/` $\rightarrow$ **HTTP 200 OK** (nip.io 降级兼容)
+* `curl -sI -H 'Host: grafana.172.237.9.58.nip.io' http://172.237.9.58/login` $\rightarrow$ **HTTP 200 OK** (nip.io 降级兼容)
