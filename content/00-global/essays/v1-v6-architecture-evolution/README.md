@@ -36,11 +36,11 @@ category: cloud-infrastructure
 
 | 篇章 | 标题 | 核心主题与架构转折点 | 对应插图与卡片 |
 | :---: | :--- | :--- | :--- |
-| **01** | [选型哲学与 V1-V2 初心](./01-selection-philosophy-and-v1-v2.zh.md) | 实战经验派哲学、2C4G 约束、V1 Docker 单体与 V2 进程守护 | `cloud_native_2c4g_cover.jpg`<br>`pragmatic-engineering-philosophy-card.svg`<br>`v1-v6-evolution-roadmap.svg` |
-| **02** | [跨主机容灾与 V3-V4 探索](./02-cross-host-dr-and-v3-v4.zh.md) | 业务膨胀、V3 Keepalived 虚地址痛点、V4 HashiCorp 全家桶资源反噬 | 演进路线图承接 |
-| **03** | [极限降本与 V5 孤注一掷](./03-extreme-cost-reduction-v5.zh.md) | 成本倒逼、单机 K3s 极限压榨、根分区爆满故障与 WireGuard 跨代隧道 | 演进路线图承接 |
-| **04** | [生产终局：V6 四大核心支柱](./04-v6-production-finality-four-pillars.zh.md) | 轻量三权分立、100GB 独立云盘 `/data`、FluxCD GitOps、Datakit 外部 SaaS 观测 | `v6-four-pillars-architecture.svg` |
-| **05** | [零秘密外泄与 92 万数据大迁移](./05-vault-restore-and-92w-data-migration.zh.md) | Vault Raft 快照恢复、370 用户 / 921,430 账本单向迁移、防超时事务保障 | `data-migration-pipeline-92w.svg` |
+| **01** | [选型哲学与 V1-V2 初心](./01-selection-philosophy-and-v1-v2.zh.md) | 实战经验派哲学、2C4G 约束、V1 Docker 单体与 V2 进程守护 | `cloud_native_2c4g_cover.jpg`<br>`pragmatic-engineering-philosophy-card.svg`<br>`v1-v6-evolution-roadmap.svg`<br>`v1-v6-roadmap-note-01.svg` |
+| **02** | [跨主机容灾与 V3-V4 探索](./02-cross-host-dr-and-v3-v4.zh.md) | 业务膨胀、V3 Keepalived 虚地址痛点、V4 HashiCorp 全家桶资源反噬 | `v1-v6-roadmap-note-02.svg` |
+| **03** | [极限降本与 V5 孤注一掷](./03-extreme-cost-reduction-v5.zh.md) | 成本倒逼、单机 K3s 极限压榨、根分区爆满故障与 WireGuard 跨代隧道 | `v1-v6-roadmap-note-03.svg` |
+| **04** | [生产终局：V6 四大核心支柱](./04-v6-production-finality-four-pillars.zh.md) | 轻量三权分立、100GB 独立云盘 `/data`、FluxCD GitOps、Datakit 外部 SaaS 观测 | `v6-four-pillars-architecture.svg`<br>`v1-v6-roadmap-note-04.svg` |
+| **05** | [零秘密外泄与 92 万数据大迁移](./05-vault-restore-and-92w-data-migration.zh.md) | Vault Raft 快照恢复、370 用户 / 921,430 账本单向迁移、防超时事务保障 | `data-migration-pipeline-92w.svg`<br>`v1-v6-roadmap-note-05.svg` |
 | **06** | [72 小时拆弹实录与 9 场排障暗战](./06-72h-nine-battles-postmortem.zh.md) | DevSecOps 八步复盘：GHCR 403、Datakit OOM、非 root 500、US 400（克制拒虚胖）等 9 场暗战 | `nine-battles-postmortem-card.svg` |
 | **07** | [客观存证大盘、七大铁律与标准 Runbook](./07-acceptance-matrix-and-runbook.zh.md) | 客观存证四界（PASS/PARTIAL/BLOCKED）、用户“US 已出现”验收、SRE 七大铁律、7 阶段迁移手册 | `acceptance-matrix-dashboard.svg`<br>`seven-golden-rules-card.svg` |
 
@@ -51,7 +51,7 @@ category: cloud-infrastructure
 专栏配备了 8 张风格轻快、专业的科技图表与信息卡片：
 1. `cloud_native_2c4g_cover.jpg`：超现实轻快科技风封面图
 2. `pragmatic-engineering-philosophy-card.svg`：实战经验派核心心法与选型哲学卡片
-3. `v1-v6-evolution-roadmap.svg`：V1 至 V6 六次架构演进里程碑路线全景图
+3. `v1-v6-evolution-roadmap.svg`<br>`v1-v6-roadmap-note-01.svg`：V1 至 V6 六次架构演进里程碑路线全景图
 4. `v6-four-pillars-architecture.svg`：V6 生产终局四大支柱核心架构拓扑图
 5. `data-migration-pipeline-92w.svg`：92 万级流水、42 表单向安全数据迁移流水线图
 6. `nine-battles-postmortem-card.svg`：72 小时 9 场排障暗战全景分类卡片

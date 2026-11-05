@@ -15,6 +15,10 @@ category: cloud-infrastructure
 > **专栏定位**：公众号【一路从 V1 狂奔到 V6】系列实战笔记（第五篇，共七篇）
 > **核心指标**：370 位用户、**921,430 笔账本流水**、42 张业务表、Vault Raft 零落盘恢复
 
+![六代演进全景路线图（笔记-05 聚焦：Vault 换心与 92 万级账本原子晋级）](./assets/v1-v6-roadmap-note-05.svg)
+
+---
+
 ![2C4G 吞吐 92 万级账本原子迁移防线](./assets/data-migration-pipeline-92w.svg)
 
 ---

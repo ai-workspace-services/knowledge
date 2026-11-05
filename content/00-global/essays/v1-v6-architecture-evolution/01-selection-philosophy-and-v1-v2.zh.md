@@ -39,7 +39,7 @@ category: cloud-infrastructure
 
 ### 二、V1 荒蛮时代（2024~2025）：手工作坊的惨痛代价
 
-![六代演进全景路线图](./assets/v1-v6-evolution-roadmap.svg)
+![六代演进全景路线图（笔记-01 聚焦：V1 & V2）](./assets/v1-v6-roadmap-note-01.svg)
 
 每个伟大系统的起点往往是混乱的。在 V1 阶段，控制面跑在单台裸机 VPS 上：
 - **架构拓扑**：Node.js、Python 后台、PostgreSQL 与原生 Nginx 全塞在同一台宿主操作系统里；

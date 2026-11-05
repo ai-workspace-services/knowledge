@@ -19,6 +19,10 @@ category: cloud-infrastructure
 
 ---
 
+![六代演进全景路线图（笔记-04 聚焦：PROD V6 生产终态四大支柱）](./assets/v1-v6-roadmap-note-04.svg)
+
+---
+
 ### 一、PROD-K3S-V6 的物理重构
 
 2026 年 11 月 1 日，团队在全新独立实例上拉起 V6：
