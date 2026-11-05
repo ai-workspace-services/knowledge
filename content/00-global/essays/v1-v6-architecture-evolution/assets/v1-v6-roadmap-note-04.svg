@@ -2,33 +2,33 @@
 
   <defs>
     <style>
-      .title { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; font-size: 24px; font-weight: 700; fill: #0F172A; }
-      .subtitle { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; font-size: 13px; fill: #64748B; }
-      .banner-tag { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; font-size: 12px; font-weight: 700; }
-      .banner-text { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; font-size: 13px; font-weight: 600; }
-      .banner-sub { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; font-size: 12px; }
-      .card-title { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; font-size: 16px; font-weight: 700; fill: #1E293B; }
-      .card-tag { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 11px; font-weight: 600; }
-      .card-desc { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; font-size: 12px; fill: #475569; line-height: 1.5; }
-      .metric-num { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 17px; font-weight: 800; }
-      .metric-label { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; font-size: 11px; fill: #64748B; }
-      .focus-tag { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; font-size: 11px; font-weight: 700; fill: #FFFFFF; }
-      .callout-text { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; font-size: 11px; font-weight: 600; }
+      .title { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", sans-serif; font-size: 24px; font-weight: 700; fill: #0F172A; }
+      .subtitle { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", sans-serif; font-size: 13px; fill: #64748B; }
+      .banner-tag { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", sans-serif; font-size: 12px; font-weight: 700; fill: #FFFFFF; }
+      .banner-text { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", sans-serif; font-size: 13px; font-weight: 600; }
+      .banner-sub { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", sans-serif; font-size: 12px; }
+      .card-title { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", sans-serif; font-size: 16px; font-weight: 700; fill: #1E293B; }
+      .card-tag { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", -apple-system, sans-serif; font-size: 11px; font-weight: 700; }
+      .card-desc { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", sans-serif; font-size: 12px; fill: #475569; line-height: 1.5; }
+      .metric-num { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", -apple-system, sans-serif; font-size: 17px; font-weight: 800; }
+      .metric-label { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Segoe UI", sans-serif; font-size: 11px; fill: #64748B; }
+      .focus-tag { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Segoe UI", sans-serif; font-size: 11px; font-weight: 700; fill: #FFFFFF; }
+      .callout-text { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Segoe UI", sans-serif; font-size: 11px; font-weight: 700; }
     </style>
     <filter id="card-shadow" x="-5%" y="-5%" width="110%" height="115%" filterUnits="userSpaceOnUse">
       <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#0F172A" flood-opacity="0.06"/>
     </filter>
     <filter id="active-shadow" x="-10%" y="-10%" width="120%" height="125%" filterUnits="userSpaceOnUse">
-      <feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="#2563EB" flood-opacity="0.22"/>
+      <feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="#2563EB" flood-opacity="0.25"/>
     </filter>
     <filter id="amber-shadow" x="-10%" y="-10%" width="120%" height="125%" filterUnits="userSpaceOnUse">
-      <feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="#D97706" flood-opacity="0.25"/>
+      <feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="#D97706" flood-opacity="0.28"/>
     </filter>
     <filter id="emerald-shadow" x="-10%" y="-10%" width="120%" height="125%" filterUnits="userSpaceOnUse">
-      <feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="#059669" flood-opacity="0.25"/>
+      <feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="#059669" flood-opacity="0.28"/>
     </filter>
     <filter id="purple-shadow" x="-10%" y="-10%" width="120%" height="125%" filterUnits="userSpaceOnUse">
-      <feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="#7C3AED" flood-opacity="0.25"/>
+      <feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="#7C3AED" flood-opacity="0.28"/>
     </filter>
     <linearGradient id="header-grad" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" stop-color="#3B82F6"/>
@@ -60,7 +60,7 @@
   <rect x="0" y="0" width="1200" height="6" fill="url(#header-grad)" rx="3"/>
 
   <!-- Header Section -->
-  <g transform="translate(50, 38)">
+  <g transform="translate(50, 36)">
     <rect x="0" y="2" width="4" height="26" fill="#2563EB" rx="2"/>
     <text x="16" y="22" class="title">从 V1 到 V6：核心控制面六代演进全景路线图</text>
     <text x="16" y="44" class="subtitle">在单台 2C4G 极限资源约束下，实现从裸机手工作坊到现代化 GitOps 净室与微内核轻量集群的跃迁</text>
@@ -81,14 +81,14 @@
   </g>
 
   <!-- Article Focus Location Banner (Prominent Navigation Bar) -->
-  <g transform="translate(50, 94)">
-    <rect width="1100" height="42" rx="10" fill="#EFF6FF" stroke="#2563EB" stroke-width="1.5"/>
+  <g transform="translate(50, 92)">
+    <rect width="1100" height="44" rx="10" fill="#EFF6FF" stroke="#2563EB" stroke-width="1.5"/>
     <g transform="translate(14, 9)">
-      <rect width="170" height="24" rx="6" fill="#1D4ED8"/>
-      <text x="85" y="16" text-anchor="middle" class="focus-tag" style="font-size:12px;">📍 专栏本篇定位 · 笔记-04</text>
+      <rect width="174" height="26" rx="6" fill="#1D4ED8"/>
+      <text x="87" y="17" text-anchor="middle" class="banner-tag">📍 专栏本篇定位 · 笔记-04</text>
     </g>
-    <text x="200" y="26" class="banner-text" fill="#0F172A">现代工业级底座终局 (PROD V6 生产终态 · 轻量三权分立、独立存储与四大核心支柱)</text>
-    <text x="1080" y="26" text-anchor="end" class="banner-sub" fill="#1D4ED8" font-weight="700">【 本篇精读聚焦：PROD V6 工业级底座 】</text>
+    <text x="204" y="27" class="banner-text" fill="#0F172A">现代工业级底座终局 (PROD V6 生产终态 · 轻量三权分立、独立存储与四大核心支柱)</text>
+    <text x="1084" y="27" text-anchor="end" class="banner-sub" fill="#1D4ED8" font-weight="700">【 本篇精读聚焦：PROD V6 工业级底座 】</text>
   </g>
 
   <!-- Flow Connecting Line (Background Base) -->
@@ -224,7 +224,7 @@
   <!-- V6 Card -->
   <g transform="translate(950, 148)" opacity="1.0">
     <rect width="200" height="350" rx="16" fill="url(#v6-grad)" stroke="#2563EB" stroke-width="3" filter="url(#active-shadow)"/>
-    <g transform="translate(50, -13)"><rect width="100" height="24" rx="12" fill="#2563EB"/><text x="50" y="16" text-anchor="middle" class="focus-tag">🎯 四大工业支柱</text></g>
+    <g transform="translate(45, -13)"><rect width="110" height="24" rx="12" fill="#2563EB"/><text x="55" y="16" text-anchor="middle" class="focus-tag">🎯 笔记-04 四大支柱</text></g>
 
     <!-- Top badge -->
     <rect x="14" y="16" width="68" height="22" rx="6" fill="#2563EB"/>
@@ -250,7 +250,7 @@
     <text x="100" y="318" text-anchor="middle" class="card-desc" fill="#BFDBFE" style="font-size:11px;">安全闭环 · 单向晋级 · 零数据丢失</text>
   </g>
   
-      <g transform="translate(950, 508)">
+      <g transform="translate(950, 506)">
         <rect width="200" height="48" rx="8" fill="#EFF6FF" stroke="#3B82F6" stroke-width="1.5"/>
         <text x="100" y="18" text-anchor="middle" class="callout-text" fill="#1E40AF">🏛️ 生产终态四大支柱实战</text>
         <text x="100" y="34" text-anchor="middle" style="font-family:-apple-system,sans-serif; font-size:10px; fill:#2563EB;">三权分立 · 100G盘 · GitOps · 观测SaaS</text>
