@@ -17,6 +17,10 @@ category: cloud-infrastructure
 
 ---
 
+![六代演进全景路线图（笔记-03 聚焦：V5 极限压榨）](./assets/v1-v6-roadmap-note-03.svg)
+
+---
+
 ### 一、降本大决战：单机 K3s all-in-one 架构
 
 2026 年 10 月 25 日，面对云成本优化压力，团队启动 **PROD V5** 架构重构：**将 Web-SaaS、Vault 密钥服务器、Grafana/可观测栈汇聚到一台 Linode 2C4G VPS 上！**
