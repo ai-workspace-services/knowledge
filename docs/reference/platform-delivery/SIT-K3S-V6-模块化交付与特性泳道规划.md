@@ -19,6 +19,7 @@
 | **4** | **`observability`** | `observability-sit` | 平台服务层 | `observability-stack-chart` (VM+Grafana) | 全量可观测协议栈，承接全部 21 个生产 Grafana 面板 |
 | **5** | **`observability-agent`**| `observability-sit` | 平台服务层 | `observability-agent` (kube-state-metrics) | 负责 Kubernetes 节点、容器指标与状态收集 |
 | **6** | **`web-saas`** | `web-saas-sit` | 业务基线层 | `distributed-web-saas-fullstack` (业务三件套) | Accounts (认证) + Billing (结算) + Console (UI) 基线 |
+| **7** | **`external-dns`** *(可选)*| `external-dns` | 基础环境层 | `kubernetes-sigs/external-dns:1.20.0` | Cloudflare DNS 自动追加同步，具备原生插拔与按需开关能力 |
 
 > [!NOTE]
 > **非 HelmRelease 模块说明**：
@@ -59,6 +60,8 @@
 | **Grafana 管理员密码** | `kv/sit/observability/grafana` | `password` | `observability-sit` | `grafana-admin` |
 | **Observability Ingest 认证**| `kv/sit/observability/ingest` | `token` | `observability-sit` | `observability-ingest-auth` |
 | **AI MCP 服务鉴权 Token** | `kv/sit/platform-mcp/auth` | `mcp-service-token` | `platform-mcp-sit` | `infra-mcp-auth` |
+| **SIT 域名通配 TLS 证书** | `kv/CICD/domains/onwalk.net`<br/>*(或 `kv/sit/domains/onwalk.net`)* | `tls_fullchain_pem_b64`<br/>`tls_key_pem_b64` | `ingress-sit` | `console-tls`<br/>`accounts-tls`<br/>`billing-tls` |
+| **Cloudflare DNS 自动化凭据**| `kv/sit/platform/cloudflare`<br/>*(特性泳道: `kv/data/sit/platform/cloudflare/feature-dns`)* | `api_token`, `account_id`, `zone_id` | `external-dns` | `external-dns-cloudflare` |
 
 ---
 
@@ -283,3 +286,9 @@ gitops/
 * `curl -s -H 'Host: mcp.sit.onwalk.net' http://172.237.9.58/healthz` $\rightarrow$ **HTTP 200 OK** (`{"service":"infrastructure-mcp-server","status":"healthy"}`)
 * `curl -sI -H 'Host: console.sit.onwalk.net' http://172.237.9.58/` $\rightarrow$ **HTTP 200 OK** (别名访问就绪)
 * `curl -sI -H 'Host: accounts-sit.onwalk.net' http://172.237.9.58/healthz` $\rightarrow$ **HTTP 200 OK** (别名访问就绪)
+
+### 4. HTTPS / TLS 证书与 ESO 对账实测验证 (`console-tls` 证书加载 100% 验证通过)
+* **ESO 对账状态**：`kubectl get externalsecret -n ingress-sit` $\rightarrow$ `console-tls`, `accounts-tls`, `billing-tls` 全部处于 **`STATUS: SecretSynced`** 与 **`READY: True`**。
+* **TLS 握手实测**：`curl -ksI https://172.237.9.58/ --resolve 'console.sit.onwalk.net:443:172.237.9.58'` $\rightarrow$ **HTTP/2 200 OK** (ALPN h2, TLSv1.3, Server Certificate: `CN=*.sit.onwalk.net`)。
+* **业务前端 TLS 实测**：`curl -ksI https://172.237.9.58/ --resolve 'app.sit.onwalk.net:443:172.237.9.58'` $\rightarrow$ **HTTP/2 200 OK**。
+* **认证服务 TLS 实测**：`curl -ksI https://172.237.9.58/ --resolve 'accounts.sit.onwalk.net:443:172.237.9.58'` $\rightarrow$ **HTTP/2 200 OK**。
