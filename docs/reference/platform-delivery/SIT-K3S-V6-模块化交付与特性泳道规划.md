@@ -2,7 +2,7 @@
 
 > **集群名称**：`sit-k3s-v6`（SIT 独立环境，与 `prod-k3s-v6` 物理隔离与声明解耦）  
 > **目标主机**：`ssh root@172.237.9.58`（Ubuntu 26.10, 2 vCPU / 4 GB RAM / 80 GB SSD）  
-> **核心原则**：**基础、服务、业务全面模块化与乐高式灵活组合（Composable Modular Architecture）**；生产零触碰（Zero Touch to PROD）、免部署本地 Vault Server、支持 Per Feature $\rightarrow$ SIT 业务特性发布流、全量面板平滑迁移为后续接管 `observability.svc.plus` 奠定基础。  
+> **核心原则**：**基础、服务、业务全面模块化与乐高式灵活组合（Composable Modular Architecture）**；生产零触碰（Zero Touch to PROD）、免部署本地 Vault Server、支持 Per Feature $\rightarrow$ SIT 业务特性发布流、全量面板平滑迁移为后续接管 `observability.svc.plus` 奠定基础；严格对齐生产级的 **OS、集群、数据库三权分立** 治理体系。  
 > **交付模式**：Playbook 节点底座引导（不依赖 GitHub Actions） + GitOps (FluxCD) 声明式模块装配。
 
 ---
@@ -12,6 +12,12 @@
 ```mermaid
 flowchart TB
     subgraph Host["宿主机 172.237.9.58 (Ubuntu 26.10, 2 vCPU / 4 GB)"]
+        subgraph TripartiteSec["【治理基石：全链路三权分立 (Tripartite Separation)】"]
+            OS_ID["OS 三类操作身份<br/>root (系统) / operator (运维) / auditor (审计)"]
+            K8S_RBAC["集群 RBAC 三权隔离<br/>cluster-admin / workloads / read-only"]
+            DB_ROLES["数据库账户三权分立<br/>admin / operator / auditor / accounts_runtime"]
+        end
+
         subgraph InfraBootstrap["Playbook 引导基础设施 (公共底层)"]
             K3S["K3s 单节点引擎 (带 ServiceLB)"]
             FLUX["FluxCD 控制面 (flux-system)"]
@@ -21,7 +27,7 @@ flowchart TB
         end
 
         subgraph SharedSIT["Shared SIT 基础设施底座 (常驻)"]
-            PG["PostgreSQL (postgresql-sit)<br/>标准接口 / 动态 Schema 支持"]
+            PG["PostgreSQL (postgresql-sit)<br/>三权分立账户 + 独立业务连接"]
             OBS["Observability 全量协议栈 (observability-sit)<br/>VictoriaMetrics + 全量 Grafana 面板 + vmagent"]
             MCP["Infrastructure MCP Server (platform-mcp-sit)"]
         end
@@ -47,15 +53,106 @@ flowchart TB
     ESO -->|同步 Secret| OBS
     ESO -->|同步 Secret| BASE
     ESO -->|同步 Secret| LANE
-    INGRESS -->|路由分发| BASE
-    INGRESS -->|*.172.237.9.58.nip.io| LANE
+    INGRESS -->|app.172.237.9.58.nip.io| BASE
+    INGRESS -->|feat-*.172.237.9.58.nip.io| LANE
     INGRESS -->|grafana.172.237.9.58.nip.io| OBS
     INGRESS -->|mcp.172.237.9.58.nip.io| MCP
 ```
 
 ---
 
-## 2. 三层模块化与可组合模型 (Three-Tier Composable Model)
+## 2. 三权分立治理体系规范 (OS / 集群 / 数据库)
+
+为保持与生产环境完全一致的合规与安全防护水位，SIT 环境在操作系统、Kubernetes 集群与 PostgreSQL 数据库三个层次严格落地**三权分立**：
+
+### 2.1 OS 操作系统三类身份 (Linux System Level)
+| 操作身份 | Linux 用户 | Sudo 与权限范围 | 限制与防护红线 |
+| :--- | :--- | :--- | :--- |
+| **系统管理员 (Root)** | `root` | 完全管理权限，用于内核调优、K3s 底座引导 | 日常业务发布与运维禁止使用；禁止外部直连 |
+| **运维身份 (Operator)** | `operator` | 最小化限定 Sudo：`/usr/bin/systemctl is-system-running` 等状态检查 | 交互式运维，严禁越权审计与随意修改系统核心配置 |
+| **审计身份 (Auditor)** | `auditor` | **严禁任何 Sudo 权限**；禁止访问 `/etc/shadow` | 只读查看主机状态与审计日志；禁止写入系统目录及访问运行时 Socket |
+
+### 2.2 Kubernetes 集群三权 RBAC (Cluster Level)
+在 `services/sit-k3s-v6/cluster-identities/` 声明并执行严格角色绑定：
+* **`root`** $\rightarrow$ 绑定原生 `cluster-admin` 角色，负责集群核心控制器维保。
+* **`operator`** $\rightarrow$ 绑定 `k3s-operator-workloads` 角色与 `k3s-operator-pod-status`：
+  * 具备 Deployments、ReplicaSets、Pods、Services、HelmReleases 的 get/list/watch 与 scale 权限；
+  * **严禁读取 Secret 明文内容**，严禁执行 `exec/attach` 进入业务容器。
+* **`auditor`** $\rightarrow$ 绑定 `k3s-auditor-read-only` 全局只读角色：
+  * 仅允许对全集群资源进行只读（get/list/watch）与读取 Pod 运行日志；
+  * 排除任何 token 颁发、port-forward 及写操作。
+
+### 2.3 PostgreSQL 数据库三权分立 (Database Level)
+PostgreSQL 原生启用 `identityAccounts` 配置，实现四重账号职责分离：
+```yaml
+identityAccounts:
+  enabled: true
+  root:     {username: postgres, existingSecret: postgresql-admin, secretKey: password}
+  operator: {username: operator, existingSecret: postgresql-operator, secretKey: password, tables: [], sequences: []}
+  auditor:  {username: auditor,  existingSecret: postgresql-auditor,  secretKey: password, views: []}
+```
+* **`admin (postgres)`**：具有全库 DDL、Schema 迁移与最高管理权限，不注入业务应用。
+* **`operator`**：用于数据库常规物理/逻辑备份、VACUUM 运维与连接维护。
+* **`auditor`**：专用于 `postgres-exporter` 性能与审计指标采集，仅赋予系统视图和 pg_stat 只读权限。
+* **`accounts_runtime`**：**业务专用运行时账号**，独立注入到 Web SaaS，仅具备业务表 DML 读写权限，无 DDL 权限与跨库权限。
+
+---
+
+## 3. SIT 独立节点 Helm Release 规划矩阵 (6 个核心)
+
+相比生产环境 V6 规划的 8 个 HelmRelease，SIT 节点根据单节点 4 GB 内存特性，去除了高开销的本地 Vault Server，并将采集链路聚合优化，规划 **6 个核心独立 Helm Release**：
+
+| # | HelmRelease 名称 | 部署命名空间 | 模块分层 | 对应 Chart 来源 | 职责与能力边界 |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **1** | **`external-secrets`** | `external-secrets` | 基础凭据层 | `external-secrets/external-secrets` | 集群通用凭据代理，对接本地 SecretStore / 外部 Vault |
+| **2** | **`caddy-ingress`** | `ingress-sit` | 基础网关层 | `distributed-web-saas-fullstack` (caddy 组件) | 统一接收入口流量，处理 nip.io 泛解析与子域名分发 |
+| **3** | **`postgresql`** | `postgresql-sit` | 平台服务层 | `distributed-web-saas-fullstack` (pg 组件) | 独立数据库服务，内建三权分立账户与业务连接 |
+| **4** | **`observability`** | `observability-sit` | 平台服务层 | `observability-stack-chart` (VM + Grafana) | 全量可观测协议栈，承接全部 21 个生产 Grafana 面板 |
+| **5** | **`observability-agent`**| `observability-sit` | 平台服务层 | `observability-agent` (kube-state-metrics) | 负责 Kubernetes 节点、容器指标与状态收集 |
+| **6** | **`web-saas`** | `web-saas-sit` | 业务基线层 | `distributed-web-saas-fullstack` (业务三件套) | Accounts (认证) + Billing (结算) + Console (UI) |
+
+> [!NOTE]
+> **非 HelmRelease 服务说明**：
+> * **`platform-mcp-sit`**：采用 Kubernetes 原生 Deployment 与 Service 部署，直连外部 `https://observability.svc.plus`，不占用额外 Helm 控制器开销。
+> * **`cluster-identities`**：采用原生 RBAC 清单管理，由 Flux Kustomization 直接声明式对账。
+> * **动态特性泳道 (`web-saas-feat-<id>`)**：依据 PR 按需派生，生命周期独立。
+
+---
+
+## 4. SIT 环境域名分配与路由映射规范
+
+根据生产零触碰原则，SIT 环境严禁修改或污染生产公网 DNS（如 `svc.plus` 权威记录）。统一采用轻量开箱即用的通配解析域名 `*.172.237.9.58.nip.io`：
+
+| 访问服务 | 分配域名 | 后端转发目标服务 | 协议与暴露端口 | 说明 |
+| :--- | :--- | :--- | :--- | :--- |
+| **全量可观测控制台** | `http://grafana.172.237.9.58.nip.io` | `observability-observability-stack:3000` | HTTP / 80 | 完整访问所有平台、数据库、系统看板 |
+| **AI 基础设施运维代理**| `http://mcp.172.237.9.58.nip.io` | `infrastructure-mcp-server:8080` | HTTP / 80 | 提供 MCP 规范的 Agent 工具调用入口 |
+| **Web SaaS 基线前端** | `http://app.172.237.9.58.nip.io` | `web-saas-console:80` | HTTP / 80 | 常驻测试基线界面 |
+| **Web SaaS 统一 API** | `http://app.172.237.9.58.nip.io/api/*`| `web-saas-accounts:80` | HTTP / 80 | 账户、认证与会话后端接口 |
+| **Per-Feature 特性泳道**| `http://feat-<pr_id>.172.237.9.58.nip.io` | `web-saas-console.feature-<pr_id>-sit:80` | HTTP / 80 | 动态拉起的独立 PR 验证环境 |
+| **健康检查就绪探针** | `http://172.237.9.58/healthz` | Caddy 本地内置响应 | HTTP / 80 | 返回 HTTP 200 "ok" |
+
+---
+
+## 5. Vault KV V2 路径规范与凭据映射契约
+
+为了实现**上层代码与配置零感知差异**，SIT 环境即使不运行本地 Vault Server，也遵循严格的标准 Vault KV V2 路径命名契约。Playbook 在目标节点本地安全生成高强度凭据，并将其映射为原生 Kubernetes Secret（当接入外部 Vault 时，ESO 可直接通过该路径无缝对账）：
+
+| 凭据分类 / 用途 | 标准 Vault KV V2 路径 | 包含的 Key / 字段 | 消费命名空间 | 映射 Kubernetes Secret 名称 |
+| :--- | :--- | :--- | :--- | :--- |
+| **数据库 Admin 根密码** | `kv/sit/database/postgresql/admin` | `password` | `postgresql-sit` | `postgresql-admin` |
+| **数据库 Operator 密码** | `kv/sit/database/postgresql/operator` | `password` | `postgresql-sit` | `postgresql-operator` |
+| **数据库 Auditor 密码** | `kv/sit/database/postgresql/auditor` | `password` | `postgresql-sit` | `postgresql-auditor` |
+| **Accounts 数据库运行时**| `kv/sit/accounts-service` | `POSTGRES_PASSWORD`, `DATABASE_URL` | `web-saas-sit` | `accounts-db-runtime` |
+| **Billing 数据库运行时** | `kv/sit/billing-service` | `DATABASE_URL` | `web-saas-sit` | `billing-db-runtime` |
+| **Web SaaS 通用安全凭据**| `kv/sit/web-saas/runtime` | `JWT_SECRET`, `SESSION_SECRET` | `web-saas-sit` | `web-saas-secrets` |
+| **Grafana 管理员密码** | `kv/sit/observability/grafana` | `password` | `observability-sit` | `grafana-admin` |
+| **Observability Ingest 认证**| `kv/sit/observability/ingest` | `token` | `observability-sit` | `observability-ingest-auth` |
+| **AI MCP 服务鉴权 Token** | `kv/sit/platform-mcp/auth` | `mcp-service-token` | `platform-mcp-sit` | `infra-mcp-auth` |
+
+---
+
+## 6. 三层模块化与可组合模型 (Three-Tier Composable Model)
 
 系统被正交分解为三个独立演进、按需插拔的层次：
 
@@ -107,44 +204,7 @@ flowchart TD
 
 ---
 
-## 3. 模块能力与灵活组合矩阵 (PROD vs SIT)
-
-通过标准化的模块接口定义，实现“**同构核心能力，异构环境声明**”：
-
-| 模块类别 | 模块名称 | 生产环境 (PROD) 组合策略 | 测试环境 (SIT) 组合策略 | 组合配置与解耦机制 |
-| :--- | :--- | :--- | :--- | :--- |
-| **基础层** | **K3s + ServiceLB** | 必选，禁用公网控制面 | 必选，ServiceLB 监听 80/443 | 统一 Playbook 初始化，通过主机变量调整监听策略 |
-| **基础层** | **FluxCD 控制面** | 必选，跟踪 `prod-k3s-v6` 根 | 必选，跟踪 `sit-k3s-v6` 根 | 独立的 GitRepository / 根 Kustomization，彻底物理隔离 |
-| **基础层** | **ESO (External Secrets)** | 必选，对接生产独立 Vault 集群 | 必选，对接本地 Local SecretStore | **上层工作负载通过标准 ExternalSecret 消费凭据，代码 100% 相同** |
-| **基础层** | **Caddy Ingress** | 必选，加载生产生产级 TLS 证书 | 必选，接入 `*.172.237.9.58.nip.io` | 统一的 Caddy Ingress Controller，域名通过 Values 注入 |
-| **服务层** | **PostgreSQL** | 必选，挂载生产 100GB 云卷 | 必选，挂载本地 5GB 快速 PVC | 同一 Chart，SIT 环境支持自动初始化多个特性 Database |
-| **服务层** | **Observability 全栈** | 必选，生产指标长期归档 | **必选，全量迁移生产全部 Grafana 面板** | **Dashboard ConfigMaps 100% 共享**，为未来接管 `observability.svc.plus` 准备 |
-| **服务层** | **Infrastructure MCP** | 可选，生产权限限制 | **必选，直连外部 `observability.svc.plus`** | 仅通过环境变量配置 `GRAFANA_URL` 指向外部权威源 |
-| **业务层** | **Web SaaS (基线)** | 必选，严格主干验证版本 | 必选，常驻集成验证基线 | 包含 Accounts、Billing、Console 标准三件套 |
-| **业务层** | **Feature SIT 泳道** | 严禁生产直接运行 | **按需动态组合**（由 PR 触发/销毁） | 支持单服务替换或全量特性沙箱组合 |
-
----
-
-## 4. 灵活组合实战：Per Feature $\rightarrow$ SIT 业务发布流
-
-依据 `ai-assisted-devops-delivery` 工程规范，特性分支（PR）需要进行跨仓库组合集成验证时，无需单独申请整套虚拟机：
-
-```text
-【组合示例：PR-128 特性验证】
-1. 共享基础：继承 Shared SIT 的 K3s、Flux、ESO、Caddy Ingress
-2. 共享服务：继承 Shared SIT 的 Observability (自动采集泳道指标)
-3. 隔离存储：在 postgresql-sit 中动态分配独立数据库 account_pr128
-4. 业务组合：
-   - Accounts: 使用 PR-128 候选镜像 (ghcr.io/ai-workspace/accounts:pr-128)
-   - Billing:  复用 SIT 基线镜像 (稳定版本)
-   - Console:  复用 SIT 基线镜像 (稳定版本)
-5. 路由暴露：自动绑定 http://feat-128.172.237.9.58.nip.io
-```
-验证完成后，直接删除该 Feature Kustomization 声明，命名空间与计算资源自动释放，实现资源极致复用。
-
----
-
-## 5. 2 vCPU / 4 GB 单节点精准配额预算表
+## 7. 2 vCPU / 4 GB 单节点精准配额预算表
 
 单节点 4 GB 内存极为有限，模块化让每个组件的消耗清晰可控：
 
@@ -164,7 +224,7 @@ flowchart TD
 
 ---
 
-## 6. 模块化 GitOps 目录拓扑结构
+## 8. 模块化 GitOps 目录拓扑结构
 
 在 `ai-workspace-infra/gitops` 仓库中构建 SIT 专属声明结构：
 
@@ -179,9 +239,11 @@ gitops/
 │   ├── postgresql-kustomization.yaml             # 组装数据库模块
 │   ├── observability-kustomization.yaml          # 组装全量可观测性模块 (含全部面板)
 │   ├── platform-mcp-kustomization.yaml           # 组装 MCP 服务模块 (直连外部)
-│   └── web-saas-kustomization.yaml               # 组装 Web SaaS 业务基线与泳道扩展
+│   ├── web-saas-kustomization.yaml               # 组装 Web SaaS 业务基线与泳道扩展
+│   └── cluster-identities-kustomization.yaml     # 组装集群三权分立 RBAC
 │
 └── services/sit-k3s-v6/                          # 【SIT 可组合服务组件库】
+    ├── cluster-identities/                       # 集群三权分立 RBAC 声明
     ├── ingress-sit/                              # Ingress 路由规则
     ├── postgresql-sit/                           # PostgreSQL 数据库声明
     ├── observability-sit/                        # 全量可观测性组件
@@ -197,7 +259,7 @@ gitops/
 
 ---
 
-## 7. 实施全链路落地执行步骤 (Execution Roadmap)
+## 9. 实施全链路落地执行步骤 (Execution Roadmap)
 
 ### 阶段一：模块化 GitOps 清单就绪
 - 在 `gitops-dev-k3s-v6` 工作区完成上述目录结构。
@@ -208,7 +270,7 @@ gitops/
 ### 阶段二：Playbook 基础引导 (无 GitHub Actions)
 - 在 `playbooks-dev-k3s-v6` 工作区编写 `sit_k3s_v6_bootstrap.yml`。
 - 对 `172.237.9.58` 执行自动化安装：
-  1. 操作系统调优与安全加固。
+  1. 操作系统调优与安全加固，建立 OS 三权身份（root, operator, auditor）。
   2. K3s 单节点安装（启用 ServiceLB，禁用 Traefik）。
   3. FluxCD 控制面安装。
   4. ESO 控制器安装与本地安全凭据供给初始化。
@@ -216,7 +278,7 @@ gitops/
 
 ### 阶段三：GitOps 声明式对账接管
 - 在目标节点应用 `sit-k3s-v6` 根图。
-- 监控 Flux 按依赖关系依次拉起：`postgresql-sit` $\rightarrow$ `observability-sit` $\rightarrow$ `platform-mcp-sit` $\rightarrow$ `web-saas-sit`。
+- 监控 Flux 按依赖关系依次拉起：`cluster-identities-sit` $\rightarrow$ `postgresql-sit` $\rightarrow$ `observability-sit` $\rightarrow$ `platform-mcp-sit` $\rightarrow$ `web-saas-sit` $\rightarrow$ `ingress-sit`。
 
 ### 阶段四：全链路功能与面板核验
 1. **基础底座验证**：`kubectl get nodes,pods -A`，所有控制器均为 Running。
