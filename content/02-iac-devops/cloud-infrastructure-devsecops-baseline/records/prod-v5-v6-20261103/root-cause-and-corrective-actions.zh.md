@@ -118,7 +118,7 @@
    - 在配置变更后，通过受控手段显式调用 Caddy admin API `POST http://localhost:2019/load` 或触发 Deployment 滚动重启。
 5. **Owner / PR / 构件**：
    - Owner：网关与 Ingress 负责人
-   - 归档文件：[PROD-K3S-V6-ServiceLB-Caddy与Datakit修复提示词.md](../../../../../docs/reference/platform-delivery/PROD-K3S-V6-ServiceLB-Caddy与Datakit修复提示词.md)
+   - 归档文件：[PROD-K3S-V6-ServiceLB-Caddy与Datakit修复提示词.md](../../../../../docs/reference/platform-delivery/observability/PROD-K3S-V6-ServiceLB-Caddy与Datakit修复提示词.md)
 6. **调谐 (Reconciliation)**：
    - 对 `caddy-ingress` 执行滚动更新，新 Pod 加载最新 ConfigMap。
 7. **运行验证 (Live Verification)**：
