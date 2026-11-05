@@ -32,6 +32,7 @@
 5. [PROD-K3S-V6 独立节点、集群冷启动规划与部署状态归档](PROD-K3S-V6-规划与部署状态归档.md)
 6. [通用 Vault 工作负载身份契约](通用-Vault-工作负载身份契约.md) — 外部 Vault、ESO 和工作负载之间的身份、Secret 引用与跨集群迁移设计。
 7. [SIT-K3S-V6 模块化交付与特性泳道规划](SIT-K3S-V6-模块化交付与特性泳道规划.md) — 生产与测试环境基础、服务、业务全面模块化与乐高式灵活组合，免部署本地 Vault Server，支持 Per Feature $\rightarrow$ SIT 业务特性发布流与全量 Grafana 面板迁移。
+8. [SIT-K3S-V6 VictoriaMetrics 到观测云双轨采集与 MetricMap 映射交付手册](SIT-K3S-V6-VictoriaMetrics到观测云双轨采集与MetricMap映射交付手册.md) — 权威源 VictoriaMetrics 与观测云 MetricMap 链路映射总览、集群端 DataKit 采集修复、4 个核心 Target（Caddy、PostgreSQL、kube-state-metrics、node-exporter）标签对齐、GitOps 与 Playbook 幂等交付，以及观测云免费配额超限（kodo.beyondDataUsage）诊断与恢复手册。
 
 前五份专项参考来源于 `ai-workspace-infra/docs` 的 `archives/2026-10-30`；其中流水线草案与 V6 状态归档包含归档时尚未提交的工作树更新。K3s role 清单中的日期和运行状态反映其原始记录；当前 V6 状态以 V6 归档中最新核对条目为准。
 
