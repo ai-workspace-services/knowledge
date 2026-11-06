@@ -343,8 +343,10 @@ spec:
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Caddy Ingress** | `http://caddy-ingress-caddy.ingress-prod:80/metrics` | `prom` | `caddy` | 15s | **~484 点** | `caddy_http_requests_total`, `caddy_http_request_duration_seconds` |
 | **PostgreSQL** | `http://postgresql-postgresql-exporter.postgresql-prod:9187/metrics` | `prom` | `postgresql` | 15s | **~2,822 点** | `pg_stat_database_xact_commit`, `pg_stat_database_numbackends` |
-| **Kube-State-Metrics** | `http://observability-agent-state.observability-prod:8080/metrics` | `prom` | `kube-state-metrics`| 15s | **~2,380 点** | `kube_pod_status_phase`, `kube_node_status_condition` |
-| **Node-Exporter** | `http://observability-agent.observability-prod:9100/metrics` | `prom` | `node-exporter` | 15s | **~1,715 点** | `node_cpu_seconds_total`, `node_memory_MemAvailable_bytes` |
+| **Kube-State-Metrics** | `http://observability-agent-state.observability-prod:8080/metrics` | `prom` | `kube-state-metrics`| 15s | **~2,380 点** | `kube_pod_status_phase`, `kube_node_status_condition` (`job="kube-state-metrics"`) |
+| **Node-Exporter** | `http://observability-agent.observability-prod:9100/metrics` | `prom` | `node-exporter` | 15s | **~1,715 点** | `node_cpu_seconds_total`, `node_memory_MemAvailable_bytes` (`job="node-exporter"`) |
+| **cAdvisor (容器硬件开销)** | `https://127.0.0.1:10250/metrics/cadvisor` | `prom` | `cadvisor` | 15s | **~7,250 点** | `container_cpu_usage_seconds_total`, `container_memory_working_set_bytes` (`job="cadvisor"`) |
+| **Kubelet (存储卷/运行时)** | `https://127.0.0.1:10250/metrics` | `prom` | `kubelet` | 15s | **~850 点** | `kubelet_volume_stats_used_bytes`, `kubelet_volume_stats_available_bytes` (`job="kubelet"`) |
 | **CRI 容器对象** | `unix:///var/run/k3s/containerd/containerd.sock` | `container` | `kubelet_pod` (对象) | 60s | 全量 Pod 对象 | 容器启动状态、宿主机 CPU/内存开销 |
 
 > **实盘吞吐数据**：在生产集群 `prod-k3s-v6` 实测，DataKit 单节点 15 秒周期稳定采集上报 **7,401 个指标数据点**，CPU 消耗低于 0.15 Core，内存占用稳定在 180MB 左右。
@@ -397,7 +399,7 @@ OTEL_EXPORTER_OTLP_HEADERS="X-Token=<OTEL_TOKEN>,To-Headless=true"
 | 仪表盘名称 | 仓库源码路径 | 桌面交付归档路径 | 对应观测云 Measurement |
 | :--- | :--- | :--- | :--- |
 | **Caddy Ingress 综合监控** | `dashboards/guance-cloud/caddy-dashboard.json` | `/Users/shenlan/Desktop/caddy-dashboard.json` | `caddy` |
-| **Kubernetes StarsL 全局看板** | `dashboards/guance-cloud/starsl-k8s-dashboard.json` | `/Users/shenlan/Desktop/starsl-k8s-dashboard.json` | `kube-state-metrics`, `node-exporter` |
+| **Kubernetes StarsL 全局看板** | `dashboards/guance-cloud/starsl-k8s-dashboard.json` | `/Users/shenlan/Desktop/starsl-k8s-dashboard.json` | `kube-state-metrics`, `node-exporter`, `cadvisor`, `kubelet` |
 | **PostgreSQL 统一数据库大盘** | `dashboards/guance-cloud/postgres-unified-overview.json` | `/Users/shenlan/Desktop/postgres-unified-overview.json` | `postgresql` |
 
 ### 2. 仪表盘元数据注释规范
