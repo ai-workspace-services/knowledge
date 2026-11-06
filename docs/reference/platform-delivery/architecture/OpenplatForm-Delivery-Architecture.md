@@ -4,7 +4,7 @@
 >
 > **状态边界：** 本文是目标架构与发布契约，不代表所有组件已部署、调谐或验收。GitOps 数量是规划基线，V6 运行事实以其状态归档顶部最新记录为准。本文变更仅为文档。
 
-> **当前 V6 范围（2026-11-02）：** 用户明确要求只解决现有环境问题。当前交付使用手动操作 / Ansible Playbooks + GitOps + Flux，入口沿用 Caddy + K3s ServiceLB；本文的 Traefik、Flagger 和流水线路线不属于本轮改造任务，也不据此判定当前环境部署失败。现有身份授权错误、资源故障和入口不通仍需按实际配置处理。
+> **当前 V6 运行实况与割接完成（2026-11-06）：** 现场已完成由 Caddy 向 **Traefik + Flux + Flagger** 的平滑割接。Caddy Deployment 副本已缩容至 0 并在 Ingress 声明中下线，80/443 流量完全由 Traefik 接管。PROD-K3S-V6 的平台域名（`console.svc.plus`, `accounts.svc.plus`, `billing.svc.plus`, `vault.svc.plus`, `observability.svc.plus`, `xworktech.com`）均已通过 Traefik IngressRoute 及真实证书链正常对外提供服务。Canary 渐进式发布机制已就绪（Flagger 基于 VictoriaMetrics 抓取的 `traefik_service_requests_total` 指标判定分析）。在架构实施与发布演练中严格遵循“零数据库 DDL 破坏（No DB Change）”与“凭据由 Vault / ESO 统一注入”的安全红线。
 
 ## 1. 设计目标与原则
 
@@ -68,7 +68,7 @@
 | `web-saas-prod-config` | Web SaaS 业务服务 |
 | `ingress-prod-config` | Traefik 与 Flagger |
 
-2026-11-02 现场已确认 Vault、PostgreSQL 和四个 Web SaaS 应用就绪，相关 ESO 同步成功；早期镜像授权、旧 mount 与应用 CrashLoop 记录属于历史问题。当前仍有 Datakit OOM/调谐失败及 Caddy 节点 443、V6 域名未交付等问题，详见 V6 归档。现场对象数量为 6 个 GitRepository、10 个 Kustomization（包含 `cluster-identities`）和 8 个 HelmRelease，不应再用上述 9 个 Kustomization 的规划数作为实际回执。
+2026-11-06 现场已完成 Traefik Ingress 的全面接管（80/443 ServiceLB 绑定 `traefik-ingress`，原 `caddy-ingress` 副本归零停止），全链路通过 Vault + ESO 同步的泛域名 `console-tls` 与品牌证书提供 TLS 终止，后端代理 Vault 时启用内网 TLS 传输跳过（`insecureSkipVerify: true` 解决 IP SAN 冲突）。Flagger 金丝雀控制器与 VictoriaMetrics 监控指标链路（ClusterIP 暴露 9100 端口抓取 Traefik 状态）均已就绪，已形成 Web SaaS 无状态服务（`accounts`, `console`）基于 Release Tag 触发的渐进式灰度发布与自动化健康观测闭环。
 
 ## 3. 统一平台架构
 
