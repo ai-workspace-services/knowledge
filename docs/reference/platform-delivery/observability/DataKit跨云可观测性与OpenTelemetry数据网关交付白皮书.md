@@ -94,27 +94,31 @@ kv/data/datakit/clusters/dev-k3s-v5    --> GLOBAL_TAGS
 - **问题 3：环境绑定与租户版本脱节**：
   将凭据按 `uat/serverless`、`prod/serverless` 等部署形态命名，无法区分底层的观测云工作空间（如国内北京免费试用版与海外香港商业版）。
 
-### 2. 治理三大原则
+### 2. 治理四大原则
 
-1. **原则一：秘密与配置严格分立（Config vs Secret Separation）**  
+1. **原则一：类别标志统一归属（Domain Category Namespace）**  
+   在 Vault 根路径与数据前缀之间补齐业务领域类别标志 —— **`observability`**（可观测性体系大类）。标准命名范式为：
+   `kv/data/<category>/<component>/<edition>` $\rightarrow$ **`kv/data/observability/datakit/{edition}`**。
+   以此避免组件名在根空间平铺裸露，与 `observability/cmdb-grafana`、`CICD/observability/*` 形成统一规范的领域命名空间与 RBAC 授权树。
+2. **原则二：秘密与配置严格分立（Config vs Secret Separation）**  
    彻底将 `GLOBAL_TAGS` 剔除出 Vault，转交由 GitOps（HelmRelease `values.datakit.global_tags`）与 Ansible Playbook（`group_vars`/`host_vars`）声明式管理，纳入 Git 版本控制。
-2. **原则二：相关键值同构聚合（Colocated Credential Node）**  
+3. **原则三：相关键值同构聚合（Colocated Credential Node）**  
    一个观测云工作空间的所有接入凭据（DataWay 端点、DataWay Token、OTel Token、OTel 鉴权头）在单个 Vault KV 节点内集中管理，保障原子性轮换。
-3. **原则三：工作空间语义二分法（Edition-Driven Paths）**  
+4. **原则四：工作空间语义二分法（Edition-Driven Paths）**  
    根据商业与地域属性，收敛为且仅收敛为 **两个权威 Vault KV v2 路径**：
-   - **`kv/data/datakit/bj-free`**：北京免费工作空间（试用版，用于 Dev、SIT、边缘轻量验证）；
-   - **`kv/data/datakit/hk-commercial`**：香港商业工作空间（高规格付费版，用于 PROD、UAT 生产级全球 APM）。
+   - **`kv/data/observability/datakit/bj-free`**：北京免费工作空间（试用版，用于 Dev、SIT、边缘轻量验证）；
+   - **`kv/data/observability/datakit/hk-commercial`**：香港商业工作空间（高规格付费版，用于 PROD、UAT 生产级全球 APM）。
 
 ### 3. 终态收敛凭据规范表
 
 | 凭据路径 (Vault KV v2) | Key 字段 | 数据类型 | 用途与标准格式说明 |
 | :--- | :--- | :--- | :--- |
-| **`kv/data/datakit/bj-free`**<br/>*(北京免费版工作空间)* | `DATAWAY_URL` | string | 完整的 DataWay 上报端点：<br/>`https://cn3-openway.guance.com?token=tkn_fffcb87e09694507b31c98b17405cc11` |
+| **`kv/data/observability/datakit/bj-free`**<br/>*(北京免费版工作空间)* | `DATAWAY_URL` | string | 完整的 DataWay 上报端点：<br/>`https://cn3-openway.guance.com?token=tkn_fffcb87e09694507b31c98b17405cc11` |
 | | `DATAWAY_TOKEN` | string | 观测云工作空间接入 Token：<br/>`tkn_fffcb87e09694507b31c98b17405cc11` |
 | | `OTEL_TOKEN` | string | OpenTelemetry 核心认证 Token：<br/>`96d584964ba24996abe4aee502bb8856` |
 | | `OTEL_EXPORTER_OTLP_HEADERS` | string | 标准 OTLP HTTP/gRPC 请求头：<br/>`X-Token=96d584964ba24996abe4aee502bb8856,To-Headless=true` |
 | | `OTEL_EXPORTER_OTLP_ENDPOINT`| string | OTel Trace 接收端点：<br/>`https://cn3-openway.guance.com/v1/write/tracing` |
-| **`kv/data/datakit/hk-commercial`**<br/>*(香港商业版工作空间)* | `DATAWAY_URL` | string | 商业版专属高可用 DataWay 端点：<br/>`https://hk-openway.guance.com?token=tkn_hk_prod_...` |
+| **`kv/data/observability/datakit/hk-commercial`**<br/>*(香港商业版工作空间)* | `DATAWAY_URL` | string | 商业版专属高可用 DataWay 端点：<br/>`https://hk-openway.guance.com?token=tkn_hk_prod_...` |
 | | `DATAWAY_TOKEN` | string | 商业版工作空间核心 Token：<br/>`tkn_hk_prod_...` |
 | | `OTEL_TOKEN` | string | 商业版专属 OpenTelemetry Token：<br/>`otel_hk_prod_...` |
 | | `OTEL_EXPORTER_OTLP_HEADERS` | string | 商业版 OTLP 鉴权头：<br/>`X-Token=otel_hk_prod_...,To-Headless=true` |
@@ -130,14 +134,14 @@ kv/data/datakit/clusters/dev-k3s-v5    --> GLOBAL_TAGS
 flowchart LR
     subgraph Trigger ["版本触发与输入"]
         CLI["Ansible CLI Override<br/>-e datakit_edition=hk-commercial"]
-        GitPR["GitOps PR Review<br/>remoteRef.key: datakit/hk-commercial"]
+        GitPR["GitOps PR Review<br/>remoteRef.key: observability/datakit/hk-commercial"]
         EnvVar["Serverless TF/Config<br/>EDITION=hk-commercial"]
     end
 
     subgraph DynamicRouting ["动态路由逻辑"]
-        PlaybookLogic{"Ansible 变量解析<br/>datakit_edition: 'hk-commercial'<br/>datakit_vault_path: 'datakit/hk-commercial'"}
-        ESOEngine{"External Secrets Operator<br/>SecretStore -> Vault KV v2<br/>Fetch key: datakit/hk-commercial"}
-        GCPSecret{"Secret Manager 自动同步<br/>kv/data/datakit/{edition}"}
+        PlaybookLogic{"Ansible 变量解析<br/>datakit_edition: 'hk-commercial'<br/>datakit_vault_path: 'observability/datakit/hk-commercial'"}
+        ESOEngine{"External Secrets Operator<br/>SecretStore -> Vault KV v2<br/>Fetch key: observability/datakit/hk-commercial"}
+        GCPSecret{"Secret Manager 自动同步<br/>kv/data/observability/datakit/{edition}"}
     end
 
     subgraph K8sSecret ["Kubernetes 运行态 Secret"]
@@ -161,16 +165,19 @@ flowchart LR
 在 `ai-workspace-infra/playbooks` 仓库的 `roles/k8s_helm/datakit/defaults/main.yml` 中建立了如下动态解析逻辑：
 
 ```yaml
+# 领域类别标志：固定归属可观测性 (observability) 大类
+datakit_vault_category: "observability"
+
 # 默认版本路由契约：PROD 环境默认流向香港商业版，非生产（dev/sit）默认流向北京免费版
 datakit_edition: "{{ 'hk-commercial' if (target_env | default('dev')) == 'prod' else 'bj-free' }}"
 
-# 映射到 Vault KV v2 路径
-datakit_vault_path: "datakit/{{ datakit_edition }}"
+# 映射到 Vault KV v2 路径：observability/datakit/{edition}
+datakit_vault_path: "{{ datakit_vault_category }}/datakit/{{ datakit_edition }}"
 ```
 
 - **常规执行**：
-  - 执行 `ansible-playbook -i inventories/sit datakit.yml` 时，自动读取 `kv/data/datakit/bj-free`；
-  - 执行 `ansible-playbook -i inventories/prod datakit.yml` 时，自动读取 `kv/data/datakit/hk-commercial`。
+  - 执行 `ansible-playbook -i inventories/sit datakit.yml` 时，自动读取 `kv/data/observability/datakit/bj-free`；
+  - 执行 `ansible-playbook -i inventories/prod datakit.yml` 时，自动读取 `kv/data/observability/datakit/hk-commercial`。
 - **一键切换与跨版本测试**：
   运维人员可通过命令行环境变量直接重载版本，无需改动任何 Playbook 核心任务：
   ```bash
@@ -183,12 +190,12 @@ datakit_vault_path: "datakit/{{ datakit_edition }}"
 - **自动化测试保障**：在 `tests/test_datakit_helm_role_contract.py` 中预置了断言测试：
   ```python
   def test_datakit_edition_resolution():
-      # SIT / Dev resolves to bj-free
-      assert resolve_vault_path(env="sit") == "datakit/bj-free"
-      # PROD resolves to hk-commercial
-      assert resolve_vault_path(env="prod") == "datakit/hk-commercial"
+      # SIT / Dev resolves to observability/datakit/bj-free
+      assert resolve_vault_path(env="sit") == "observability/datakit/bj-free"
+      # PROD resolves to observability/datakit/hk-commercial
+      assert resolve_vault_path(env="prod") == "observability/datakit/hk-commercial"
       # Explicit CLI override takes precedence
-      assert resolve_vault_path(env="sit", override="hk-commercial") == "datakit/hk-commercial"
+      assert resolve_vault_path(env="sit", override="hk-commercial") == "observability/datakit/hk-commercial"
   ```
 
 ### 2. FluxCD GitOps 声明式热切换规范
@@ -213,15 +220,15 @@ spec:
   data:
   - secretKey: ENV_DATAWAY
     remoteRef:
-      key: datakit/hk-commercial       # <--- 切换核心入口：datakit/bj-free <-> datakit/hk-commercial
+      key: observability/datakit/hk-commercial       # <--- 切换核心入口：observability/datakit/bj-free <-> observability/datakit/hk-commercial
       property: DATAWAY_URL
   - secretKey: OTEL_EXPORTER_OTLP_HEADERS
     remoteRef:
-      key: datakit/hk-commercial
+      key: observability/datakit/hk-commercial
       property: OTEL_EXPORTER_OTLP_HEADERS
   - secretKey: OTEL_EXPORTER_OTLP_ENDPOINT
     remoteRef:
-      key: datakit/hk-commercial
+      key: observability/datakit/hk-commercial
       property: OTEL_EXPORTER_OTLP_ENDPOINT
 ```
 
