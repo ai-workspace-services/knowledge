@@ -118,11 +118,11 @@ kv/data/datakit/clusters/dev-k3s-v5    --> GLOBAL_TAGS
 | | `OTEL_TOKEN` | string | OpenTelemetry 核心认证 Token：<br/>`96d584964ba24996abe4aee502bb8856` |
 | | `OTEL_EXPORTER_OTLP_HEADERS` | string | 标准 OTLP HTTP/gRPC 请求头：<br/>`X-Token=96d584964ba24996abe4aee502bb8856,To-Headless=true` |
 | | `OTEL_EXPORTER_OTLP_ENDPOINT`| string | OTel Trace 接收端点：<br/>`https://cn3-openway.guance.com/v1/write/tracing` |
-| **`kv/data/observability/datakit/hk-commercial`**<br/>*(香港商业版工作空间)* | `DATAWAY_URL` | string | 商业版专属高可用 DataWay 端点：<br/>`https://hk-openway.guance.com?token=tkn_hk_prod_...` |
+| **`kv/data/observability/datakit/hk-commercial`**<br/>*(香港商业版工作空间 / 中国区6)* | `DATAWAY_URL` | string | 商业版专属高可用 DataWay 端点 (CN6 香港)：<br/>`https://cn6-openway.guance.com?token=tkn_hk_prod_...` |
 | | `DATAWAY_TOKEN` | string | 商业版工作空间核心 Token：<br/>`tkn_hk_prod_...` |
 | | `OTEL_TOKEN` | string | 商业版专属 OpenTelemetry Token：<br/>`otel_hk_prod_...` |
 | | `OTEL_EXPORTER_OTLP_HEADERS` | string | 商业版 OTLP 鉴权头：<br/>`X-Token=otel_hk_prod_...,To-Headless=true` |
-| | `OTEL_EXPORTER_OTLP_ENDPOINT`| string | 商业版专属 Trace 网关：<br/>`https://hk-openway.guance.com/v1/write/tracing` |
+| | `OTEL_EXPORTER_OTLP_ENDPOINT`| string | 商业版专属 Trace 网关：<br/>`https://cn6-openway.guance.com/v1/write/tracing` |
 
 ### 4. 凭据录入与自动化注入标准模版（开箱即用）
 
@@ -146,15 +146,15 @@ kv/data/datakit/clusters/dev-k3s-v5    --> GLOBAL_TAGS
 ```
 
 ##### ② 香港商业版 (`kv/data/observability/datakit/hk-commercial`)
-> 适用：UAT、PROD、海外边缘节点（企业高可用商业版网关）
+> 适用：UAT、PROD、海外边缘节点（观测云中国区6香港节点 `cn6-openway.guance.com`）
 
 ```json
 {
-  "DATAWAY_URL": "https://hk-openway.guance.com?token=<YOUR_HK_COMMERCIAL_DATAWAY_TOKEN>",
+  "DATAWAY_URL": "https://cn6-openway.guance.com?token=<YOUR_HK_COMMERCIAL_DATAWAY_TOKEN>",
   "DATAWAY_TOKEN": "<YOUR_HK_COMMERCIAL_DATAWAY_TOKEN>",
   "OTEL_TOKEN": "<YOUR_HK_COMMERCIAL_OTEL_TOKEN>",
   "OTEL_EXPORTER_OTLP_HEADERS": "X-Token=<YOUR_HK_COMMERCIAL_OTEL_TOKEN>,To-Headless=true",
-  "OTEL_EXPORTER_OTLP_ENDPOINT": "https://hk-openway.guance.com/v1/write/tracing"
+  "OTEL_EXPORTER_OTLP_ENDPOINT": "https://cn6-openway.guance.com/v1/write/tracing"
 }
 ```
 
@@ -179,17 +179,17 @@ vault kv put kv/observability/datakit/bj-free \
   OTEL_EXPORTER_OTLP_ENDPOINT="https://cn3-openway.guance.com/v1/write/tracing"
 
 # ==============================================================================
-# 2. 写入香港商业版凭据 (PROD/UAT)
+# 2. 写入香港商业版凭据 (PROD/UAT - CN6 香港节点)
 # ==============================================================================
 export HK_DATAWAY_TOKEN="tkn_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 export HK_OTEL_TOKEN="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 
 vault kv put kv/observability/datakit/hk-commercial \
   DATAWAY_TOKEN="${HK_DATAWAY_TOKEN}" \
-  DATAWAY_URL="https://hk-openway.guance.com?token=${HK_DATAWAY_TOKEN}" \
+  DATAWAY_URL="https://cn6-openway.guance.com?token=${HK_DATAWAY_TOKEN}" \
   OTEL_TOKEN="${HK_OTEL_TOKEN}" \
   OTEL_EXPORTER_OTLP_HEADERS="X-Token=${HK_OTEL_TOKEN},To-Headless=true" \
-  OTEL_EXPORTER_OTLP_ENDPOINT="https://hk-openway.guance.com/v1/write/tracing"
+  OTEL_EXPORTER_OTLP_ENDPOINT="https://cn6-openway.guance.com/v1/write/tracing"
 ```
 
 ---
