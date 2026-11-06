@@ -226,9 +226,10 @@ flowchart TD
 
 ## 九、知识库独立迁移参考文档归档 (`knowledge`)
 
-按照要求，将 VictoriaMetrics 权威源到观测云双轨采集与 MetricMap 映射的完整交付过程，归档为独立参考手册：
-- **文档文件**：[`docs/reference/platform-delivery/SIT-K3S-V6-VictoriaMetrics到观测云双轨采集与MetricMap映射交付手册.md`](https://github.com/ai-workspace-services/knowledge/blob/main/docs/reference/platform-delivery/SIT-K3S-V6-VictoriaMetrics%E5%88%B0%E8%A7%82%E6%B5%8B%E4%BA%91%E5%8F%8C%E8%BD%A8%E9%87%87%E9%9B%86%E4%B8%8EMetricMap%E6%30%A0%E5%B0%84%E4%BA%A4%E4%BB%98%E6%89%8B%E5%86%8C.md)
-- **目录索引**：[`docs/reference/platform-delivery/README.md`](https://github.com/ai-workspace-services/knowledge/blob/main/docs/reference/platform-delivery/README.md)
+按照要求，将 VictoriaMetrics 权威源到观测云双轨采集与 MetricMap 映射的完整交付过程，归档为独立参考手册与体系白皮书：
+- **体系白皮书**：[`docs/reference/platform-delivery/observability/DataKit跨云可观测性与OpenTelemetry数据网关交付白皮书.md`](observability/DataKit跨云可观测性与OpenTelemetry数据网关交付白皮书.md)
+- **交付实操手册**：[`docs/reference/platform-delivery/observability/SIT-K3S-V6-VictoriaMetrics到观测云双轨采集与MetricMap映射交付手册.md`](observability/SIT-K3S-V6-VictoriaMetrics到观测云双轨采集与MetricMap映射交付手册.md)
+- **目录索引**：[`docs/reference/platform-delivery/README.md`](README.md)
 - **合并 PR**：[#367](https://github.com/ai-workspace-services/knowledge/pull/367)（`docs(platform-delivery): add SIT-K3S-V6 VictoriaMetrics to Guance Cloud telemetry and MetricMap migration manual`，已由 Admin 自动合并合入 `main`）
 - **手册涵盖要点**：
   1. **权威源与观测云链路映射总览**：VictoriaMetrics（扁平时序）与观测云（`Measurement:Field {Tags}`）数据模型转换与 4 目标对应矩阵；
