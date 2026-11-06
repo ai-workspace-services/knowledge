@@ -124,6 +124,97 @@ kv/data/datakit/clusters/dev-k3s-v5    --> GLOBAL_TAGS
 | | `OTEL_EXPORTER_OTLP_HEADERS` | string | 商业版 OTLP 鉴权头：<br/>`X-Token=otel_hk_prod_...,To-Headless=true` |
 | | `OTEL_EXPORTER_OTLP_ENDPOINT`| string | 商业版专属 Trace 网关：<br/>`https://hk-openway.guance.com/v1/write/tracing` |
 
+### 4. 凭据录入与自动化注入标准模版（开箱即用）
+
+为确保上报域名、接口路径、OTel Headers 格式等静态协议参数 100% 准确，提供预置完整参数的标准模板。**运维人员仅需填写/替换自己的专属 API Token**，其余字段无需调整。
+
+#### 4.1 Vault Web UI 录入 JSON 模版
+
+在 Vault Web 控制台进入对应路径后，切换至 **JSON** 编辑模式直接粘贴：
+
+##### ① 北京免费版 (`kv/data/observability/datakit/bj-free`)
+> 适用：开发（DEV）、SIT、边缘轻量集群（观测云 SaaS cn3 节点）
+
+```json
+{
+  "DATAWAY_URL": "https://cn3-openway.guance.com?token=<YOUR_BJ_FREE_DATAWAY_TOKEN>",
+  "DATAWAY_TOKEN": "<YOUR_BJ_FREE_DATAWAY_TOKEN>",
+  "OTEL_TOKEN": "<YOUR_BJ_FREE_OTEL_TOKEN>",
+  "OTEL_EXPORTER_OTLP_HEADERS": "X-Token=<YOUR_BJ_FREE_OTEL_TOKEN>,To-Headless=true",
+  "OTEL_EXPORTER_OTLP_ENDPOINT": "https://cn3-openway.guance.com/v1/write/tracing"
+}
+```
+
+##### ② 香港商业版 (`kv/data/observability/datakit/hk-commercial`)
+> 适用：UAT、PROD、海外边缘节点（企业高可用商业版网关）
+
+```json
+{
+  "DATAWAY_URL": "https://hk-openway.guance.com?token=<YOUR_HK_COMMERCIAL_DATAWAY_TOKEN>",
+  "DATAWAY_TOKEN": "<YOUR_HK_COMMERCIAL_DATAWAY_TOKEN>",
+  "OTEL_TOKEN": "<YOUR_HK_COMMERCIAL_OTEL_TOKEN>",
+  "OTEL_EXPORTER_OTLP_HEADERS": "X-Token=<YOUR_HK_COMMERCIAL_OTEL_TOKEN>,To-Headless=true",
+  "OTEL_EXPORTER_OTLP_ENDPOINT": "https://hk-openway.guance.com/v1/write/tracing"
+}
+```
+
+---
+
+#### 4.2 Vault CLI 一键写入脚本（推荐：仅声明一次 Token 变量）
+
+在初始化或密钥轮换时，推荐使用 Shell 脚本自动化注入。**Token 变量只需定义一次，脚本自动完成 `DATAWAY_URL` 与 `OTEL_EXPORTER_OTLP_HEADERS` 的格式化拼装**，杜绝手动拼接产生拼写错误：
+
+```bash
+# ==============================================================================
+# 1. 写入北京免费版凭据 (Dev/SIT)
+# ==============================================================================
+export BJ_DATAWAY_TOKEN="tkn_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+export BJ_OTEL_TOKEN="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+vault kv put kv/observability/datakit/bj-free \
+  DATAWAY_TOKEN="${BJ_DATAWAY_TOKEN}" \
+  DATAWAY_URL="https://cn3-openway.guance.com?token=${BJ_DATAWAY_TOKEN}" \
+  OTEL_TOKEN="${BJ_OTEL_TOKEN}" \
+  OTEL_EXPORTER_OTLP_HEADERS="X-Token=${BJ_OTEL_TOKEN},To-Headless=true" \
+  OTEL_EXPORTER_OTLP_ENDPOINT="https://cn3-openway.guance.com/v1/write/tracing"
+
+# ==============================================================================
+# 2. 写入香港商业版凭据 (PROD/UAT)
+# ==============================================================================
+export HK_DATAWAY_TOKEN="tkn_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+export HK_OTEL_TOKEN="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+vault kv put kv/observability/datakit/hk-commercial \
+  DATAWAY_TOKEN="${HK_DATAWAY_TOKEN}" \
+  DATAWAY_URL="https://hk-openway.guance.com?token=${HK_DATAWAY_TOKEN}" \
+  OTEL_TOKEN="${HK_OTEL_TOKEN}" \
+  OTEL_EXPORTER_OTLP_HEADERS="X-Token=${HK_OTEL_TOKEN},To-Headless=true" \
+  OTEL_EXPORTER_OTLP_ENDPOINT="https://hk-openway.guance.com/v1/write/tracing"
+```
+
+---
+
+#### 4.3 Vault KV v2 HTTP REST API 模版（CI/CD 流水线与自动化编排）
+
+针对 Ansible、Terraform 或 CI/CD Job 自动化注入，直接调用 Vault HTTP API：
+
+```bash
+# 示例：通过 API 写入北京免费版凭据
+curl --silent --fail \
+     --header "X-Vault-Token: ${VAULT_TOKEN}" \
+     --request POST \
+     --data '{
+       "data": {
+         "DATAWAY_URL": "https://cn3-openway.guance.com?token=<YOUR_DATAWAY_TOKEN>",
+         "DATAWAY_TOKEN": "<YOUR_DATAWAY_TOKEN>",
+         "OTEL_TOKEN": "<YOUR_OTEL_TOKEN>",
+         "OTEL_EXPORTER_OTLP_HEADERS": "X-Token=<YOUR_OTEL_TOKEN>,To-Headless=true",
+         "OTEL_EXPORTER_OTLP_ENDPOINT": "https://cn3-openway.guance.com/v1/write/tracing"
+       }
+     }' \
+     https://vault.svc.plus/v1/kv/data/observability/datakit/bj-free
+```
+
 ---
 
 ## 三、双版本动态切换机制与全链路编排契约
