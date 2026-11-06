@@ -2,7 +2,7 @@
 
 状态：通用身份契约仍为设计，尚未完成通用声明及调用方实现。本文不自动授权写入 Vault、切换 Flux、迁移凭据或删除旧资源。
 
-**最新现场记录（2026-11-02，北京时间）：** 本批次由用户显式分配 `clusterId=prod-k3s-v6`，当前各 SecretStore 使用 `jwt-prod-k3s-prod-k3s-v6`，ESO Secret 同步已恢复。TLS 引导实际使用 role/policy `prod-k3s-tls-reader`、audience `vault-prod-k3s-tls`、ServiceAccount `vault-prod/vault-tls-reader`，SecretStore 名为 `shared-vault-tls-bootstrap`，目标 Secret 为 `vault-prod/vault-server-tls`。它与 Ingress、数据库及应用的独立 reader 分别授权。详见 [V6 最新部署状态](PROD-K3S-V6-规划与部署状态归档.md)。本轮只修复当前环境，不因命名包含批次字符串而改名或复制实现。
+**最新现场记录（2026-11-06，北京时间）：** 本批次由用户显式分配 `clusterId=prod-k3s-v6`，当前各 SecretStore 持续使用 `jwt-prod-k3s-prod-k3s-v6`。入口流量割接至 Traefik 后，全站 TLS 证书严格延续既有 Vault KV 逻辑路径 `kv/CICD/domains/svc.plus` 及 `kv/CICD/domains/xworktech.com`，严禁使用自签名证书。ESO Controller 借助 ServiceAccount `ingress-tls-reader`（通过 TokenRequest 获取短期 JWT 挂载并登录 Vault `jwt-prod-k3s-prod-k3s-v6/role/prod-k3s-v6-ingress-tls-reader`），将证书安全同步到集群内 Secret（`console-tls`、`accounts-tls`、`billing-tls`、`brand-console-tls`），Traefik IngressRoute 统一挂载该 Secret 实施公网 HTTPS 终结。
 
 **历史记录（2026-11-01）：** 公共 Vault 的旧 `jwt-prod-k3s-v6` mount 曾被停用，旧 TLS reader role 随 mount 删除，签发 token 被撤销；当时仍引用旧 mount 的 SecretStore 同步失败。该状态已由上述新 mount 与调用方配置修复，不能作为当前故障结论。
 
