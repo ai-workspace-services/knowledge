@@ -416,6 +416,25 @@ OTEL_EXPORTER_OTLP_HEADERS="X-Token=<OTEL_TOKEN>,To-Headless=true"
 }
 ```
 
+### 3. K8S Dashboard 动态视图变量与分组表格多查询渲染基线
+
+在观测云控制台（SaaS）呈现 Kubernetes 大盘时，需严格遵循以下渲染与指标聚合规范：
+
+1. **分组与图表标题静态化（规避裸露 `#{Var}` 占位符）**：
+   - 当用户在控制台全局筛选器中选择 `*`（默认通配）时，分组标题与图表名称若包含 `【#{Node}】`、`【#{Pod}】`、`【#{Container}】`、`#{NameSpace}：` 等插值语法，前端模板引擎无法求值，会导致字面量占位符直接裸露在界面中；
+   - 统一将分组名称固化为标准业务语义（`节点资源总览`、`Pod资源总览`、`微服务(容器名)资源总览`），并精简图表名称（如 `节点内存使用量`、`Pod资源明细 (节点与容器资源画像)`），避免界面产生半成品模板感。
+
+2. **分组表格图（Grouped Table）多 PromQL 聚合标签强一致性**：
+   - 表格组件使用 `toGroupColumn` 模式汇聚多指标时，所有参与 Query（CPU 使用、内存 WSS/RSS、重启次数、运行时长、网络吞吐等）在聚合末端必须具备完全一致的分组维度：`by (container, pod, node, namespace)`；
+   - 若某项指标（如 `kube_pod_container_status_restarts_total` 或 `time() - kube_pod_created`）原生标签结构与 cAdvisor 不对齐，必须通过 `* on(pod, namespace) group_left(node) kube_pod_info` 补齐节点信息并外层 `sum(...) by (...)` 收敛，避免因标签不对齐导致表格行全部展示为横杠 `-`。
+
+3. **主测量查询代码（`mainMeasurementQueryCode`）选型**：
+   - 严禁将带有资源限制计算公式的 Query（如 `CPU%` = CPU使用 / CPU限制）作为 `mainMeasurementQueryCode`，否则未配置 `resources.limits` 的业务 Pod 将无法被行索引，导致整行数据缺失；
+   - 必须统一指定具备 100% 运行态时序覆盖的指标（如 Query Q `container_cpu_usage_seconds_total` 使用核数）作为行驱动基准。
+
+4. **图表类型与时序轴解耦**：
+   - 分组表格图的底层配置需显式设定 `chartType: "table"`，并移除多余的 `stackType: "time"`，规避时序轴覆盖分组列导致首列出现异常时间戳的问题。
+
 ---
 
 ## 七、三权分立与运维安全审计基线
