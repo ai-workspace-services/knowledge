@@ -3,8 +3,9 @@
 本目录汇集专项参考文档、跨组件总体架构、双轨可观测性规范以及代际集群交付手册。规划和目标图不代表代码已实现或线上已验收；运行状态以各文档标注的观察时间、GitOps 提交哈希与实际集群回执为准。
 
 > [!IMPORTANT]
-> **终态交付与交接报告**：全量架构对齐、SIT 与 PROD 双集群 DataKit / VictoriaMetrics 修复回执、标准仪表盘调试及异构时序映射请参考核心交接归档：
-> 📋 [**Hand-Off 交付与交接报告 (终态完整版)**](Hand-Off-交付与交接报告-终态完整版.md)
+> **核心交付归档与白皮书**：
+> - 📋 [**Hand-Off 交付与交接报告 (终态完整版)**](Hand-Off-交付与交接报告-终态完整版.md)：全量架构对齐、SIT 与 PROD 双集群 DataKit / VictoriaMetrics 修复回执、标准仪表盘调试及异构时序映射。
+> - 📘 [**Web Console 前端全量路由与后端微服务 API 目录统计白皮书**](Web-Console-前端全量路由与后端微服务-API-目录统计白皮书.md)：181 项全量监控资产收敛（65 前端页面路由 7 大类 + 116 后端微服务 API 8 大类）、三级树状分组架构规范、Flagger 渐进发布与门禁联动（0/1/2 状态映射、Billing 未配置金丝雀 Not configured 规范、双色加权流量切分条）以及 VictoriaMetrics 动态遥测接入规范。
 
 ---
 
@@ -14,6 +15,7 @@
 docs/reference/platform-delivery/
 ├── README.md                                             # 平台交付索引与总体导航
 ├── Hand-Off-交付与交接报告-终态完整版.md                   # 双集群全量交付与交接总报告
+├── Web-Console-前端全量路由与后端微服务-API-目录统计白皮书.md # 181 项全量监控资产、三级树状架构、Flagger金丝雀与动态遥测白皮书
 ├── architecture/                                         # 基础运行环境、身份契约与统一交付架构
 ├── observability/                                        # 可观测性、Grafana 面板、观测云双轨与 MetricMap
 ├── clusters/                                             # 节点与集群环境独立归档
@@ -43,6 +45,7 @@ docs/reference/platform-delivery/
 
 | 文档名称 | 核心内容与技术边界 |
 | :--- | :--- |
+| [**Web Console 前端全量路由与后端微服务 API 目录统计白皮书**](Web-Console-前端全量路由与后端微服务-API-目录统计白皮书.md) | **【资产与发布白皮书】** 181 项全量监控资产（65 前端路由 7 大类 + 116 后端 API 8 大类）系统收敛梳理、前端/后端/大类/子组件三级树状分组架构规范、Flagger 金丝雀发布与门禁联动（0/1/2 映射、Billing 未配置金丝雀 Not configured 规范、双色流量切分条）及 VictoriaMetrics 动态遥测接入规范。 |
 | [**DataKit 跨云可观测性与 OpenTelemetry 数据网关交付白皮书**](observability/DataKit跨云可观测性与OpenTelemetry数据网关交付白皮书.md) | **【体系白皮书】** 双轨可观测性战略定位、Vault KV v2 路径按 `observability` 领域类别极致收敛（`observability/datakit/bj-free` vs `observability/datakit/hk-commercial`）、Playbook/GitOps 动态无缝切换契约、4 大 Prometheus 端点实盘采集与 OpenTelemetry 数据网关接入规范。 |
 | [**SIT-K3S-V6 VictoriaMetrics 到观测云双轨采集与 MetricMap 映射交付手册**](observability/SIT-K3S-V6-VictoriaMetrics到观测云双轨采集与MetricMap映射交付手册.md) | **【核心交付】** 权威源 VictoriaMetrics 与观测云 MetricMap 链路映射总览、DataKit 4 大 Target 抓取规范、GitOps/Playbook 幂等交付及免费额度超限（`kodo.beyondDataUsage`）诊断手册。 |
 | [**SIT 共享观测与双集群探针交接及 PROD 旧服务端退役验收报告**](observability/SIT共享观测与双集群探针交接及PROD旧服务端退役验收报告.md) | **【验收报告】** SIT 共享观测服务端与双集群探针全链路交接验收，权威 DNS 切流、PROD 全量指标汇聚、Flagger 金丝雀认证查询、Grafana 凭据同步与 PROD 旧服务端无损退役运行回执。 |
