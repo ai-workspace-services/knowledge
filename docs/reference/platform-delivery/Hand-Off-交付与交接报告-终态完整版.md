@@ -39,7 +39,7 @@ flowchart TD
         CaddyGW["Caddy :8443 (observability.svc.plus)"]
         VMAuth["vmauth /api/v1/write"]
         VMStorage["VictoriaMetrics (:8428)"]
-        CentralGrafana["Grafana 3 个看板 (ev-k3s-v6 / dev-k3s-v6 / sit-k3s-v6)"]
+        CentralGrafana["Grafana 3 个看板 ( prod-k3s-v6 / dev-k3s-v6)"]
     end
 
     Workloads --> Exporters
