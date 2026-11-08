@@ -228,17 +228,18 @@ Flagger 在 Kubernetes 中通过 Prometheus Exporter 暴露核心状态指标 `f
 | `2` | `Failed` | 金丝雀发布分析失败（错误率超标或延迟熔断），已执行自动回滚。 | 警示珊瑚红，标记回滚与异常原因 | **强行熔断 (BLOCKED)** |
 | `null` | `Not configured` | 服务未配置 Flagger Canary 资源（属于单实例或非金丝雀服务）。 | 灰色斜纹斑马线，提示无金丝雀配置 | 不参与金丝雀步进判定 |
 
-### 3.2 多微服务金丝雀编排矩阵与 Billing 未配置规范
-平台由三个核心微服务构成，各微服务遵循差异化发布契约：
+### 3.2 多微服务金丝雀编排矩阵与 Billing 全面对齐规范
+平台由三大核心微服务构成，各微服务已全面对齐统一的渐进式发布契约：
 1. **Console (`console.svc.plus`)**：配置 Traefik/Flagger 渐进发布，步长 10%，最大权重 50%，分析间隔 1m。
 2. **Accounts (`accounts.svc.plus`)**：配置 Flagger 渐进发布，步长 5%，最大权重 20%，分析间隔 1m。
-3. **Billing (`billing.svc.plus`)**：**特殊规范（Not configured）**。
-   > [!WARNING]
-   > **商业化计费微服务未配置金丝雀的特殊约束**：
-   > 商业计费微服务（Billing）涉及外部 Stripe Webhook 幂等性、强一致性财务账本与数据库双写事务，目前采用**不可变全量蓝绿滚动部署**，未挂载 Flagger Canary CRD。
-   > - 控制台规范：不得将未配置呈现为假象的 `0%` 或 `Failed`。
-   > - 必须准确返回 `phase: "Not configured"`，`weight: null`，`primaryTrafficPct: null`，`candidateTrafficPct: null`。
-   > - UI 渲染层必须渲染为**灰色斜纹条（Patterned Gray Bar）**，并标注提示语 `"No canary configured for this service"`。
+3. **Billing (`billing.svc.plus`)**：**全面对齐金丝雀发布矩阵**。
+   > [!NOTE]
+   > **商业化计费微服务金丝雀对齐规范**：
+   > 商业计费微服务（Billing）已通过 GitOps `canary-billing.yaml` 完成与 Traefik IngressRoute 及 Flagger Canary CRD 的全量对接。
+   > - 彻底废除原有的“未配置金丝雀（Not configured）”硬编码覆盖与灰色斑马线兜底逻辑。
+   > - 在 PROD 稳态环境下呈现为 `phase: "Succeeded"`（Primary 100% | Candidate 0%）。
+   > - 在 SIT 或金丝雀演练推进中动态支持 `phase: "Progressing"` 与双色加权流量切分条（默认 Candidate 10% 初始步长）。
+   > - 控制台与 Grafana 监控插件均与 VictoriaMetrics 实盘指标 `flagger_canary_status{name="web-saas-billing"}` 及 `flagger_canary_weight` 保持 100% 动态对齐。
 
 ### 3.3 双色流量加权切分条 (Canary Split Bar) 设计
 在控制台界面中，每个服务的发布状态通过高保真流量切分条直观可视化：
