@@ -45,6 +45,7 @@ docs/reference/platform-delivery/
 | :--- | :--- |
 | [**DataKit 跨云可观测性与 OpenTelemetry 数据网关交付白皮书**](observability/DataKit跨云可观测性与OpenTelemetry数据网关交付白皮书.md) | **【体系白皮书】** 双轨可观测性战略定位、Vault KV v2 路径按 `observability` 领域类别极致收敛（`observability/datakit/bj-free` vs `observability/datakit/hk-commercial`）、Playbook/GitOps 动态无缝切换契约、4 大 Prometheus 端点实盘采集与 OpenTelemetry 数据网关接入规范。 |
 | [**SIT-K3S-V6 VictoriaMetrics 到观测云双轨采集与 MetricMap 映射交付手册**](observability/SIT-K3S-V6-VictoriaMetrics到观测云双轨采集与MetricMap映射交付手册.md) | **【核心交付】** 权威源 VictoriaMetrics 与观测云 MetricMap 链路映射总览、DataKit 4 大 Target 抓取规范、GitOps/Playbook 幂等交付及免费额度超限（`kodo.beyondDataUsage`）诊断手册。 |
+| [**SIT 共享观测与双集群探针交接及 PROD 旧服务端退役验收报告**](observability/SIT共享观测与双集群探针交接及PROD旧服务端退役验收报告.md) | **【验收报告】** SIT 共享观测服务端与双集群探针全链路交接验收，权威 DNS 切流、PROD 全量指标汇聚、Flagger 金丝雀认证查询、Grafana 凭据同步与 PROD 旧服务端无损退役运行回执。 |
 | [21个 Grafana 面板数据流检查与修复验收报告](observability/21个Grafana面板数据流检查与修复验收报告.md) | 21 个 Grafana 核心面板的数据流校验、图表指标源梳理与修复验收回执。 |
 | [Antigravity：21个 Grafana 面板数据流检查与修复提示词](observability/Antigravity-21个Grafana面板数据流检查与修复提示词.md) | Agent 自动化修复与数据流逐 Panel 核验工程提示词。 |
 | [Grafana 独立 PostgreSQL 与 GitOps 持久化规划](observability/Grafana独立PostgreSQL与GitOps持久化规划.md) | 共享业务 PostgreSQL 实例、独立 `grafana` 数据库、生命周期与 GitOps 持久化配置。 |
