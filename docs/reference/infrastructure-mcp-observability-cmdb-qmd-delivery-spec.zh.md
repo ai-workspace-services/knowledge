@@ -41,7 +41,7 @@ flowchart TD
         Agent["Antigravity / Codex / XWorkmate Agent / Trae / Cursor"]
     end
 
-    subgraph PlatformMCP ["platform-mcp 集群服务"]
+    subgraph PlatformCluster ["platform-mcp 集群服务"]
         Caddy_Edge_Ingress["Caddy Ingress Controller (platform-ingress / IngressClass: caddy / hostPort 80/443)"]
         
         subgraph PlatformMCP ["Namespace: platform-mcp (Restricted PSA)"]
