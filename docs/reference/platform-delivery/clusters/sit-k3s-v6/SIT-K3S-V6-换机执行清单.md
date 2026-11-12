@@ -96,6 +96,8 @@
 - [ ] 将 `sit-k3s-guard` 纳入 playbooks 管理（当前为主机手工文件，仓库中无来源），依据 [ADR-0001：GitOps 三类执行器与单一配置负责人](../../architecture/ADR-0001-GitOps三类执行器与单一配置负责人.md)。
 - [x] operator 免密 sudo 已按 `vhosts/common` 下发 `/etc/sudoers.d/operator-k3s`：仅 `k3s`、`ctr`、`kubectl`、`flux` 免密，其他命令（如 `id`）仍需密码；auditor 核对 `sudo -n` 被拒、`k3s`/`sit-k3s-guard` active。`common_os_identities.yml` 改为先绑定 Vault become 密码再收集 facts（[playbooks#1014](https://github.com/ai-workspace-infra/playbooks/pull/1014)）。
 - [x] `/data` 数据契约改为两种形式：独立 ext4 数据卷（`k3s_platform_data_mode: volume`，默认，校验挂载 UUID）或分配目录（`directory`，root 拥有、无组/其他写权限，回执记录所在文件系统 UUID 与 `data_mode`）。本机无数据盘，交接按 `directory` 执行（[playbooks#1015](https://github.com/ai-workspace-infra/playbooks/pull/1015)）。
+- [x] 候选 overlay 的 9 个 GitRepository 改为统一引用 tag `sit-k3s-v6-contabo-r1`（位于合并提交 `34974b9`），替代自引用的 commit 钉选（[gitops#899](https://github.com/ai-workspace-infra/gitops/pull/899)）。
+- [x] 整理交接文档：[SIT-K3S-V6-交接文档.md](SIT-K3S-V6-交接文档.md)。
 - [x] SIT identity-writer 策略与角色已应用到 Vault。
 - [ ] 为新 cluster UID 建立独立 Vault JWT 信任（使用重新生成后的 issuer/JWKS，不改旧集群挂载）。
 - [ ] 在目标机安装 Helm 客户端与 Flux controllers，按 `declarative_active` 交接候选根路径，确认 `FLUX_HANDOVER_VERIFIED`。
