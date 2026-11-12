@@ -1,5 +1,7 @@
 # SIT-K3S-V6 换机执行清单
 
+> 治理规范：本清单所有变更遵循 [ADR-0001：GitOps 三类执行器与单一配置负责人](../../architecture/ADR-0001-GitOps三类执行器与单一配置负责人.md)（主机归 Ansible，Compose 归 Doco CD，集群内资源归 Flux，同一资源只有一个声明式负责人）。
+
 2026-11-12（北京时间） · 本地配套清单 · 源 `172.237.9.58` → 目标 `5.189.172.69`
 
 在目标新建 K3s 和空数据卷，完整部署 SIT 服务，以测试账号和新观测样本验收。执行范围包括已批准域名的 DNS 切换。旧 PostgreSQL、PVC、历史观测数据和旧 kubeconfig 不导入。旧机保留到切换观察完成，并继续承载尚未交接的服务。
@@ -91,7 +93,7 @@
 - [x] `kv/sit/security/become/operator` 已写入随机生成的 operator sudo 密码（v3）并同步到主机；聊天中泄露的 v1/v2 已 destroy。密码只存在 Vault，不进仓库与聊天。
 - [x] 2026-11-13 以 operator 安装 Flux CLI 2.9.6 与 4 个 Flux controller（`flux-system` 全部 1/1 Ready）。
 - [x] 修复主机手工防火墙 `/etc/nftables.d/sit-k3s-guard.nft`：原规则对非 `lo` 接口一律丢弃 6443/10250 等端口，导致 Pod 访问 API Server 失败（Flux 与 metrics-server CrashLoop）。现先放行 `lo`、`cni0`、`flannel.1`，公网侧 6443 复测仍被拦截；旧文件备份为 `.bak-20261113`。
-- [ ] 将 `sit-k3s-guard` 纳入 playbooks 管理（当前为主机手工文件，仓库中无来源）。
+- [ ] 将 `sit-k3s-guard` 纳入 playbooks 管理（当前为主机手工文件，仓库中无来源），依据 [ADR-0001：GitOps 三类执行器与单一配置负责人](../../architecture/ADR-0001-GitOps三类执行器与单一配置负责人.md)。
 - [x] operator 免密 sudo 已按 `vhosts/common` 下发 `/etc/sudoers.d/operator-k3s`：仅 `k3s`、`ctr`、`kubectl`、`flux` 免密，其他命令（如 `id`）仍需密码；auditor 核对 `sudo -n` 被拒、`k3s`/`sit-k3s-guard` active。`common_os_identities.yml` 改为先绑定 Vault become 密码再收集 facts（[playbooks#1014](https://github.com/ai-workspace-infra/playbooks/pull/1014)）。
 - [ ] 通过 Toolkit 应用 SIT identity-writer 角色，并为新 cluster UID 建立独立 Vault JWT 信任（使用重新生成后的 issuer/JWKS）。
 - [ ] 在目标机安装 Helm 客户端与 Flux controllers，按 `declarative_active` 交接候选根路径，确认 `FLUX_HANDOVER_VERIFIED`。

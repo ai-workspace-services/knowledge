@@ -80,3 +80,7 @@ docs/reference/platform-delivery/
 - [XConnect Agent 配置收敛与 Free 临时白名单规划](agent-delivery/XConnect-Agent配置收敛与Free临时白名单规划.md) — 三仓实施范围、零 SQL schema 改动、五字段兼容、五类节点验收与回滚。
 - [本机 QMD 跨 Code APP 接力与 Knowledge 向量归档](agent-delivery/本机QMD跨CodeAPP接力与Knowledge向量归档.md) — 本机任务状态持久化、跨会话 Agent 接力、Ollama 向量计算与归档验收。
 - [XConnect 日本 HAProxy 试点规划草稿](agent-delivery/XConnect-日本HAProxy试点规划草稿.md) — 边缘节点反向代理与连接优化草案。
+
+## 架构决策记录（ADR）
+
+- [ADR-0001：GitOps 三类执行器与单一配置负责人](architecture/ADR-0001-GitOps三类执行器与单一配置负责人.md)
