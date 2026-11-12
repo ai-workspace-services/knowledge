@@ -95,7 +95,9 @@
 - [x] 修复主机手工防火墙 `/etc/nftables.d/sit-k3s-guard.nft`：原规则对非 `lo` 接口一律丢弃 6443/10250 等端口，导致 Pod 访问 API Server 失败（Flux 与 metrics-server CrashLoop）。现先放行 `lo`、`cni0`、`flannel.1`，公网侧 6443 复测仍被拦截；旧文件备份为 `.bak-20261113`。
 - [ ] 将 `sit-k3s-guard` 纳入 playbooks 管理（当前为主机手工文件，仓库中无来源），依据 [ADR-0001：GitOps 三类执行器与单一配置负责人](../../architecture/ADR-0001-GitOps三类执行器与单一配置负责人.md)。
 - [x] operator 免密 sudo 已按 `vhosts/common` 下发 `/etc/sudoers.d/operator-k3s`：仅 `k3s`、`ctr`、`kubectl`、`flux` 免密，其他命令（如 `id`）仍需密码；auditor 核对 `sudo -n` 被拒、`k3s`/`sit-k3s-guard` active。`common_os_identities.yml` 改为先绑定 Vault become 密码再收集 facts（[playbooks#1014](https://github.com/ai-workspace-infra/playbooks/pull/1014)）。
-- [ ] 通过 Toolkit 应用 SIT identity-writer 角色，并为新 cluster UID 建立独立 Vault JWT 信任（使用重新生成后的 issuer/JWKS）。
+- [x] `/data` 数据契约改为两种形式：独立 ext4 数据卷（`k3s_platform_data_mode: volume`，默认，校验挂载 UUID）或分配目录（`directory`，root 拥有、无组/其他写权限，回执记录所在文件系统 UUID 与 `data_mode`）。本机无数据盘，交接按 `directory` 执行（[playbooks#1015](https://github.com/ai-workspace-infra/playbooks/pull/1015)）。
+- [x] SIT identity-writer 策略与角色已应用到 Vault。
+- [ ] 为新 cluster UID 建立独立 Vault JWT 信任（使用重新生成后的 issuer/JWKS，不改旧集群挂载）。
 - [ ] 在目标机安装 Helm 客户端与 Flux controllers，按 `declarative_active` 交接候选根路径，确认 `FLUX_HANDOVER_VERIFIED`。
 - [ ] 运行 `k3s_identity_bootstrap.yml`，确认三身份凭据交付和允许/拒绝验收，得到 `K3S_IDENTITIES_VERIFIED`。
 - [ ] 后续分阶段放行 PostgreSQL/观测/VPA、应用/MCP、入口，完成服务验收和 DNS 切换。
