@@ -10,6 +10,17 @@
 
 **V6 现有 SSH 来源核对**：`kv/sit/platform/mcp` 的 `ssh_private_key_b64` 是 SIT MCP SSH sidecar 的既有私钥来源；其公钥指纹与目标机当前 root 授权公钥一致。GitOps 文档描述该密钥在旧环境供多个角色共用。`kv/sit/security/{root,operator,auditor}` 是当前 `vhosts/common` OS 身份 profile 的输入，已在 SIT Vault 建立并应用到目标机。用户确认由一人管理，三账户复用同一把 SSH key 是预期配置。账户仍分别使用独立 Unix 身份、组、sudo 和文件权限。持钥人均可登录三账户，权限验收按实际账户分别核对。
 
+## 当前批次与执行器
+
+- [x] 源机 `auditor@172.237.9.58` 登录并完成进程盘点。独立 auditor kubeconfig 尚未交付，源端 Flux revision、HelmRelease、PVC 和入口清单待实测。
+- [x] 目标机 `operator@5.189.172.69` 已能通过现有 sudo 规则查询目标 Kubernetes API。K3s 节点和四个 Flux 控制器已 Ready。
+- [x] Contabo Flux 图使用发布 tag `sit-k3s-v6-contabo-r1`，指向 `34974b928b1114736e43832ff0350bca220ad6ea`。渲染验证九个 source 同用该 tag，仅激活 `sit-k3s`、`external-secrets`、`cluster-identities-sit`。[GitOps #899](https://github.com/ai-workspace-infra/gitops/pull/899)
+- [ ] Ansible 交付目标 `/data`。本机采用系统盘上的分配目录，由 root 拥有且组和其他用户不可写。目录和所在文件系统写入交接回执。现有 K3s 数据目录继续使用 `/opt/rancher/k3s`。[Playbooks #1015](https://github.com/ai-workspace-infra/playbooks/pull/1015)
+- [ ] `operator` 使用保留已核验 tag 的 Playbooks 入口交接 Flux。记录根源与根 Kustomization 的 tag revision，验证 ESO 和集群身份 RBAC 就绪，再验证独立身份。[Playbooks #1016](https://github.com/ai-workspace-infra/playbooks/pull/1016)
+- [ ] 按下文的凭据、存储、应用与入口条件分批部署。使用目标 IP 验收实际域名的 TLS 和服务。ExternalDNS 保持挂起，DNS 切换暂缓。
+
+Ansible Pull 管理主机基线，包括 SSH、防火墙、systemd、软件包、K3s 主机配置及分配目录。Flux 管理 K3s 内的 Helm、Kustomize、Operator 和工作负载。独立 Compose 栈由 Doco CD 管理，须先核对源端是否有纳入迁移的 Compose 栈。Vault 或 SOPS 提供凭据，vmagent 和 Vector 提供观测证据，IaC 管理云资源。每个资源只绑定一个声明负责人。
+
 ## 1. 仓库和引导参数
 
 | 仓库 / 项目 | 固定基线和执行定位 |
