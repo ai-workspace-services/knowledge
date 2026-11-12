@@ -42,14 +42,14 @@ observability-metrics
 observability-traces
 ```
 
-MCP 配置合同如下：
+MCP 配置合同如下（统一挂在 `mcp.svc.plus`，与 `observability.svc.plus` 分开部署，每条路由都要求 Bearer `MCP_SERVICE_TOKEN`；`observability.svc.plus/mcp/*` 已下线）：
 
 | MCP | Endpoint | 当前 Codex 状态 | 处理原则 |
 |---|---|---|---|
-| `observability-grafana` | `https://observability.svc.plus/mcp/v1/grafana/mcp` | `Unsupported` | 保留，作为 Grafana 查询/面板能力入口 |
-| `observability-logs` | `https://observability.svc.plus/mcp/v1/logs/mcp` | `Unsupported` | 保留，作为 VictoriaLogs 查询入口 |
-| `observability-metrics` | `https://observability.svc.plus/mcp/v1/metrics/mcp` | `Unsupported` | 保留，作为 VictoriaMetrics 查询入口 |
-| `observability-traces` | `https://observability.svc.plus/mcp/v1/traces/mcp` | `Unsupported` | 保留，作为 VictoriaTraces 查询入口 |
+| `observability-grafana` | `https://mcp.svc.plus/v1/grafana/mcp` | `Unsupported` | 保留，作为 Grafana 查询/面板能力入口 |
+| `observability-logs` | `https://mcp.svc.plus/v1/logs/mcp` | `Unsupported` | 保留，作为 VictoriaLogs 查询入口 |
+| `observability-metrics` | `https://mcp.svc.plus/v1/metrics/mcp` | `Unsupported` | 保留，作为 VictoriaMetrics 查询入口 |
+| `observability-traces` | `https://mcp.svc.plus/v1/traces/mcp` | `Unsupported` | 保留，作为 VictoriaTraces 查询入口 |
 
 `Unsupported` 不得被流水线直接解释为服务宕机。验收时必须分别检查 MCP HTTP 初始化、鉴权、工具发现和实际只读查询；新 Micro SaaS 只需要注册服务名、环境、版本和数据源标签，即可复用现有 Grafana、Metrics、Logs、Traces 和 MCP 能力。
 
