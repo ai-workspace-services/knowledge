@@ -17,7 +17,8 @@
 - [x] Contabo Flux 图使用发布 tag `sit-k3s-v6-contabo-r1`，指向 `34974b928b1114736e43832ff0350bca220ad6ea`。渲染验证九个 source 同用该 tag，仅激活 `sit-k3s`、`external-secrets`、`cluster-identities-sit`。[GitOps #899](https://github.com/ai-workspace-infra/gitops/pull/899)
 - [x] Ansible 已交付目标 `/data`。本机采用系统盘上的分配目录，由 root 拥有且组和其他用户不可写。目录和所在文件系统写入交接回执。现有 K3s 数据目录继续使用 `/opt/rancher/k3s`。[Playbooks #1015](https://github.com/ai-workspace-infra/playbooks/pull/1015)
 - [x] `operator` 使用 Playbooks 已合并的交接脚本，返回 `FLUX_HANDOVER_VERIFIED`。根与身份 RBAC 单元已在 r1 Ready，`data_mode=directory`。
-- [ ] 验收 ESO 安装。通过目标 Vault writer 签发独立身份，再用实际账户完成权限验收。[Playbooks #1016](https://github.com/ai-workspace-infra/playbooks/pull/1016)
+- [x] ESO 2.14.0 HelmRelease 与 Flux Kustomization 已 Ready，三个 Pod 均为 1/1。
+- [ ] 通过目标 Vault writer 签发独立身份，再用实际账户完成权限验收。[Playbooks #1016](https://github.com/ai-workspace-infra/playbooks/pull/1016)
 - [ ] 按下文的凭据、存储、应用与入口条件分批部署。使用目标 IP 验收实际域名的 TLS 和服务。ExternalDNS 保持挂起，DNS 切换暂缓。
 
 Ansible Pull 管理主机基线，包括 SSH、防火墙、systemd、软件包、K3s 主机配置及分配目录。Flux 管理 K3s 内的 Helm、Kustomize、Operator 和工作负载。独立 Compose 栈由 Doco CD 管理，须先核对源端是否有纳入迁移的 Compose 栈。Vault 或 SOPS 提供凭据，vmagent 和 Vector 提供观测证据，IaC 管理云资源。每个资源只绑定一个声明负责人。
