@@ -20,6 +20,9 @@ category: observability
 
 # Demystifying Centralized Observability Architecture: VictoriaMetrics, VictoriaLogs, VictoriaTraces Suite, and Integrated MCP Server
 
+> **Update (2026-11)**: `observability.svc.plus` no longer hosts MCP servers or `/mcp/*` routes. MCP is deployed separately by the `platform-mcp` chart on `mcp.svc.plus` (`/v1/{metrics,logs,traces,grafana}/mcp`, all requiring Bearer `MCP_SERVICE_TOKEN`). The MCP role variables below are historical reference only.
+
+
 > **Author**: shenlan & Antigravity AI Infrastructure Team  
 > **Publication Date**: August 10, 2026  
 > **Topic Keywords**: `Observability` `VictoriaMetrics` `VictoriaLogs` `VictoriaTraces` `Grafana` `Model Context Protocol (MCP)` `Ansible` `AIOps`  
@@ -46,7 +49,7 @@ The backend utilizes a containerized, modular microservices topology exposed thr
 | **VictoriaLogs** | `victorialogs` | `/ingest/logs/insert/jsonline`<br>`/select/logsql/` | **High-Volume Log Search & Analytics Engine** (Logs). Reduces RAM by 80% compared to Elasticsearch, optimized for high-cardinality logs. |
 | **VictoriaTraces** *(New)* | `victoriatraces` | `/ingest/traces/`<br>`:10428` (`:4317`/`:4318`) | **Distributed Trace Engine** (Traces). Native OTLP (gRPC/HTTP) and Jaeger protocol support, compressed span storage, Trace-to-Logs integration. |
 | **Grafana** | `grafana` | `https://observability.svc.plus/grafana/` | **Unified Visual Dashboard & Alerting**. Aggregates VictoriaMetrics metrics, VictoriaLogs entries, and VictoriaTraces spans. |
-| **MCP Servers** *(New)* | `observability-mcp-*` | `/mcp/v1/*` | **AI Model Context Protocol Server Array**. Exposes metrics, logs, traces, and dashboard tools for AI Coding Agents via JSON-RPC. |
+| **MCP Servers** *(New)* | `platform-mcp` (separate) | `mcp.svc.plus/v1/*` | **AI Model Context Protocol Server Array**. Exposes metrics, logs, traces, and dashboard tools for AI Coding Agents via JSON-RPC. |
 
 ---
 
@@ -163,19 +166,6 @@ observability.svc.plus {
         reverse_proxy grafana:3000
     }
 
-    # 5. Model Context Protocol (MCP) AI Gateway Routes
-    handle_path /mcp/v1/metrics/* {
-        reverse_proxy 127.0.0.1:8430
-    }
-    handle_path /mcp/v1/logs/* {
-        reverse_proxy 127.0.0.1:9430
-    }
-    handle_path /mcp/v1/traces/* {
-        reverse_proxy 127.0.0.1:4320
-    }
-    handle_path /mcp/v1/grafana/* {
-        reverse_proxy 127.0.0.1:3001
-    }
 }
 ```
 

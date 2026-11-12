@@ -10,20 +10,26 @@ Actions 日志推测主机状态。
 
 ## 一次性 Codex 配置
 
+4 个可观测 MCP 统一挂在 `mcp.svc.plus`（`platform-mcp` chart），每条路由都要求 Bearer `MCP_SERVICE_TOKEN`；旧的 `observability.svc.plus/mcp/*` 已下线。
+
 在拥有 Codex 配置目录的终端执行；完成后新开一个 Codex 会话以刷新工具清单：
 
 ```bash
 codex mcp add observability-grafana \
-  --url https://observability.svc.plus/mcp/v1/grafana/mcp
+  --url https://mcp.svc.plus/v1/grafana/mcp \
+  --bearer-token-env-var MCP_SERVICE_TOKEN
 
 codex mcp add observability-metrics \
-  --url https://observability.svc.plus/mcp/v1/metrics/mcp
+  --url https://mcp.svc.plus/v1/metrics/mcp \
+  --bearer-token-env-var MCP_SERVICE_TOKEN
 
 codex mcp add observability-logs \
-  --url https://observability.svc.plus/mcp/v1/logs/mcp
+  --url https://mcp.svc.plus/v1/logs/mcp \
+  --bearer-token-env-var MCP_SERVICE_TOKEN
 
 codex mcp add observability-traces \
-  --url https://observability.svc.plus/mcp/v1/traces/mcp
+  --url https://mcp.svc.plus/v1/traces/mcp \
+  --bearer-token-env-var MCP_SERVICE_TOKEN
 ```
 
 不输出凭据地确认注册状态：

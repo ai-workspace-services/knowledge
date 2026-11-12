@@ -20,6 +20,9 @@ category: observability
 
 # 集中式可观测性服务端架构解密：VictoriaMetrics、VictoriaLogs、Grafana 阵列与 MCP 智能 Server 集成
 
+> **更新（2026-11）**：`observability.svc.plus` 已不再承载 MCP Server 和 `/mcp/*` 路由。MCP 改由 `platform-mcp` chart 独立部署在 `mcp.svc.plus`（`/v1/{metrics,logs,traces,grafana}/mcp`，全部要求 Bearer `MCP_SERVICE_TOKEN`）。下文中 docker 角色里的 MCP 变量与 Caddy 路由仅作历史参考。
+
+
 > **作者**：shenlan
 > **日期**：2026 年 8 月 7 日
 > **标签**：observability / victoriametrics / victorialogs / victoriatraces / grafana / mcp / caddy / ansible / vector
@@ -67,7 +70,7 @@ Exporters & Tail      Caddy Gateway     Victoria Cluster      MCP + AI Agent
 | **VictoriaLogs** | `victorialogs` | `/ingest/logs/insert/jsonline`<br>`/select/logsql/` | **海量日志全文检索与分析引擎**。对比 Elasticsearch 内存占用减少 80%，高效处理高基数（High-Cardinality）日志。 |
 | **VictoriaTraces** | `victoriatraces` | `/ingest/traces/*`<br>`/opentelemetry/v1/traces` | **分布式全链路追踪引擎**。高效接收与存储 OpenTelemetry / OTLP 追踪数据，提供跨微服务的全链路瓶颈排查与上下文关联。 |
 | **Grafana** | `grafana` | `https://observability.svc.plus/grafana/` | **统一可视化与告警大盘**。聚合 VictoriaMetrics 指标与 VictoriaLogs 日志，提供多维度 Dashboards 及 Metric-to-Log 一键时间戳钻取。 |
-| **MCP Servers（新增）** | `observability-mcp-*` | `/mcp/v1/*` | **AI 模型上下文协议 Server 阵列**。允许 AI Coding Agent（如 Cursor / Claude / Antigravity）调取 Metrics、Logs、Traces 及 Dashboards 上下文。 |
+| **MCP Servers（新增）** | `platform-mcp`（独立部署） | `mcp.svc.plus/v1/*` | **AI 模型上下文协议 Server 阵列**。允许 AI Coding Agent（如 Cursor / Claude / Antigravity）调取 Metrics、Logs、Traces 及 Dashboards 上下文。 |
 
 ### 2.2 Observability Agent 边缘采集组件清单
 
@@ -202,14 +205,14 @@ flowchart LR
 
 1. **Observability Agent（边缘采集）**：通过 Node/Process/Xray Exporters 采集基础指标与系统日志，经由 Vector 管道（VRL Remap + 磁盘持久化缓冲）加密上报；
 2. **Observability Server（服务端中枢）**：Caddy 统一入口按 Path 分发，分别写入 VictoriaMetrics、VictoriaLogs 与 VictoriaTraces 存储引擎，由 Grafana 进行统一聚合可视化；
-3. **MCP & AI Gateway（智能化接入层）**：VictoriaMetrics MCP、VictoriaLogs MCP、VictoriaTraces MCP 与 Grafana MCP 四大适配器挂载于 `/mcp/v1/*` 路由；
+3. **MCP & AI Gateway（智能化接入层）**：VictoriaMetrics MCP、VictoriaLogs MCP、VictoriaTraces MCP 与 Grafana MCP 四大适配器改为独立部署在 `mcp.svc.plus/v1/*`（Bearer `MCP_SERVICE_TOKEN`）；
 4. **AI Agent 智能排障与上下文感知工作流**：AI Coding Agent（Cursor / Claude / Antigravity）通过 JSON-RPC 发起 Tool Calls，自动完成指标分析、日志检索、Trace 瓶颈定位与告警自愈排障。
 
 ---
 
 ## 5. Caddy 路由分发与安全控制配置
 
-Caddyfile 集中管理所有可观测性子路径及 MCP 路由，实现零侵入扩展：
+Caddyfile 集中管理所有可观测性子路径（MCP 路由已迁出到 `mcp.svc.plus`），实现零侵入扩展：
 
 ```caddyfile
 # Caddyfile 片段：observability.svc.plus
@@ -234,26 +237,12 @@ observability.svc.plus {
         reverse_proxy grafana:3000
     }
 
-    # 5. MCP (Model Context Protocol) 智能化 Gateway 路由
-    handle_path /mcp/v1/metrics/* {
-        reverse_proxy 127.0.0.1:8430
-    }
-    handle_path /mcp/v1/logs/* {
-        reverse_proxy 127.0.0.1:9430
-    }
-    handle_path /mcp/v1/traces/* {
-        reverse_proxy 127.0.0.1:4320
-    }
-    handle_path /mcp/v1/grafana/* {
-        reverse_proxy 127.0.0.1:3001
-    }
 }
 ```
 
 **安全控制要点**：
 
-- MCP Server 默认仅绑定 `127.0.0.1`，不直接对外暴露端口，必须经 Caddy 网关鉴权后才可达；
-- `observability_mcp_auth_enabled: true` 开启 MCP 层认证，配合 Caddy 的 IP/Token 接入控制形成双重防护；
+- MCP 不再经本 Caddy 暴露，统一由 `mcp.svc.plus` 网关做 Bearer 鉴权；
 - 统一域名 + ACME 自动证书，边缘 Agent 与 AI 工具链无需感知后端微服务集群的变化。
 
 ---
