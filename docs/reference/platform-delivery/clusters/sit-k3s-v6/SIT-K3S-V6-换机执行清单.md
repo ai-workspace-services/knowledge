@@ -12,7 +12,13 @@
 
 ## 当前批次与执行器
 
-当前运行范围已由用户确认：目标机只运行 K3s 基础组件、Flux 和 External Secrets。通过目标机 operator 核验，10 个运行 Pod 均为 1/1，Gateway API CRD 安装 Job 已完成，业务单元及 ExternalDNS 均暂停。后续业务部署待用户扩大本批范围。
+本轮目标是让 Contabo 承载源机同一套服务，使用新存储，DNS 暂不切换。目标当前只运行 K3s、Flux 和 ESO 基础组件。业务单元按依赖逐批放行，ExternalDNS 维持暂停。
+
+| 承载层 | 源机 auditor 证据 | 目标交付 |
+| --- | --- | --- |
+| K3s | 进程层确认 PostgreSQL 和容器运行。源机独立 Kubernetes 审计凭据仍待交付，精确工作负载版本以实际 Flux/Helm 审计为准。 | 由 operator 提交 Contabo 发布候选，由 Flux 依次部署数据库和观测、应用与入口。核对 Vault、空 PVC、服务健康及目标 IP 的 TLS/Host 路由。 |
+| 宿主机服务 | systemd 确认 `new-api.service`、`xworkmate-remote-desktop.service` 正在运行。 | 目标两项均未运行。通过现有 Ansible roles 交付宿主机配置与 systemd 服务，分别验收 API 与 WebRTC。 |
+| Compose | 源机 auditor 未找到 Docker 命令或运行中的 Docker/Doco systemd 单元。 | 查清实际 Compose inventory 后，由 Doco CD 接管其中经确认的栈。 |
 
 - [x] 源机 `auditor@172.237.9.58` 登录并完成进程盘点。独立 auditor kubeconfig 尚未交付，源端 Flux revision、HelmRelease、PVC 和入口清单待实测。
 - [x] 目标机 `operator@5.189.172.69` 已能通过现有 sudo 规则查询目标 Kubernetes API。K3s 节点和四个 Flux 控制器已 Ready。
