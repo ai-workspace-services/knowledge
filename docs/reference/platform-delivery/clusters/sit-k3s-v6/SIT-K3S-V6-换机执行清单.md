@@ -88,7 +88,11 @@
 - [x] auditor 核对：`k3s` active（`v1.37.1+k3s1`），根盘 99G 已用约 3%，内存 7.8Gi；`/etc/rancher/k3s/config.yaml` 的 `data-dir` 为 `/opt/rancher/k3s`，`/var/lib/rancher` 不存在。系统状态 `degraded`，原因是 `cloud-init-main` 与 `cloud-init-network` 失败。
 - [x] 修正 SIT 身份声明的 TLS 目录为 `/opt/rancher/k3s/server/tls`，删除 install_dir 覆盖，沿用 Playbooks 默认（[gitops#898](https://github.com/ai-workspace-infra/gitops/pull/898)）。
 - [x] 决定由 Ansible 从 Vault 注入 `operator` 的 become 密码。Playbooks 新增 `vhosts/common` 的 `become_from_vault.yml`，读取 `kv/<env>/security/become/<SSH 用户>` 的 `password` 字段，并接入 `k3s_identity_bootstrap.yml`（[playbooks#1013](https://github.com/ai-workspace-infra/playbooks/pull/1013)）。
-- [ ] 在 Vault 写入 `kv/sit/security/become/operator` 的 `password`（operator 现有 sudo 密码，由账户 owner 写入），并给执行身份授予该路径只读。
+- [x] `kv/sit/security/become/operator` 已写入随机生成的 operator sudo 密码（v3）并同步到主机；聊天中泄露的 v1/v2 已 destroy。密码只存在 Vault，不进仓库与聊天。
+- [x] 2026-11-13 以 operator 安装 Flux CLI 2.9.6 与 4 个 Flux controller（`flux-system` 全部 1/1 Ready）。
+- [x] 修复主机手工防火墙 `/etc/nftables.d/sit-k3s-guard.nft`：原规则对非 `lo` 接口一律丢弃 6443/10250 等端口，导致 Pod 访问 API Server 失败（Flux 与 metrics-server CrashLoop）。现先放行 `lo`、`cni0`、`flannel.1`，公网侧 6443 复测仍被拦截；旧文件备份为 `.bak-20261113`。
+- [ ] 将 `sit-k3s-guard` 纳入 playbooks 管理（当前为主机手工文件，仓库中无来源）。
+- [x] operator 免密 sudo 已按 `vhosts/common` 下发 `/etc/sudoers.d/operator-k3s`：仅 `k3s`、`ctr`、`kubectl`、`flux` 免密，其他命令（如 `id`）仍需密码；auditor 核对 `sudo -n` 被拒、`k3s`/`sit-k3s-guard` active。`common_os_identities.yml` 改为先绑定 Vault become 密码再收集 facts（[playbooks#1014](https://github.com/ai-workspace-infra/playbooks/pull/1014)）。
 - [ ] 通过 Toolkit 应用 SIT identity-writer 角色，并为新 cluster UID 建立独立 Vault JWT 信任（使用重新生成后的 issuer/JWKS）。
 - [ ] 在目标机安装 Helm 客户端与 Flux controllers，按 `declarative_active` 交接候选根路径，确认 `FLUX_HANDOVER_VERIFIED`。
 - [ ] 运行 `k3s_identity_bootstrap.yml`，确认三身份凭据交付和允许/拒绝验收，得到 `K3S_IDENTITIES_VERIFIED`。
