@@ -70,6 +70,7 @@ docs/reference/platform-delivery/
 
 ### 2. 测试集群 (`clusters/sit-k3s-v6/`)
 - [SIT-K3S-V6 模块化交付与特性泳道规划](clusters/sit-k3s-v6/SIT-K3S-V6-模块化交付与特性泳道规划.md) — 模块化乐高交付体系、免本地 Vault Server 设计，支持 Feature $\rightarrow$ SIT 特性泳道持续验证。
+- [SIT-K3S-V6 换机执行清单](clusters/sit-k3s-v6/SIT-K3S-V6-换机执行清单.md) — 目标主机、Vault 身份、Playbooks 顺序、K3s 初始化状态，以及 Flux、服务验收和 DNS 切换的逐项状态。
 - [SIT-K3S-V6 换机重部署与 DNS 切换手册](clusters/sit-k3s-v6/SIT-K3S-V6-换机重部署与DNS切换手册.md)。涵盖 SSH 预检、Playbooks 引导、Flux 接管、空环境验收及 DNS 回退。
 
 ---

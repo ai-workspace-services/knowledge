@@ -691,3 +691,90 @@ flowchart LR
 
 ### 8.2 持续合规与架构生命周期声明
 本白皮书所统计之 181 项监控资产，已与平台 GitOps 仓库（`ai-workspace-infra/gitops-v6-identity-mount`）及 Portal 控制台前端代码库完全对齐。任何新增路由或后端微服务接口变更，均必须通过 Pull Request 同步更新本白皮书目录与 `routesCatalog.ts`，禁止任何未申报资产直接上线生产环境。
+
+---
+
+## 九、2026-11-08 源码核对与截图证据补全（Inventory Verification Addendum）
+
+> 记录时间：2026-11-08（Asia/Shanghai，UTC+8）。本节区分三类证据：**源码静态核对**、**Web Console 截图观察**、**Grafana 截图观察**。截图只代表瞬时界面状态，不是独立探测验收或发布授权；本节不转录真实域名、集群标识或任何凭据，示例域名统一用 `console.example.com` / `accounts.example.com` / `billing.example.com`。
+
+### 9.1 源码静态核对（Console 前端仓库主干，2026-11-08）
+
+| 核对项 | 结果 |
+| --- | --- |
+| `platform-operations/data/routesCatalog.ts` 条目数 | 181（前端 65 / 后端 116），按 service+method+path 去重后仍为 181 |
+| Grafana 插件内置 `routesCatalog.ts` 与 Console 目录 | 181 项 service/method/path 完全一致，无单边条目 |
+| `src/app/**/page.tsx` 页面路由 | 65 个，全部出现在目录中（含 `[slug]`、`[...segments]` 等动态模板） |
+| `src/app/**/route.ts` API 路由文件 | 108 个，全部出现在目录中；116 项后端条目 = Console 109（部分文件多方法） + Accounts 4 + Billing 3 |
+| Accounts / Billing 条目来源 | 仅为健康 / 就绪 / ping 等探测端点（`/healthz`、`/readyz`、`/api/ping`、`/api/billing/plans`），**未**从这两个服务各自仓库枚举全部业务 API |
+| 方法分布 | GET 112、POST 23、PUT 3、DELETE 3 |
+
+结论：「181 / 65 / 116」目前与 Console 源码一致，但它是**生成结果**而不是常量；新增页面或 API 后应重新生成目录并对账，面板计数随目录变化。
+
+### 9.2 前端 7 个大类（补全 Web Console 截图裁切缺失的一类）
+
+Web Console 截图只露出 6 类共 61 项；Grafana 面板与源码目录显示第 7 类为 **智能体与工作空间 / AI Workspace & Studio（`fe-workspace`，4 项）**：`/ai-workspace`、`/ai-workspace/bot-team`、`/ai-workspace/conversation/[id]`、`/ai-workspace/tasks`。
+
+| 标识 | 大类 | 英文 | 条目 |
+| --- | --- | --- | ---: |
+| `fe-portal` | 产品、服务与门户 | Portal, Products & Services | 16 |
+| `fe-panel` | 平台运维与控制台 | Panel & Operations | 13 |
+| `fe-support` | 客户支持与服务条款 | Support, Legal & System | 10 |
+| `fe-docs` | 知识库、文档与博客 | Docs, Knowledge & Blogs | 8 |
+| `fe-auth` | 统一身份认证与用户中心 | Auth & User Center | 7 |
+| `fe-edge` | 边缘套件与基础设施工具 | Edge Suites & Cloud IaC | 7 |
+| `fe-workspace` | 智能体与工作空间 | AI Workspace & Studio | 4 |
+
+### 9.3 后端 8 个大类（Grafana 全部展开观察，与源码一致）
+
+| 标识 | 大类 | 英文 | 条目 |
+| --- | --- | --- | ---: |
+| `be-auth` | 身份认证与用户账户 | Authentication & Account Management | 26 |
+| `be-admin` | 平台治理与管理控制台 | Admin & Governance Platform | 23 |
+| `be-billing` | 商业化、计费与订阅 | Billing, Payments & Subscriptions | 17 |
+| `be-ops` | 运维监控与发布门禁 | Operations & Progressive Release | 14 |
+| `be-agent` | AI 智能体与工作空间 | AI Workspace & Agent Runtime | 13 |
+| `be-content` | 文档检索、营销与集成服务 | Docs, Content & Integrations | 13 |
+| `be-mfa` | MFA 多因素安全认证 | Multi-Factor Authentication | 6 |
+| `be-edge` | 边缘协同与互联网络 | Edge Connect & Collaboration | 4 |
+
+Web Console 截图中后端 116 项未展开，逐项状态仅来自 Grafana 截图（瞬时全部 PASS）与源码目录。
+
+### 9.4 Web Console 与 Grafana 呈现差异
+
+| 维度 | Web Console | Grafana 插件 |
+| --- | --- | --- |
+| 门禁文案 | `ALLOWED` / `All 10 checks passed (Gate Clear)` | `PASSED` / `10 / 10 checks passed` |
+| 树操作按钮 | 全部展开 / 全部收起 | 展开全部 / 折叠全部 |
+| 叶子表 Age 列 | 有 | 无；新鲜度在 Top 10 Endpoint Details 的 `Freshness (age)` |
+| 额外区块 | — | Top 10 Endpoint Details、Gate rule、Candidate sample（下限 ≥ 10,000） |
+| Flux / GitOps / Traefik 独立面板 | 未见 | 未见；渐进发布展示主要为 Flagger 权重与门禁 |
+
+### 9.5 证据冲突：Billing 与各服务金丝雀状态（保留，不选“赢家”）
+
+| 来源 | Console | Accounts | Billing |
+| --- | --- | --- | --- |
+| 本白皮书 3.2 节 | Progressing | Progressing | Not configured / 空权重 |
+| Web Console 截图 | Progressing 20% | Succeeded 0% | Succeeded 0% |
+| Grafana 截图 | Progressing 20% | Progressing 10% | Progressing 10% |
+
+源码层面的可解释因素（需进一步核验，不作定论）：BFF 在拿不到 `flagger_canary_*` 指标时有**默认降级值**（PROD 视为 Succeeded 0%，SIT 视为 Progressing 10%/20%），mock 载荷中 Billing 亦按环境给出 Progressing / Succeeded；因此截图值可能来自降级或 mock，而非控制器真实状态。真实状态应以 Canary 资源与 Flagger 指标核对。实现要求：**确认未配置**、**已配置并成功**、**进行中**、**遥测缺失（Unknown）** 必须是四种可区分状态，不能把未知映射为 Succeeded 0%。
+
+### 9.6 对第四章遥测契约的勘误提示
+
+- `probe_success` 通常是 gauge，`increase(probe_success[15m])` 不能当作请求样本数；候选样本应来自真实请求计数器（如入口或服务侧 `*_requests_total`）。
+- 若导出器只提供 `probe_duration_seconds` gauge，则不存在 `_bucket`，无法计算 `histogram_quantile`；单次 duration 不能标为 p95。
+- mock / 降级数据必须显式标注来源，且**不得**生成真实 `ALLOWED`；缺失样本是 `NO DATA` / `UNKNOWN`，门禁应阻断而不是放行。
+- 资产采集 ≠ 主动请求：POST / PUT / DELETE、`/logout`、`/email/unsubscribe` 及动态模板路径只登记、不探测（Grafana 插件以 `NOT PROBED` 标注）。
+
+### 9.7 职责链（Flux + GitOps + Flagger + Traefik）
+
+`Git 期望状态 → Flux 调谐 → Flagger 渐进分析 → Traefik 加权路由 → 探测/指标证据 → 控制台与 Grafana 只读展示`
+
+Git 提交、Flux 调谐状态、Canary Phase、入口权重是**不同证据**，不能合并为一个绿色成功灯；看板只读展示，不向控制器下发放行指令。目录中 `be-ops`（14 项）已覆盖运维监控与发布门禁相关 API，本节不为 Flux / Traefik 虚构新的业务 API。
+
+### 9.8 剩余缺口
+
+1. Accounts / Billing 服务自身业务 API 尚未从各自源码枚举（当前只含探测端点）。
+2. 目录生成脚本尚未落入仓库，目前为人工维护的 `routesCatalog.ts` 两份副本（Console 与 Grafana 插件），需要单一来源 + CI 对账。
+3. 金丝雀三方证据冲突需以集群内 Canary 资源核实后再更新 3.2 节。
