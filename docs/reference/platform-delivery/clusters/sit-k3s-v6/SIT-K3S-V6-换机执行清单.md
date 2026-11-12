@@ -84,6 +84,10 @@
 - [x] 新增候选独立 Flux 根路径 `environments/clusters/sit-k3s-v6/overlays/contabo-vps`（[gitops#895](https://github.com/ai-workspace-infra/gitops/pull/895)）。第一阶段仅 namespaces、External Secrets、`cluster-identities-sit` 启用，应用单元与 ExternalDNS 暂停。
 - [x] 在 GitOps 写入 SIT `k3s_identity` 声明，并让 Playbooks 引导读取该声明（[gitops#896](https://github.com/ai-workspace-infra/gitops/pull/896)、[playbooks#1011](https://github.com/ai-workspace-infra/playbooks/pull/1011)）。SIT identity-writer 策略已合入，尚未经 Toolkit 应用到 Vault。
 - [x] 将候选 overlay 内全部 GitRepository 固定到已审查提交 `8fae9c2`（[gitops#897](https://github.com/ai-workspace-infra/gitops/pull/897)）。旧集群根源仍跟随 `main`。
+- [x] 执行账户约定（2026-11-12 23:54）：目标机变更以 `operator` 执行，核对以 `auditor` 执行。实测两账户均可 SSH 登录；`operator` 属 sudo 组但除 `systemctl is-system-running` 外均需密码，无法非交互读取 `/etc/rancher/k3s/k3s.yaml`（root 0600）；`auditor` 无 sudo、无 kubeconfig，可只读核对服务与配置。
+- [x] auditor 核对：`k3s` active（`v1.37.1+k3s1`），根盘 99G 已用约 3%，内存 7.8Gi；`/etc/rancher/k3s/config.yaml` 的 `data-dir` 为 `/opt/rancher/k3s`，`/var/lib/rancher` 不存在。系统状态 `degraded`，原因是 `cloud-init-main` 与 `cloud-init-network` 失败。
+- [x] 修正 SIT 身份声明的 TLS 目录为 `/opt/rancher/k3s/server/tls`，删除 install_dir 覆盖，沿用 Playbooks 默认（[gitops#898](https://github.com/ai-workspace-infra/gitops/pull/898)）。
+- [ ] 为 `operator` 提供非交互执行条件（Ansible become 密码由受控来源注入，或为引导所需命令单独授权），否则 Flux 与身份引导仍需 root 执行。
 - [ ] 通过 Toolkit 应用 SIT identity-writer 角色，并为新 cluster UID 建立独立 Vault JWT 信任（使用重新生成后的 issuer/JWKS）。
 - [ ] 在目标机安装 Helm 客户端与 Flux controllers，按 `declarative_active` 交接候选根路径，确认 `FLUX_HANDOVER_VERIFIED`。
 - [ ] 运行 `k3s_identity_bootstrap.yml`，确认三身份凭据交付和允许/拒绝验收，得到 `K3S_IDENTITIES_VERIFIED`。
