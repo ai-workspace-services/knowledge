@@ -12,6 +12,8 @@
 
 ## 当前批次与执行器
 
+当前运行范围已由用户确认：目标机只运行 K3s 基础组件、Flux 和 External Secrets。通过目标机 operator 核验，10 个运行 Pod 均为 1/1，Gateway API CRD 安装 Job 已完成，业务单元及 ExternalDNS 均暂停。后续业务部署待用户扩大本批范围。
+
 - [x] 源机 `auditor@172.237.9.58` 登录并完成进程盘点。独立 auditor kubeconfig 尚未交付，源端 Flux revision、HelmRelease、PVC 和入口清单待实测。
 - [x] 目标机 `operator@5.189.172.69` 已能通过现有 sudo 规则查询目标 Kubernetes API。K3s 节点和四个 Flux 控制器已 Ready。
 - [x] Contabo Flux 图使用发布 tag `sit-k3s-v6-contabo-r1`，指向 `34974b928b1114736e43832ff0350bca220ad6ea`。渲染验证九个 source 同用该 tag，仅激活 `sit-k3s`、`external-secrets`、`cluster-identities-sit`。[GitOps #899](https://github.com/ai-workspace-infra/gitops/pull/899)
