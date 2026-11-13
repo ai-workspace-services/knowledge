@@ -8,19 +8,25 @@
 
 ---
 
-## 一、SIT-K3S-V6 独立节点规划的独立 Helm Release（6 个核心，另含 VPA 基线与可选 ExternalDNS）
+## 一、SIT-K3S-V6 HelmRelease 清单（9 个核心，另含 VPA 基线与可选 ExternalDNS）
 
-相比生产 V6 的 8 个 HelmRelease，SIT 单节点不部署本地 Vault Raft，并将可观测采集链路聚合优化，规划 **6 个核心业务/平台 Helm Release**。VPA 是集群基线附加组件，不计入这 6 个模块；ExternalDNS 是独立可选项。当前 Contabo 节点有 4 vCPU / 约 8 GiB RAM，以下配额是工作负载预算，不再以旧源机的 2 vCPU / 4 GB 为容量基线：
+按 SIT GitOps 的 HelmRelease 对象计数。下表列出规划组件；实际部署状态见验收章节。
 
-| # | HelmRelease 名称 | 部署命名空间 | 模块分层 | 对应 Chart 来源 | 职责定位与能力边界 |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **1** | **`external-secrets`** | `external-secrets` | 基础凭据层 | `external-secrets/external-secrets` | 集群通用凭据代理，自动同步本地 SecretStore / 外部 Vault |
-| **2** | **`traefik-ingress`** | `ingress-sit` | 基础网关层 | `distributed-web-saas-fullstack` (Traefik 组件) | 共享网关接收入口流量，处理 `onwalk.net` 域名路由与子域名分发 |
-| **3** | **`postgresql`** | `postgresql-sit` | 平台服务层 | `distributed-web-saas-fullstack` (pg 组件) | 独立数据库，内建三权分立账户与业务连接 |
-| **4** | **`observability`** | `observability-sit` | 平台服务层 | `observability-stack-chart` (VM+Grafana) | 全量可观测协议栈，承接全部 21 个生产 Grafana 面板 |
-| **5** | **`observability-agent`**| `observability-sit` | 平台服务层 | `observability-agent` (kube-state-metrics) | 负责 Kubernetes 节点、容器指标与状态收集 |
-| **6** | **`web-saas`** | `web-saas-sit` | 业务基线层 | `distributed-web-saas-fullstack` (业务三件套) | Accounts (认证) + Billing (结算) + Console (UI) 基线 |
-| **7** | **`external-dns`** *(可选)*| `external-dns` | 基础环境层 | `kubernetes-sigs/external-dns:1.20.0` | Cloudflare DNS 自动追加同步，具备原生插拔与按需开关能力 |
+| HelmRelease | 命名空间 | 职责 |
+| --- | --- | --- |
+| `external-secrets` | `external-secrets` | 同步 Vault 凭据和 TLS Secret |
+| `traefik-crds` | `ingress-sit` | 为 Traefik 安装 IngressRoute、TraefikService 等 CRD |
+| `traefik-ingress` | `ingress-sit` | 默认入口，终止 TLS 并执行加权路由 |
+| `postgresql` | `postgresql-sit` | 独立数据库与角色治理 |
+| `observability` | `observability-sit` | VictoriaMetrics 与指标采集 |
+| `observability-agent` | `observability-sit` | Kubernetes 指标与状态采集 |
+| `observability-grafana` | `observability-sit` | Grafana 与监控面板 |
+| `datakit` | `observability-sit` | DataKit 采集 |
+| `web-saas-sit` | `web-saas-sit` | Accounts、Billing、Console 与 Flagger 渐进发布 |
+| `vpa`（基线） | `vpa-system` | 自动资源建议与调整 |
+| `external-dns`（可选） | `external-dns` | DNS 记录预览，当前保持 dry-run |
+
+Flagger 由 `web-saas-sit` HelmRelease 启用；三个应用的 Canary 是独立 GitOps 对象，不另计为 HelmRelease。
 
 > [!NOTE]
 > **非 HelmRelease 模块说明**：
