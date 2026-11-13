@@ -4,17 +4,38 @@
 
 2026-11-12（北京时间） · 本地配套清单 · 源 `172.237.9.58` → 目标 `5.189.172.69`
 
-在目标新建 K3s 和空数据卷，完整部署 SIT 服务，以测试账号和新观测样本验收。执行范围包括已批准域名的 DNS 切换。旧 PostgreSQL、PVC、历史观测数据和旧 kubeconfig 不导入。旧机保留到切换观察完成，并继续承载尚未交接的服务。
+在目标新建 K3s 和空数据卷，完整部署 SIT 服务，以测试账号和新观测样本验收。本轮部署期间暂缓 DNS 切换。旧 PostgreSQL、PVC、历史观测数据和旧 kubeconfig 不导入。旧机保留到切换观察完成，并继续承载尚未交接的服务。
 
 逐步命令、放行条件和回退见 [Knowledge 正式手册与索引](https://github.com/ai-workspace-services/knowledge/tree/main/docs/reference/platform-delivery/clusters/sit-k3s-v6)（[PR #383](https://github.com/ai-workspace-services/knowledge/pull/383)）。本清单中的域名、IP 和 Vault 路径供内部执行使用，表中不含密钥值。
 
-**当前状态（2026-11-12 23:50 北京时间）**：目标为 Debian 13、4 vCPU、约 8 GiB 内存，系统盘约 100 GiB，无独立数据盘。已将 PROD 三条 OS 公钥记录复制到 SIT Vault 并回读一致。`vhosts/common` OS 身份与主机基线已执行，主机名为 `sit-k3s-v6`。K3s `v1.37.1+k3s1` 单节点已 Ready，API `/readyz` 通过，kubeconfig 为 `0600`。UFW 保留 SSH、HTTP、HTTPS，nftables 持久规则在 K3s 前置 hook 丢弃外部控制面流量。本轮目标机的 K3s TLS 与 token 已重新生成；身份签发不使用旧 token，但目标集群的 Vault JWT 信任必须使用新集群的 issuer/JWKS，不得改写旧机 mount 的签名键。
+**当前状态（北京时间 2026-11-13）**：目标为 Debian 13、4 vCPU、约 8 GiB 内存，约 100 GiB 系统盘。已将三条 OS 公钥记录写入 SIT Vault 并回读核对。Ansible 已完成 `vhosts/common` 主机基线及 `/data` 目录交付。K3s `v1.37.1+k3s1` 单节点 Ready，API `/readyz` 通过，管理员 kubeconfig 权限为 `0600`。UFW 保留 SSH、HTTP、HTTPS，nftables 在 K3s 前置 hook 拦截外部控制面流量。Flux 当前交接到 `sit-k3s-v6-contabo-r3`（GitOps `e56a816`）：根、ESO、身份 RBAC 与 VPA Ready；目标目前仅运行 K3s/Flux/ESO/VPA 基础 Pod。PostgreSQL、观测、MCP、Ingress、Web SaaS 和 ExternalDNS 单元保持暂停。
 
-候选 Flux 根路径已由 [gitops#895](https://github.com/ai-workspace-infra/gitops/pull/895) 加入 `environments/clusters/sit-k3s-v6/overlays/contabo-vps`：第一阶段只启用 namespaces、External Secrets 和 `cluster-identities-sit`，应用单元与 ExternalDNS 保持暂停。[gitops#896](https://github.com/ai-workspace-infra/gitops/pull/896) 已补充 SIT `k3s_identity` 声明与 SIT identity-writer 策略/角色，并将 `cluster-identities-sit` 纳入该 overlay。[playbooks#1011](https://github.com/ai-workspace-infra/playbooks/pull/1011) 使 `k3s_identity_bootstrap.yml` 直接读取这份声明。[gitops#897](https://github.com/ai-workspace-infra/gitops/pull/897) 将候选 overlay 内全部 GitRepository 固定到已审查提交 [`8fae9c2`](https://github.com/ai-workspace-infra/gitops/commit/8fae9c2db8da3ef0994558ad24278912df411738)；旧集群根源仍跟随 `main`。Playbooks 当前 main 为 [`5365740a`](https://github.com/ai-workspace-infra/playbooks/commit/5365740a76562d2fa87647a9b7aa6c96574034bc)。
+目标 K3s TLS 与 token 已重新生成。K3s root/operator/auditor 凭据已由 operator 签发并完成允许/拒绝验收；目标 ESO 工作负载仍须绑定新集群 issuer/JWKS 的独立 Vault JWT mount，旧机继续使用原 mount。GitOps `cluster-identities-sit` 提供集群 RBAC，[Playbooks #1011](https://github.com/ai-workspace-infra/playbooks/pull/1011) 提供身份签发入口。
 
-尚未执行：通过 Toolkit 应用 SIT identity-writer 角色；为新 cluster UID 建立独立 Vault JWT 信任；在目标机安装 Flux controllers 并交接候选根路径；运行 `k3s_identity_bootstrap`；以及后续服务验收与 DNS 切换。标准 `bootstrap-k3s.sh` 入口仍要求数值实例 ID 与 Linode 数据卷，本目标按 operator SSH inventory 分阶段调用 role，不伪造 CMDB 字段。
+Contabo overlay 已由 `operator` 交接至 Flux，当前 r3 根、身份 RBAC、ESO 与 VPA Ready。目标 K3s root/operator/auditor 凭据已签发，auditor 只读及 operator 的限定管理权限已实测。[GitOps #899](https://github.com/ai-workspace-infra/gitops/pull/899) 用发布 tag 取代 #897 的旧 SHA 固定；[GitOps #901](https://github.com/ai-workspace-infra/gitops/pull/901) 修正 auditor 对 Secrets/ConfigMaps 和写操作的权限。目标使用 SSH inventory 分阶段调用 Playbooks，保留独立卷与分配目录的实际校验。
 
 **V6 现有 SSH 来源核对**：`kv/sit/platform/mcp` 的 `ssh_private_key_b64` 是 SIT MCP SSH sidecar 的既有私钥来源；其公钥指纹与目标机当前 root 授权公钥一致。GitOps 文档描述该密钥在旧环境供多个角色共用。`kv/sit/security/{root,operator,auditor}` 是当前 `vhosts/common` OS 身份 profile 的输入，已在 SIT Vault 建立并应用到目标机。用户确认由一人管理，三账户复用同一把 SSH key 是预期配置。账户仍分别使用独立 Unix 身份、组、sudo 和文件权限。持钥人均可登录三账户，权限验收按实际账户分别核对。
+
+## 当前批次与执行器
+
+本批只部署 DNS 控制器，不切换或写入公共 DNS。目标继续保持 K3s、Flux、ESO 与 VPA 现有运行集合；其他业务单元不放行。ExternalDNS 使用 Vault 路径 `kv/sit/platform/cloudflare/feature-dns` 的现有 token，通过目标专用 Vault JWT 信任交付，并由 Contabo overlay 强制 `--dry-run`；域名过滤覆盖 `onwalk.net` 与 `svc.plus`。启用后核对 Pod/ExternalSecret 状态、控制器 API 读取结果和公共 DNS 原记录；`upsert-only` 本身仍可创建或更新记录，不能代替 dry-run。
+
+| 承载层 | 源机 auditor 证据 | 目标交付 |
+| --- | --- | --- |
+| K3s | 进程层确认 PostgreSQL 和容器运行。源机独立 Kubernetes 审计凭据仍待交付，精确工作负载版本以实际 Flux/Helm 审计为准。 | 由 operator 提交 Contabo 发布候选，由 Flux 依次部署数据库和观测、应用与入口。核对 Vault、空 PVC、服务健康及目标 IP 的 TLS/Host 路由。 |
+| 宿主机服务 | systemd 确认 `new-api.service`、`xworkmate-remote-desktop.service` 正在运行。 | 目标两项均未运行。通过现有 Ansible roles 交付宿主机配置与 systemd 服务，分别验收 API 与 WebRTC。 |
+| Compose | 源机 auditor 未找到 Docker 命令或运行中的 Docker/Doco systemd 单元。 | 查清实际 Compose inventory 后，由 Doco CD 接管其中经确认的栈。 |
+
+- [x] 源机 `auditor@172.237.9.58` 登录并完成进程盘点。独立 auditor kubeconfig 尚未交付，源端 Flux revision、HelmRelease、PVC 和入口清单待实测。
+- [x] 目标机 `operator@5.189.172.69` 已能通过现有 sudo 规则查询目标 Kubernetes API。K3s 节点和四个 Flux 控制器已 Ready。
+- [x] Contabo Flux 图已从 r1/r2 更新到发布 tag `sit-k3s-v6-contabo-r3`，指向 `e56a81611240699a789120b3e7f32149fa4f8bc0`。目标实时查询确认 `sit-k3s`、`external-secrets`、`cluster-identities-sit`、`vpa-sit` Ready，其余服务单元暂停。[GitOps #901](https://github.com/ai-workspace-infra/gitops/pull/901)
+- [x] Ansible 已交付目标 `/data`。本机采用系统盘上的分配目录，由 root 拥有且组和其他用户不可写。目录和所在文件系统写入交接回执。现有 K3s 数据目录继续使用 `/opt/rancher/k3s`。[Playbooks #1015](https://github.com/ai-workspace-infra/playbooks/pull/1015)
+- [x] `operator` 使用 Playbooks 已合并的交接脚本，返回 `FLUX_HANDOVER_VERIFIED`。根与身份 RBAC 单元已在 r1 Ready，`data_mode=directory`。
+- [x] ESO 2.14.0 HelmRelease 与 Flux Kustomization 已 Ready，三个 Pod 均为 1/1；VPA HelmRelease 与三个 Pod 均 Ready，目标 K3s 无 PVC。
+- [x] 以目标 Vault writer 签发 root/operator/auditor K3s 身份，并用实际账户完成允许/拒绝验收；身份与 r3 RBAC 核对结果见下方记录。[Playbooks #1016](https://github.com/ai-workspace-infra/playbooks/pull/1016)
+- [ ] DNS 阶段：ExternalDNS 当前仍暂停，目标 namespace 尚无 ExternalDNS Pod 或 Cloudflare Secret。目标专用 Vault JWT auth mount 尚未建立；现有 `kv/sit/platform/cloudflare/feature-dns` token 对 `onwalk.net`、`svc.plus` 的 zone 查询均返回 HTTP 403。先以强制 dry-run 部署，观察控制器实际 API 结果；Ingress 和业务单元继续暂停，不做 DNS 切换。
+
+Ansible Pull 管理主机基线，包括 SSH、防火墙、systemd、软件包、K3s 主机配置及分配目录。Flux 管理 K3s 内的 Helm、Kustomize、Operator 和工作负载。独立 Compose 栈由 Doco CD 管理，须先核对源端是否有纳入迁移的 Compose 栈。Vault 或 SOPS 提供凭据，vmagent 和 Vector 提供观测证据，IaC 管理云资源。每个资源只绑定一个声明负责人。
 
 ## 1. 仓库和引导参数
 
@@ -99,11 +120,11 @@
 - [x] 候选 overlay 的 9 个 GitRepository 改为统一引用 tag `sit-k3s-v6-contabo-r1`（位于合并提交 `34974b9`），替代自引用的 commit 钉选（[gitops#899](https://github.com/ai-workspace-infra/gitops/pull/899)）。
 - [x] 整理交接文档：[SIT-K3S-V6-交接文档.md](SIT-K3S-V6-交接文档.md)。
 - [x] SIT identity-writer 策略与角色已应用到 Vault。
-- [ ] 为新 cluster UID 建立独立 Vault JWT 信任（使用重新生成后的 issuer/JWKS，不改旧集群挂载）。
+- [ ] 为新 cluster UID 建立独立 Vault JWT 信任（使用重新生成后的 issuer/JWKS，不改旧集群挂载）。当前 Vault 仅发现旧 `jwt-sit-k3s-sit-k3s-v6` mount，目标 `jwt-sit-k3s-v6-contabo-vps` mount 尚不存在。
 - [x] 2026-11-13 以 operator 运行 `k3s_flux_handover.yml`（[playbooks#1017](https://github.com/ai-workspace-infra/playbooks/pull/1017)），`declarative_active` 交接候选根路径，`data_mode=directory`，得到 `FLUX_HANDOVER_VERIFIED`。当前 tag `sit-k3s-v6-contabo-r3`（`e56a816`）：`sit-k3s`、`external-secrets`、`cluster-identities-sit`、`vpa-sit` Ready，其余单元暂停。
 - [x] 以 operator 运行 `k3s_identity_bootstrap.yml`（声明 commit `d5776ff`，identity-writer 30 分钟 batch token），三身份 `~/.kube/identity-config` 交付，允许/拒绝检查全部通过。auditor 复核发现 r2 的 auditor ClusterRole 仍可读 secrets，合入 [gitops#847](https://github.com/ai-workspace-infra/gitops/pull/847) 并发布 r3（[gitops#901](https://github.com/ai-workspace-infra/gitops/pull/901)）后重交接；复核 auditor 读 secrets/configmaps、patch、exec 均为 no，operator scale 为 yes、读 secrets 为 no。
-- [ ] 后续分阶段放行 PostgreSQL/观测/VPA、应用/MCP、入口，完成服务验收和 DNS 切换。
-4. **Flux 部署和验收。** 注册目标 Vault JWT 信任，准备本地来源 Secret 和业务 Secret。调谐后核对 Kustomization 与 HelmRelease、PV/PVC Bound、ESO 同步，验证空库初始化、Console/Accounts/Billing/Content、VPA/Flagger、MCP、Grafana/观测及实际需要的泳道。目标限定域名测试示例为 `curl --fail --show-error --resolve console-sit.onwalk.net:443:5.189.172.69 https://console-sit.onwalk.net/`，应用功能和证书须同时通过。
+- [ ] 外部DNS只读凭据和目标 JWT identity Ready 后，单独部署 ExternalDNS dry-run；该阶段确认 DNS 计划而不写入记录。后续服务放行与实际 DNS 切换仍是独立步骤，须另行按清单验证。
+4. **Flux 部署和验收。** 当前仅进行 DNS 控制器批次：先由 Playbooks 为目标 cluster issuer/JWKS 建立专用 Vault JWT 信任；Contabo ExternalDNS overlay 固定 `--dry-run` 并单独启用该 Kustomization。核对 HelmRelease、Pod 和 ExternalSecret 状态，确认 Cloudflare API 读取结果，查看 ExternalDNS 计划日志并从权威 NS/公共解析器复核记录未变化。Ingress 与业务服务保持暂停，本批不执行域名切换。
 5. **DNS 交接和观察。** 导出 DNS 原记录，确定唯一写入者。对已存在的两条 CNAME 链及 AI/Desktop A 分别审查，对需要启用的 NXDOMAIN 域名新增。切后校验公共解析、TLS 和业务，观察至少覆盖旧 TTL 及一个任务周期。失败则恢复原记录/删除本轮新增记录并核对旧服务，值守记录新旧测试数据的独立边界。
 
-仓库基线、公开 DNS、目标 SSH 和 SIT OS 公钥已核对。OS 三身份与 common 基线已验收，K3s 单节点已 Ready。候选 Flux 根路径、身份声明和 Git 源钉选已合入。Flux controllers 交接、Vault writer/JWT 应用、身份签发、SIT 服务和 DNS 切换仍未执行或验收。
+仓库基线、公开 DNS、目标 SSH 和 SIT OS 公钥已核对。OS 三身份与 common 基线已验收，K3s 单节点 Ready。目标 Flux r3、ESO、K3s 三身份和 VPA 已验收；目标仅运行基础 Pod 与 VPA。ExternalDNS、其他业务单元和 DNS 切换尚未执行。DNS 部署前仍需目标专用 Vault JWT 信任及 Cloudflare 只读凭据；DNS 阶段使用 dry-run，公共记录保持原值。
