@@ -166,6 +166,23 @@ r15 已发布并由 Flux 根应用（`5906cea84c6bbb58c533c6907351a1823e095e14`�
 
 ### r19 现场复核（2026-11-13，Asia/Shanghai）
 
+#### 21:14 补充验收回执
+
+以下为 `operator@5.189.172.69` 只读核查和公共解析查询的时点结果；尚未完成的项目不能视为业务验收通过。
+
+| 项目 | 结果 | 证据与后续动作 |
+| --- | --- | --- |
+| 节点与 Flux | PASS | 节点 Ready，Debian 13，K3s `v1.37.1+k3s1`；九个 GitRepository 均为 `sit-k3s-v6-contabo-r19@sha1:84f427cdfaa2d4d98e6b5621ddbaf1f53dae0859`。 |
+| PostgreSQL 与观测控制面 | 部分通过 | PostgreSQL、exporter、Grafana、Victoria 系列及 observability-agent Pod 运行，相关 HelmRelease Ready；PostgreSQL 角色允许/拒绝测试和云端新鲜数据验收未执行。 |
+| DataKit | FAIL | 目标没有 DataKit HelmRelease 或 Pod。凭据映射已确定：SIT `kv/observability/datakit/hk-commercial`，PROD `kv/observability/datakit/bj-free`；仍需交付对应 Vault 身份、ESO 及采集器，并验收实际数据。 |
+| MCP | FAIL | `infrastructure-mcp-server` init 容器拉取 `ghcr.io/ai-workspace-infra/infrastructure-mcp-server:v0.4.0-sit` 时 GHCR 返回 403；MCP 协议验收未执行。 |
+| Web SaaS | FAIL | `web-saas-secrets` 外部凭据同步失败；Accounts、Billing、Content 为 CreateContainerConfigError，HelmRelease 和 Canary 依赖未 Ready。 |
+| DNS 与证书 | 部分通过 | 1.1.1.1 查询 `grafana-sit.onwalk.net`、`accounts-sit.onwalk.net`、`console-sit.onwalk.net`、`mcp-sit.onwalk.net` 和 `mcp-sit.svc.plus` 无 A 答案；`mcp.svc.plus` 仍指向 `172.237.9.58`。指定目标 IP 并使用 `grafana-sit.onwalk.net` SNI 时，证书验证通过且 Grafana 返回 302。ExternalDNS 已启用写入，但当前 source 不包含 Traefik IngressRoute；须验收记录所有权和作用范围后再发布。 |
+| 桌面与 AI 入口 | NOT_RUN | `ai.svc.plus` 与 `ai_desktop.svc.plus` 的 A 记录指向 `5.189.172.69`；当前 IngressRoute 清单未见对应路由，桌面服务、ExternalService 与端到端访问尚待验收。 |
+| 三权分立 | NOT_RUN | Operator 最小 sudo、真实 Auditor 权限及数据库三角色允许/拒绝测试尚未完成。 |
+
+随后新建 SSH 连接报主机密钥校验失败；需通过可信渠道核对目标主机密钥后继续现场操作，本次没有绕过校验。规划中的旧主机信息和 Caddy 默认入口需按 Contabo 节点与 Traefik + Flagger 目标修订。
+
 GitOps [#921](https://github.com/ai-workspace-infra/gitops/pull/921) 已合并，目标根 `config-sit` 切换到 `sit-k3s-v6-contabo-r19` 并 reconcile。复核时 Flux 根及基础控制器、集群身份、ESO、ExternalDNS、Ingress/Routes、Observability、PostgreSQL、VPA Kustomization 均 Ready，`lastAppliedRevision` 为 `sit-k3s-v6-contabo-r19@sha1:84f427cdfaa2d4d98e6b5621ddbaf1f53dae0859`。`observability-agent`、Observability、Traefik、PostgreSQL、ExternalDNS HelmRelease 均 Ready；Accounts/Billing/Console TLS 和共享 Observability TLS ExternalSecret 均 SecretSynced。该记录是集群状态回执，不表示全部公开域名已完成 DNS 切换或业务功能验收。
 
 - **ExternalDNS**：Pod 与 HelmRelease Ready；实际参数没有 `--dry-run`，`policy=upsert-only`，过滤域名包含 `onwalk.net`、`svc.plus`。DNS 写入能力已启用。本次没有读取权威 DNS/TXT 所有权或公共递归解析结果，因此不判断记录是否已切换。
