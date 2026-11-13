@@ -121,8 +121,8 @@ Ansible Pull 管理主机基线，包括 SSH、防火墙、systemd、软件包�
 - [x] 整理交接文档：[SIT-K3S-V6-交接文档.md](SIT-K3S-V6-交接文档.md)。
 - [x] SIT identity-writer 策略与角色已应用到 Vault。
 - [ ] 为新 cluster UID 建立独立 Vault JWT 信任（使用重新生成后的 issuer/JWKS，不改旧集群挂载）。
-- [ ] 在目标机安装 Helm 客户端与 Flux controllers，按 `declarative_active` 交接候选根路径，确认 `FLUX_HANDOVER_VERIFIED`。
-- [ ] 运行 `k3s_identity_bootstrap.yml`，确认三身份凭据交付和允许/拒绝验收，得到 `K3S_IDENTITIES_VERIFIED`。
+- [x] 2026-11-13 以 operator 运行 `k3s_flux_handover.yml`（[playbooks#1017](https://github.com/ai-workspace-infra/playbooks/pull/1017)），`declarative_active` 交接候选根路径，`data_mode=directory`，得到 `FLUX_HANDOVER_VERIFIED`。当前 tag `sit-k3s-v6-contabo-r3`（`e56a816`）：`sit-k3s`、`external-secrets`、`cluster-identities-sit`、`vpa-sit` Ready，其余单元暂停。
+- [x] 以 operator 运行 `k3s_identity_bootstrap.yml`（声明 commit `d5776ff`，identity-writer 30 分钟 batch token），三身份 `~/.kube/identity-config` 交付，允许/拒绝检查全部通过。auditor 复核发现 r2 的 auditor ClusterRole 仍可读 secrets，合入 [gitops#847](https://github.com/ai-workspace-infra/gitops/pull/847) 并发布 r3（[gitops#901](https://github.com/ai-workspace-infra/gitops/pull/901)）后重交接；复核 auditor 读 secrets/configmaps、patch、exec 均为 no，operator scale 为 yes、读 secrets 为 no。
 - [ ] 后续分阶段放行 PostgreSQL/观测/VPA、应用/MCP、入口，完成服务验收和 DNS 切换。
 4. **Flux 部署和验收。** 注册目标 Vault JWT 信任，准备本地来源 Secret 和业务 Secret。调谐后核对 Kustomization 与 HelmRelease、PV/PVC Bound、ESO 同步，验证空库初始化、Console/Accounts/Billing/Content、VPA/Flagger、MCP、Grafana/观测及实际需要的泳道。目标限定域名测试示例为 `curl --fail --show-error --resolve console-sit.onwalk.net:443:5.189.172.69 https://console-sit.onwalk.net/`，应用功能和证书须同时通过。
 5. **DNS 交接和观察。** 导出 DNS 原记录，确定唯一写入者。对已存在的两条 CNAME 链及 AI/Desktop A 分别审查，对需要启用的 NXDOMAIN 域名新增。切后校验公共解析、TLS 和业务，观察至少覆盖旧 TTL 及一个任务周期。失败则恢复原记录/删除本轮新增记录并核对旧服务，值守记录新旧测试数据的独立边界。
