@@ -42,8 +42,8 @@ Flagger 由 `web-saas-sit` HelmRelease 启用；三个应用的 Canary 是独立
 
 | 访问服务 | 规范主域名 (Primary - 直属二级子域) | 后端转发目标服务 | 协议 / 端口 | 说明 |
 | :--- | :--- | :--- | :--- | :--- |
-| **全量可观测控制台** | `https://grafana-sit.onwalk.net` | `observability-observability-stack:3000` | HTTPS 443 / HTTP 80 | 完整访问所有平台、数据库、系统 21 个监控面板 |
-| **AI 基础设施运维代理** | `https://mcp-sit.onwalk.net` | `infrastructure-mcp-server:8080` | HTTPS 443 / HTTP 80 | 提供 MCP 规范的 Agent 工具调用入口 |
+| **全量可观测控制台** | `https://observability.svc.plus` | `observability-observability-stack:3000` | HTTPS 443 / HTTP 80 | 完整访问所有平台、数据库、系统 21 个监控面板 |
+| **AI 基础设施运维代理** | `https://mcp.svc.plus` | `infrastructure-mcp-server:8080` | HTTPS 443 / HTTP 80 | 提供 MCP 规范的 Agent 工具调用入口 |
 | **Web SaaS 控制台前端** | `https://console-sit.onwalk.net` | `web-saas-console:80` | HTTPS 443 / HTTP 80 | Web SaaS 控制台测试基线界面 |
 | **Web SaaS 统一 API** | `https://accounts-sit.onwalk.net` | `web-saas-accounts:80` | HTTPS 443 / HTTP 80 | 账户、认证与会话后端接口 |
 | **Web SaaS 计费接口** | `https://billing-sit.onwalk.net` | `web-saas-billing:80` | HTTPS 443 / HTTP 80 | 计费与订阅后端接口 |
