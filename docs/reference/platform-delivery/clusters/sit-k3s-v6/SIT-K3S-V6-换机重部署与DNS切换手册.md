@@ -189,6 +189,8 @@ DataKit chart `2.16.1` 的 values 契约要求 `ENV_DATAWAY` 为带 token 的完
 
 Chart 模板复核发现普通节点模式默认使用 `hostNetwork: true` 和 `privileged: true`。DataKit 属于节点采集器；这些宿主机权限仍需逐项核对其必要性、例外范围和实际运行身份，不能以此声明业务工作负载已满足 rootless。该项未通过安全验收。
 
+进一步核查 chart 模板：普通模式将宿主机 `/`、`/var/run` 和 `/sys/kernel/debug` 以未声明 `readOnly` 的 hostPath 挂载，并给采集器 ClusterRole 授予 `pods/exec` 的 get/list/watch。以上是模板静态事实，不是已部署的现场权限；部署前需审查最小化配置及其采集需求，并使用真实运行身份验证。
+
 GitOps 候选已提交为草稿 [#922](https://github.com/ai-workspace-infra/gitops/pull/922)，包含 DataKit 凭据映射及 Traefik DNS source。合并和发布前仍需核对 Vault 身份交付、DNS 记录所有权与生产映射；此草稿不代表目标已部署。
 
 候选 DNS 声明后续补充了 annotation 筛选和 `sit.onwalk.net` 排除项，并将入口目标调整为 `sit-k3s-v6-ingress.onwalk.net`。静态核查 ExternalDNS v0.20.0 chart：`annotationFilter` 与 `excludeDomains` 会转为对应参数，启用 `traefik-proxy` 时 chart 会赋予 Traefik 路由只读 RBAC；目标集群实际权限和记录结果尚未验收。
