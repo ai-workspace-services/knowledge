@@ -144,3 +144,22 @@ done
 ```
 
 执行回执附上目标实例和 cluster UID、GitOps/Playbooks SHA、引导回执、Flux revisions、启用模块的运行状态、DNS 变更 ID、功能验收及观察窗口。所有结果按 `PASS`、`FAIL`、`BLOCKED` 或 `NOT_RUN` 记录。本手册随文档发布，目标部署和 DNS 切换的实际结果另行登记。
+
+## 7. Contabo 执行回执
+
+| 批次 | 结果 | 现场证据 |
+| --- | --- | --- |
+| r14 基础验收 | PASS | `operator@5.189.172.69` 登录成功，节点 Ready。Flux 根、ESO、VPA、ExternalDNS、PostgreSQL 和 Traefik 控制器已收敛。 |
+| r14 入口 TLS | PASS | 在 `sit-onwalk-tls-reader` ClusterSecretStore Ready 后触发三个 ExternalSecret 重同步，`accounts-tls`、`billing-tls`、`console-tls` 均 SecretSynced。`ingress-sit-routes` 已应用 `sit-k3s-v6-contabo-r14@sha1:daac245a`，Ready=True。 |
+| 本地卷 | PASS | PostgreSQL 5 GiB 和观测 10 GiB PVC 均 Bound，使用 `local-path`。本次验收允许 `/data` 使用根文件系统。 |
+| 观测采集 | FAIL | r14 的 `observability-agent` 拒绝 HTTP remote-write。[GitOps #917](https://github.com/ai-workspace-infra/gitops/pull/917) 提交集群内 HTTPS 修复，需验证 HelmRelease Ready 和实际指标入库。 |
+| MCP 与 Web SaaS | NOT_RUN | [GitOps #917](https://github.com/ai-workspace-infra/gitops/pull/917) 提交解除两个 Kustomization 暂停的配置，待发布后验收。 |
+| 本批 DNS 交接 | NOT_RUN | 本批操作为入口凭据重同步和候选声明更新。 |
+
+r15 已发布并由 Flux 根应用（`5906cea84c6bbb58c533c6907351a1823e095e14`）。入口路由在 r15 再次 Ready。MCP 与 Web SaaS 均已解除暂停。MCP 的 `platform-mcp` ExternalSecret 报同步错误，Web SaaS 的 Canary 声明因缺少 Flagger CRD 被拒绝。观测采集仍需核实 HelmRelease 升级和指标入库。
+
+### r15 现场复核补记
+
+- `observability-sit` 在手动触发子 Kustomization 和 HelmRelease reconcile 后 Ready=True。`observability-agent` HelmRelease upgrade succeeded，generation 3/3，两个 vmagent Pod 均 Running。remote-write 使用集群内 HTTPS Traefik Service，SNI 为 `observability.svc.plus`。
+- MCP SecretStore `platform-mcp-reader` 仍为 `InvalidProviderConfig`，状态消息为 `unable to create client`。目标 Vault JWT role 尚未由具备 Vault auth 配置权限的身份完成引导。
+- Web SaaS 首轮同步发现 `Canary` CRD 不存在。GitOps #918 移除初始 Kustomization 中的 Canary 资源，先部署 HelmRelease/Flagger。该 PR 合并且 CRD Ready 后，还需重新纳入 Canary 资源并验收渐进发布。
