@@ -193,6 +193,8 @@ Playbooks 中 `platform/dev_web_saas_seed` 已有 Accounts/Billing 独立 DML �
 
 补充字段核查：SIT 指定的 `hk-commercial` 记录包含 `DATAWAY_URL`、`OTEL_EXPORTER_OTLP_HEADERS`、`OTEL_EXPORTER_OTLP_ENDPOINT`，仅核对字段存在性，未记录值。DataKit 候选声明已修正 SIT 采集标签中的 `environment=dev` 和 PostgreSQL 实例名；候选尚未发布或运行验收。
 
+21:32 再次查询公共解析器：`grafana-sit.onwalk.net`、`accounts-sit.onwalk.net`、`console-sit.onwalk.net`、`mcp-sit.svc.plus` 仍无 A 答案；`mcp.svc.plus` 仍解析至旧节点 `172.237.9.58`。ExternalDNS Pod Ready，日志仍显示无变更。该结果与 r19 source 未监听 Traefik IngressRoute 一致；PR #922 未部署。
+
 DataKit chart `2.16.1` 的 values 契约要求 `ENV_DATAWAY` 为带 token 的完整 DataWay URL，并支持从外部 Secret 的指定 key 注入。已在不输出凭据值的情况下核对 SIT `DATAWAY_URL` 为 HTTPS 且包含非空 token；实际 ESO 同步、容器注入及云端接收尚未验证。
 
 Chart 模板复核发现普通节点模式默认使用 `hostNetwork: true` 和 `privileged: true`。DataKit 属于节点采集器；这些宿主机权限仍需逐项核对其必要性、例外范围和实际运行身份，不能以此声明业务工作负载已满足 rootless。该项未通过安全验收。
