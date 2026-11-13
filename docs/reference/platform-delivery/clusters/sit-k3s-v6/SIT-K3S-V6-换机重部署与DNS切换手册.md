@@ -183,6 +183,8 @@ r15 已发布并由 Flux 根应用（`5906cea84c6bbb58c533c6907351a1823e095e14`�
 
 随后新建 SSH 连接报主机密钥校验失败；需通过可信渠道核对目标主机密钥后继续现场操作，本次没有绕过校验。规划中的旧主机信息和 Caddy 默认入口需按 Contabo 节点与 Traefik + Flagger 目标修订。
 
+补充字段核查：SIT 指定的 `hk-commercial` 记录包含 `DATAWAY_URL`、`OTEL_EXPORTER_OTLP_HEADERS`、`OTEL_EXPORTER_OTLP_ENDPOINT`，仅核对字段存在性，未记录值。DataKit 候选声明已修正 SIT 采集标签中的 `environment=dev` 和 PostgreSQL 实例名；候选尚未发布或运行验收。
+
 GitOps [#921](https://github.com/ai-workspace-infra/gitops/pull/921) 已合并，目标根 `config-sit` 切换到 `sit-k3s-v6-contabo-r19` 并 reconcile。复核时 Flux 根及基础控制器、集群身份、ESO、ExternalDNS、Ingress/Routes、Observability、PostgreSQL、VPA Kustomization 均 Ready，`lastAppliedRevision` 为 `sit-k3s-v6-contabo-r19@sha1:84f427cdfaa2d4d98e6b5621ddbaf1f53dae0859`。`observability-agent`、Observability、Traefik、PostgreSQL、ExternalDNS HelmRelease 均 Ready；Accounts/Billing/Console TLS 和共享 Observability TLS ExternalSecret 均 SecretSynced。该记录是集群状态回执，不表示全部公开域名已完成 DNS 切换或业务功能验收。
 
 - **ExternalDNS**：Pod 与 HelmRelease Ready；实际参数没有 `--dry-run`，`policy=upsert-only`，过滤域名包含 `onwalk.net`、`svc.plus`。DNS 写入能力已启用。本次没有读取权威 DNS/TXT 所有权或公共递归解析结果，因此不判断记录是否已切换。
