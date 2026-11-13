@@ -155,3 +155,5 @@ done
 | 观测采集 | FAIL | r14 的 `observability-agent` 拒绝 HTTP remote-write。[GitOps #917](https://github.com/ai-workspace-infra/gitops/pull/917) 提交集群内 HTTPS 修复，需验证 HelmRelease Ready 和实际指标入库。 |
 | MCP 与 Web SaaS | NOT_RUN | [GitOps #917](https://github.com/ai-workspace-infra/gitops/pull/917) 提交解除两个 Kustomization 暂停的配置，待发布后验收。 |
 | 本批 DNS 交接 | NOT_RUN | 本批操作为入口凭据重同步和候选声明更新。 |
+
+r15 已发布并由 Flux 根应用（`5906cea84c6bbb58c533c6907351a1823e095e14`）。入口路由在 r15 再次 Ready。MCP 与 Web SaaS 均已解除暂停。MCP 的 `platform-mcp` ExternalSecret 报同步错误，Web SaaS 的 Canary 声明因缺少 Flagger CRD 被拒绝。观测采集仍需核实 HelmRelease 升级和指标入库。
