@@ -187,6 +187,8 @@ r15 已发布并由 Flux 根应用（`5906cea84c6bbb58c533c6907351a1823e095e14`�
 
 GitOps 候选已提交为草稿 [#922](https://github.com/ai-workspace-infra/gitops/pull/922)，包含 DataKit 凭据映射及 Traefik DNS source。合并和发布前仍需核对 Vault 身份交付、DNS 记录所有权与生产映射；此草稿不代表目标已部署。
 
+候选 DNS 声明后续补充了 annotation 筛选和 `sit.onwalk.net` 排除项，并将入口目标调整为 `sit-k3s-v6-ingress.onwalk.net`。静态核查 ExternalDNS v0.20.0 chart：`annotationFilter` 与 `excludeDomains` 会转为对应参数，启用 `traefik-proxy` 时 chart 会赋予 Traefik 路由只读 RBAC；目标集群实际权限和记录结果尚未验收。
+
 GitOps [#921](https://github.com/ai-workspace-infra/gitops/pull/921) 已合并，目标根 `config-sit` 切换到 `sit-k3s-v6-contabo-r19` 并 reconcile。复核时 Flux 根及基础控制器、集群身份、ESO、ExternalDNS、Ingress/Routes、Observability、PostgreSQL、VPA Kustomization 均 Ready，`lastAppliedRevision` 为 `sit-k3s-v6-contabo-r19@sha1:84f427cdfaa2d4d98e6b5621ddbaf1f53dae0859`。`observability-agent`、Observability、Traefik、PostgreSQL、ExternalDNS HelmRelease 均 Ready；Accounts/Billing/Console TLS 和共享 Observability TLS ExternalSecret 均 SecretSynced。该记录是集群状态回执，不表示全部公开域名已完成 DNS 切换或业务功能验收。
 
 - **ExternalDNS**：Pod 与 HelmRelease Ready；实际参数没有 `--dry-run`，`policy=upsert-only`，过滤域名包含 `onwalk.net`、`svc.plus`。DNS 写入能力已启用。本次没有读取权威 DNS/TXT 所有权或公共递归解析结果，因此不判断记录是否已切换。
