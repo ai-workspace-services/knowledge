@@ -185,6 +185,8 @@ r15 已发布并由 Flux 根应用（`5906cea84c6bbb58c533c6907351a1823e095e14`�
 
 后续用户指示直接接受首次主机密钥，本机已采用首次连接信任方式保存 ED25519 host key，`operator` 登录成功并读取到主机名 `sit-k3s-v6`；该步骤未通过独立控制台核对指纹。复核 Flux 仍为 r19，MCP、Web SaaS 和 Canary 仍未 Ready，Web SaaS ExternalSecret 仍报 SecretSyncedError。
 
+补充核查：Web SaaS SecretStore 为 Valid，ESO 日志明确报 `sit/web-saas/runtime` 对应的 Secret 不存在，Accounts Pod 事件报 Kubernetes Secret `web-saas-secrets` 不存在。Accounts 和 Billing 当前 HelmRelease 声明 `POSTGRES_USER: postgres`，不符合业务独立受限数据库身份目标；恢复业务前需核对初始化/迁移权限、业务连接凭据和允许/拒绝测试，不能仅生成通用安全 Secret 后宣称三权验收通过。
+
 补充字段核查：SIT 指定的 `hk-commercial` 记录包含 `DATAWAY_URL`、`OTEL_EXPORTER_OTLP_HEADERS`、`OTEL_EXPORTER_OTLP_ENDPOINT`，仅核对字段存在性，未记录值。DataKit 候选声明已修正 SIT 采集标签中的 `environment=dev` 和 PostgreSQL 实例名；候选尚未发布或运行验收。
 
 DataKit chart `2.16.1` 的 values 契约要求 `ENV_DATAWAY` 为带 token 的完整 DataWay URL，并支持从外部 Secret 的指定 key 注入。已在不输出凭据值的情况下核对 SIT `DATAWAY_URL` 为 HTTPS 且包含非空 token；实际 ESO 同步、容器注入及云端接收尚未验证。
