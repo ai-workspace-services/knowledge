@@ -2,7 +2,7 @@
 
 > **集群名称**：`sit-k3s-v6`（SIT 独立环境，与 `prod-k3s-v6` 物理隔离与声明解耦）  
 > **目标主机**：`ssh operator@5.189.172.69`（Contabo 手动创建的独立 VPS；Debian 13，4 vCPU，约 8 GiB RAM，约 99 GiB 根盘；未配置独立数据盘）
-> **参考源机**：`172.237.9.58` 仅用于只读对照和历史配置核验，不是本规划的部署目标。目标主机通过 operator 身份执行 Ansible pull、Playbook 与 Flux/GitOps；DNS 保持 dry-run/未切换，直至单独验收。
+> **参考源机**：`172.237.9.58` 仅用于只读对照和历史配置核验，不是本规划的部署目标。目标主机通过 operator 身份执行 Ansible pull、Playbook 与 Flux/GitOps；ExternalDNS 已启用写入，域名发布与共享入口切换按实际记录和逐项验收执行。
 > **核心原则**：**基础、服务、业务全面模块化与乐高式灵活组合（Composable Modular Architecture）**；生产零触碰（Zero Touch to PROD）、免部署本地 Vault Server、支持 Per Feature $\rightarrow$ SIT 业务特性发布流、全量面板平滑迁移为后续接管 `observability.svc.plus` 奠定基础；严格对齐生产级的 **OS、集群、数据库三权分立** 治理体系。  
 > **交付模式**：Playbook 节点底座引导（不依赖 GitHub Actions） + GitOps (FluxCD) 声明式模块装配。
 
@@ -275,7 +275,7 @@ gitops/
 
 ## 九、实施落地与实测验收清单 (Implementation & Verification)
 
-以下状态于 2026-11-13 从目标节点 `operator@5.189.172.69` 实测。旧节点 `172.237.9.58` 仅作为参考源；它的旧部署结果不代表新 SIT 环境已部署。当前 GitOps 发布仍为 `sit-k3s-v6-contabo-r5`；服务模块已由根声明，但其 Kustomization 处于挂起状态，尚未部署，因此本节将“已验证”和“待验收”分开记录。
+以下为 2026-11-13 对目标节点 `operator@5.189.172.69` 的 r5 阶段历史记录，不能作为当前状态。旧节点 `172.237.9.58` 仅作为参考源；后续发布和现场验收记录见换机重部署与 DNS 切换手册。
 
 ### 1. 基础底座与控制器
 * **K3s 单节点：已验证**。节点 `sit-k3s-v6` 为 `Ready`，版本 `v1.37.1+k3s1`，OS 为 Debian GNU/Linux 13，节点地址 `5.189.172.69`；CPU 为 4，内存 Capacity/Allocatable 为 8,138,640 KiB。

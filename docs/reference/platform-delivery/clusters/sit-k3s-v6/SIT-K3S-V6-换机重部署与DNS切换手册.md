@@ -181,7 +181,7 @@ r15 已发布并由 Flux 根应用（`5906cea84c6bbb58c533c6907351a1823e095e14`�
 | 桌面与 AI 入口 | NOT_RUN | `ai.svc.plus` 与 `ai_desktop.svc.plus` 的 A 记录指向 `5.189.172.69`；当前 IngressRoute 清单未见对应路由，桌面服务、ExternalService 与端到端访问尚待验收。 |
 | 三权分立 | NOT_RUN | Operator 最小 sudo、真实 Auditor 权限及数据库三角色允许/拒绝测试尚未完成。 |
 
-随后新建 SSH 连接报主机密钥校验失败；需通过可信渠道核对目标主机密钥后继续现场操作，本次没有绕过校验。规划中的旧主机信息和 Caddy 默认入口需按 Contabo 节点与 Traefik + Flagger 目标修订。
+随后新建 SSH 连接报主机密钥校验失败。规划已将目标主机列为 Contabo 节点，并将 Traefik + Flagger 列为入口及渐进发布目标。
 
 后续用户指示直接接受首次主机密钥，本机已采用首次连接信任方式保存 ED25519 host key，`operator` 登录成功并读取到主机名 `sit-k3s-v6`；该步骤未通过独立控制台核对指纹。复核 Flux 仍为 r19，MCP、Web SaaS 和 Canary 仍未 Ready，Web SaaS ExternalSecret 仍报 SecretSyncedError。
 
