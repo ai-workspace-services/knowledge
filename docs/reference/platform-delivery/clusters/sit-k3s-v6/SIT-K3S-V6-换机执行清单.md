@@ -34,7 +34,7 @@
 | MCP | Vault JWT login/限定路径 read 已通过临时实际工作负载身份验证，ExternalSecret Ready；Deployment init container 因 GHCR 镜像 403 `ErrImagePull` 未启动。镜像包 API 对当前仓库查询返回 404，且没有发现已发布 tag。 | 发布/授权可拉取的固定 MCP 镜像后再通过 GitOps 更新引用，并验证 Pod 与 MCP initialize/tools/list。不可借用 feature-lane registry 凭据扩大范围。 |
 | Web SaaS | SecretStore Valid；ExternalSecret 失败，因为 `kv/sit/web-saas/runtime` 不存在；HelmRelease InstallFailed，Accounts/Billing/Content Pods 因 `web-saas-secrets` 缺失未运行，Canary 依赖未 Ready。 | 凭据 owner 在既定 Vault path 提供 `JWT_SECRET`、`SESSION_SECRET` 后安全重同步；再验应用数据库连接与三组 Canary。 |
 | operator sudo 最小权限 | 尚未符合规划目标。`sudo -n -l` 显示 K3s/容器工具免密规则，同时 operator 仍有密码保护的 `(ALL : ALL) ALL` 通用 sudo 规则。 | 由主机权限变更移除/收敛通用 sudo 后，用 operator 实测批准/拒绝命令，再更新状态。 |
-| ExternalDNS 与 DNS | ExternalDNS Pod/HelmRelease Ready，参数无 `--dry-run` 且 `policy=upsert-only`，域名过滤包含 `onwalk.net`、`svc.plus`。Cloudflare 公共解析器 `1.1.1.1` 当前将 `ai_desktop.svc.plus`、`ai.svc.plus` 解析到 `5.189.172.69`，TLS 校验通过但 HTTPS `/` 为 404；目标缺少相应 IngressRoute/后端。`observability.svc.plus` 仍解析到旧节点 `172.237.9.58`。 | 为 Desktop/AI Gateway 先交付主机服务或独立后端与 SIT IngressRoute，逐域名健康探测通过后记录当前 DNS/TXT 所有权和回退值。未核实观测域名迁移及其调用方之前保持旧入口。 |
+| ExternalDNS 与 DNS | ExternalDNS Pod/HelmRelease Ready，参数无 `--dry-run` 且 `policy=upsert-only`，域名过滤包含 `onwalk.net`、`svc.plus`。Cloudflare 公共解析器 `1.1.1.1` 当前将 `ai_desktop.svc.plus`、`ai.svc.plus` 解析到 `5.189.172.69`，TLS 校验通过但 HTTPS `/` 为 404；目标缺少相应 IngressRoute/后端。`observability.svc.plus` 仍解析到旧节点 `172.237.9.58`；用 `curl --resolve` 直探新节点时 TLS 校验通过并返回 302 `/login`。 | 为 Desktop/AI Gateway 先交付主机服务或独立后端与 SIT IngressRoute，逐域名健康探测通过后记录当前 DNS/TXT 所有权和回退值。Observability 域名已有其他集群/生产远程写入依赖，未完成调用方交接前保持旧入口。 |
 | 源端完整服务清单 | 未完成。auditor 仅完成主机级只读盘点，不能读取源端 Kubernetes 管理凭据。 | 获得审计身份后补充 Flux/Helm/PVC/Ingress 实际状态；不得从进程名推断版本或声明部署一致。 |
 
 ## 运行记录约定
