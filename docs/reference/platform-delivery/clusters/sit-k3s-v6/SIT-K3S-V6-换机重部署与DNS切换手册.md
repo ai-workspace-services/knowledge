@@ -233,3 +233,9 @@ GitOps [#921](https://github.com/ai-workspace-infra/gitops/pull/921) 已合并�
 补充字段检查：Vault `kv/sit/database/postgresql/{admin,operator,auditor}` 仅核对到各自 `password` 字段名；`kv/sit/accounts-service`、`kv/sit/billing-service` 与 `kv/sit/web-saas/runtime` 当前为 MISSING_OR_UNREADABLE（不记录秘密值）。GitOps Web SaaS HelmRelease 引用 `accounts-db-runtime` 和 `billing-db-runtime`，但当前 SIT 清单没有这两个 Secret 的 ExternalSecret 定义；Accounts/Billing 仍把 `POSTGRES_USER` 声明为 `postgres`。所以 Web SaaS 还需补齐业务 DB 身份/Secret 声明、数据库初始化执行契约及 Vault runtime 字段，才可解除当前 Secret 缺失；不能只补 JWT/Session 字段后宣称已具备启动条件。
 
 后续实施顺序：为当前集中 PostgreSQL 拟定与现有数据状态兼容的 Accounts/Billing 独立角色初始化入口，再验收数据库权限；经凭据 owner/Playbook 建立 SIT DB 与应用签名密钥 Vault 字段，并补充两组 DB ExternalSecret 后安全重同步 ESO；确认可拉取且固定版本的 MCP 镜像；审查 DataKit 节点采集例外后推进 SIT DataKit 部署。只有服务通过实际 Ready 和外部健康验收，才给相应路由增加 ExternalDNS 作用域标记。任何阶段都不重建现有 PVC、不复用 PostgreSQL 超级用户作为业务身份、不修改共享域名 DNS。完成项和新证据继续追加在本手册。
+
+#### Accounts 数据库初始化契约核查
+
+- 核查 Accounts 源码提交 `84bc14499d9c59810c6aa21687f0271a88cae1f1`：新库初始化使用 `migratectl init` 建立原生 schema；后续使用受版本和校验和约束的 `migratectl migrate`。数据库 reset 被禁用。
+- 受管理的 primary 连接使用 `DATABASE_URL`，数据库名为 `account`，并校验连接身份摘要和后台写入配置。上述是源码契约，尚需核对目标部署镜像的实际版本和对应参数，不能据此直接操作现有 PVC。
+- 当前目标仍为 r19；`web-saas-sit`、`platform-mcp-sit` 未就绪，Canary 等待 Web SaaS。GitOps #922 和本文档 PR #399 尚未合并，不能将候选声明视为已部署。
