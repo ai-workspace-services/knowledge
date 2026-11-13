@@ -187,6 +187,8 @@ r15 已发布并由 Flux 根应用（`5906cea84c6bbb58c533c6907351a1823e095e14`�
 
 补充核查：Web SaaS SecretStore 为 Valid，ESO 日志明确报 `sit/web-saas/runtime` 对应的 Secret 不存在，Accounts Pod 事件报 Kubernetes Secret `web-saas-secrets` 不存在。Accounts 和 Billing 当前 HelmRelease 声明 `POSTGRES_USER: postgres`，不符合业务独立受限数据库身份目标；恢复业务前需核对初始化/迁移权限、业务连接凭据和允许/拒绝测试，不能仅生成通用安全 Secret 后宣称三权验收通过。
 
+Playbooks 中 `platform/dev_web_saas_seed` 已有 Accounts/Billing 独立 DML 身份的初始化实现，但其契约限定新 SIT 命名空间内各自的 PostgreSQL 与固定来源 schema；本环境的数据库位于独立 `postgresql-sit` 命名空间，不能直接认定该 role 适用。需先对齐目标拓扑、当前数据库状态和固定镜像/schema，再通过适用的 Playbook 实施及验证，禁止为适配而清空现有 PVC。
+
 补充字段核查：SIT 指定的 `hk-commercial` 记录包含 `DATAWAY_URL`、`OTEL_EXPORTER_OTLP_HEADERS`、`OTEL_EXPORTER_OTLP_ENDPOINT`，仅核对字段存在性，未记录值。DataKit 候选声明已修正 SIT 采集标签中的 `environment=dev` 和 PostgreSQL 实例名；候选尚未发布或运行验收。
 
 DataKit chart `2.16.1` 的 values 契约要求 `ENV_DATAWAY` 为带 token 的完整 DataWay URL，并支持从外部 Secret 的指定 key 注入。已在不输出凭据值的情况下核对 SIT `DATAWAY_URL` 为 HTTPS 且包含非空 token；实际 ESO 同步、容器注入及云端接收尚未验证。
