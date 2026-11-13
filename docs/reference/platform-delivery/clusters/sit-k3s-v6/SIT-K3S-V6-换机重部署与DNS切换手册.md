@@ -185,6 +185,8 @@ r15 已发布并由 Flux 根应用（`5906cea84c6bbb58c533c6907351a1823e095e14`�
 
 补充字段核查：SIT 指定的 `hk-commercial` 记录包含 `DATAWAY_URL`、`OTEL_EXPORTER_OTLP_HEADERS`、`OTEL_EXPORTER_OTLP_ENDPOINT`，仅核对字段存在性，未记录值。DataKit 候选声明已修正 SIT 采集标签中的 `environment=dev` 和 PostgreSQL 实例名；候选尚未发布或运行验收。
 
+DataKit chart `2.16.1` 的 values 契约要求 `ENV_DATAWAY` 为带 token 的完整 DataWay URL，并支持从外部 Secret 的指定 key 注入。已在不输出凭据值的情况下核对 SIT `DATAWAY_URL` 为 HTTPS 且包含非空 token；实际 ESO 同步、容器注入及云端接收尚未验证。
+
 GitOps 候选已提交为草稿 [#922](https://github.com/ai-workspace-infra/gitops/pull/922)，包含 DataKit 凭据映射及 Traefik DNS source。合并和发布前仍需核对 Vault 身份交付、DNS 记录所有权与生产映射；此草稿不代表目标已部署。
 
 候选 DNS 声明后续补充了 annotation 筛选和 `sit.onwalk.net` 排除项，并将入口目标调整为 `sit-k3s-v6-ingress.onwalk.net`。静态核查 ExternalDNS v0.20.0 chart：`annotationFilter` 与 `excludeDomains` 会转为对应参数，启用 `traefik-proxy` 时 chart 会赋予 Traefik 路由只读 RBAC；目标集群实际权限和记录结果尚未验收。
