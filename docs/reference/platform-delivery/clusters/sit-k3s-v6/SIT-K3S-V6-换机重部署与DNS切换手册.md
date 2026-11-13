@@ -210,6 +210,23 @@ GitOps [#921](https://github.com/ai-workspace-infra/gitops/pull/921) 已合并�
 - **ExternalDNS**：Pod 与 HelmRelease Ready；实际参数没有 `--dry-run`，`policy=upsert-only`，过滤域名包含 `onwalk.net`、`svc.plus`。DNS 写入能力已启用。本次没有读取权威 DNS/TXT 所有权或公共递归解析结果，因此不判断记录是否已切换。
 - **MCP Vault 身份**：按 GitOps 声明创建 Contabo 专属只读 policy/JWT role。实际目标 ServiceAccount audience token 对 Vault 登录成功，并可读取 `kv/sit/platform/mcp`；输出只检查字段名。ESO 安全重同步后 `platform-mcp` ExternalSecret Ready、Secret 已生成。MCP Pod 仍被 init container 镜像阻塞：GHCR 返回 403 `ErrImagePull`；GitHub package API 对声明镜像包返回 404，仓库尚无可用版本 tag。尚未发布/授权可拉取的镜像，未运行 GitHub Actions。
 - **Web SaaS**：JWT Store 为 Valid；Vault 中 `kv/sit/web-saas/runtime` 当前不存在。`web-saas-secrets` ExternalSecret 因此未 Ready，HelmRelease 安装失败，Accounts/Billing/Content Pod 未能启动，Canary 依赖未 Ready。需要由凭据 owner 在该路径配置 `JWT_SECRET`、`SESSION_SECRET`，之后才能重同步并验收服务；本文不记录凭据值。
-- **DataKit**：目标当前没有 DataKit HelmRelease/Pod；r19 的 Contabo overlay 删除了 DataKit HelmRepository/HelmRelease。用户指定的 `kv/prod/observability/` 在当前 Vault 无 DataKit 记录；生产 GitOps 旧声明路径 `kv/observability/datakit/hk-commercial` 与 `kv/observability/datakit/bj-free` 存在，当前只核对了字段名，未读取任何值或复制。确认实际 source path 后，仍需 SIT 专属 ExternalSecret/JWT reader 声明与 DataKit HelmRelease 才能部署。
+- **DataKit**：目标当前没有 DataKit HelmRelease/Pod；r19 Contabo overlay 未包含 DataKit。凭据路径已按用户要求确定为 SIT `kv/observability/datakit/hk-commercial`、PROD `kv/observability/datakit/bj-free`；仍需通过 SIT 专属 ExternalSecret/JWT reader 与 DataKit HelmRelease 实际部署并验收数据接收。
 - **operator 身份与权限**：交互 Bash 中 `kubectl auth whoami` 返回 `operator`；非交互 SSH 命令不读取 `.bashrc`，直接调用 K3s kubectl 时会默认尝试 root 管理 kubeconfig，因此现场命令显式使用 operator 交互 shell或受限 sudo kubectl。`sudo -n -l` 同时显示密码保护的通用 `(ALL : ALL) ALL`，operator 最小 sudo 仍未通过。
 - **DNS/桌面入口**：通过 Cloudflare 公共解析器 `1.1.1.1` 查询，`ai_desktop.svc.plus`、`ai.svc.plus` 当前 A 均为 `5.189.172.69`；TLS 验证成功但 HTTPS `/` 返回 404。目标集群没有匹配这两个 Host 的 IngressRoute；目标主机 `xworkmate-remote-desktop.service` 不存在，8090 无监听。Playbooks 的 `webrtc_desktop_bridge` role 要求预置由服务用户独占的 0600 token 文件和本地构建的 Linux binary；目标缺少 systemd 服务和 listener，不能视为桌面交付完成。`observability.svc.plus` 公共解析仍指旧节点 `172.237.9.58`；使用 `curl --resolve` 直探新节点时 TLS 校验通过并返回 302 `/login`。因该共享域名被其他集群/生产 remote-write 引用，本轮不切换其 DNS。DNS 已指向新机不代表应用入口完成；未将 Kustomization Ready 等同于业务服务 Ready，MCP 与 Web SaaS 仍按以上阻塞状态记录。
+
+### 2026-11-13 21:34（Asia/Shanghai）目标机复核
+
+本轮使用现有默认 SSH 身份 `~/.ssh/id_ed25519` 以 `operator@5.189.172.69` 建立 BatchMode 连接，没有创建或添加其他 SSH key。主机名为 `sit-k3s-v6`。非交互 `kubectl` 不能读取 root 所有的 `/etc/rancher/k3s/k3s.yaml`；通过现有 `sudo -n k3s kubectl` 只读检查成功。本轮没有修改目标主机或集群资源。
+
+| 项目 | 当前证据与结果 |
+| --- | --- |
+| K3s 节点 | `sit-k3s-v6` 为 `Ready`，Debian GNU/Linux 13，K3s `v1.37.1+k3s1`，节点地址 `5.189.172.69`。 |
+| Flux Kustomization | `cluster-identities-sit`、`external-dns-sit`、`external-secrets`、`ingress-sit`、`ingress-sit-routes`、`observability-sit`、`postgresql-sit`、`sit-k3s`、`vpa-sit` 均 Ready，revision 仍为 `sit-k3s-v6-contabo-r19@sha1:84f427cdfaa2d4d98e6b5621ddbaf1f53dae0859`。`platform-mcp-sit` 因 Deployment Failed 未 Ready；`web-saas-sit` 因 HelmRelease Failed 未 Ready；`web-saas-sit-canary` 等待前置 Kustomization。 |
+| HelmRelease | External Secrets、Traefik、Observability、Observability Agent、Grafana、PostgreSQL、VPA、ExternalDNS 均 Ready。Web SaaS HelmRelease 安装超时，Accounts/Billing/Content 三个 Deployment 未就绪。 |
+| ExternalSecret | PostgreSQL 三权凭据、MCP、ExternalDNS、TLS、Grafana 和观测凭据均 `SecretSynced=True`。`web-saas-secrets` 为 `SecretSyncedError`，消息 `could not get secret data from provider`；`web-saas-runtime-reader` SecretStore 是 Valid，但 Vault 路径 `kv/sit/web-saas/runtime` 不存在。Pod 事件确认 `web-saas-secrets` Kubernetes Secret 不存在。不得把运行时 Secret 值写入本手册。 |
+| MCP | `platform-mcp-sit` 中 `infrastructure-mcp-server` 为 `0/2 Init:ImagePullBackOff`；原有 GHCR 镜像拉取 403 的阻塞仍未解除，MCP initialize/tools/list 尚未验收。 |
+| PostgreSQL 业务身份 | PostgreSQL 与 exporter HelmRelease Ready；应用清单仍将 Accounts/Billing 配置为 `POSTGRES_USER=postgres`。当前没有通过业务身份的 DML 允许、DDL 拒绝及审计只读测试。现有 `platform/dev_web_saas_seed` role 要求 namespace 内独立数据库和固定初始化契约，与当前独立 `postgresql-sit` 拓扑不匹配，不能直接套用。 |
+| 配置候选 | GitOps #922 目前 HEAD 为 `b5de89fc6bd0767a9133e0053dbc747061d1dc84`，仍为 Draft，尚未合并/部署。新增本地 Kustomize 渲染验证通过；该新 SHA 暂无 CI 检查回执。候选包含 SIT/PROD DataKit 映射（SIT `kv/observability/datakit/hk-commercial`，PROD `kv/observability/datakit/bj-free`）、Traefik ExternalDNS source，以及 SIT 专属 TXT owner `sit-k3s-v6-contabo-vps`。Flux Helm post-renderer 仅移除 DataKit chart `2.16.1` 默认 `pods/exec` RBAC 项；其 `privileged`、`hostNetwork` 与 hostPath 仍保留以支持当前节点采集配置，属于待现场验证的节点采集权限例外。 |
+| DNS 查询 | 通过 `1.1.1.1` 查询，候选 ingress target、`grafana-sit.onwalk.net`、`accounts-sit.onwalk.net`、`console-sit.onwalk.net`、`mcp-sit.svc.plus` 均无公开 A/TXT 答案；`mcp.svc.plus` 仍为旧机 `172.237.9.58`。此查询不等同于 Cloudflare 权威控制台/Zone API 的 owner 验证。 |
+
+后续实施顺序：先为当前集中 PostgreSQL 拟定与现有数据状态兼容的 Accounts/Billing 独立角色初始化入口，再验收数据库权限；补齐 `kv/sit/web-saas/runtime` 所需字段后安全重同步 ESO；确认可拉取且固定版本的 MCP 镜像；审查 DataKit 节点采集例外和 ExternalDNS owner/过滤范围后，推进 GitOps 候选。任何阶段都不重建现有 PVC、不复用 PostgreSQL 超级用户作为业务身份、不修改共享域名 DNS。完成项和新证据继续追加在本手册。

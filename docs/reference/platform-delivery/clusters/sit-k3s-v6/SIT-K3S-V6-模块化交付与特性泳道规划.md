@@ -273,32 +273,18 @@ gitops/
 
 ---
 
-## 九、实施落地与实测验收清单 (Implementation & Verification)
+## 九、执行顺序与验收门禁 (Implementation & Verification)
 
-以下为 2026-11-13 对目标节点 `operator@5.189.172.69` 的 r5 阶段历史记录，不能作为当前状态。旧节点 `172.237.9.58` 仅作为参考源；后续发布和现场验收记录见换机重部署与 DNS 切换手册。
+本规划定义目标架构、模块依赖和验收标准，不保存带时间戳的现场状态或阶段回执。具体目标主机、GitOps tag/SHA、命令结果、失败原因和后续动作统一记录在[《SIT-K3S-V6 换机重部署与 DNS 切换手册》](SIT-K3S-V6-换机重部署与DNS切换手册.md)。旧节点 `172.237.9.58` 只作为只读参考源；独立 SIT 目标是 Contabo 节点 `5.189.172.69`。
 
-### 1. 基础底座与控制器
-* **K3s 单节点：已验证**。节点 `sit-k3s-v6` 为 `Ready`，版本 `v1.37.1+k3s1`，OS 为 Debian GNU/Linux 13，节点地址 `5.189.172.69`；CPU 为 4，内存 Capacity/Allocatable 为 8,138,640 KiB。
-* **FluxCD 控制面：已验证**。source、kustomize、helm、notification 4 个控制器均为 `1/1 Running`。
-* **ESO：已验证**。controller、cert-controller、webhook 均为 `1/1 Running`。
-* **VPA：已验证**。admission-controller、recommender、updater 均为 `1/1 Running`。
-* **OS 存储：已核对**。根盘约 99 GiB，`/data` 未挂载独立数据盘（当前路径落在根文件系统）。K3s local-path PVC 将消耗根盘空间。
-* **OS operator 权限：存在收敛项**。实测 sudoers 同时列出密码保护的 `(ALL : ALL) ALL` 和 K3s/容器工具免密命令；这不符合本规划中 operator 最小化 sudo 的目标，不能标记为权限合规，需在后续主机权限变更中收敛并复验。
+### 按依赖推进
 
-### 2. 模块交付与核心服务
-* **当前就绪 Kustomization**：`sit-k3s`、`external-secrets`、`cluster-identities-sit`、`vpa-sit`、`external-dns-sit` 已 `Ready=True`，revision 为 `sit-k3s-v6-contabo-r5@sha1:9e5066014ce3b03292be1331e18c40be315dddb5`。
-* **当前挂起模块**：`postgresql-sit`、`observability-sit`、`platform-mcp-sit`、`ingress-sit`、`web-saas-sit` 的 Flux Kustomization 当前 `suspend: true`，尚未部署；相关服务、Ingress、PVC 均未创建。
-* **PostgreSQL Vault 凭据**：GitOps r6 声明引用 `kv/sit/database/postgresql/{admin,operator,auditor}`，但 r6 尚未由目标 Flux 接收；Vault JWT reader role、ESO Secret 对账以及 PostgreSQL 实例均待验收。不得以 Vault KV 路径已存在替代 ESO 实测。
-* **ExternalDNS：未通过**。Deployment Pod 为 `CrashLoopBackOff`；日志显示 Cloudflare API 返回 HTTP 403 / code 9109 `Invalid access token`。当前参数仍包含 `--dry-run`，无 DNS 记录写入；修复凭据后仍需确认 dry-run 与候选记录，DNS 切换另行执行。
+1. **主机与 K3s 基线**：由 `vhosts/common` 完成 OS 初始化，platform 入口按顺序调度 K3s role；核对节点身份、容量、磁盘、三类主机账户和 operator 最小 sudo。
+2. **Flux 与身份底座**：验证根 Source、GitRepository、Kustomization revision，ESO/VPA/ExternalDNS、集群身份和只读审计 RBAC。记录 Flux 实际应用的 immutable tag 与 commit SHA。
+3. **PostgreSQL**：通过 ESO 交付 admin/operator/auditor 凭据；核实 PVC、健康检查和三类数据库身份。为 Accounts、Billing 建立独立受限业务身份，分别验证业务 DML 允许、管理操作与审计写入拒绝；不清理或重建已有 PVC。
+4. **Observability 与 DataKit**：确认 Victoria/Grafana/agent Ready 和新数据入库；SIT DataKit 使用 `kv/observability/datakit/hk-commercial`，PROD 使用 `kv/observability/datakit/bj-free`。验证各自 ESO 身份、实际注入和数据接收，并审查节点采集所需宿主权限。
+5. **MCP 与入口**：先验证固定镜像可拉取、MCP Vault Secret 和协议调用，再验证 Traefik 路由、TLS SAN/链/有效期及真实后端。共享域名仅在明确切换安排和回滚目标后变更。
+6. **Web SaaS 与渐进发布**：ESO 交付应用运行密钥，业务连接使用独立 DB 角色；确认 Accounts、Billing、Content、Console Ready 后再部署 Flagger/Canary，完成逐步放量、指标门禁和失败回退验证。
+7. **DNS**：ExternalDNS 的 provider、域名过滤、annotation/label 过滤、排除域和 owner TXT 必须逐项核对。只对 SIT 管理的域名发布记录；不得覆盖共享或旧节点仍在使用的记录。每次记录变化都验证权威解析、公共解析、TLS 和 HTTP 路由，并保留回退记录。
 
-### 3. 域名、路由与 TLS
-* **DNS：未切换**。本轮不修改权威 DNS；`onwalk.net` 与 `svc.plus` 仍按现状解析。
-* **HTTP/HTTPS 路由：待验收**。Ingress 尚挂起，因此不能声称目标 IP 上的规划域名已可访问。待 `ingress-sit` Ready 后，从目标节点及外部网络逐项验证健康路由、状态码、证书 SAN/链/有效期及回滚目标。
-* **ESO TLS Secret：待验收**。尚无 `ingress-sit` SecretStore/ExternalSecret 同步证据；验证时仅记录 Ready 状态、证书元数据，不输出私钥或 Secret 值。
-
-### 4. 发布与验收门禁
-1. GitOps r6 tag/根源 handover 必须指向已合并的候选提交；交接后确认 Flux `lastAppliedRevision` 与预期 tag/SHA 一致。
-2. 先交付 PostgreSQL Vault JWT/ESO 凭据链和数据库模块，核对 PVC、三类 DB 身份及健康探针，再逐模块恢复观测、MCP、Ingress、Web SaaS。
-3. ExternalDNS 保持 dry-run；对比计划记录与权威 DNS 当前记录，未单独批准前不切流量。
-4. 验证三个 Canary 通过 TraefikService 逐步放量；指标达标后晋升，失败时将流量退回稳定版。
-5. 每个模块单独记录 Kustomization/HelmRelease Ready、Pod 状态、PVC、Vault/ESO 对账和回退依据；上一项验收通过后再推进下一项。
+每个模块都要保留配置提交、部署 revision、真实身份下的权限证据、服务/业务验收结果和回退点。Flux Ready、HelmRelease Ready 或 Pod Running 单独都不构成业务验收通过；未完成的项留在执行手册中标为 FAIL、NOT_RUN 或 BLOCKED，不用规划文档中的静态目标替代现场证据。
