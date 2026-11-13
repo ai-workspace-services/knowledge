@@ -31,6 +31,7 @@
 | GitOps r19 根源交接 | 已完成。根、子源和核心 Kustomization 已报告 r19 SHA `84f427cdfaa2d4d98e6b5621ddbaf1f53dae0859`。 | 保留 `config-sit` tag、Flux `lastAppliedRevision` 和 Ready 状态回执。 |
 | PostgreSQL 凭据交付 | 基础交付完成。三个 PostgreSQL Vault/ESO ExternalSecret 与 HelmRelease 均 Ready；PVC 使用根盘 `local-path`。 | 仍需单独完成业务连接与三类数据库角色允许/拒绝验收；不记录凭据值。 |
 | Observability 与 Ingress | 控制器/HelmRelease、Ingress routes 和 TLS ExternalSecret 已 Ready；本次未做所有公开域名的端到端功能验收。 | 保留当前健康状态，逐域名核对入口、证书、服务和外部回调。 |
+| DataKit | 未部署。r19 Contabo overlay 删除了 DataKit HelmRepository/HelmRelease；`kv/prod/observability/` 当前无 DataKit 记录。生产 GitOps 旧声明引用的 `kv/observability/datakit/hk-commercial` 与既有 `kv/observability/datakit/bj-free` 路径存在，但尚未按用户指定路径完成 DataWay 凭据复制或 ESO 对账。 | 确认凭据来源路径后，将所需字段安全写入 SIT 专属路径，并由专属 JWT role/ESO Secret 交付；不要把生产商业空间 DataWay 发送目标默认给 SIT。 |
 | MCP | Vault JWT login/限定路径 read 已通过临时实际工作负载身份验证，ExternalSecret Ready；Deployment init container 因 GHCR 镜像 403 `ErrImagePull` 未启动。镜像包 API 对当前仓库查询返回 404，且没有发现已发布 tag。 | 发布/授权可拉取的固定 MCP 镜像后再通过 GitOps 更新引用，并验证 Pod 与 MCP initialize/tools/list。不可借用 feature-lane registry 凭据扩大范围。 |
 | Web SaaS | SecretStore Valid；ExternalSecret 失败，因为 `kv/sit/web-saas/runtime` 不存在；HelmRelease InstallFailed，Accounts/Billing/Content Pods 因 `web-saas-secrets` 缺失未运行，Canary 依赖未 Ready。 | 凭据 owner 在既定 Vault path 提供 `JWT_SECRET`、`SESSION_SECRET` 后安全重同步；再验应用数据库连接与三组 Canary。 |
 | operator sudo 最小权限 | 尚未符合规划目标。`sudo -n -l` 显示 K3s/容器工具免密规则，同时 operator 仍有密码保护的 `(ALL : ALL) ALL` 通用 sudo 规则。 | 由主机权限变更移除/收敛通用 sudo 后，用 operator 实测批准/拒绝命令，再更新状态。 |
