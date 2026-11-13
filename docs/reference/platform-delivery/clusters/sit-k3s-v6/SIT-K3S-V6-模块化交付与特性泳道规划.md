@@ -1,15 +1,16 @@
 # SIT-K3S-V6 独立节点模块化交付与特性泳道规划
 
 > **集群名称**：`sit-k3s-v6`（SIT 独立环境，与 `prod-k3s-v6` 物理隔离与声明解耦）  
-> **目标主机**：`ssh root@172.237.9.58`（Ubuntu 26.10, 2 vCPU / 4 GB RAM / 80 GB SSD）  
+> **目标主机**：`ssh operator@5.189.172.69`（Contabo 手动创建的独立 VPS；Debian 13，4 vCPU，约 8 GiB RAM，约 99 GiB 根盘；未配置独立数据盘）
+> **参考源机**：`172.237.9.58` 仅用于只读对照和历史配置核验，不是本规划的部署目标。目标主机通过 operator 身份执行 Ansible pull、Playbook 与 Flux/GitOps；DNS 保持 dry-run/未切换，直至单独验收。
 > **核心原则**：**基础、服务、业务全面模块化与乐高式灵活组合（Composable Modular Architecture）**；生产零触碰（Zero Touch to PROD）、免部署本地 Vault Server、支持 Per Feature $\rightarrow$ SIT 业务特性发布流、全量面板平滑迁移为后续接管 `observability.svc.plus` 奠定基础；严格对齐生产级的 **OS、集群、数据库三权分立** 治理体系。  
 > **交付模式**：Playbook 节点底座引导（不依赖 GitHub Actions） + GitOps (FluxCD) 声明式模块装配。
 
 ---
 
-## 一、SIT-K3S-V6 独立节点规划的独立 Helm Release（共 6 个核心）
+## 一、SIT-K3S-V6 独立节点规划的独立 Helm Release（6 个核心，另含 VPA 基线与可选 ExternalDNS）
 
-相比生产 V6 的 8 个 HelmRelease，SIT 单节点依据 4 GB 内存环境去除了本地重度 Vault Raft，并将可观测采集链路聚合优化，规划 **6 个核心独立 Helm Release**：
+相比生产 V6 的 8 个 HelmRelease，SIT 单节点不部署本地 Vault Raft，并将可观测采集链路聚合优化，规划 **6 个核心业务/平台 Helm Release**。VPA 是集群基线附加组件，不计入这 6 个模块；ExternalDNS 是独立可选项。当前 Contabo 节点有 4 vCPU / 约 8 GiB RAM，以下配额是工作负载预算，不再以旧源机的 2 vCPU / 4 GB 为容量基线：
 
 | # | HelmRelease 名称 | 部署命名空间 | 模块分层 | 对应 Chart 来源 | 职责定位与能力边界 |
 | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -41,7 +42,7 @@
 | **Web SaaS 统一 API** | `https://accounts-sit.onwalk.net` | `accounts.sit.onwalk.net` | `web-saas-accounts:80` | HTTPS 443 / HTTP 80 | 账户、认证与会话后端接口 |
 | **Web SaaS 计费接口** | `https://billing-sit.onwalk.net` | `billing.sit.onwalk.net` | `web-saas-billing:80` | HTTPS 443 / HTTP 80 | 计费与订阅后端接口 |
 | **Per-Feature 特性泳道**| `https://feat-<pr_id>-sit.onwalk.net` | `feat-<pr_id>.sit.onwalk.net` | `web-saas-console.feature-<pr_id>-sit:80` | HTTPS 443 / HTTP 80 | 动态拉取的独立 PR 验证环境 |
-| **网关健康检查** | `http://172.237.9.58/healthz` | `http://172.237.9.58/` (Ready探针) | Caddy 本地内置响应 | HTTP 80 / HTTPS 443 | 返回 HTTP 200 "ok" / "SIT Platform Gateway Ready" |
+| **网关健康检查** | `http://5.189.172.69/healthz` | `http://5.189.172.69/` (Ready探针) | Caddy 本地内置响应 | HTTP 80 / HTTPS 443 | 部署 Ingress 后在目标节点验证；当前尚未部署 |
 
 ---
 
@@ -104,7 +105,7 @@ identityAccounts:
 
 ```mermaid
 flowchart TB
-    subgraph Host["宿主机 172.237.9.58 (Ubuntu 26.10, 2 vCPU / 4 GB)"]
+    subgraph Host["目标宿主机 5.189.172.69 (Contabo, Debian 13, 4 vCPU / 8 GiB; root disk 99 GiB)"]
         subgraph TripartiteSec["【治理基石：全链路三权分立 (Tripartite Separation)】"]
             OS_ID["OS 三类操作身份<br/>root (系统) / operator (运维) / auditor (审计)"]
             K8S_RBAC["集群 RBAC 三权隔离<br/>cluster-admin / workloads / read-only"]
@@ -206,9 +207,9 @@ flowchart TD
 
 ---
 
-## 七、2 vCPU / 4 GB 单节点精准配额预算表
+## 七、Contabo 目标节点配额预算表（4 vCPU / 约 8 GiB）
 
-单节点 4 GB 内存极为有限，模块化让每个组件的消耗清晰可控：
+目标节点实测 Kubernetes Capacity/Allocatable 为 4 CPU、8,138,640 KiB 内存；宿主机 `free -h` 可用内存约 5.6 GiB（采样时）。保留模块资源 requests/limits，按该节点实际容量评估；以下既有单服务配额可作为部署上限，汇总值不是当前已部署资源的实测值。`/data` 位于根文件系统，没有独立 ext4 数据卷；PVC 使用 K3s local-path 时会消耗根盘空间，部署前需确认保留空间与重建策略。
 
 | 模块分类 | 组件 / 命名空间 | CPU Request | CPU Limit | 内存 Request | 内存 Limit | 存储分配 |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -221,8 +222,8 @@ flowchart TD
 | **服务层** | AI MCP (platform-mcp-sit) | 50m | 200m | 100 MiB | 200 MiB | 无 |
 | **业务层** | Web SaaS 基线 (web-saas-sit) | 150m | 600m | 450 MiB | 800 MiB | 无 |
 | **业务层** | 动态特性泳道预留 (feature-*-sit) | 100m | 400m | 350 MiB | 600 MiB | 共享 PG |
-| **安全缓冲** | **宿主机可用内存安全水位 (防 OOM)** | - | - | **1100 MiB** | - | - |
-| **总计** | **全模块满载装配** | **1050m** | - | **2906 MiB** | - | **15 GiB** |
+| **安全缓冲** | **宿主机可用内存安全水位 (防 OOM)** | - | - | **至少 1100 MiB** | - | - |
+| **总计** | **全模块满载装配（预算，不是当前运行值）** | **1050m** | - | **2906 MiB** | - | **15 GiB** |
 
 ---
 
@@ -263,34 +264,29 @@ gitops/
 
 ## 九、实施落地与实测验收清单 (Implementation & Verification)
 
-在 `172.237.9.58` 上已完成全链路部署与严格核验：
+以下状态于 2026-11-13 从目标节点 `operator@5.189.172.69` 实测。旧节点 `172.237.9.58` 仅作为参考源；它的旧部署结果不代表新 SIT 环境已部署。当前 GitOps 发布仍为 `sit-k3s-v6-contabo-r5`；服务模块已由根声明，但其 Kustomization 处于挂起状态，尚未部署，因此本节将“已验证”和“待验收”分开记录。
 
 ### 1. 基础底座与控制器
-* **K3s 单节点**：运行 `v1.37.2+k3s1`，ServiceLB 成功绑定宿主机 `80` 和 `443` 端口。
-* **FluxCD 控制面**：4 个核心控制器（source, kustomize, helm, notification）正常运行在 `flux-system`。
-* **ESO 控制器**：3 个核心控制器正常运行在 `external-secrets`。
+* **K3s 单节点：已验证**。节点 `sit-k3s-v6` 为 `Ready`，版本 `v1.37.1+k3s1`，OS 为 Debian GNU/Linux 13，节点地址 `5.189.172.69`；CPU 为 4，内存 Capacity/Allocatable 为 8,138,640 KiB。
+* **FluxCD 控制面：已验证**。source、kustomize、helm、notification 4 个控制器均为 `1/1 Running`。
+* **ESO：已验证**。controller、cert-controller、webhook 均为 `1/1 Running`。
+* **VPA：已验证**。admission-controller、recommender、updater 均为 `1/1 Running`。
+* **OS 存储：已核对**。根盘约 99 GiB，`/data` 未挂载独立数据盘（当前路径落在根文件系统）。K3s local-path PVC 将消耗根盘空间。
+* **OS operator 权限：存在收敛项**。实测 sudoers 同时列出密码保护的 `(ALL : ALL) ALL` 和 K3s/容器工具免密命令；这不符合本规划中 operator 最小化 sudo 的目标，不能标记为权限合规，需在后续主机权限变更中收敛并复验。
 
-### 2. 核心服务与面板完整性
-* **全量可观测性 (5/5 Pod Running)**：VictoriaMetrics + VictoriaLogs + VictoriaTraces + OpenTelemetry Collector + Grafana 13.2.4 全部运行。
-* **21 个生产 Grafana 面板全量迁移**：经 Grafana REST API 核查，全部 21 个监控看板均已完成 Provisioning 并正常加载。
-* **Infrastructure MCP Server (1/1 Running)**：直连外部权威中心 `https://observability.svc.plus`，暴露 `/healthz` 与 `/v1/models` 等工具调用端点。
-* **PostgreSQL (1/1 Running)**：PostgreSQL 17 + `postgres-exporter` 正常运行，配置 `appArmorProfile: { type: Unconfined }` 规避 Linux 7.3 内核信号阻断。
-* **Web SaaS (4/4 Pod Running)**：Accounts + Billing + Console + Content 全部正常运行，响应 `/healthz`、`/api/ping`。
+### 2. 模块交付与核心服务
+* **当前就绪 Kustomization**：`sit-k3s`、`external-secrets`、`cluster-identities-sit`、`vpa-sit`、`external-dns-sit` 已 `Ready=True`，revision 为 `sit-k3s-v6-contabo-r5@sha1:9e5066014ce3b03292be1331e18c40be315dddb5`。
+* **当前挂起模块**：`postgresql-sit`、`observability-sit`、`platform-mcp-sit`、`ingress-sit`、`web-saas-sit` 的 Flux Kustomization 当前 `suspend: true`，尚未部署；相关服务、Ingress、PVC 均未创建。
+* **PostgreSQL Vault 凭据**：GitOps r6 声明引用 `kv/sit/database/postgresql/{admin,operator,auditor}`，但 r6 尚未由目标 Flux 接收；Vault JWT reader role、ESO Secret 对账以及 PostgreSQL 实例均待验收。不得以 Vault KV 路径已存在替代 ESO 实测。
+* **ExternalDNS：未通过**。Deployment Pod 为 `CrashLoopBackOff`；日志显示 Cloudflare API 返回 HTTP 403 / code 9109 `Invalid access token`。当前参数仍包含 `--dry-run`，无 DNS 记录写入；修复凭据后仍需确认 dry-run 与候选记录，DNS 切换另行执行。
 
-### 3. HTTP 路由端到端实测验证 (`*-sit.onwalk.net` 规范主域名 100% 验证通过)
-* `curl -sI http://172.237.9.58/` $\rightarrow$ **HTTP 200 OK** (`SIT Platform Gateway Ready`)
-* `curl -sI -H 'Host: console-sit.onwalk.net' http://172.237.9.58/` $\rightarrow$ **HTTP 200 OK** (Web SaaS Console 前端完整渲染)
-* `curl -s -o /dev/null -w "%{http_code}" -H 'Host: accounts-sit.onwalk.net' http://172.237.9.58/healthz` $\rightarrow$ **HTTP 200 OK** (Accounts 认证服务就绪)
-* `curl -s -o /dev/null -w "%{http_code}" -H 'Host: billing-sit.onwalk.net' http://172.237.9.58/healthz` $\rightarrow$ **HTTP 200 OK** (Billing 结算服务就绪)
-* `curl -sI -H 'Host: grafana-sit.onwalk.net' http://172.237.9.58/login` $\rightarrow$ **HTTP 200 OK** (Grafana 13.2.4 控制台就绪)
-* `curl -s -H 'Host: mcp-sit.onwalk.net' http://172.237.9.58/healthz` $\rightarrow$ **HTTP 200 OK** (`{"service":"infrastructure-mcp-server","status":"healthy"}`)
-* `curl -sI -H 'Host: app-sit.onwalk.net' http://172.237.9.58/` $\rightarrow$ **HTTP 200 OK** (别名访问就绪)
-* `curl -sI -H 'Host: console.sit.onwalk.net' http://172.237.9.58/` $\rightarrow$ **HTTP 200 OK** (旧域名兼容别名就绪)
+### 3. 域名、路由与 TLS
+* **DNS：未切换**。本轮不修改权威 DNS；`onwalk.net` 与 `svc.plus` 仍按现状解析。
+* **HTTP/HTTPS 路由：待验收**。Ingress 尚挂起，因此不能声称目标 IP 上的规划域名已可访问。待 `ingress-sit` Ready 后，从目标节点及外部网络逐项验证健康路由、状态码、证书 SAN/链/有效期及回滚目标。
+* **ESO TLS Secret：待验收**。尚无 `ingress-sit` SecretStore/ExternalSecret 同步证据；验证时仅记录 Ready 状态、证书元数据，不输出私钥或 Secret 值。
 
-### 4. HTTPS / TLS 证书与 ESO 对账实测验证 (`console-tls` 证书加载 100% 验证通过)
-* **ESO 对账状态**：`kubectl get externalsecret -n ingress-sit` $\rightarrow$ `console-tls`, `accounts-tls`, `billing-tls` 全部处于 **`STATUS: SecretSynced`** 与 **`READY: True`**。
-* **TLS 握手实测 (主控制台)**：`curl -ksI https://172.237.9.58/ --resolve 'console-sit.onwalk.net:443:172.237.9.58'` $\rightarrow$ **HTTP/2 200 OK** (ALPN h2, TLSv1.3, Server Certificate: `CN=*.onwalk.net`)。
-* **认证服务 TLS 实测**：`curl -ksI https://172.237.9.58/healthz --resolve 'accounts-sit.onwalk.net:443:172.237.9.58'` $\rightarrow$ **HTTP/2 200 OK**。
-* **计费服务 TLS 实测**：`curl -ksI https://172.237.9.58/healthz --resolve 'billing-sit.onwalk.net:443:172.237.9.58'` $\rightarrow$ **HTTP/2 200 OK**。
-* **监控看板 TLS 实测**：`curl -ksI https://172.237.9.58/login --resolve 'grafana-sit.onwalk.net:443:172.237.9.58'` $\rightarrow$ **HTTP/2 200 OK**。
-* **MCP 运维网关 TLS 实测**：`curl -ksI https://172.237.9.58/healthz --resolve 'mcp-sit.onwalk.net:443:172.237.9.58'` $\rightarrow$ **HTTP/2 200 OK**。
+### 4. 发布与验收门禁
+1. GitOps r6 tag/根源 handover 必须指向已合并的候选提交；交接后确认 Flux `lastAppliedRevision` 与预期 tag/SHA 一致。
+2. 先交付 PostgreSQL Vault JWT/ESO 凭据链和数据库模块，核对 PVC、三类 DB 身份及健康探针，再逐模块恢复观测、MCP、Ingress、Web SaaS。
+3. ExternalDNS 保持 dry-run；对比计划记录与权威 DNS 当前记录，未单独批准前不切流量。
+4. 每个模块单独记录 Kustomization/HelmRelease Ready、Pod 状态、PVC、Vault/ESO 对账和回退依据；上一项验收通过后再推进下一项。
