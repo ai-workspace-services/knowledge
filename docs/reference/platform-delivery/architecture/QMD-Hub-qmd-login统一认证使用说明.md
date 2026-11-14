@@ -58,3 +58,25 @@ QMD_HUB_RESOLVE=qmd.svc.plus:443:5.189.172.69 qmd whoami
 
 - 单测 `test/hub-login.test.ts` 15 例：交互/非交互 × 有/无 MFA、缺 MFA 码退出 3、缺密码退出 2、错误密码/TOTP、Hub 403 吊销、机器 token、多 Hub profile、logout 吊销。
 - 实测：box 上 `qmd login --token-stdin` 对 `https://qmd.svc.plus`（固定解析到 5.189.172.69）识别为 `static_token`；伪造 token 返回 401。真实账户交互登录待用户自测。
+
+## 七、合并与重新部署回执（2026-11-14 20:36–20:50，UTC+8）
+
+**合并（squash）**：ai-workspace-lab/qmd#13 → `f626412`；ai-workspace-infra/playbooks#1026 → `58f890f`；本仓库 #415 → `9e89190`。
+
+**Hub（sit-k3s-v6，5.189.172.69）**：playbooks main `58f890f` 的 `deploy_qmd_hub.yml`，`-e qmd_hub_version=f626412`（单次临时 inventory）。
+
+| 运行 | ok | changed | failed | 说明 |
+|---|---|---|---|---|
+| `--check --diff` | 33 | 2 | 0 | 预期变更：QMD 源码 checkout、syncd 脚本 |
+| 正式执行 | 56 | 5 | 0 | checkout、构建、脚本、重启 syncd、重启 qmd-hub；新增 whoami 校验通过 |
+| 再次执行 | 53 | 0 | 0 | 幂等 |
+
+**Spoke（Grok Bot box `~/qmd-spoke`）**：`deploy_qmd_standalone.yml`，`-e qmd_standalone_version=f626412`；check `ok=17 changed=3`，执行 `ok=20 changed=4`，再次执行 `ok=19 changed=1`。剩下的 1 项是 `config/index.yml`：`qmd update` 会把配置改写成等价格式（补上 `models`、去掉注释和引号），所以每次运行模板都会再写一次。部署前就是这样，不是这次改动引入的，留作待办。
+
+**验证（经 Traefik `https://qmd.svc.plus`，在 Hub 本机固定解析，TLS 校验 0）**：
+
+- 无凭据：`/`、`/api/v1/auth/whoami`、`/api/v1/sync/whoami`、`/api/v1/sync/{health,auth,changes,events}`、`/mcp`、`/random` 全部 401；401 响应体含 `login_url` 与 `accounts_url`。伪造的 Bearer 和伪造的 `xc_session` 也都是 401。
+- sync token：`/api/v1/auth/whoami` 返回 200，`identity.method=static_token`；`/api/v1/sync/whoami` 和 `/health` 也是 200。
+- box 上的 `qmd`（`f626412`）：`qmd login --token-stdin` 与 `qmd whoami --json` 都识别为 `static_token`；`--non-interactive` 缺密码时退出码 2。
+- `sync.sh` 双向（transport `https`）：push 6 个文件，`hub_fence=741`；pull 拉回 1 条 Hub 笔记（fence 734→741）。box 上搜得到 Hub 笔记，Hub 上也搜得到 box 笔记。
+- 版本固定：playbooks 默认值仍是 `917637d`，已开 ai-workspace-infra/playbooks#1027 改为 `f626412`（待批准）。
