@@ -270,3 +270,7 @@ GitOps [#921](https://github.com/ai-workspace-infra/gitops/pull/921) 已合并�
 - Web SaaS ESO 日志报告 `sit/web-saas/runtime` 的 Secret 不存在；MCP 的 GHCR 镜像仍返回 403。r20 本次交接没有解决这两个既有阻塞。
 
 - 后续只读核查：`kv/observability/datakit/hk-commercial` 可由当前本地 Vault 身份读取，存在 `DATAWAY_URL`、`OTEL_EXPORTER_OTLP_HEADERS`、`OTEL_EXPORTER_OTLP_ENDPOINT` 等字段；只核对字段名，未记录值。现有 JWT mount 的 bound issuer 为 `https://kubernetes.default.svc.cluster.local`。这缩小了当前故障范围：ESO 尚未通过缺失的 JWT role 登录，不能据此推断其已有读取权限。
+
+- DataKit 身份 Playbook 在 `vault_config` 阶段发现同一公钥的 PEM 表示不同。目标节点与 Vault 的 issuer 和 DER SHA-256 指纹一致。本地修正配置检查，以解码后的公钥内容比较，五项现有 role 测试通过。
+- 重新运行 Playbook，脱敏回执为 `VAULT_WORKLOAD_IDENTITY_CONFIGURED`。随后即时检查仍显示 SecretStore `InvalidProviderConfig`、ExternalSecret `SecretSyncedError`、DataKit DaemonSet Ready 0/1。待 ESO 再次协调后复核，并执行身份允许/拒绝与上报验收。
+- 临时管理策略已删除。短时令牌自撤销返回 HTTP 403，令牌按签发时的 15 分钟 TTL 到期。
