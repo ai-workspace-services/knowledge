@@ -278,3 +278,5 @@ GitOps [#921](https://github.com/ai-workspace-infra/gitops/pull/921) 已合并�
 - DataKit Vault SecretStore 随后变为 Valid。通过 operator 对 ExternalSecret 发起一次同步，确认 Ready，DataKit DaemonSet rollout 成功。已请求 Flux 重试此前因 Pod 未就绪而超时的 HelmRelease，仍需核对 Helm、Kustomization 与数据接收。
 
 - Flux 重试完成，DataKit HelmRelease 和 observability-sit Kustomization 均达到 Ready。远端工作空间收到目标节点数据仍待验证。
+
+- 目标机 DataKit 自监控 `datakit_io_endpoint_point_total` 已报告发送状态 OK：metric 9,484,655，logging 164,447，object 1,209。metric 另有 4,855 点标记 unknown，原因待核对。这是发送端累计值，观测云工作空间内的目标节点时序仍待查询确认。复查 DataKit 1/1 Ready，HelmRelease Ready，ExternalSecret SecretSynced。
