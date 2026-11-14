@@ -254,3 +254,10 @@ GitOps [#921](https://github.com/ai-workspace-infra/gitops/pull/921) 已合并�
 - 当前仓库 Actions 最近运行记录中没有 `Publish image` 运行；`v0.4.0-sit` GitHub Release 查询返回 not found。由于此工作流不生成 Release 页面，Release 查询本身不能证明 tag/image 不存在；但可确认尚未找到 tag 触发的发布运行，当前仍没有可验证的镜像 digest。集群清单继续引用 `v0.4.0-sit`，运行时匿名拉取返回 403。
 - 依据用户此前要求，全程不依赖 GitHub Actions；因此不可用该工作流作为本次发布手段。应按既定 SSH/Playbook/Flux/GitOps 流程，使用有凭据的构建执行环境推送 GHCR，然后以不可变 digest 更新 GitOps，再部署验证。当前本地权限未验证可直接推送该包，本轮未尝试发布。
 - GitOps PR #922 与 Knowledge PR #399 仍开放；目标节点仍处于 r19。该复核仅更新证据，没有对目标机或 GHCR 执行变更。
+
+### 2026-11-14 再核发布与目标状态
+
+- 查询 Infrastructure-MCP-Server 仓库根目录确认 `publish-image.yml` 存在，但该仓库当前没有 Git tag（GitHub Tags API 返回空）；GHCR `v0.4.0-sit` 因此没有对应的 tag 发布证据。当前工作流虽已存在，按用户“全程不依赖 GitHub Action”的要求，本流程不触发它。
+- GitOps #922 的 YAML-only 与 gitleaks 检查成功，PR 无 review 且仍开放；Knowledge #399 仍开放。Knowledge PR 的自动 Codex review 未完成并提示达到用量限制，该提示不构成代码审查通过或失败的实质意见。
+- SSH 只读复核目标仍应用 r19（`84f427c`）；platform-mcp-sit、web-saas-sit 未 Ready，web-saas-sit-canary 等待依赖。
+- 当前本地 GitHub 凭据未验证具备 GHCR `write:packages`；也未发现上游 tag。故未尝试推送镜像、改 GitOps 镜像引用、触发 Actions、合并 PR 或变更目标集群。
