@@ -268,3 +268,5 @@ GitOps [#921](https://github.com/ai-workspace-infra/gitops/pull/921) 已合并�
 - DataKit HelmRelease 已开始安装，但 Pod 因缺少 `datakit-dataway-secret` 报 `CreateContainerConfigError`。ESO 日志明确报告 Vault JWT role `sit-k3s-v6-contabo-vps-datakit-dataway-reader` 不存在；SecretStore 为 `InvalidProviderConfig`。因此暂不能判断 DataWay KV 的字段是否可读，或声称上报已成功。
 - 本机 Vault 当前 token 为 root；专用 DataKit reader 策略和角色均未创建。`vault_jwt_workload_identity` Playbook 要求配置模式使用只包含指定管理策略的短时 token，并核对集群及节点身份；需要先准备范围限定的管理策略再执行，不应直接将 root token 交给 Playbook。
 - Web SaaS ESO 日志报告 `sit/web-saas/runtime` 的 Secret 不存在；MCP 的 GHCR 镜像仍返回 403。r20 本次交接没有解决这两个既有阻塞。
+
+- 后续只读核查：`kv/observability/datakit/hk-commercial` 可由当前本地 Vault 身份读取，存在 `DATAWAY_URL`、`OTEL_EXPORTER_OTLP_HEADERS`、`OTEL_EXPORTER_OTLP_ENDPOINT` 等字段；只核对字段名，未记录值。现有 JWT mount 的 bound issuer 为 `https://kubernetes.default.svc.cluster.local`。这缩小了当前故障范围：ESO 尚未通过缺失的 JWT role 登录，不能据此推断其已有读取权限。
