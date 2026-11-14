@@ -235,3 +235,4 @@ export QMD_ARCHIVE_CRON="0 3 * * *"  # 每日凌晨 03:00 归档
 ## 八、落地回执
 
 - 2026-11-14：Grok Bot box（第 1 级 Spoke）↔ sit-k3s-v6（第 4 级企业模式 + Hub-Spoke 中心）双向异步同步已部署并验证，见 [QMD Hub-Spoke 部署回执（2026-11-14）](QMD-Hub-Spoke部署回执-20261114.md)。
+- 2026-11-14：Spoke 侧 `qmd login`（复用 accounts.svc.plus，支持官方/自定义 Hub 域名、交互与非交互一次给全 MFA）见 [QMD Hub 登录：qmd login 统一认证使用说明](QMD-Hub-qmd-login统一认证使用说明.md)。

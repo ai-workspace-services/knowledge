@@ -58,6 +58,8 @@
 - 机器同步：Spoke 的 sync token（Hub 本机 0600 文件）作为机器凭据继续有效；后端对每个请求再次校验同一凭据，不存在无认证路径。
 - accounts 侧无需注册 OAuth client / 回调，也未改动生产集群任何资源。
 
+CLI 登录：`qmd login` / `qmd whoami` 使用说明见 [QMD Hub 登录：qmd login 统一认证使用说明](QMD-Hub-qmd-login统一认证使用说明.md)。
+
 ## 五、验证结果
 
 | 验证 | 命令 / 方式 | 结果 |
