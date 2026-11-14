@@ -284,3 +284,5 @@ GitOps [#921](https://github.com/ai-workspace-infra/gitops/pull/921) 已合并�
 - Playbooks 主分支已包含 JWT PEM 比较修复（PR #1019，提交 `2caa98cc`）。在该提交运行现有 role 测试，5 项通过。现场身份配置用此前的本地修复完成，主分支版本本轮仅验证了测试。
 
 - 通过目标 DataKit 的 `datakit dql` 只读查询远端工作空间。CPU `usage_idle` 在指定主机最近 5 分钟及不限定主机最近 10 分钟均返回 `Empty result`。目前只有发送端成功证据，需用实际启用的 measurement 和目标节点标签做远端验收。Flux 复查观测 r20 Ready，MCP、Web SaaS 和 Canary 仍未就绪。Vault 元数据查询确认 `kv/sit/web-saas/runtime` 尚无记录。
+
+- DataKit HelmRelease 声明启用 cpu、mem、system、hostobject。目标 Pod 内 DQL 查询这三个指标集最近 30 分钟均返回 Empty result。按观测云文档示例追加查询 CPU 默认时间窗和 HOST 对象，也返回 Empty result。远端时序验收保持待完成。
