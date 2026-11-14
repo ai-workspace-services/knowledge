@@ -38,6 +38,7 @@ docs/reference/platform-delivery/
 | [K3s role 职责与依赖清单](architecture/K3s-role职责与依赖清单.md) | Ansible K3s 角色拆分、输入变量定义与依赖矩阵。 |
 | [Infrastructure-MCP-Server 统一入口与多模态智能体接入实施方案](architecture/Infrastructure-MCP-Server统一入口与多模态智能体接入实施方案.md) | 基础设施模型上下文协议聚合中枢（含 ssh-mcp-server）、`https://mcp.svc.plus` 统一入口、四种多模态智能体接入模式与可观测性下联实测。 |
 | [QMD 单体运行与分布式异步同步架构规范](architecture/QMD单体运行与分布式异步同步架构规范.md) | 确立 QMD 坚守单体运行与分布式异步同步原则；定义极简模式（QMD + SQLite + sync）、简单的分布式模式（QMD Hub-Spoke）、扩展模式（QMD + PG vector）与企业持久存储模式（QMD + PG vector + 外部归档 Google Drive/S3）四级阶梯架构规范。 |
+| [多集群网络互联与全局 CIDR 规划架构规范白皮书](architecture/多集群网络互联与全局CIDR规划架构规范白皮书.md) | `10.0.0.0/8` 全局多集群 CIDR 四维正交分配矩阵、Submariner VS Cilium ClusterMesh VS Kube-OVN (OVN-IC) 横向选型对比，以及 `k3s-cluster-server` Role 的工程化互斥约束与双可选支持设计。 |
 
 ---
 
@@ -68,6 +69,7 @@ docs/reference/platform-delivery/
 ## 三、集群环境专项 (`clusters/`)
 
 ### 1. 生产集群 (`clusters/prod-k3s-v6/`)
+- [PROD-K3S-V6 模块化交付与特性架构规划](clusters/prod-k3s-v6/PROD-K3S-V6-模块化交付与特性规划.md) — 生产单节点 8 大 HelmRelease、权威域名矩阵、Vault KV v2 路径契约、全链路三权分立及 2C4G 高密度配额调优规范。
 - [PROD-K3S-V6 独立节点、集群冷启动规划与部署状态归档](clusters/prod-k3s-v6/PROD-K3S-V6-规划与部署状态归档.md) — 节点规格、持久化卷规划、集群冷启动与运行状态基线归档。
 - [PROD-K3S-V6 用户迁移操作手册](clusters/prod-k3s-v6/PROD-K3S-V6-用户迁移操作手册.md) — 生产环境用户数据单向迁移、数据库初始化与割接验证。
 - [PROD-K3S-V6 Accounts 迁移 API 单向同步规划](clusters/prod-k3s-v6/PROD-K3S-V6-Accounts迁移API单向同步规划.md) — 账户系统数据单向同步接口契约与网关限制。
