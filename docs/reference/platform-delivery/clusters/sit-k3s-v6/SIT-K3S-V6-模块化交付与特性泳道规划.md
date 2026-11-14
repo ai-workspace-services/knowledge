@@ -31,10 +31,23 @@
 
 ## 二、SIT-K3S-V6 环境分配的域名规划与路由映射
 
-域名体系严格实行**“业务 Web SaaS 严格隔离在 `onwalk.net`，平台支撑与工作空间特例允许使用 `svc.plus`”**的分层治理原则：
+域名体系实行**“业务 Web SaaS 严格隔离在 `onwalk.net`，平台支撑与工作空间特例允许使用 `svc.plus`”**的分层治理原则：
 
-1. **业务 Web SaaS 严格受限于 `onwalk.net`**：`console` / `accounts` / `billing` 以及各 `feature-<pr_id>` 特性泳道严格统一使用 SIT 根域名 **`onwalk.net`**（规范主域 **`*-sit.onwalk.net`**，适配 `*.onwalk.net` 通配符证书），**严禁将 SIT 业务 Web SaaS 暴露或覆盖到生产权威 `*.svc.plus` 域名**。
-2. **SIT 监控服务、MCP、AI Desktop 与 AI 聚合网关允许使用 `svc.plus`**：在确认不污染生产 Web SaaS 流量的前提下，**SIT 监控服务**（`observability.svc.plus`）、**MCP 服务**（`mcp-sit.svc.plus` / `mcp.svc.plus`）、**AI Desktop**（`desktop.svc.plus`）与 **AI 聚合网关**（`ai.svc.plus`）允许使用 `svc.plus` 域名（绑定 `shared-observability-tls`）；其中 `desktop.svc.plus`（`xworkmate-remote-desktop.service`）**唯一对接 PROD `https://accounts.svc.plus` 在线账户服务**（`XRD_ACCOUNTS_URL=https://accounts.svc.plus`、`XRD_LOGIN_URL=https://console.svc.plus/login`），通过同父域 `.svc.plus` 会话 Cookie（`xc_session`）实现统一单点登录，**严禁也不对接 SIT 环境 `accounts` 服务（`accounts-sit.onwalk.net`）**。
+1. **业务 Web SaaS（严格限定 `onwalk.net`）**
+   - **适用范围**：`console`、`accounts`、`billing` 及各 `feature-<pr_id>` 特性泳道。
+   - **域名与证书**：统一使用直属二级子域 **`*-sit.onwalk.net`**，适配 `*.onwalk.net` 通配符证书（`console-tls` / `accounts-tls` / `billing-tls`）。
+   - **隔离红线**：严禁将 SIT 业务 Web SaaS 暴露或覆盖到生产权威 `*.svc.plus` 域名。
+
+2. **平台支撑与 AI 工作空间（允许使用 `svc.plus`）**
+   - **允许范围**：在不污染生产业务 Web SaaS 流量的前提下，以下四类服务允许使用 `svc.plus` 域名并复用 `shared-observability-tls`（`*.svc.plus`）证书：
+     - **SIT 监控服务**：`observability.svc.plus`（同时保留 `grafana-sit.onwalk.net`）
+     - **SIT MCP 服务**：`mcp-sit.svc.plus` / `mcp.svc.plus`（同时保留 `mcp-sit.onwalk.net`）
+     - **AI 远程桌面**：`desktop.svc.plus`
+     - **聚合 AI 网关**：`ai.svc.plus`
+   - **`desktop.svc.plus` 认证边界**：
+     - 宿主机 `xworkmate-remote-desktop.service` **唯一对接 PROD 在线账户服务 `https://accounts.svc.plus`**（`XRD_ACCOUNTS_URL=https://accounts.svc.plus`、`XRD_LOGIN_URL=https://console.svc.plus/login`）。
+     - 浏览器通过同父域 `.svc.plus` 会话 Cookie（`xc_session`）实现统一单点登录，并保留本地静态 Break-glass Token 兜底。
+     - **严禁也不对接 SIT 环境 `accounts` 服务（`accounts-sit.onwalk.net`）**。
 
 | 访问服务 | 分类边界 | 规范主域名 (Primary) | 后端转发目标服务 | 协议 / 端口 | 说明 |
 | :--- | :--- | :--- | :--- | :--- | :--- |
