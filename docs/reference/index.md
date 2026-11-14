@@ -131,6 +131,7 @@ GitHub 组织入口：[ai-workspace-infra](https://github.com/ai-workspace-infra
 | 40 | AI Workspace、XWorkmate 多执行器与三级记忆技术白皮书规划（含独立 macOS / Home-Lab Workspace profiles） | zh | knowledge working tree · review-draft · proposed-not-applied | [docs/reference/ai-workspace-agent-memory-whitepaper-plan.zh.md](ai-workspace-agent-memory-whitepaper-plan.zh.md) |
 | 41 | AI Workspace 三套架构版本图与迁移验收索引 | zh | knowledge working tree · review-draft · A historical / B transition / C target-pending | [docs/reference/ai-workspace-agent-memory-variants.zh.md](ai-workspace-agent-memory-variants.zh.md) |
 | 42 | QMD + PG + 云盘三级任务聚合与记忆系统落地规范 | zh | knowledge working tree · v1.0-release · approved | [docs/reference/qmd-pg-cloud-drive-three-tier-memory-spec.zh.md](qmd-pg-cloud-drive-three-tier-memory-spec.zh.md) |
+| 43 | QMD 单体运行引擎、分布式异步同步与渐进演进架构规范 | zh | knowledge working tree · v1.2-release · approved | [docs/reference/qmd-monolithic-engine-distributed-async-sync-spec.zh.md](qmd-monolithic-engine-distributed-async-sync-spec.zh.md) |
 
 ## 八、性能调优与容量规划
 
@@ -161,6 +162,9 @@ GitHub 组织入口：[ai-workspace-infra](https://github.com/ai-workspace-infra
 | # | 标题 | 语言 | 来源版本 | 文件或入口 |
 | ---: | --- | --- | --- | --- |
 | 47 | Infrastructure-MCP-Server 部署、集中式可观测性、CMDB 与 QMD 记忆系统交付全景技术规范 | zh | knowledge working tree · v1.0-release · approved | [docs/reference/infrastructure-mcp-observability-cmdb-qmd-delivery-spec.zh.md](infrastructure-mcp-observability-cmdb-qmd-delivery-spec.zh.md) |
+| 48 | Infrastructure-MCP-Server (mcp.svc.plus) 统一入口与多模态智能体接入实施方案 | zh | knowledge working tree · v1.0-release · approved | [docs/reference/infrastructure-mcp-server-unified-gateway-spec.zh.md](infrastructure-mcp-server-unified-gateway-spec.zh.md) |
+| 49 | 全栈可观测性与 Agent 节点采集治理交接报告 (Hand-Off) | zh | knowledge working tree · v1.1-release · approved | [docs/reference/platform-delivery/observability/observability-agent-telemetry-handoff.md](platform-delivery/observability/observability-agent-telemetry-handoff.md) |
+| 50 | Grafana 渐进式发布矩阵面板去 Mock 化与 Operations 控制台对齐技术白皮书 | zh | knowledge working tree · v1.0-release · approved | [docs/reference/platform-delivery/observability/grafana-progressive-release-panel-and-operations-alignment.md](platform-delivery/observability/grafana-progressive-release-panel-and-operations-alignment.md) |
 
 ## 使用与维护约束
 
