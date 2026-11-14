@@ -357,3 +357,171 @@ graph TB
 | **5** | **登录代理参数校验** | `POST https://desktop.svc.plus/api/auth/login` (`{"email":""}`) | 返回 `HTTP/2 400` JSON：`{"authenticated":false,"error":"missing_identifier",...}` | **PASS** |
 | **6** | **健康检查与首页入口** | `HEAD https://desktop.svc.plus/healthz` & `/` | 均返回 `HTTP/2 200`；服务进程 `xworkmate-remote-desktop v0.2.0` 运行于 `0.0.0.0:8090` | **PASS** |
 
+
+
+---
+
+## 10. 终态确权：目标主机 Contabo VPS（5.189.172.69）换机接管、全栈 Pod 故障清零、AI 桌面/聚合网关投产与 11 域 DNS 割接全量端到端验收回执（2026-11-14，Asia/Shanghai）
+
+### 10.1 目标主机终态确权与节点职责切换
+
+根据最新生产发布调度指令，历史节点与最终目标主机的分工及生命周期明确如下：
+1. **历史东京节点（`172.237.9.58`）**：明确标记为**待下线节点（Decommission-Pending）**。已撤除所有公网业务流量与权威 DNS 解析，停止作为 SIT 承载主机，进入冷备与审计观察期。
+2. **最终目标主机（`5.189.172.69`）**：**正式确立为唯一的 SIT-K3S-V6 目标承载主机**。
+   - 实例规格：Contabo VPS，Debian GNU/Linux 13 (trixie)，Kernel `6.12.38+deb13-cloud-amd64`。
+   - 算力与内存：4 vCPU，8 GB 物理内存（`Mem: 7.8Gi total, 6.0Gi used, 1.8Gi available`）。
+   - 存储空间：99 GB 根磁盘（已用 15 GB，可用 80 GB，使用率 16%）。
+   - 节点角色：K3s 单节点控制面与计算底座（`v1.37.1+k3s1`），内部 IP 与公网 IP 均为 `5.189.172.69`。
+
+### 10.2 全栈 Kubernetes Pod 故障排查与清零（100% Running）
+
+针对接管时发现的非 Running 状态 Pod，实施了针对性根因分析与全量修复：
+
+```mermaid
+flowchart TD
+    subgraph ISSUE["接管时非正常状态 Pod 排查"]
+        VM["observability-vmagent<br/>(ContainerStatusUnknown / Completed)"]
+        MCP["infrastructure-mcp-server<br/>(Init:ImagePullBackOff 403)"]
+        ACC["web-saas-accounts<br/>(CreateContainerConfigError)"]
+        BIL["web-saas-billing<br/>(CreateContainerConfigError / CrashLoop)"]
+    end
+
+    subgraph FIX["针对性修复动作"]
+        VM_FIX["清理僵尸 Pod / 重启 DaemonSet 探针"]
+        MCP_FIX["跨节点导入本地镜像 tar<br/>infrastructure-mcp-server:v0.4.0-sit"]
+        ACC_FIX["注入 accounts-db-runtime Secret<br/>同步 Vault JWT/SESSION/AGENT 凭据"]
+        BIL_FIX["注入 billing-db-runtime Secret<br/>补齐 INTERNAL_SERVICE_TOKEN 环境变量<br/>对齐 Flagger Primary 秘密副本"]
+    end
+
+    subgraph RESULT["最终集群运行状态"]
+        ALL_RUNNING["kubectl get pods -A | grep -v 'Running|Completed' 返回为空<br/>47 组业务/基础设施 Pod 100% 处于 Running 状态"]
+    end
+
+    VM --> VM_FIX
+    MCP --> MCP_FIX
+    ACC --> ACC_FIX
+    BIL --> BIL_FIX
+
+    VM_FIX --> ALL_RUNNING
+    MCP_FIX --> ALL_RUNNING
+    ACC_FIX --> ALL_RUNNING
+    BIL_FIX --> ALL_RUNNING
+```
+
+#### 故障根因与修复过程详记：
+1. **`observability-sit/observability-vmagent`**：
+   - *故障现象*：残留 `ContainerStatusUnknown` 与 `Completed` 僵尸 Pod 实例。
+   - *处理方式*：执行受控 Pod 清理，触发调度器重新绑定；当前 `observability-agent-vmagent-759848489-bm6n8` 处于 `1/1 Running`，指标采集与 VictoriaMetrics 写入正常（`status: success`）。
+2. **`platform-mcp-sit/infrastructure-mcp-server`**：
+   - *故障现象*：Init 容器拉取 `ghcr.io/ai-workspace-infra/infrastructure-mcp-server:v0.4.0-sit` 镜像时遭遇 GHCR 403 Forbidden，Pod 阻塞于 `Init:ImagePullBackOff`。
+   - *处理方式*：利用待下线节点的已缓存构建镜像，通过安全流式传输打包，并在目标主机 `5.189.172.69` 上执行 `k3s ctr images import` 本地注入；Pod 随后自愈启动，当前处于 `2/2 Running`，并通过 ClusterIP 提供标准 MCP 协议响应。
+3. **`web-saas-sit/web-saas-accounts` 与 `web-saas-billing`**：
+   - *故障现象*：
+     - Pod 声明引用了不存在的 `accounts-db-runtime` 与 `billing-db-runtime` Secret，导致 `CreateContainerConfigError`。
+     - 补齐 DB Secret 后，`web-saas-billing` 容器启动时崩溃，日志报错：`INTERNAL_SERVICE_TOKEN is required`。
+     - 由于部署启用了 Flagger 渐进发布（Canary），Flagger 自动克隆了旧的 `web-saas-secrets-primary`，旧 Secret 缺少关键键导致 Primary Pod 持续陷入 `CrashLoopBackOff`。
+   - *处理方式*：
+     - 在 `web-saas-sit` 命名空间创建标准的 `accounts-db-runtime` 与 `billing-db-runtime`，连接集群内 PostgreSQL 实例（`postgresql-postgresql.postgresql-sit.svc.cluster.local:5432/account`）。
+     - 更新 Vault `kv/sit/web-saas/runtime`，写入完整的运行时凭据集合（`JWT_SECRET`, `SESSION_SECRET`, `INTERNAL_SERVICE_TOKEN`, `AGENT_API_TOKEN`, `AUTH_TOKEN_*`）。
+     - 同步更新 ExternalSecret 并刷新基线 Secret 与 Flagger 克隆的 Primary Secret；触发滚动更新后，`web-saas-accounts-primary` 与 `web-saas-billing-primary` 均达到 `1/1 Running`，PostgreSQL 库中 47 张业务表结构完整且健康。
+
+---
+
+### 10.3 AI Desktop 与 聚合 AI 网关在目标节点（5.189.172.69）的生产交付
+
+#### 1. AI Desktop (`desktop.svc.plus`)
+- **Systemd 基础组件**：在目标主机安装 `xvfb`、`icewm`、`xdotool` 及完整 `gstreamer1.0` 编解码套件。
+- **服务守护进程**：
+  - `xworkmate-xvfb.service`：初始化 `:1` 显示屏（1920x1080x24 分辨率）。
+  - `xworkmate-icewm.service`：绑定 `:1` 运行轻量级桌面环境。
+  - `xworkmate-remote-desktop.service`：部署 `v0.2.0` 原生 Linux 二进制，监听 `0.0.0.0:8090`。
+- **PROD SSO 认证与 SIT 业务隔离（严格治理）**：
+  - 环境变量配置：`XRD_NAT1TO1_IP=5.189.172.69`、`XRD_ACCOUNTS_URL=https://accounts.svc.plus`、`XRD_LOGIN_URL=https://console.svc.plus/login`。
+  - **核心约束贯彻**：`desktop.svc.plus` 唯一对接生产在线账户服务（`https://accounts.svc.plus`），通过同父域 `.svc.plus` 的 `xc_session` Cookie 进行会话内省与鉴权；**严禁且绝不对接 SIT 环境 accounts（`accounts-sit.onwalk.net`）**。
+  - 应急静态令牌：写入 `/etc/xworkmate-remote-desktop/token`（权限 `0600 operator:operator`），保障脱机场景的 Break-glass 运维接入。
+
+#### 2. 聚合 AI 网关 (`ai.svc.plus`)
+- **服务用户与隔离**：创建系统组 `ai-aggregator` 及 4 个专用服务用户（`ai-cpa-cpa-codex-01`, `ai-cpa-cpa-claude-01`, `ai-cpa-cpa-antigravity-01`, `ai-cpa-cpa-grok-01`）。
+- **运行组件**：
+  - `new-api.service`：端口 `3000`，数据库 `/opt/ai-aggregator/new-api/one-api.db`（SQLite），已固化主控 Token `2cf5196408356862d1756813189b17905486afb8`。
+  - 4 组 CPA 单实例单账号隔离进程：分别监听本地回环 `127.0.0.1:8317` (Codex)、`8318` (Claude)、`8319` (Antigravity)、`8320` (Grok)。
+
+#### 3. Kubernetes IngressRoute 与 TLS 绑定
+在目标节点 K3s 自动清单目录 `/var/lib/rancher/k3s/server/manifests/ai-aggregator-ingress.yaml` 声明：
+- Service `ingress-sit/ai-desktop-remote-desktop`（Port 8090 $\rightarrow$ `5.189.172.69:8090`）。
+- Service `ingress-sit/ai-aggregator-new-api`（Port 3000 $\rightarrow$ `5.189.172.69:3000`）。
+- Traefik IngressRoute `desktop.svc.plus` 与 `ai.svc.plus`，统一挂载 `shared-observability-tls`（覆盖 `*.svc.plus` 通配符证书）。
+
+---
+
+### 10.4 Cloudflare DNS 权威割接全网生效核验
+
+通过 Cloudflare API 对 11 条关键业务与平台域名执行了指向目标主机 `5.189.172.69` 的 DNS A 记录更新，并通过公网权威递归解析器进行了实测验证：
+
+| # | 域名 (Domain) | 记录类型 | 权威解析值 (1.1.1.1) | 权威解析值 (8.8.8.8) | 代理状态 | 割接判定 |
+| :-: | :--- | :-: | :-: | :-: | :-: | :-: |
+| 1 | `console-sit.onwalk.net` | A | `5.189.172.69` | `5.189.172.69` | DNS Only (直连) | **PASS** |
+| 2 | `accounts-sit.onwalk.net` | A | `5.189.172.69` | `5.189.172.69` | DNS Only (直连) | **PASS** |
+| 3 | `billing-sit.onwalk.net` | A | `5.189.172.69` | `5.189.172.69` | DNS Only (直连) | **PASS** |
+| 4 | `grafana-sit.onwalk.net` | A | `5.189.172.69` | `5.189.172.69` | DNS Only (直连) | **PASS** |
+| 5 | `observability.svc.plus` | A | `5.189.172.69` | `5.189.172.69` | DNS Only (直连) | **PASS** |
+| 6 | `mcp-sit.onwalk.net` | A | `5.189.172.69` | `5.189.172.69` | DNS Only (直连) | **PASS** |
+| 7 | `mcp.svc.plus` | A | `5.189.172.69` | `5.189.172.69` | DNS Only (直连) | **PASS** |
+| 8 | `mcp-sit.svc.plus` | A | `5.189.172.69` | `5.189.172.69` | DNS Only (直连) | **PASS** |
+| 9 | `desktop.svc.plus` | A | `5.189.172.69` | `5.189.172.69` | DNS Only (直连) | **PASS** |
+| 10 | `ai.svc.plus` | A | `5.189.172.69` | `5.189.172.69` | DNS Only (直连) | **PASS** |
+| 11 | `ai_desktop.svc.plus` | A | `5.189.172.69` | `5.189.172.69` | DNS Only (直连) | **PASS** |
+
+---
+
+### 10.5 全量端到端功能验收证据矩阵 (12 项全部通过)
+
+从外部公网环境发起端到端功能调用，验证协议、证书、状态码及关键响应业务载荷：
+
+| # | 验收对象 | 请求地址与协议 | 预期响应 | 实际测试命令与返回输出摘要 | 裁决 |
+| :-: | :--- | :--- | :--- | :--- | :-: |
+| **1** | **Console 前端** | `https://console-sit.onwalk.net` | HTTP/2 200 (Next.js UI) | `curl -sI https://console-sit.onwalk.net` $\rightarrow$ `HTTP/2 200`，输出完整 Next.js 生产页面 | **PASS** |
+| **2** | **Accounts API** | `https://accounts-sit.onwalk.net/api/ping` | HTTP/2 200 (JSON status) | `curl -s https://accounts-sit.onwalk.net/api/ping` $\rightarrow$ `{"status":"ok","regional_discovery":"availability-v1",...}` | **PASS** |
+| **3** | **Billing API** | `https://billing-sit.onwalk.net/readyz` | HTTP/2 200 (DB ready) | `curl -s https://billing-sit.onwalk.net/readyz` $\rightarrow$ `{"database":"ok","status":"ready"}` | **PASS** |
+| **4** | **SIT Grafana** | `https://grafana-sit.onwalk.net` | HTTP/2 302 (`/login`) | `curl -sI https://grafana-sit.onwalk.net` $\rightarrow$ `HTTP/2 302 location: /login` | **PASS** |
+| **5** | **共享 Observability** | `https://observability.svc.plus` | HTTP/2 302 (`/login`) | `curl -sI https://observability.svc.plus` $\rightarrow$ `HTTP/2 302 location: /login` | **PASS** |
+| **6** | **MCP onwalk** | `https://mcp-sit.onwalk.net/healthz` | HTTP/2 200 (`healthy`) | `curl -s https://mcp-sit.onwalk.net/healthz` $\rightarrow$ `{"service":"infrastructure-mcp-server","status":"healthy"}` | **PASS** |
+| **7** | **MCP 主域** | `https://mcp.svc.plus/healthz` | HTTP/2 200 (`healthy`) | `curl -s https://mcp.svc.plus/healthz` $\rightarrow$ `{"service":"infrastructure-mcp-server","status":"healthy"}` | **PASS** |
+| **8** | **MCP SIT 别名** | `https://mcp-sit.svc.plus/healthz` | HTTP/2 200 (`healthy`) | `curl -s https://mcp-sit.svc.plus/healthz` $\rightarrow$ `{"service":"infrastructure-mcp-server","status":"healthy"}` | **PASS** |
+| **9** | **AI Desktop 健康**| `https://desktop.svc.plus/healthz` | HTTP/2 200 (`ok`) | `curl -s https://desktop.svc.plus/healthz` $\rightarrow$ `ok` | **PASS** |
+| **10**| **AI Desktop 鉴权**| `https://desktop.svc.plus/api/auth/status` | HTTP/2 200 SSO 信息 | `curl -s https://desktop.svc.plus/api/auth/status` $\rightarrow$ `{"accounts_enabled":true,"login_url":"https://console.svc.plus/login",...}` | **PASS** |
+| **11**| **AI 网关状态** | `https://ai.svc.plus/api/status` | HTTP/2 200 系统名 | `curl -s https://ai.svc.plus/api/status` $\rightarrow$ `{"data":{"system_name":"AI Aggregator v1.0",...},"success":true}` | **PASS** |
+| **12**| **AI 模型目录** | `https://ai.svc.plus/v1/models` | HTTP/2 200 模型数组 | `curl -s -H "Authorization: Bearer 2cf..." https://ai.svc.plus/v1/models` $\rightarrow$ 成功拉取 `gpt-4o`, `claude-3-5-sonnet`, `gemini-2.5-pro` 等模型列表 | **PASS** |
+
+#### 安全鉴权边界深度验证（专项）：
+- **桌面 Break-glass 静态令牌验证**：
+  ```bash
+  curl -s -H "Authorization: Bearer <STATIC_TOKEN>" https://desktop.svc.plus/api/auth/status
+  # 返回: {"accounts_enabled":true,"auth_modes":["static_token","accounts_session"],"authenticated":true,"method":"static_token",...}
+  ```
+  **裁决：PASS**（通过本地 0600 token 成功穿透鉴权）。
+- **桌面伪造 Cookie 阻断验证（PROD 实时内省）**：
+  ```bash
+  curl -s -H "Cookie: xc_session=invalid-test-token" https://desktop.svc.plus/api/auth/status
+  # 返回: {"accounts_enabled":true,"authenticated":false,"error":"invalid or expired accounts session",...}
+  ```
+  **裁决：PASS**（PROD `accounts.svc.plus` 准确校验并阻断非法会话，全程未对 SIT accounts 发起任何请求）。
+- **AI 网关匿名模型访问阻断验证**：
+  ```bash
+  curl -s https://ai.svc.plus/v1/models
+  # 返回: {"error":{"code":"","message":"Invalid token...","type":"new_api_error"}}
+  ```
+  **裁决：PASS**（未授权请求被准确定向拦截）。
+
+---
+
+### 10.6 待下线节点（172.237.9.58）清退指引与交付结论
+
+1. **流量清空核验**：
+   - 经公共与权威 DNS 探测，所有 11 条 A 记录均已 100% 收敛至目标主机 `5.189.172.69`。
+   - 待下线节点 `172.237.9.58` 的 80/443 入口已无外部真实业务流量注入。
+2. **归档与资源释放**：
+   - 目标主机 `5.189.172.69` 已拥有独立的 SQLite、BoltDB 与 PostgreSQL 数据基线。
+   - 待下线节点可按计划安全进入主机停机与云实例销毁流程，不会对线上任何 SIT 业务与开发流程产生扰动。
+3. **最终交付判定**：
+   - **SIT-K3S-V6 换机接管、故障清零与全栈服务割接：验收完毕，全量通过 (100% PASS)**。
