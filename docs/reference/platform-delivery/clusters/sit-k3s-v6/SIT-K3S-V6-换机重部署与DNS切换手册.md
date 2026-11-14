@@ -288,3 +288,5 @@ GitOps [#921](https://github.com/ai-workspace-infra/gitops/pull/921) 已合并�
 - DataKit HelmRelease 声明启用 cpu、mem、system、hostobject。目标 Pod 内 DQL 查询这三个指标集最近 30 分钟均返回 Empty result。按观测云文档示例追加查询 CPU 默认时间窗和 HOST 对象，也返回 Empty result。远端时序验收保持待完成。
 
 - 明确指定本地 `127.0.0.1:9529` 后，DataKit DQL CLI 对 `cpu limit 1` 仍显示 Empty result。直接向同一实例的 `/v1/query/raw` 提交查询得到 `kodo.queryIsForbidden`，因此 CLI 空结果不能用于判定工作空间无数据，需使用有查询权限的观测云身份完成验收。目标机发送端 metric OK 累计已增至 16,451,164。
+
+- Web SaaS：确认 Vault 无历史元数据后，以 CAS=0 初始化 `kv/sit/web-saas/runtime` v1，独立生成 JWT_SECRET 和 SESSION_SECRET。手动触发 ESO 同步，ExternalSecret 达到 Ready，Content Pod 已进入 Running（当时 0/1）。已请求 Flux 重试 Web SaaS HelmRelease。Accounts、Billing 和 Canary 尚待复验，业务数据库身份仍需单独交付。
