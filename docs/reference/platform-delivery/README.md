@@ -36,6 +36,8 @@ docs/reference/platform-delivery/
 | [环境与业务发布解析：最小实施草案](architecture/环境与业务发布解析-最小实施草案.md) | 环境分层语义、域名解析策略与业务发布规范。 |
 | [GitHub Actions 流水线实施草案](architecture/GitHub-Actions流水线实施草案.md) | CI/CD 流水线编排规范与自动化质量门禁。 |
 | [K3s role 职责与依赖清单](architecture/K3s-role职责与依赖清单.md) | Ansible K3s 角色拆分、输入变量定义与依赖矩阵。 |
+| [Infrastructure-MCP-Server 统一入口与多模态智能体接入实施方案](architecture/Infrastructure-MCP-Server统一入口与多模态智能体接入实施方案.md) | 基础设施模型上下文协议聚合中枢（含 ssh-mcp-server）、`https://mcp.svc.plus` 统一入口、四种多模态智能体接入模式与可观测性下联实测。 |
+| [QMD 单体运行与分布式异步同步架构规范](architecture/QMD单体运行与分布式异步同步架构规范.md) | 确立 QMD 坚守单体运行与分布式异步同步原则；定义极简模式（QMD + SQLite + sync）、简单的分布式模式（QMD Hub-Spoke）、扩展模式（QMD + PG vector）与企业持久存储模式（QMD + PG vector + 外部归档 Google Drive/S3）四级阶梯架构规范。 |
 
 ---
 
@@ -58,6 +60,8 @@ docs/reference/platform-delivery/
 | [Pro Custom 专属资源工作台规划](observability/Pro-Custom专属资源工作台规划.md) | 功能边界、权益配额、创建任务与 Grafana 快捷入口。 |
 | [Pro Custom 与 Grafana 分阶段交付验收规划](observability/Pro-Custom与Grafana分阶段交付验收规划.md) | 阶段依赖矩阵、验收标准、回退方案与多阶段里程碑。 |
 | [PROD-K3S-V6 ServiceLB、Caddy 与 Datakit 修复提示词](observability/PROD-K3S-V6-ServiceLB-Caddy与Datakit修复提示词.md) | 历史生产现场 ServiceLB 穿透、Caddy 外部接入与 DataKit OOM 排障参考。 |
+| [**全栈可观测性与 Agent 节点采集治理交接报告 (Hand-Off)**](observability/observability-agent-telemetry-handoff.md) | **【核心交付】** `observability.svc.plus` 监控集群入口故障 RCA、全网 8 个 Edge Agent 节点指标/流量 100% 采集上报矩阵、Vault 权威路径统一标准（`kv/data/CICD/domains/svc.plus` 与 `kv/data/CICD/observability`）及运维指引。 |
+| [**Grafana 渐进式发布矩阵面板去 Mock 化与 Operations 控制台对齐技术白皮书**](observability/grafana-progressive-release-panel-and-operations-alignment.md) | **【核心交付】** 彻底移除自研插件 `progressive-release-matrix-panel` 内部硬编码 Mock 数据，建立规范的 NO DATA 基线与优雅降级契约；Next.js Portal 动态 CORS 改造与 `/api/billing/plans` 状态全链路对齐。 |
 
 ---
 
