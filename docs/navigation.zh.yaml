@@ -43,6 +43,8 @@ sections:
         href: /docs/reference/overview
       - title: 多云平台工程技术白皮书
         href: /docs/reference/multi-cloud-platform-engineering-whitepaper
+      - title: 开源自主 AI Bot 与云桌面全栈自建白皮书
+        href: /docs/reference/ai-bot-desktop-qmd-selfhost-whitepaper
       - title: Proxy Server 三种部署形态与控制面边界
         href: /docs/reference/proxy-server-deployment-profiles
       - title: 内容规范

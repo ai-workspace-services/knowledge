@@ -132,6 +132,7 @@ GitHub 组织入口：[ai-workspace-infra](https://github.com/ai-workspace-infra
 | 41 | AI Workspace 三套架构版本图与迁移验收索引 | zh | knowledge working tree · review-draft · A historical / B transition / C target-pending | [docs/reference/ai-workspace-agent-memory-variants.zh.md](ai-workspace-agent-memory-variants.zh.md) |
 | 42 | QMD + PG + 云盘三级任务聚合与记忆系统落地规范 | zh | knowledge working tree · v1.0-release · approved | [docs/reference/qmd-pg-cloud-drive-three-tier-memory-spec.zh.md](qmd-pg-cloud-drive-three-tier-memory-spec.zh.md) |
 | 43 | QMD 单体运行引擎、分布式异步同步与渐进演进架构规范 | zh | knowledge working tree · v1.2-release · approved | [docs/reference/qmd-monolithic-engine-distributed-async-sync-spec.zh.md](qmd-monolithic-engine-distributed-async-sync-spec.zh.md) |
+| 51 | 开源自主 AI Bot、云桌面与三级记忆全栈自建技术白皮书 | zh | knowledge working tree · v1.0-release · approved | [docs/reference/ai-bot-desktop-qmd-selfhost-whitepaper.zh.md](ai-bot-desktop-qmd-selfhost-whitepaper.zh.md) |
 
 ## 八、性能调优与容量规划
 
