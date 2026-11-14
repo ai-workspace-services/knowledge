@@ -274,3 +274,5 @@ GitOps [#921](https://github.com/ai-workspace-infra/gitops/pull/921) 已合并�
 - DataKit 身份 Playbook 在 `vault_config` 阶段发现同一公钥的 PEM 表示不同。目标节点与 Vault 的 issuer 和 DER SHA-256 指纹一致。本地修正配置检查，以解码后的公钥内容比较，五项现有 role 测试通过。
 - 重新运行 Playbook，脱敏回执为 `VAULT_WORKLOAD_IDENTITY_CONFIGURED`。随后即时检查仍显示 SecretStore `InvalidProviderConfig`、ExternalSecret `SecretSyncedError`、DataKit DaemonSet Ready 0/1。待 ESO 再次协调后复核，并执行身份允许/拒绝与上报验收。
 - 临时管理策略已删除。短时令牌自撤销返回 HTTP 403，令牌按签发时的 15 分钟 TTL 到期。
+
+- DataKit Vault SecretStore 随后变为 Valid。通过 operator 对 ExternalSecret 发起一次同步，确认 Ready，DataKit DaemonSet rollout 成功。已请求 Flux 重试此前因 Pod 未就绪而超时的 HelmRelease，仍需核对 Helm、Kustomization 与数据接收。
