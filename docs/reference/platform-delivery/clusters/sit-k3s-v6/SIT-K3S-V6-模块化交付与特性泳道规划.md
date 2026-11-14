@@ -33,20 +33,20 @@
 
 域名体系严格实行**“业务 Web SaaS 严格隔离在 `onwalk.net`，平台支撑与工作空间特例允许使用 `svc.plus`”**的分层治理原则：
 
-1. **业务 Web SaaS 严格受限于 `onwalk.net`**：`console` / `accounts` / `billing` 以及各 `feature-<pr_id>` 特性泳道严格统一使用 SIT 根域名 **`onwalk.net`**（规范主域 **`*-sit.onwalk.net`**，兼容别名 `*.sit.onwalk.net`，适配 `*.onwalk.net` 通配符证书），**严禁将 SIT 业务 Web SaaS 暴露或覆盖到生产权威 `*.svc.plus` 域名**。
-2. **SIT 监控服务、MCP、AI Desktop 与 AI 聚合网关允许使用 `svc.plus`**：在确认不污染生产 Web SaaS 流量的前提下，**SIT 监控服务**（`observability.svc.plus`）、**MCP 服务**（`mcp-sit.svc.plus` / `mcp.svc.plus`）、**AI Desktop**（`desktop.svc.plus`）与 **AI 聚合网关**（`ai.svc.plus`）允许使用 `svc.plus` 域名（绑定 `shared-observability-tls`），并可按需在 `*-sit.onwalk.net` 保留兼容别名；其中 `desktop.svc.plus`（`xworkmate-remote-desktop.service`）**唯一对接 PROD `https://accounts.svc.plus` 在线账户服务**（`XRD_ACCOUNTS_URL=https://accounts.svc.plus`、`XRD_LOGIN_URL=https://console.svc.plus/login`），通过同父域 `.svc.plus` 会话 Cookie（`xc_session`）实现统一单点登录，**严禁也不对接 SIT 环境 `accounts` 服务（`accounts-sit.onwalk.net`）**。
+1. **业务 Web SaaS 严格受限于 `onwalk.net`**：`console` / `accounts` / `billing` 以及各 `feature-<pr_id>` 特性泳道严格统一使用 SIT 根域名 **`onwalk.net`**（规范主域 **`*-sit.onwalk.net`**，适配 `*.onwalk.net` 通配符证书），**严禁将 SIT 业务 Web SaaS 暴露或覆盖到生产权威 `*.svc.plus` 域名**。
+2. **SIT 监控服务、MCP、AI Desktop 与 AI 聚合网关允许使用 `svc.plus`**：在确认不污染生产 Web SaaS 流量的前提下，**SIT 监控服务**（`observability.svc.plus`）、**MCP 服务**（`mcp-sit.svc.plus` / `mcp.svc.plus`）、**AI Desktop**（`desktop.svc.plus`）与 **AI 聚合网关**（`ai.svc.plus`）允许使用 `svc.plus` 域名（绑定 `shared-observability-tls`）；其中 `desktop.svc.plus`（`xworkmate-remote-desktop.service`）**唯一对接 PROD `https://accounts.svc.plus` 在线账户服务**（`XRD_ACCOUNTS_URL=https://accounts.svc.plus`、`XRD_LOGIN_URL=https://console.svc.plus/login`），通过同父域 `.svc.plus` 会话 Cookie（`xc_session`）实现统一单点登录，**严禁也不对接 SIT 环境 `accounts` 服务（`accounts-sit.onwalk.net`）**。
 
-| 访问服务 | 分类边界 | 规范主域名 (Primary) | 兼容别名 (Aliases) | 后端转发目标服务 | 协议 / 端口 | 说明 |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **全量可观测控制台** | **SIT 监控 (`svc.plus` 允许)** | `https://observability.svc.plus`<br/>`https://grafana-sit.onwalk.net` | `grafana.sit.onwalk.net` | `observability-observability-stack:3000` | HTTPS 443 / HTTP 80 | 完整访问平台、数据库、系统监控面板（允许使用 `svc.plus`） |
-| **AI 基础设施运维代理** | **SIT MCP (`svc.plus` 允许)** | `https://mcp-sit.onwalk.net`<br/>`https://mcp-sit.svc.plus` | `mcp.sit.onwalk.net`<br/>`mcp.svc.plus` | `infrastructure-mcp-server:8080` | HTTPS 443 / HTTP 80 | 提供 MCP 规范的 Agent 工具调用入口（允许使用 `svc.plus`） |
-| **AI 远程桌面入口** | **SIT Workspace (`svc.plus` 允许)** | `https://desktop.svc.plus` | `desktop-sit.onwalk.net`<br/>`desktop.sit.onwalk.net` | `ingress-sit/ai-desktop-remote-desktop:8090` | HTTPS 443 / HTTP 80 | WebRTC 远程桌面；**仅对接 PROD `https://accounts.svc.plus` 在线服务**（通过 `.svc.plus` 共享 `xc_session` 打通 SSO，不接 SIT `accounts`），保留本地 Break-glass Token 兜底 |
-| **聚合 AI 网关** | **SIT Workspace (`svc.plus` 允许)** | `https://ai.svc.plus` | `ai-sit.onwalk.net` | `ingress-sit/ai-aggregator-new-api:3000` | HTTPS 443 / HTTP 80 | New API + 4 组 CPA 适配池统一 OpenAI 兼容入口 |
-| **Web SaaS 控制台前端** | **业务 Web SaaS (`onwalk.net` 限定)** | `https://console-sit.onwalk.net` | `app-sit.onwalk.net`<br/>`console.sit.onwalk.net`<br/>`app.sit.onwalk.net` | `web-saas-console:80` | HTTPS 443 / HTTP 80 | Web SaaS 控制台测试基线界面 |
-| **Web SaaS 统一 API** | **业务 Web SaaS (`onwalk.net` 限定)** | `https://accounts-sit.onwalk.net` | `accounts.sit.onwalk.net` | `web-saas-accounts:80` | HTTPS 443 / HTTP 80 | SIT 隔离账户、认证与会话后端接口 |
-| **Web SaaS 计费接口** | **业务 Web SaaS (`onwalk.net` 限定)** | `https://billing-sit.onwalk.net` | `billing.sit.onwalk.net` | `web-saas-billing:80` | HTTPS 443 / HTTP 80 | SIT 隔离计费与订阅后端接口 |
-| **Per-Feature 特性泳道** | **业务 Web SaaS (`onwalk.net` 限定)** | `https://feat-<pr_id>-sit.onwalk.net` | `feat-<pr_id>.sit.onwalk.net` | `web-saas-console.feature-<pr_id>-sit:80` | HTTPS 443 / HTTP 80 | 动态拉取的独立 PR 验证环境 |
-| **网关健康检查** | **网关探针** | `http://172.237.9.58/healthz` | `http://172.237.9.58/` (Ready探针) | Traefik / Gateway 本地响应 | HTTP 80 / HTTPS 443 | 返回 HTTP 200 "ok" |
+| 访问服务 | 分类边界 | 规范主域名 (Primary) | 后端转发目标服务 | 协议 / 端口 | 说明 |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **全量可观测控制台** | **SIT 监控 (`svc.plus` 允许)** | `https://observability.svc.plus`<br/>`https://grafana-sit.onwalk.net` | `observability-observability-stack:3000` | HTTPS 443 / HTTP 80 | 完整访问平台、数据库、系统监控面板（允许使用 `svc.plus`） |
+| **AI 基础设施运维代理** | **SIT MCP (`svc.plus` 允许)** | `https://mcp-sit.onwalk.net`<br/>`https://mcp-sit.svc.plus` | `infrastructure-mcp-server:8080` | HTTPS 443 / HTTP 80 | 提供 MCP 规范的 Agent 工具调用入口（允许使用 `svc.plus`） |
+| **AI 远程桌面入口** | **SIT Workspace (`svc.plus` 允许)** | `https://desktop.svc.plus` | `ingress-sit/ai-desktop-remote-desktop:8090` | HTTPS 443 / HTTP 80 | WebRTC 远程桌面；**仅对接 PROD `https://accounts.svc.plus` 在线服务**（通过 `.svc.plus` 共享 `xc_session` 打通 SSO，不接 SIT `accounts`），保留本地 Break-glass Token 兜底 |
+| **聚合 AI 网关** | **SIT Workspace (`svc.plus` 允许)** | `https://ai.svc.plus` | `ingress-sit/ai-aggregator-new-api:3000` | HTTPS 443 / HTTP 80 | New API + 4 组 CPA 适配池统一 OpenAI 兼容入口 |
+| **Web SaaS 控制台前端** | **业务 Web SaaS (`onwalk.net` 限定)** | `https://console-sit.onwalk.net` | `web-saas-console:80` | HTTPS 443 / HTTP 80 | Web SaaS 控制台测试基线界面 |
+| **Web SaaS 统一 API** | **业务 Web SaaS (`onwalk.net` 限定)** | `https://accounts-sit.onwalk.net` | `web-saas-accounts:80` | HTTPS 443 / HTTP 80 | SIT 隔离账户、认证与会话后端接口 |
+| **Web SaaS 计费接口** | **业务 Web SaaS (`onwalk.net` 限定)** | `https://billing-sit.onwalk.net` | `web-saas-billing:80` | HTTPS 443 / HTTP 80 | SIT 隔离计费与订阅后端接口 |
+| **Per-Feature 特性泳道** | **业务 Web SaaS (`onwalk.net` 限定)** | `https://feat-<pr_id>-sit.onwalk.net` | `web-saas-console.feature-<pr_id>-sit:80` | HTTPS 443 / HTTP 80 | 动态拉取的独立 PR 验证环境 |
+| **网关健康检查** | **网关探针** | `http://172.237.9.58/healthz` | Traefik / Gateway 本地响应 | HTTP 80 / HTTPS 443 | 返回 HTTP 200 "ok" |
 
 ---
 
