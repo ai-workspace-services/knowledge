@@ -39,6 +39,7 @@ docs/reference/platform-delivery/
 | [Infrastructure-MCP-Server 统一入口与多模态智能体接入实施方案](architecture/Infrastructure-MCP-Server统一入口与多模态智能体接入实施方案.md) | 基础设施模型上下文协议聚合中枢（含 ssh-mcp-server）、`https://mcp.svc.plus` 统一入口、四种多模态智能体接入模式与可观测性下联实测。 |
 | [QMD 单体运行与分布式异步同步架构规范](architecture/QMD单体运行与分布式异步同步架构规范.md) | 确立 QMD 坚守单体运行与分布式异步同步原则；定义极简模式（QMD + SQLite + sync）、简单的分布式模式（QMD Hub-Spoke）、扩展模式（QMD + PG vector）与企业持久存储模式（QMD + PG vector + 外部归档 Google Drive/S3）四级阶梯架构规范。 |
 | [QMD Hub-Spoke 部署回执（2026-11-14）](architecture/QMD-Hub-Spoke部署回执-20261114.md) | box Spoke（QMD + SQLite + sync）↔ sit-k3s-v6 Hub（QMD + PG17/pgvector + Drive 归档 + Delta Sync API）部署、验证结果与规范差异。 |
+| [QMD Hub 登录：qmd login 统一认证使用说明](architecture/QMD-Hub-qmd-login统一认证使用说明.md) | `qmd login` 交互/非交互（一次给全 MFA）登录 qmd.svc.plus 或自定义 Hub，复用 accounts.svc.plus；命令、退出码、凭据存储与 Hub `whoami` 契约。 |
 | [多集群网络互联与全局 CIDR 规划架构规范白皮书](architecture/多集群网络互联与全局CIDR规划架构规范白皮书.md) | `10.0.0.0/8` 全局多集群 CIDR 四维正交分配矩阵、Submariner VS Cilium ClusterMesh VS Kube-OVN (OVN-IC) 横向选型对比，以及 `k3s-cluster-server` Role 的工程化互斥约束与双可选支持设计。 |
 
 ---
