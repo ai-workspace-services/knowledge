@@ -322,29 +322,29 @@ graph TB
 
 ---
 
-## 9. 域名隔离治理收敛与 `desktop.svc.plus` ↔ `accounts.svc.plus` 统一账户认证打通（2026-11-14，Asia/Shanghai）
+## 9. 域名隔离治理收敛与 `desktop.svc.plus` ↔ PROD `accounts.svc.plus` 统一账户认证打通（2026-11-14，Asia/Shanghai）
 
 ### 9.1 SIT 环境域名隔离策略微调结论
 
 在 [《SIT-K3S-V6 独立节点模块化交付与特性泳道规划》](SIT-K3S-V6-模块化交付与特性泳道规划.md) 中已明确域边界规则：
 - **业务 Web SaaS 严格限制在 `onwalk.net`**：`console` / `accounts` / `billing` 及 `feature-<pr_id>` 特性泳道保持仅使用 `*-sit.onwalk.net`（兼容 `*.sit.onwalk.net`），不触碰或占用生产业务 `*.svc.plus` 域名。
-- **SIT 监控、MCP、AI Desktop 与 AI 网关允许使用 `svc.plus`**：`observability.svc.plus`、`mcp-sit.svc.plus` / `mcp.svc.plus`、`desktop.svc.plus` 与 `ai.svc.plus` 允许使用 `svc.plus` 域名与 `shared-observability-tls`（`*.svc.plus`）证书；其中 `desktop.svc.plus` 利用与 `accounts.svc.plus` 同父域（`.svc.plus`）的优势实现浏览器单点登录互通。
+- **SIT 监控、MCP、AI Desktop 与 AI 网关允许使用 `svc.plus`**：`observability.svc.plus`、`mcp-sit.svc.plus` / `mcp.svc.plus`、`desktop.svc.plus` 与 `ai.svc.plus` 允许使用 `svc.plus` 域名与 `shared-observability-tls`（`*.svc.plus`）证书；其中 `desktop.svc.plus`（`xworkmate-remote-desktop.service`）**直接且仅对接 PROD `https://accounts.svc.plus` 在线账户服务**，利用同父域（`.svc.plus`）实现浏览器单点登录互通，**不连接 SIT 环境 `accounts` 服务（`accounts-sit.onwalk.net`）**。
 
-### 9.2 `xworkmate-remote-desktop` 与 `accounts.svc.plus` 认证集成方案
+### 9.2 `xworkmate-remote-desktop` 与 PROD `accounts.svc.plus` 认证集成方案
 
 1. **认证协议与同域 SSO 打通链路**：
-   - `accounts.svc.plus` 在登录（`POST /api/auth/login` 与 MFA `POST /api/auth/mfa/verify`）成功后下发 `HttpOnly`、`SameSite=Lax`、`Domain=.svc.plus` 的 `xc_session` 会话 Cookie，并提供 `GET /api/auth/session` 会话查询接口（同时支持 `Authorization: Bearer` 与 `Cookie: xc_session`）。
+   - PROD 在线服务 `https://accounts.svc.plus` 在登录（`POST /api/auth/login` 与 MFA `POST /api/auth/mfa/verify`）成功后下发 `HttpOnly`、`SameSite=Lax`、`Domain=.svc.plus` 的 `xc_session` 会话 Cookie，并提供 `GET /api/auth/session` 会话查询接口（同时支持 `Authorization: Bearer` 与 `Cookie: xc_session`）。
    - Traefik 入口（`ingress-sit/ai-desktop-routes`）将 `https://desktop.svc.plus` 请求的 `Cookie` 与 `Host` 透传至宿主机 `xworkmate-remote-desktop.service`（`0.0.0.0:8090`）。
    - `xworkmate-remote-desktop`（升级至 `v0.2.0`）实现多模式鉴权链（按优先级 `Authorization: Bearer` $\rightarrow$ JSON body `token` $\rightarrow$ `Cookie: xc_session`）：
      - 若凭证匹配本地静态 Break-glass 令牌文件（`/etc/xworkmate-remote-desktop/token`，权限 `0600`），通过常量时间比对直接放行（`method="static_token"`），保障运维断网/上游不可用时的高可用应急接入。
-     - 否则调用 `XRD_ACCOUNTS_URL`（`https://accounts.svc.plus/api/auth/session`）进行实时会话内省，并以 Token 的 SHA-256 摘要作为键在内存中缓存已验证身份（TTL 由 `XRD_AUTH_CACHE_TTL` 控制，默认 `30s`）。
+     - 否则调用 PROD 在线账户服务 `XRD_ACCOUNTS_URL=https://accounts.svc.plus`（`https://accounts.svc.plus/api/auth/session`）进行实时会话内省，并以 Token 的 SHA-256 摘要作为键在内存中缓存已验证身份（TTL 由 `XRD_AUTH_CACHE_TTL` 控制，默认 `30s`）；**不对接也不请求 SIT `accounts`（`accounts-sit.onwalk.net`）**。
      - 支持 `XRD_ALLOWED_EMAILS` 与 `XRD_ALLOWED_ROLES` 细粒度访问控制：未提供凭证或会话无效返回 `HTTP 401`，身份已认证但不在允许名单或账号非活跃返回 `HTTP 403`。
 2. **新增 HTTP 接口与前端 WebRTC 页面升级**：
-   - 服务端新增 `GET /api/auth/status`、`POST /api/auth/login`（代理密码及 TOTP MFA 登录并在共享 `.svc.plus` 域或 host-only 域写回 `HttpOnly; SameSite=Lax; Secure` 的 `xc_session` Cookie）与 `POST /api/auth/logout`（清理缓存、注销上游会话并清除 Cookie）。
-   - `web/index.html` 启动时请求 `/api/auth/status` 自动识别已登录账户，提供 `Sign In` 登录弹窗（支持邮箱/密码与 6 位 TOTP MFA）、`SSO Login`（跳转 `XRD_LOGIN_URL=https://console.svc.plus/login`，回切页面自动刷新会话态）与可折叠静态 `Token` 兜底栏，并以 `credentials: "same-origin"` 发起 `/api/session` WebRTC 协商。
-3. **Playbooks IaC 对齐与目标主机上线**：
-   - 更新 `playbooks/roles/vhosts/webrtc_desktop_bridge`（`defaults/main.yml` 与 `templates/xworkmate-remote-desktop.service.j2`），新增 `XRD_ACCOUNTS_URL`、`XRD_LOGIN_URL`、`XRD_ALLOWED_ROLES`、`XRD_ALLOWED_EMAILS` 环境变量注入；禁止在 Git 或日志中存储任何 Token 明文。
-   - 目标主机 `172.237.9.58`（`sit-k3s-v6`）已部署 `xworkmate-remote-desktop v0.2.0`（静态交叉编译 `linux/amd64`），并注入 `XRD_ACCOUNTS_URL=https://accounts.svc.plus` 与 `XRD_LOGIN_URL=https://console.svc.plus/login`。
+   - 服务端新增 `GET /api/auth/status`、`POST /api/auth/login`（代理密码及 TOTP MFA 登录至 PROD `https://accounts.svc.plus` 并在共享 `.svc.plus` 域写回 `HttpOnly; SameSite=Lax; Secure` 的 `xc_session` Cookie）与 `POST /api/auth/logout`（清理缓存、注销上游会话并清除 Cookie）。
+   - `web/index.html` 启动时请求 `/api/auth/status` 自动识别已登录账户，提供 `Sign In` 登录弹窗（支持邮箱/密码与 6 位 TOTP MFA）、`SSO Login`（跳转 PROD `XRD_LOGIN_URL=https://console.svc.plus/login`，回切页面自动刷新会话态）与可折叠静态 `Token` 兜底栏，并以 `credentials: "same-origin"` 发起 `/api/session` WebRTC 协商。
+3. **Playbooks IaC 默认值对齐与目标主机上线**：
+   - 更新 `playbooks/roles/vhosts/webrtc_desktop_bridge`（`defaults/main.yml` 与 `templates/xworkmate-remote-desktop.service.j2`），默认锁定 `webrtc_desktop_bridge_accounts_url: "https://accounts.svc.plus"` 与 `webrtc_desktop_bridge_login_url: "https://console.svc.plus/login"`，同时提供 `XRD_ALLOWED_ROLES`、`XRD_ALLOWED_EMAILS` 环境变量注入；禁止在 Git 或日志中存储任何 Token 明文。
+   - 目标主机 `172.237.9.58`（`sit-k3s-v6`）已部署 `xworkmate-remote-desktop v0.2.0`（静态交叉编译 `linux/amd64`），直接连接 PROD `https://accounts.svc.plus`（`XRD_ACCOUNTS_URL=https://accounts.svc.plus`、`XRD_LOGIN_URL=https://console.svc.plus/login`），未接入任何 SIT `accounts` 实例。
 
 ### 9.3 目标主机改造后实测验收结果
 
