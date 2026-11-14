@@ -286,3 +286,5 @@ GitOps [#921](https://github.com/ai-workspace-infra/gitops/pull/921) 已合并�
 - 通过目标 DataKit 的 `datakit dql` 只读查询远端工作空间。CPU `usage_idle` 在指定主机最近 5 分钟及不限定主机最近 10 分钟均返回 `Empty result`。目前只有发送端成功证据，需用实际启用的 measurement 和目标节点标签做远端验收。Flux 复查观测 r20 Ready，MCP、Web SaaS 和 Canary 仍未就绪。Vault 元数据查询确认 `kv/sit/web-saas/runtime` 尚无记录。
 
 - DataKit HelmRelease 声明启用 cpu、mem、system、hostobject。目标 Pod 内 DQL 查询这三个指标集最近 30 分钟均返回 Empty result。按观测云文档示例追加查询 CPU 默认时间窗和 HOST 对象，也返回 Empty result。远端时序验收保持待完成。
+
+- 明确指定本地 `127.0.0.1:9529` 后，DataKit DQL CLI 对 `cpu limit 1` 仍显示 Empty result。直接向同一实例的 `/v1/query/raw` 提交查询得到 `kodo.queryIsForbidden`，因此 CLI 空结果不能用于判定工作空间无数据，需使用有查询权限的观测云身份完成验收。目标机发送端 metric OK 累计已增至 16,451,164。
