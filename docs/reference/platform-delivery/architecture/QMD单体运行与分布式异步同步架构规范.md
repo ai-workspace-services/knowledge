@@ -229,3 +229,9 @@ export QMD_ARCHIVE_CRON="0 3 * * *"  # 每日凌晨 03:00 归档
 2. 多设备/多端协同：**`QMD Hub-Spoke 简单分布式`**，本地读 0ms，增量异步推流；
 3. 团队多 Agent 协作：**`QMD + PG (vector)`**，共享事务状态与统一 HNSW 向量；
 4. 企业灾备与合规：扩充 **外部归档（Google Drive / S3）**，形成闭环自愈的三级立体记忆资产。
+
+---
+
+## 八、落地回执
+
+- 2026-11-14：Grok Bot box（第 1 级 Spoke）↔ sit-k3s-v6（第 4 级企业模式 + Hub-Spoke 中心）双向异步同步已部署并验证，见 [QMD Hub-Spoke 部署回执（2026-11-14）](QMD-Hub-Spoke部署回执-20261114.md)。
