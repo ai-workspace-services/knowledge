@@ -1,13 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 540" width="1200" height="540">
   <defs>
     <style>
-      .title { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; font-size: 26px; font-weight: 700; fill: #0F172A; }
-      .subtitle { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; font-size: 14px; fill: #64748B; }
-      .card-title { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; font-size: 16px; font-weight: 700; fill: #1E293B; }
-      .card-tag { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 11px; font-weight: 600; }
-      .card-desc { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; font-size: 12px; fill: #475569; line-height: 1.5; }
-      .metric-num { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 18px; font-weight: 800; }
-      .metric-label { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; font-size: 11px; fill: #64748B; }
+      .title { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", sans-serif; font-size: 24px; font-weight: 700; fill: #0F172A; }
+      .subtitle { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", sans-serif; font-size: 13px; fill: #64748B; }
+      .card-title { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", sans-serif; font-size: 16px; font-weight: 700; fill: #1E293B; }
+      .card-tag { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", -apple-system, sans-serif; font-size: 11px; font-weight: 700; }
+      .card-desc { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", sans-serif; font-size: 12px; fill: #475569; line-height: 1.5; }
+      .metric-num { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", -apple-system, sans-serif; font-size: 17px; font-weight: 800; }
+      .metric-label { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Segoe UI", sans-serif; font-size: 11px; fill: #64748B; }
     </style>
     <filter id="card-shadow" x="-5%" y="-5%" width="110%" height="115%" filterUnits="userSpaceOnUse">
       <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#0F172A" flood-opacity="0.06"/>
@@ -29,7 +29,7 @@
   <rect x="0" y="0" width="1200" height="6" fill="url(#header-grad)" rx="3"/>
 
   <!-- Header Section -->
-  <g transform="translate(50, 45)">
+  <g transform="translate(50, 42)">
     <rect x="0" y="2" width="4" height="26" fill="#2563EB" rx="2"/>
     <text x="16" y="22" class="title">从 V1 到 V6：核心控制面六代演进全景路线图</text>
     <text x="16" y="44" class="subtitle">在单台 2C4G 极限资源约束下，实现从裸机手工作坊到现代化 GitOps 净室与微内核轻量集群的跃迁</text>
@@ -46,8 +46,32 @@
     </g>
   </g>
 
-  <!-- Flow Connecting Line -->
-  <path d="M 140 300 L 1060 300" stroke="#CBD5E1" stroke-width="3" stroke-dasharray="6 6"/>
+  <!-- Connecting Chevrons in Gaps (Clean Progression Flow) -->
+  <!-- Gap 1: V1 -> V2 -->
+  <g transform="translate(222, 305)">
+    <circle cx="0" cy="0" r="10" fill="#F1F5F9" stroke="#CBD5E1" stroke-width="1"/>
+    <path d="M -3 -4 L 2 0 L -3 4" stroke="#64748B" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <!-- Gap 2: V2 -> V3 -->
+  <g transform="translate(402, 305)">
+    <circle cx="0" cy="0" r="10" fill="#F1F5F9" stroke="#CBD5E1" stroke-width="1"/>
+    <path d="M -3 -4 L 2 0 L -3 4" stroke="#64748B" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <!-- Gap 3: V3 -> V4 -->
+  <g transform="translate(582, 305)">
+    <circle cx="0" cy="0" r="10" fill="#F1F5F9" stroke="#CBD5E1" stroke-width="1"/>
+    <path d="M -3 -4 L 2 0 L -3 4" stroke="#64748B" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <!-- Gap 4: V4 -> V5 -->
+  <g transform="translate(762, 305)">
+    <circle cx="0" cy="0" r="10" fill="#F1F5F9" stroke="#CBD5E1" stroke-width="1"/>
+    <path d="M -3 -4 L 2 0 L -3 4" stroke="#64748B" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <!-- Gap 5: V5 -> V6 -->
+  <g transform="translate(942, 305)">
+    <circle cx="0" cy="0" r="10" fill="#EFF6FF" stroke="#93C5FD" stroke-width="1"/>
+    <path d="M -3 -4 L 2 0 L -3 4" stroke="#2563EB" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
 
   <!-- Timeline Cards: V1 to V6 -->
   <!-- V1 Card -->
@@ -64,9 +88,6 @@
     <text x="14" y="142" class="card-desc">• 手写 Bash 运维</text>
     <text x="14" y="164" class="card-desc">• 凭据直接明文硬编码</text>
     <text x="14" y="186" class="card-desc">• 环境严重配置漂移</text>
-
-    <!-- Node Dot -->
-    <circle cx="82" cy="160" r="7" fill="#94A3B8" stroke="#FFFFFF" stroke-width="3"/>
 
     <rect x="14" y="270" width="137" height="42" rx="8" fill="#FEF2F2"/>
     <text x="82" y="287" text-anchor="middle" class="card-desc" fill="#DC2626" style="font-weight:600;">核心阵痛</text>
@@ -86,10 +107,7 @@
     <text x="14" y="120" class="card-desc">• Docker Compose</text>
     <text x="14" y="142" class="card-desc">• 确立不可变构件</text>
     <text x="14" y="164" class="card-desc">• 每日结构化冷备</text>
-    <text x="14" y="186" class="card-desc">• 经受7重连环断门</text>
-
-    <!-- Node Dot -->
-    <circle cx="82" cy="160" r="7" fill="#3B82F6" stroke="#FFFFFF" stroke-width="3"/>
+    <text x="14" y="186" class="card-desc">• 经受 7 重连环断门</text>
 
     <rect x="14" y="270" width="137" height="42" rx="8" fill="#F0FDF4"/>
     <text x="82" y="287" text-anchor="middle" class="card-desc" fill="#16A34A" style="font-weight:600;">核心突破</text>
@@ -111,9 +129,6 @@
     <text x="14" y="164" class="card-desc">• 统一服务 Token</text>
     <text x="14" y="186" class="card-desc">• Vector P0 入口排障</text>
 
-    <!-- Node Dot -->
-    <circle cx="82" cy="160" r="7" fill="#14B8A6" stroke="#FFFFFF" stroke-width="3"/>
-
     <rect x="14" y="270" width="137" height="42" rx="8" fill="#F0FDFA"/>
     <text x="82" y="287" text-anchor="middle" class="card-desc" fill="#0D9488" style="font-weight:600;">核心突破</text>
     <text x="82" y="303" text-anchor="middle" class="card-desc" fill="#115E59" style="font-size:11px;">不信任未经恢复的备份</text>
@@ -133,9 +148,6 @@
     <text x="14" y="142" class="card-desc">• 双链路 OTel 追踪</text>
     <text x="14" y="164" class="card-desc">• 边缘网关流上报</text>
     <text x="14" y="186" class="card-desc">• P0 自动化回归集</text>
-
-    <!-- Node Dot -->
-    <circle cx="82" cy="160" r="7" fill="#C084FC" stroke="#FFFFFF" stroke-width="3"/>
 
     <rect x="14" y="270" width="137" height="42" rx="8" fill="#FAF5FF"/>
     <text x="82" y="287" text-anchor="middle" class="card-desc" fill="#9333EA" style="font-weight:600;">核心突破</text>
@@ -157,9 +169,6 @@
     <text x="14" y="164" class="card-desc">• 引入 Flux v2 GitOps</text>
     <text x="14" y="186" class="card-desc">• Vault 30角色/11策略</text>
 
-    <!-- Node Dot -->
-    <circle cx="82" cy="160" r="7" fill="#F59E0B" stroke="#FFFFFF" stroke-width="3"/>
-
     <rect x="14" y="270" width="137" height="42" rx="8" fill="#FFFBEB"/>
     <text x="82" y="287" text-anchor="middle" class="card-desc" fill="#D97706" style="font-weight:600;">降本收益</text>
     <text x="82" y="303" text-anchor="middle" class="card-desc" fill="#B45309" style="font-size:11px;">单台 VPS 整合核心面</text>
@@ -174,7 +183,7 @@
     <text x="48" y="31" text-anchor="middle" class="card-tag" fill="#FFFFFF">PROD V6</text>
 
     <text x="14" y="64" class="card-title" style="font-size:18px; fill:#1E3A8A;">现代生产终态</text>
-    <text x="14" y="84" class="subtitle" style="font-size:12px; color:#3B82F6;">2026-11-03 落地</text>
+    <text x="14" y="84" class="subtitle" style="font-size:12px; fill:#3B82F6;">2026-11-03 落地</text>
 
     <line x1="14" y1="98" x2="186" y2="98" stroke="#BFDBFE"/>
 
@@ -184,9 +193,6 @@
     <text x="14" y="188" class="card-desc" style="font-weight:600; fill:#1E40AF;">• 6 大 Namespace 物理隔离</text>
     <text x="14" y="210" class="card-desc" style="font-weight:600; fill:#1E40AF;">• 外部观测云 SaaS 集成</text>
     <text x="14" y="232" class="card-desc" style="font-weight:600; fill:#1E40AF;">• 92W+ 账本单事务晋级</text>
-
-    <!-- Node Dot -->
-    <circle cx="100" cy="170" r="9" fill="#2563EB" stroke="#FFFFFF" stroke-width="4"/>
 
     <rect x="14" y="275" width="172" height="58" rx="10" fill="#2563EB"/>
     <text x="100" y="298" text-anchor="middle" class="card-desc" fill="#FFFFFF" style="font-weight:700; font-size:13px;">工业级成熟终态</text>

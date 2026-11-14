@@ -8,25 +8,19 @@
 
 ---
 
-## 一、SIT-K3S-V6 HelmRelease 清单（9 个核心，另含 VPA 基线与可选 ExternalDNS）
+## 一、SIT-K3S-V6 独立节点规划的独立 Helm Release（共 6 个核心）
 
-按 SIT GitOps 的 HelmRelease 对象计数。下表列出规划组件；实际部署状态见验收章节。
+相比生产 V6 的 8 个 HelmRelease，SIT 单节点依据 4 GB 内存环境去除了本地重度 Vault Raft，并将可观测采集链路聚合优化，规划 **6 个核心独立 Helm Release**：
 
-| HelmRelease | 命名空间 | 职责 |
-| --- | --- | --- |
-| `external-secrets` | `external-secrets` | 同步 Vault 凭据和 TLS Secret |
-| `traefik-crds` | `ingress-sit` | 为 Traefik 安装 IngressRoute、TraefikService 等 CRD |
-| `traefik-ingress` | `ingress-sit` | 默认入口，终止 TLS 并执行加权路由 |
-| `postgresql` | `postgresql-sit` | 独立数据库与角色治理 |
-| `observability` | `observability-sit` | VictoriaMetrics 与指标采集 |
-| `observability-agent` | `observability-sit` | Kubernetes 指标与状态采集 |
-| `observability-grafana` | `observability-sit` | Grafana 与监控面板 |
-| `datakit` | `observability-sit` | DataKit 采集 |
-| `web-saas-sit` | `web-saas-sit` | Accounts、Billing、Console 与 Flagger 渐进发布 |
-| `vpa`（基线） | `vpa-system` | 自动资源建议与调整 |
-| `external-dns`（可选） | `external-dns` | DNS 记录预览，当前保持 dry-run |
-
-Flagger 由 `web-saas-sit` HelmRelease 启用；三个应用的 Canary 是独立 GitOps 对象，不另计为 HelmRelease。
+| # | HelmRelease 名称 | 部署命名空间 | 模块分层 | 对应 Chart 来源 | 职责定位与能力边界 |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **1** | **`external-secrets`** | `external-secrets` | 基础凭据层 | `external-secrets/external-secrets` | 集群通用凭据代理，自动同步本地 SecretStore / 外部 Vault |
+| **2** | **`caddy-ingress`** | `ingress-sit` | 基础网关层 | `distributed-web-saas-fullstack` (caddy 组件) | 共享网关接收入口流量，处理 `onwalk.net` 域名路由与子域名分发 |
+| **3** | **`postgresql`** | `postgresql-sit` | 平台服务层 | `distributed-web-saas-fullstack` (pg 组件) | 独立数据库，内建三权分立账户与业务连接 |
+| **4** | **`observability`** | `observability-sit` | 平台服务层 | `observability-stack-chart` (VM+Grafana) | 全量可观测协议栈，承接全部 21 个生产 Grafana 面板 |
+| **5** | **`observability-agent`**| `observability-sit` | 平台服务层 | `observability-agent` (kube-state-metrics) | 负责 Kubernetes 节点、容器指标与状态收集 |
+| **6** | **`web-saas`** | `web-saas-sit` | 业务基线层 | `distributed-web-saas-fullstack` (业务三件套) | Accounts (认证) + Billing (结算) + Console (UI) 基线 |
+| **7** | **`external-dns`** *(可选)*| `external-dns` | 基础环境层 | `kubernetes-sigs/external-dns:1.20.0` | Cloudflare DNS 自动追加同步，具备原生插拔与按需开关能力 |
 
 > [!NOTE]
 > **非 HelmRelease 模块说明**：
@@ -38,16 +32,35 @@ Flagger 由 `web-saas-sit` HelmRelease 启用；三个应用的 Canary 是独立
 
 ## 二、SIT-K3S-V6 环境分配的域名规划与路由映射
 
-严格执行生产零触碰原则（严禁修改或污染生产权威 DNS `*.svc.plus`），SIT 环境统一以 **`onwalk.net`** 为基础根域名。为彻底避免三级子域名（多级嵌套）导致的泛域名证书跨级不匹配及解析复杂度，全平台统一微调采用直属二级子域 **`*-sit.onwalk.net`** 作为规范主域名，适配 `*.onwalk.net` 通配符证书。下表列出规划主域名：
+域名体系实行**“业务 Web SaaS 严格隔离在 `onwalk.net`，平台支撑与工作空间特例允许使用 `svc.plus`”**的分层治理原则：
 
-| 访问服务 | 规范主域名 (Primary - 直属二级子域) | 后端转发目标服务 | 协议 / 端口 | 说明 |
-| :--- | :--- | :--- | :--- | :--- |
-| **全量可观测控制台** | `https://observability.svc.plus` | `observability-observability-stack:3000` | HTTPS 443 / HTTP 80 | 完整访问所有平台、数据库、系统 21 个监控面板 |
-| **AI 基础设施运维代理** | `https://mcp.svc.plus` | `infrastructure-mcp-server:8080` | HTTPS 443 / HTTP 80 | 提供 MCP 规范的 Agent 工具调用入口 |
-| **Web SaaS 控制台前端** | `https://console-sit.onwalk.net` | `web-saas-console:80` | HTTPS 443 / HTTP 80 | Web SaaS 控制台测试基线界面 |
-| **Web SaaS 统一 API** | `https://accounts-sit.onwalk.net` | `web-saas-accounts:80` | HTTPS 443 / HTTP 80 | 账户、认证与会话后端接口 |
-| **Web SaaS 计费接口** | `https://billing-sit.onwalk.net` | `web-saas-billing:80` | HTTPS 443 / HTTP 80 | 计费与订阅后端接口 |
-| **Per-Feature 特性泳道** | `https://feat-<pr_id>-sit.onwalk.net` | `web-saas-console.feature-<pr_id>-sit:80` | HTTPS 443 / HTTP 80 | 动态拉取的独立 PR 验证环境 |
+1. **业务 Web SaaS（严格限定 `onwalk.net`）**
+   - **适用范围**：`console`、`accounts`、`billing` 及各 `feature-<pr_id>` 特性泳道。
+   - **域名与证书**：统一使用直属二级子域 **`*-sit.onwalk.net`**，适配 `*.onwalk.net` 通配符证书（`console-tls` / `accounts-tls` / `billing-tls`）。
+   - **隔离红线**：严禁将 SIT 业务 Web SaaS 暴露或覆盖到生产权威 `*.svc.plus` 域名。
+
+2. **平台支撑与 AI 工作空间（允许使用 `svc.plus`）**
+   - **允许范围**：在不污染生产业务 Web SaaS 流量的前提下，以下四类服务允许使用 `svc.plus` 域名并复用 `shared-observability-tls`（`*.svc.plus`）证书：
+     - **SIT 监控服务**：`observability.svc.plus`（同时保留 `grafana-sit.onwalk.net`）
+     - **SIT MCP 服务**：`mcp-sit.svc.plus` / `mcp.svc.plus`（同时保留 `mcp-sit.onwalk.net`）
+     - **AI 远程桌面**：`desktop.svc.plus`
+     - **聚合 AI 网关**：`ai.svc.plus`
+   - **`desktop.svc.plus` 认证边界**：
+     - 宿主机 `xworkmate-remote-desktop.service` **唯一对接 PROD 在线账户服务 `https://accounts.svc.plus`**（`XRD_ACCOUNTS_URL=https://accounts.svc.plus`、`XRD_LOGIN_URL=https://console.svc.plus/login`）。
+     - 浏览器通过同父域 `.svc.plus` 会话 Cookie（`xc_session`）实现统一单点登录，并保留本地静态 Break-glass Token 兜底。
+     - **严禁也不对接 SIT 环境 `accounts` 服务（`accounts-sit.onwalk.net`）**。
+
+| 访问服务 | 分类边界 | 规范主域名 (Primary) | 后端转发目标服务 | 协议 / 端口 | 说明 |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **全量可观测控制台** | **SIT 监控 (`svc.plus` 允许)** | `https://observability.svc.plus`<br/>`https://grafana-sit.onwalk.net` | `observability-observability-stack:3000` | HTTPS 443 / HTTP 80 | 完整访问平台、数据库、系统监控面板（允许使用 `svc.plus`） |
+| **AI 基础设施运维代理** | **SIT MCP (`svc.plus` 允许)** | `https://mcp-sit.onwalk.net`<br/>`https://mcp-sit.svc.plus` | `infrastructure-mcp-server:8080` | HTTPS 443 / HTTP 80 | 提供 MCP 规范的 Agent 工具调用入口（允许使用 `svc.plus`） |
+| **AI 远程桌面入口** | **SIT Workspace (`svc.plus` 允许)** | `https://desktop.svc.plus` | `ingress-sit/ai-desktop-remote-desktop:8090` | HTTPS 443 / HTTP 80 | WebRTC 远程桌面；**仅对接 PROD `https://accounts.svc.plus` 在线服务**（通过 `.svc.plus` 共享 `xc_session` 打通 SSO，不接 SIT `accounts`），保留本地 Break-glass Token 兜底 |
+| **聚合 AI 网关** | **SIT Workspace (`svc.plus` 允许)** | `https://ai.svc.plus` | `ingress-sit/ai-aggregator-new-api:3000` | HTTPS 443 / HTTP 80 | New API + 4 组 CPA 适配池统一 OpenAI 兼容入口 |
+| **Web SaaS 控制台前端** | **业务 Web SaaS (`onwalk.net` 限定)** | `https://console-sit.onwalk.net` | `web-saas-console:80` | HTTPS 443 / HTTP 80 | Web SaaS 控制台测试基线界面 |
+| **Web SaaS 统一 API** | **业务 Web SaaS (`onwalk.net` 限定)** | `https://accounts-sit.onwalk.net` | `web-saas-accounts:80` | HTTPS 443 / HTTP 80 | SIT 隔离账户、认证与会话后端接口 |
+| **Web SaaS 计费接口** | **业务 Web SaaS (`onwalk.net` 限定)** | `https://billing-sit.onwalk.net` | `web-saas-billing:80` | HTTPS 443 / HTTP 80 | SIT 隔离计费与订阅后端接口 |
+| **Per-Feature 特性泳道** | **业务 Web SaaS (`onwalk.net` 限定)** | `https://feat-<pr_id>-sit.onwalk.net` | `web-saas-console.feature-<pr_id>-sit:80` | HTTPS 443 / HTTP 80 | 动态拉取的独立 PR 验证环境 |
+| **网关健康检查** | **网关探针** | `http://172.237.9.58/healthz` | Traefik / Gateway 本地响应 | HTTP 80 / HTTPS 443 | 返回 HTTP 200 "ok" |
 
 ---
 
@@ -110,7 +123,7 @@ identityAccounts:
 
 ```mermaid
 flowchart TB
-    subgraph Host["目标宿主机 5.189.172.69 (Contabo, Debian 13, 4 vCPU / 8 GiB; root disk 99 GiB)"]
+    subgraph Host["宿主机 172.237.9.58 (Ubuntu 26.10, 2 vCPU / 4 GB)"]
         subgraph TripartiteSec["【治理基石：全链路三权分立 (Tripartite Separation)】"]
             OS_ID["OS 三类操作身份<br/>root (系统) / operator (运维) / auditor (审计)"]
             K8S_RBAC["集群 RBAC 三权隔离<br/>cluster-admin / workloads / read-only"]
@@ -121,7 +134,7 @@ flowchart TB
             K3S["K3s 单节点引擎 (带 ServiceLB)"]
             FLUX["FluxCD 控制面 (flux-system)"]
             ESO["External Secrets Operator (external-secrets)"]
-            INGRESS["共享网关 Traefik Ingress (80/443)"]
+            INGRESS["共享网关 Caddy Ingress (80/443)"]
             LOCALSEC["本地安全凭据供给 (SIT Local SecretStore)"]
         end
 
@@ -152,17 +165,17 @@ flowchart TB
     ESO -->|同步 Secret| OBS
     ESO -->|同步 Secret| BASE
     ESO -->|同步 Secret| LANE
-    INGRESS -->|console-sit.onwalk.net / accounts-sit / billing-sit| BASE
-    INGRESS -->|feat-*-sit.onwalk.net| LANE
-    INGRESS -->|grafana-sit.onwalk.net| OBS
-    INGRESS -->|mcp-sit.onwalk.net| MCP
+    INGRESS -->|app.sit.onwalk.net| BASE
+    INGRESS -->|feat-*.sit.onwalk.net| LANE
+    INGRESS -->|grafana.sit.onwalk.net| OBS
+    INGRESS -->|mcp.sit.onwalk.net| MCP
 ```
 
 ---
 
 ## 六、三层模块化与可组合模型 (Three-Tier Composable Model)
 
-系统分为基础层、平台服务层和业务层。Traefik 接收入口流量；业务层的 Flagger 根据请求成功率和延迟调整稳定版与候选版的权重。特性泳道独立验证，基线应用通过 Canary 逐步放量。
+系统被正交分解为三个独立演进、按需插拔的层次：
 
 ```mermaid
 flowchart TD
@@ -171,7 +184,7 @@ flowchart TD
         K3S["K3s 运行时<br/>(含 ServiceLB)"]
         FLUX["FluxCD 控制面<br/>(GitOps 引擎)"]
         ESO["External Secrets Operator<br/>(凭据抽象层)"]
-        INGRESS_CORE["Traefik Ingress<br/>(默认网关：80/443)"]
+        INGRESS_CORE["Caddy Ingress 控制器<br/>(统一网关入口)"]
     end
 
     subgraph Tier2["【服务层：通用平台服务模块 (Platform Services - 可选组合)】"]
@@ -181,7 +194,7 @@ flowchart TD
         end
         subgraph ModObs["可观测性模块 (全量迁移)"]
             VM["VictoriaMetrics"]
-            GF["Grafana 全量面板<br/>(Platform/Postgres/Traefik)"]
+            GF["Grafana 全量面板<br/>(Platform/Postgres/Caddy)"]
             AGENT["vmagent 指标采集"]
         end
         subgraph ModMCP["AI 运维代理模块"]
@@ -192,13 +205,9 @@ flowchart TD
     subgraph Tier3["【业务层：Web SaaS 业务与特性泳道 (Business - 灵活发布)】"]
         direction TB
         subgraph Baseline["SIT 基线集成 (Main 分支收敛)"]
-            WEIGHT["TraefikService 加权路由"]
-            STABLE["稳定版：Accounts / Billing / Console"]
-            CANDIDATE["候选版：Accounts / Billing / Console"]
-            FLAGGER["Flagger Canary：逐步放量 / 晋升 / 回退"]
-            WEIGHT --> STABLE
-            WEIGHT --> CANDIDATE
-            FLAGGER -.->|调整权重| WEIGHT
+            ACCOUNTS["Accounts Service"]
+            BILLING["Billing Service"]
+            CONSOLE["Console UI"]
         end
         subgraph FeatureLanes["Per Feature -> SIT 动态特性泳道"]
             FEAT_A["特性泳道 1: feature-128-sit (PR-128 差异化组合)"]
@@ -208,9 +217,6 @@ flowchart TD
 
     Tier1 ==>|基础运行依赖| Tier2
     Tier2 ==>|服务能力支撑| Tier3
-    INGRESS_CORE -->|基线域名| WEIGHT
-    INGRESS_CORE -->|独立域名| FeatureLanes
-    VM -.->|请求成功率与延迟| FLAGGER
     Baseline -.->|按需选用服务| ModDB
     Baseline -.->|指标上报| ModObs
     FEAT_A -.->|复用底座，独立 Schema| ModDB
@@ -219,9 +225,9 @@ flowchart TD
 
 ---
 
-## 七、Contabo 目标节点配额预算表（4 vCPU / 约 8 GiB）
+## 七、2 vCPU / 4 GB 单节点精准配额预算表
 
-目标节点实测 Kubernetes Capacity/Allocatable 为 4 CPU、8,138,640 KiB 内存；宿主机 `free -h` 可用内存约 5.6 GiB（采样时）。保留模块资源 requests/limits，按该节点实际容量评估；以下既有单服务配额可作为部署上限，汇总值不是当前已部署资源的实测值。`/data` 位于根文件系统，没有独立 ext4 数据卷；PVC 使用 K3s local-path 时会消耗根盘空间，部署前需确认保留空间与重建策略。
+单节点 4 GB 内存极为有限，模块化让每个组件的消耗清晰可控：
 
 | 模块分类 | 组件 / 命名空间 | CPU Request | CPU Limit | 内存 Request | 内存 Limit | 存储分配 |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -234,8 +240,8 @@ flowchart TD
 | **服务层** | AI MCP (platform-mcp-sit) | 50m | 200m | 100 MiB | 200 MiB | 无 |
 | **业务层** | Web SaaS 基线 (web-saas-sit) | 150m | 600m | 450 MiB | 800 MiB | 无 |
 | **业务层** | 动态特性泳道预留 (feature-*-sit) | 100m | 400m | 350 MiB | 600 MiB | 共享 PG |
-| **安全缓冲** | **宿主机可用内存安全水位 (防 OOM)** | - | - | **至少 1100 MiB** | - | - |
-| **总计** | **全模块满载装配（预算，不是当前运行值）** | **1050m** | - | **2906 MiB** | - | **15 GiB** |
+| **安全缓冲** | **宿主机可用内存安全水位 (防 OOM)** | - | - | **1100 MiB** | - | - |
+| **总计** | **全模块满载装配** | **1050m** | - | **2906 MiB** | - | **15 GiB** |
 
 ---
 
@@ -264,6 +270,7 @@ gitops/
     ├── observability-sit/                        # 全量可观测性组件
     │   ├── grafana-restored-platform.yaml        # 平台全量监控面板 (全量同构迁移)
     │   ├── grafana-restored-postgres.yaml        # 数据库全量监控面板 (全量同构迁移)
+    │   ├── grafana-caddy-dashboards.yaml         # 网关与链路监控面板
     │   └── helmrelease.yaml                      # VictoriaMetrics + Grafana 栈
     ├── platform-mcp-sit/                         # AI MCP 服务 (配置直连外部 observability.svc.plus)
     └── web-saas-sit/                             # 业务组件库 (支持 Feature Overlay 组合)
