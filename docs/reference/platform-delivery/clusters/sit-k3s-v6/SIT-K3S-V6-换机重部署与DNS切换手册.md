@@ -280,3 +280,5 @@ GitOps [#921](https://github.com/ai-workspace-infra/gitops/pull/921) 已合并�
 - Flux 重试完成，DataKit HelmRelease 和 observability-sit Kustomization 均达到 Ready。远端工作空间收到目标节点数据仍待验证。
 
 - 目标机 DataKit 自监控 `datakit_io_endpoint_point_total` 已报告发送状态 OK：metric 9,484,655，logging 164,447，object 1,209。metric 另有 4,855 点标记 unknown，原因待核对。这是发送端累计值，观测云工作空间内的目标节点时序仍待查询确认。复查 DataKit 1/1 Ready，HelmRelease Ready，ExternalSecret SecretSynced。
+
+- Playbooks 主分支已包含 JWT PEM 比较修复（PR #1019，提交 `2caa98cc`）。在该提交运行现有 role 测试，5 项通过。现场身份配置用此前的本地修复完成，主分支版本本轮仅验证了测试。
