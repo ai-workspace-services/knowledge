@@ -239,7 +239,80 @@ sequenceDiagram
 
 3. **双模统一鉴权打通 (SSO & Token Convergence)**：
    - **生产统一 SSO (`accounts_session`)**：`desktop.svc.plus` 原生对接生产统一账户中心 `https://accounts.svc.plus`。客户端经由同父域 `.svc.plus` 自动携带 `xc_session` Cookie 进行会话内省与鉴权，实现一次登录、桌面与网关同域免密穿透；
-   - **工作区静态令牌 (`static_token`)**：支持请求头 `Authorization: Bearer <token>` 与 SDP 请求体 `token` 校验，直接对齐 `AI_WORKSPACE_AUTH_TOKEN`，满足局域网及私有化 Break-glass 运维需求。
+   - **工作区静态令牌 (`static_token`)**：支持请求头 `Authorization: Bearer <token>` 与 SDP 请求体 `token` 校验，直接对齐 `AI_WORKSPACE_AUTH_TOKEN`，满足局域网及私有化 Break-glass 运维需求；
+   - **标准协议错误与 DSH 契约对齐**：所有 API 路由统一支持 `/api/...` 与 `/api/v1/...` 前缀。对未匹配的 API 请求严格返回 HTTP 404 JSON 错误包，彻底杜绝回退至 `index.html` 引发客户端 JSON 解析崩溃（解决「Server 返回了无效的控制消息」问题）；登录接口完整输出 DSH Remote `validateWebLogin` 所需的 `token`、`expiresAt`、`account` 与 `isAdmin` 字段。
+
+#### 2.2.4 AI Agent 原生操作与视觉感知接口规约 (`xworkmate-remote-desktop` Computer-Use & MCP)
+
+为最大程度满足自主智能体（DeepSeek Harness、Google Antigravity、Claude Computer-Use、OSWorld、OpenClaw）对云端 Linux 桌面的可感知性与可操作性，`xworkmate-remote-desktop` 在人类交互式 WebRTC 视频流之外，原生构建了面向 AI Agent 的全套原子操控与感知接口：
+
+```mermaid
+flowchart TD
+    subgraph HumanClient["人类交互端 (Human-in-the-Loop)"]
+        Browser["Web 浏览器 / DSH 视窗"]
+        WebRTCStream["WebRTC 实时视频流 (H.264 @ 60FPS)"]
+        DataChannelInput["DataChannel (鼠标轨迹/按键输入)"]
+    end
+
+    subgraph AgentClient["AI 智能体控制端 (Autonomous Agent)"]
+        AIAgent["AI Agent (DSH / Antigravity / Claude)"]
+        MCP["MCP Server / REST 客户端"]
+    end
+
+    subgraph ServerPlane["XWorkmate Remote Desktop (:8090)"]
+        Router["统一 API 路由器 (/api/v1 & /api)"]
+        AuthLayer["统一鉴权层 (SSO Cookie / Bearer Token)"]
+        AgentCtrl["AgentController (感知与控制中枢)"]
+        WebRTCSrv["WebRTC 服务 (Pion + GStreamer)"]
+        Xdotool["Xdotool & X11 驱动器"]
+    end
+
+    subgraph LinuxDesktop["Linux X11 显示环境 (:1)"]
+        X11["X11 Root Window / Xvfb"]
+        WindowManager["窗口管理器 (IceWM)"]
+        Apps["应用容器 (Chrome, Terminal, VSCode)"]
+    end
+
+    Browser -->|观看实时操作| WebRTCStream
+    WebRTCSrv -->|推流| WebRTCStream
+    Browser -->|手动接管| DataChannelInput
+    DataChannelInput -->|注入| Xdotool
+
+    AIAgent -->|MCP 工具调用 / REST| MCP
+    MCP -->|Bearer Token / API| Router
+    Router --> AuthLayer
+    AuthLayer --> AgentCtrl
+
+    AgentCtrl -->|截图抓取 (image/png / base64)| X11
+    AgentCtrl -->|原子/批处理动作| Xdotool
+    AgentCtrl -->|剪贴板同步| X11
+    AgentCtrl -->|窗口检索与聚焦| WindowManager
+    Xdotool -->|键鼠操作| Apps
+```
+
+##### 1. AI 视觉感知能力 (Visual Perception Plane)
+- **视口元数据与能力清单 (`GET /api/v1/desktop/info`)**：
+  返回当前屏幕几何尺寸（如 1280x720）、鼠标实时绝对坐标、当前活跃聚焦窗口（ID、Title、PID、Geometry）以及支持的 Agent 动作集合；
+- **高保真截屏 (`GET /api/v1/desktop/screenshot`)**：
+  - 二进制流模式（`?raw=true`）：直接响应 `Content-Type: image/png` 或 `image/jpeg`，适合流水线直接送审模型；
+  - 结构化 JSON 模式：响应 `{ "format": "png", "width": 1280, "height": 720, "base64": "...", "timestamp": ... }`，方便 LLM Agent 解析。
+
+##### 2. AI 动作控制能力 (Actuation Plane)
+- **统一动作执行端点 (`POST /api/v1/desktop/action`)**：
+  - **自适应坐标归一化**：输入支持 `[0.0 .. 1.0]` 归一化浮点（视觉模型直接输出的相对视口比例）与 `[0 .. W, 0 .. H]` 绝对像素整数，服务端自动计算物理坐标；
+  - **动作全集**：
+    - 鼠标：`click`、`double_click`、`triple_click`、`right_click`、`middle_click`、`move`、`mouse_down`、`mouse_up`、`drag`（起止坐标拖拽）、`scroll`（滚轮上下）；
+    - 键盘：`key`（支持组合键如 `ctrl+c`、`alt+Tab`、`Return`）、`key_down`、`key_up`、`type`（文本注入）；
+    - 时序：`sleep`（指定毫秒暂停）；
+  - **指令流水线与即时视口回传 (`Batch Actions with return_screenshot`)**：
+    支持传入 `actions: [...]` 数组连续执行宏指令，并可开启 `return_screenshot: true`。在所有动作执行完毕后，单次网络往返内直接附加最新视口截图，降低跨国网络下的感知-执行轮询延迟。
+
+##### 3. 剪贴板与窗口管理协同
+- **剪贴板直接读写 (`GET/POST /api/v1/desktop/clipboard`)**：直接对接 X11 Clipboard 选区，解决大段代码与 Markdown 逐字打字延迟大、符号转义出错的痛点；
+- **窗口管理与应用拉起 (`GET /api/v1/desktop/windows`, `POST /api/v1/desktop/windows/focus`, `POST /api/v1/desktop/launch`)**：提供桌面应用视窗枚举、前置聚焦与应用启动能力。
+
+##### 4. Model Context Protocol (MCP) 原生接入
+- 服务端直接暴露 `/api/v1/desktop/mcp/manifest` 与 `/api/v1/openapi.json`，任何兼容 MCP 的智能体（Antigravity、Cursor、Claude、OpenClaw）无需额外编写驱动胶水代码，即可一键注册为原生桌面操作工具。
 
 ---
 
