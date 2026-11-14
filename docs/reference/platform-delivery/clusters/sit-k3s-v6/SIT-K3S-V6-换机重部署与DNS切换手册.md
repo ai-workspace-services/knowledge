@@ -153,7 +153,7 @@ ssh -o BatchMode=yes -o StrictHostKeyChecking=yes \
 
 ## 3. 准备候选 GitOps 图
 
-在 GitOps PR 中加入目标的资源声明和独立 Flux 路径。候选的根与所有子源须解析到审查过的 SHA。Playbooks 的 `declarative_active` 引导将根源固定为 `spec.ref.commit`，保留根源的 `kustomize.toolkit.fluxcd.io/ssa: IfNotPresent` 注解。子源由 GitOps 声明固定。若子源与根要使用同一提交，可在候选中声明本轮唯一 tag，提交审查后创建该 tag，并验证所有来源解析结果。每次变更使用新的固定版本。
+在 GitOps PR 中加入目标的资源声明和独立 Flux 路径。**发布模型（2026-11-14 起）：根源 `config-sit` watch `branch: main`；子源 tag 是 `main` 中的配置**（`overlays/contabo-vps/kustomization.yaml` 的 GitRepository tag patch，#919 机制），根不再钉 `sit-k3s-v6-contabo-rNN`。推进一轮发布 = 合并把 tag 改为新 `rNN` 的 PR → 在该合并提交上创建同名不可变 tag → Flux 从 `main` 读到新配置后子源切到新 tag。Playbooks `declarative_active` 引导在声明分支 tip 等于审查提交时保留 `branch`（否则退回 `spec.ref.commit` 固定，playbooks#1025），并保留根源的 `kustomize.toolkit.fluxcd.io/ssa: IfNotPresent` 注解（因此存量集群的根 ref 由运维一次性 `kubectl patch` 切换）。每次变更使用新的固定 tag。
 
 | 阶段 | GitOps 模块及依赖 |
 | --- | --- |
@@ -764,3 +764,22 @@ flowchart TD
    - 待下线节点可按计划安全进入主机停机与云实例销毁流程，不会对线上任何 SIT 业务与开发流程产生扰动。
 3. **最终交付判定**：
    - **SIT-K3S-V6 换机接管、故障清零与全栈服务割接：验收完毕，全量通过 (100% PASS)**。
+
+## 11. Flux 根源切换为 watch `main`（子源 tag 由 main 配置控制）（2026-11-14，Asia/Shanghai）
+
+- **机制**：根 Kustomization `sit-k3s`（`root.yaml`）→ 源 `config-sit`（`source.yaml`，`ssa: IfNotPresent`）；`overlays/contabo-vps/kustomization.yaml` 的 GitRepository patch 给所有源统一设 tag（#919）。现改为：该 patch 设子源 `sit-k3s-v6-contabo-r21`，其后追加针对 `config-sit` 的 patch 设 `branch: main`。
+- **PR**：gitops [#932](https://github.com/ai-workspace-infra/gitops/pull/932) 合并提交 `46d63340f56739b87a2aeb67f7bd210f0cacae59`（tag `sit-k3s-v6-contabo-r21` 指向该提交）；playbooks [#1025](https://github.com/ai-workspace-infra/playbooks/pull/1025) 合并提交 `a3b0517fffca3accd8a744fb13f24ce44a4a9f63`。
+- **r20（`fb8244f`）→ main 带上集群的改动**（逐个子 Kustomization 渲染对比，12 个中 3 个有变化）：`ingress-sit-routes` 新增 qmd.svc.plus（Service / EndpointSlice `10.42.0.1:8182` / IngressRoute + forwardAuth Middleware，#931）；`observability-sit` ConfigMap `source-grafana-general-0` 仪表盘 JSON（#929）；`web-saas-sit` console `/pricing`→`/prices/` 跳转、`SUBSCRIPTION_GRACE_PERIOD` / `ARREARS_SUSPEND_THRESHOLD=72h`、mock Stripe `STRIPE_MODE=test`（#930）。#925–#928 仅涉及 PROD / 旧 dev-v5 路径。
+- **切换**：`operator@5.189.172.69` 执行 `sudo -n k3s kubectl -n flux-system patch gitrepository config-sit`（ref → `branch: main`）+ `sudo -n flux reconcile`。
+
+| 对象 | 切换前 | 切换后 |
+| --- | --- | --- |
+| `config-sit` | tag r20 · `fb8244f` · Ready | **branch main** · `46d6334` · Ready |
+| 8 个子 GitRepository | tag r20 · Ready | tag r21 · `46d6334` · Ready |
+| 12 个 Kustomization | 全部 Ready（r20） | 全部 Ready（`sit-k3s`/`external-secrets` 为 `main@46d6334`，其余 `r21@46d6334`） |
+| 10 个 HelmRelease | 全部 Ready | 全部 Ready（`web-saas-sit` v2→v3 升级成功） |
+| 非 Running/Completed Pod | 0 | 0 |
+
+- **qmd.svc.plus**：ExternalDNS 于 20:12（Asia/Shanghai）创建 `A qmd.svc.plus → 5.189.172.69`（TTL 300）及 TXT 归属记录；公共 DNS 解析生效。经公共 DNS 访问：未认证 `/`、`/api/v1/sync/health`、`/mcp` 均 401，证书校验通过；sync token `health` 200、SSE `fence` 事件正常。
+- **box 直连**：box 出站代理对 `qmd.svc.plus` 时通时断（首次 401，后续 TLS 被代理重置；同时 `desktop.svc.plus` 稳定 200），`sync.sh` 自动回退 SSH 隧道成功（push fence 732–734）。HTTPS 直连同步待 box 出站放行稳定后复测。
+- **回退**：`kubectl patch gitrepository config-sit` ref 改回 `tag: sit-k3s-v6-contabo-r20` 并 revert #932（子源回 r20）。本次未触发。

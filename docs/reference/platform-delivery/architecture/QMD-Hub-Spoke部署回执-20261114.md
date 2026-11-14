@@ -73,12 +73,12 @@
 | HTTPS 入口 | 临时（无 DNS 标签）应用 GitOps 同款对象，在主机 `curl --resolve qmd.svc.plus:443:5.189.172.69` | 证书 `CN=svc.plus`，SAN `*.svc.plus`，Let's Encrypt YE2，到期 2027-01-05，verify=0；`/health` 200；无 token 401；带 token `/changes`、SSE 正常；`/mcp` 404。验证后已删除临时对象 |
 | PROD accounts（只读） | DoH + `curl` | `accounts.svc.plus` → CNAME `accounts-selfhost-prod-v6.svc.plus` → `172.237.24.232`（与 `prod-k3s-v6.svc.plus` 同址）；`/healthz` 200；`/api/auth/session` 无会话 401；证书 `CN=svc.plus` 到期 2027-01-05 |
 | 入口认证 | 临时应用 GitOps 同款对象（含 forwardAuth Middleware），`curl --resolve` | 无凭据 `/`、`/api/v1/sync/health`、`/auth`、`/changes`、`/events`、`/mcp`、任意路径均 401；HTML 401 带登录链接；伪造 Bearer / 伪造 `xc_session` 经 accounts 校验 401；sync token：health 200，push（plan→put→commit 得 fence 730）、`/changes`、`/file` sha256 一致、SSE `fence` 事件正常；box `sync.sh` 拉取 fence 730 并可检索；删除测试 origin 后 fence 731 `delete` 同步到 box。验证后已删除临时对象 |
-| DNS | Cloudflare DoH | `qmd.svc.plus` 当前 NXDOMAIN；待 gitops#931 随新 release ref 生效后由 ExternalDNS 创建 |
+| DNS | Cloudflare DoH | ExternalDNS 于 2026-11-14 20:12（Asia/Shanghai）创建 `qmd.svc.plus A 5.189.172.69`（gitops#932 根源切 main、子源 r21 后）；公共 DNS 未认证 401 |
 
 ## 六、与规范的差异 / 待办
 
 1. **规范示例与仓库能力**：`QMD_ROLE=hub`、`qmd-hub --daemon`、`POST /api/v1/sync/push`、`QMD_HUB_URL` 在 `ai-workspace-lab/qmd` 中不存在（仓库已有：SQLite/FTS5、`qmd sync`（SSH+rsync 双向、不同步索引）、`qmd mcp --http`（/mcp /query /search /health，Bearer）、PG backend、memory-tiers L1/L2/L3）。Hub-Spoke Delta API 由 playbooks role 内的 `qmd-hub-syncd` 实现，端口 `8182`，路径 `/api/v1/sync/*`。
 2. **Embedding**：两端均未配置 `QMD_EMBED_API_*`，当前为 BM25（SQLite FTS5 / PG FTS）；“Hub 集中计算向量并随增量下发 sqlite-vec”未实现。
 3. **L3 Google Drive 凭据缺失**：需用户提供 `/etc/qmd-hub/rclone.conf`（owner `qmdhub`，`0600`），内含 remote `[qmd-archive]`（Drive 服务账号 JSON 或 OAuth token，建议存 Vault 如 `kv/sit/qmd-hub/archive` 后由运维落盘）；目标路径 `qmd-archive:ai-workspace-archive/qmd-hub/sit-k3s-v6`。未复制任何个人 token。
-4. **对外入口未生效**：gitops#931 待合并且需新的 Flux release ref（当前 tag `sit-k3s-v6-contabo-r20`）；期间 box 自动走 SSH 隧道兜底（已验证）。box 出站对未解析的 SNI 会被拦截，DNS 生效后再复测 HTTPS 直连。
+4. **对外入口已生效**：gitops#931 随 #932（Flux 根 watch main、子源 tag r21）上线；box 出站代理对该域名时通时断，`sync.sh` 自动回退 SSH 隧道，HTTPS 直连待复测。
 5. **鉴权粒度**：单一共享 sync token，未按 Spoke 区分；人类账户登录后从 console 跳回 `qmd.svc.plus` 依赖 console 登录页对回跳地址的放行策略（未验证真实账户登录，未改生产）；`pg_jieba` 未安装（FTS 使用 english 配置）。
