@@ -282,3 +282,5 @@ GitOps [#921](https://github.com/ai-workspace-infra/gitops/pull/921) 已合并�
 - 目标机 DataKit 自监控 `datakit_io_endpoint_point_total` 已报告发送状态 OK：metric 9,484,655，logging 164,447，object 1,209。metric 另有 4,855 点标记 unknown，原因待核对。这是发送端累计值，观测云工作空间内的目标节点时序仍待查询确认。复查 DataKit 1/1 Ready，HelmRelease Ready，ExternalSecret SecretSynced。
 
 - Playbooks 主分支已包含 JWT PEM 比较修复（PR #1019，提交 `2caa98cc`）。在该提交运行现有 role 测试，5 项通过。现场身份配置用此前的本地修复完成，主分支版本本轮仅验证了测试。
+
+- 通过目标 DataKit 的 `datakit dql` 只读查询远端工作空间。CPU `usage_idle` 在指定主机最近 5 分钟及不限定主机最近 10 分钟均返回 `Empty result`。目前只有发送端成功证据，需用实际启用的 measurement 和目标节点标签做远端验收。Flux 复查观测 r20 Ready，MCP、Web SaaS 和 Canary 仍未就绪。Vault 元数据查询确认 `kv/sit/web-saas/runtime` 尚无记录。
