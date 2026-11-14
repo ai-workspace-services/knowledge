@@ -239,3 +239,11 @@ GitOps [#921](https://github.com/ai-workspace-infra/gitops/pull/921) 已合并�
 - 核查 Accounts 源码提交 `84bc14499d9c59810c6aa21687f0271a88cae1f1`：新库初始化使用 `migratectl init` 建立原生 schema；后续使用受版本和校验和约束的 `migratectl migrate`。数据库 reset 被禁用。
 - 受管理的 primary 连接使用 `DATABASE_URL`，数据库名为 `account`，并校验连接身份摘要和后台写入配置。上述是源码契约，尚需核对目标部署镜像的实际版本和对应参数，不能据此直接操作现有 PVC。
 - 当前目标仍为 r19；`web-saas-sit`、`platform-mcp-sit` 未就绪，Canary 等待 Web SaaS。GitOps #922 和本文档 PR #399 尚未合并，不能将候选声明视为已部署。
+
+### 2026-11-14 现场阻塞复核
+
+- 使用 `operator@5.189.172.69` 与 `sudo -n k3s kubectl` 只读检查；目标 Flux 所有已就绪的基础 Kustomization 仍应用 `sit-k3s-v6-contabo-r19`（`84f427c`）。`platform-mcp-sit` 因 Deployment Failed 未就绪，`web-saas-sit` 因 HelmRelease Failed 未就绪，`web-saas-sit-canary` 等待 `web-saas-sit`。
+- `web-saas-sit/web-saas-secrets` ExternalSecret 指向 `sit/web-saas/runtime` 的 `JWT_SECRET` 和 `SESSION_SECRET`，连续同步事件报 `could not get secret data from provider`。同命名空间 `web-saas-runtime-reader` SecretStore 显示 Valid/Ready；Kubernetes Secret `web-saas-secrets` 未创建。当前证据可确认 Vault 读取失败，不能单凭 ESO 消息区分 KV 路径不存在、字段缺失或 Vault 授权拒绝；需由 Vault 管理侧查审计/路径元数据后修复。
+- `platform-mcp-sit/infrastructure-mcp-server` 的 init container 镜像 `ghcr.io/ai-workspace-infra/infrastructure-mcp-server:v0.4.0-sit` 匿名拉取收到 GHCR `403 Forbidden`，Pod 为 `Init:ImagePullBackOff`。GitHub package API 查询返回 404，不能据此确定镜像不存在还是包访问权限不足。需检查镜像发布记录和包可见性，并提供可由目标节点拉取的已发布镜像或受限 pull secret。
+- GitOps PR #922 检查项 YAML-only 与 gitleaks 均成功，PR 仍开放且无 review；该候选尚未合并、打 r20 tag 或部署。Knowledge PR #399 仍开放，记录本次阻塞证据。
+- 本次仅做只读检查和文档记录；未重同步 ESO、修改 Vault、更新镜像凭据、切换 DNS 或修改集群资源。
