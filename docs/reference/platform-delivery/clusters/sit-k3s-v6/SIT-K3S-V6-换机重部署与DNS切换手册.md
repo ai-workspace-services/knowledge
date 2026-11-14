@@ -247,3 +247,10 @@ GitOps [#921](https://github.com/ai-workspace-infra/gitops/pull/921) 已合并�
 - `platform-mcp-sit/infrastructure-mcp-server` 的 init container 镜像 `ghcr.io/ai-workspace-infra/infrastructure-mcp-server:v0.4.0-sit` 匿名拉取收到 GHCR `403 Forbidden`，Pod 为 `Init:ImagePullBackOff`。GitHub package API 查询返回 404，不能据此确定镜像不存在还是包访问权限不足。需检查镜像发布记录和包可见性，并提供可由目标节点拉取的已发布镜像或受限 pull secret。
 - GitOps PR #922 检查项 YAML-only 与 gitleaks 均成功，PR 仍开放且无 review；该候选尚未合并、打 r20 tag 或部署。Knowledge PR #399 仍开放，记录本次阻塞证据。
 - 本次仅做只读检查和文档记录；未重同步 ESO、修改 Vault、更新镜像凭据、切换 DNS 或修改集群资源。
+
+### MCP 镜像发布链路复核（2026-11-14）
+
+- Infrastructure-MCP-Server 的 `main` 已包含 `.github/workflows/publish-image.yml`；工作流仅在推送 `v*` tag 或手动 dispatch 时触发，构建并推送 linux/amd64 与 linux/arm64 镜像至 GHCR。
+- 当前仓库 Actions 最近运行记录中没有 `Publish image` 运行；`v0.4.0-sit` GitHub Release 查询返回 not found。由于此工作流不生成 Release 页面，Release 查询本身不能证明 tag/image 不存在；但可确认尚未找到 tag 触发的发布运行，当前仍没有可验证的镜像 digest。集群清单继续引用 `v0.4.0-sit`，运行时匿名拉取返回 403。
+- 依据用户此前要求，全程不依赖 GitHub Actions；因此不可用该工作流作为本次发布手段。应按既定 SSH/Playbook/Flux/GitOps 流程，使用有凭据的构建执行环境推送 GHCR，然后以不可变 digest 更新 GitOps，再部署验证。当前本地权限未验证可直接推送该包，本轮未尝试发布。
+- GitOps PR #922 与 Knowledge PR #399 仍开放；目标节点仍处于 r19。该复核仅更新证据，没有对目标机或 GHCR 执行变更。
