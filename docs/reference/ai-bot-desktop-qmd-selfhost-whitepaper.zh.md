@@ -223,6 +223,24 @@ sequenceDiagram
 - 令牌纯内存生成，未落地写入任何磁盘文件，失效期默认 ≤ 300 秒；
 - 每次配对完成后，一次性 Challenge 立即作废，防止重放攻击。
 
+#### 2.2.3 WebRTC 远程图形桌面直连与统一认证复用规约 (`xworkmate-remote-desktop`)
+
+为实现 DSH 客户端与云端 Linux 图形桌面（X11）的毫秒级无缝视觉互联，并避免硬编码第三方平台（如知乎扫码、DSH Go 商业托管），系统对远程桌面与 Agent 通道进行了通用化分层解耦：
+
+1. **两层能力解耦架构**：
+   - **L1 远程图形桌面层 (`xworkmate-remote-desktop`)**：采用 Go + Pion WebRTC + GStreamer 管道（`ximagesrc ! videoconvert ! x264enc`），直接捕获 X11 显示屏 `:1`，编码为 H.264 RTP 视频流（支持 1080P @ 60FPS），并通过 WebRTC Video Track 推流到客户端；双向控制通过 DataChannel `input`（有序可靠，按键与点击）及 `input-move`（无序低延迟，鼠标轨迹）直连宿主 `xdotool` 注入。
+   - **L2 Agent RPC 与工具通道层 (`ds-harness-remote`)**：负责 DSH 智能体执行环境的 RPC 工具调用（ACP 协议、Codex Streams、文件系统双向读写与 PTY 伪终端会话）。
+
+2. **自适应通用服务端点与净化设计 (Generic Server URL Discovery)**：
+   - 彻底清除源码中写死的第三方公网服务 `dsh.r2049.cn`，改为通用环境变量与配置项驱动：
+     `serverUrl: https://desktop.svc.plus`（可通过 `DSH_REMOTE_SERVER` 或 `XWORKMATE_REMOTE_SERVER` 覆盖）。
+   - 在 DSH Desktop 远程工作台弹窗顶部常驻 **「WebRTC 图形远程桌面直连卡片」**，动态读取当前配置的服务器端点，提供一键免密拉起 60fps 远程桌面画面的能力；
+   - 净化登录提供商列表，过滤掉所有无关的第三方扫码插件，仅保留标准工作区令牌（Bearer Token）、统一账号 SSO 以及 `xworkmate-pairing-v1` 设备配对。
+
+3. **双模统一鉴权打通 (SSO & Token Convergence)**：
+   - **生产统一 SSO (`accounts_session`)**：`desktop.svc.plus` 原生对接生产统一账户中心 `https://accounts.svc.plus`。客户端经由同父域 `.svc.plus` 自动携带 `xc_session` Cookie 进行会话内省与鉴权，实现一次登录、桌面与网关同域免密穿透；
+   - **工作区静态令牌 (`static_token`)**：支持请求头 `Authorization: Bearer <token>` 与 SDP 请求体 `token` 校验，直接对齐 `AI_WORKSPACE_AUTH_TOKEN`，满足局域网及私有化 Break-glass 运维需求。
+
 ---
 
 ### 2.3 零信任穿透互联网络 (`XConnect-Gateway` & `XConnect-One`)
