@@ -296,6 +296,75 @@ erDiagram
 
 ---
 
+### 2.5 统一模型聚合网关与 DSH 长任务 WORK 模型路由规约
+
+在复杂工程交付、长时间跨会话开发及代码重构等长任务（Long-Horizon Tasks）场景下，传统单次推理小模型容易发生上下文截断、指令漂移与幻觉。本架构通过 **AI 聚合网关（Caddy + New API + CPA）** 统一收敛模型端点，将 DSH 的模型解析层全量重定向至网关的标准 `/v1` 接口，并全面升级为主流的 **WORK 级长任务模型**。
+
+#### 2.5.1 DSH 聚合网关路由拓扑与端点声明
+
+```mermaid
+flowchart LR
+    DSH["DeepSeek Harness Bot / SuperAgent\n(@deepseek-ai/dsh-llm-pi-ai)"] -->|"标准 /v1 接口 (OpenAI 协议)"| GW["AI 聚合网关 (http://127.0.0.1:3000/v1)"]
+    GW --> CPA1["CPA Claude (200K 上下文 / 8K 输出)\nclaude-3-5-sonnet / claude-3-7-sonnet"]
+    GW --> CPA2["CPA DeepSeek (64K-128K 上下文 / 8K 输出)\ndeepseek-chat (V3) / deepseek-reasoner (R1)"]
+    GW --> CPA3["CPA OpenAI (128K 上下文)\ngpt-4o / codex-main"]
+```
+
+#### 2.5.2 主流长任务 WORK 模型矩阵
+
+| 模型稳定别名 (Model Alias) | 底层对齐上游 | 上下文容量 (Context Window) | 最大输出 (Max Tokens) | 核心应用场景与 WORK 定位 |
+| :--- | :--- | :--- | :--- | :--- |
+| **`claude-3-5-sonnet`** | Claude 3.5 Sonnet (20241022) | 200,000 | 8,192 | **首选主力 WORK 模型**：超长代码审查、多文件架构重构、复杂工具链链式调用 |
+| **`claude-3-7-sonnet`** | Claude 3.7 Sonnet | 200,000 | 8,192 | **高阶深度推理模型**：复杂系统架构演进、数学建模与端到端系统排错 |
+| **`deepseek-chat`** | DeepSeek V3 | 65,536 | 8,192 | **性价比日常 WORK 模型**：常规业务编码、自动化运维脚本、QMD 任务初筛 |
+| **`deepseek-reasoner`** | DeepSeek R1 | 65,536 | 8,192 | **长链思考推理模型**：算法设计、高难度死锁与并发边界条件诊断 |
+| **`gpt-4o`** | OpenAI GPT-4o / Codex | 128,000 | 4,096 | **全能兼容 WORK 模型**：多模态截图诊断、跨语言生态代码生成与转换 |
+
+#### 2.5.3 DSH Profile 配置规范 (`cordis.patch.yml`)
+
+DSH 客户端通过如下 Patch 声明完成模型重定向与默认 WORK 模型绑定：
+
+```yaml
+- id: agent-default-model
+  name: "@deepseek-ai/dsh-agent-default-model"
+  config:
+    provider: ai-aggregator
+    model: claude-3-5-sonnet
+
+- id: llm-pi-ai
+  name: "@deepseek-ai/dsh-llm-pi-ai"
+  config:
+    providers:
+      ai-aggregator:
+        displayName: "AI Aggregator (Work Gateway)"
+        api: openai-completions
+        baseURL: "http://127.0.0.1:3000/v1"
+        apiKeyEnv: AI_WORKSPACE_AUTH_TOKEN
+        models:
+          - id: claude-3-5-sonnet
+            name: "Claude 3.5 Sonnet (WORK - Long Task)"
+            contextWindow: 200000
+            maxTokens: 8192
+          - id: claude-3-7-sonnet
+            name: "Claude 3.7 Sonnet (WORK - Advanced)"
+            contextWindow: 200000
+            maxTokens: 8192
+          - id: deepseek-chat
+            name: "DeepSeek V3 (Chat/Work)"
+            contextWindow: 65536
+            maxTokens: 8192
+          - id: deepseek-reasoner
+            name: "DeepSeek R1 (Reasoner/Work)"
+            contextWindow: 65536
+            maxTokens: 8192
+          - id: gpt-4o
+            name: "GPT-4o (Work)"
+            contextWindow: 128000
+            maxTokens: 4096
+```
+
+---
+
 ## 三、开源自建全栈实施指南 (Self-Hosting Implementation)
 
 本节提供在全新 Linux 服务器（Ubuntu 22.04 / 24.04 LTS 或 Debian 12，推荐配置：4 核 CPU / 8GB 内存 / 50GB SSD）上完整落地自建环境的详尽步骤。
@@ -664,16 +733,20 @@ echo "==========================================================================
 
 ## 五、开源生态协同与未来演进 (Ecosystem & Roadmap)
 
-### 5.1 组织仓库协同矩阵
+### 5.1 组织仓库协同矩阵与 Fork Base 上游溯源声明
 
-| 组织 / 仓库 | 模块定位 | 开源协议 | 协同接口契约 |
-| :--- | :--- | :--- | :--- |
-| **`ai-workspace-lab/deepseek-harness`** | 智能体微内核与生命周期编排 | Apache-2.0 | 提供 Cordis 插件规范与工具管道上下文 |
-| **`ai-workspace-lab/dsh-session-superagent`** | 智能体自主轮询与状态总线 | MIT | 对接 QMD TaskBoard API 与任务抢占原语 |
-| **`ai-workspace-lab/ds-harness-remote`** | 桌面视讯串流与键鼠事件中继 | MIT | 遵循 `xworkmate-pairing-v1` 扫码配对规范 |
-| **`ai-workspace-lab/xworkmate-app`** | 跨平台多模态交互客户端 | GPL-3.0 | 消费 Bridge Catalog，聚合 QMD 任务列表 |
-| **`ai-workspace-xstream/XConnect-Gateway`** | 零信任跨网穿透服务端 | MPL-2.0 | 提供 VLESS/XHTTP 443 传输中继 |
-| **`ai-workspace-xstream/XConnect-One`** | 终端受控轻量级守护客户端 | MPL-2.0 | 维护本地 WireGuard 虚拟网卡与安全出站 |
+本解决方案建立在优秀的开源项目与社区贡献基础之上。为了恪守开源规范并保持清晰的工程演进谱系，各核心组件均建立了严格的溯源声明：
+
+#### 5.1.1 仓库协同与上游溯源矩阵
+
+| 组织 / 仓库 | 模块定位与职责 | 开源协议 | Fork Base (上游基线) | 衍生演进核心成果 |
+| :--- | :--- | :--- | :--- | :--- |
+| **`ai-workspace-lab/ds-harness-remote`** | 桌面视讯串流与键鼠事件中继 | MIT | [liguobao/ds-harness-remote](https://github.com/liguobao/ds-harness-remote) | 彻底清除知乎/微信第三方依赖；融入 `xworkmate-pairing-v1` 原生配对与 XConnect 零信任隧道 |
+| **`ai-workspace-lab/dsh-session-superagent`** | 智能体自主轮询与状态总线 | MIT | [MYCF711/dsh-session-superagent](https://github.com/MYCF711/dsh-session-superagent) | 全面融入 XWorkmate 生态规范；新增 QMD TaskBoard 状态看板长轮询与无锁竞争抢占（`qmd-watch`） |
+| **`ai-workspace-lab/deepseek-harness`** | 智能体微内核与生命周期编排 | Apache-2.0 | [deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness) | 提供 Cordis 插件规范、工具管道上下文与 `@deepseek-ai/dsh-llm-pi-ai` 聚合网关路由 |
+| **`ai-workspace-lab/xworkmate-app`** | 跨平台多模态交互客户端 | GPL-3.0 | 原创研发 (Original) | 消费 Bridge Catalog，聚合 QMD 任务列表，提供原生 WebRTC 远程视讯与扫码会话建立 |
+| **`ai-workspace-xstream/XConnect-Gateway`** | 零信任跨网穿透服务端 | MPL-2.0 | 原创研发 (Original) | 提供 VLESS/XHTTP 443 传输中继与设备签名配对 |
+| **`ai-workspace-xstream/XConnect-One`** | 终端受控轻量级守护客户端 | MPL-2.0 | 原创研发 (Original) | 维护本地 WireGuard 虚拟网卡与单向安全出站长连接 |
 
 ### 5.2 未来演进路线 (Future Roadmap)
 
