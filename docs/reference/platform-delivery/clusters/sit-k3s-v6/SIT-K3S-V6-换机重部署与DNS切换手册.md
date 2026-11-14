@@ -261,3 +261,10 @@ GitOps [#921](https://github.com/ai-workspace-infra/gitops/pull/921) 已合并�
 - GitOps #922 的 YAML-only 与 gitleaks 检查成功，PR 无 review 且仍开放；Knowledge #399 仍开放。Knowledge PR 的自动 Codex review 未完成并提示达到用量限制，该提示不构成代码审查通过或失败的实质意见。
 - SSH 只读复核目标仍应用 r19（`84f427c`）；platform-mcp-sit、web-saas-sit 未 Ready，web-saas-sit-canary 等待依赖。
 - 当前本地 GitHub 凭据未验证具备 GHCR `write:packages`；也未发现上游 tag。故未尝试推送镜像、改 GitOps 镜像引用、触发 Actions、合并 PR 或变更目标集群。
+
+### r20 交接与 DataKit 身份阻塞
+
+- GitOps PR #922 已合并，合并提交 `fb8244f7f3e02632a3ea99c7daeb63664a3b898a`，tag `sit-k3s-v6-contabo-r20` 指向该提交。通过 operator 将 `config-sit` 根源切至 r20 后，九个 GitRepository 均获取 r20；基础 Kustomization 已应用该版本。ExternalDNS 新 Pod 为 Running；没有据此声称业务 DNS 或业务服务已验收。
+- DataKit HelmRelease 已开始安装，但 Pod 因缺少 `datakit-dataway-secret` 报 `CreateContainerConfigError`。ESO 日志明确报告 Vault JWT role `sit-k3s-v6-contabo-vps-datakit-dataway-reader` 不存在；SecretStore 为 `InvalidProviderConfig`。因此暂不能判断 DataWay KV 的字段是否可读，或声称上报已成功。
+- 本机 Vault 当前 token 为 root；专用 DataKit reader 策略和角色均未创建。`vault_jwt_workload_identity` Playbook 要求配置模式使用只包含指定管理策略的短时 token，并核对集群及节点身份；需要先准备范围限定的管理策略再执行，不应直接将 root token 交给 Playbook。
+- Web SaaS ESO 日志报告 `sit/web-saas/runtime` 的 Secret 不存在；MCP 的 GHCR 镜像仍返回 403。r20 本次交接没有解决这两个既有阻塞。
