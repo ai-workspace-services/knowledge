@@ -292,3 +292,5 @@ GitOps [#921](https://github.com/ai-workspace-infra/gitops/pull/921) 已合并�
 - Web SaaS：确认 Vault 无历史元数据后，以 CAS=0 初始化 `kv/sit/web-saas/runtime` v1，独立生成 JWT_SECRET 和 SESSION_SECRET。手动触发 ESO 同步，ExternalSecret 达到 Ready，Content Pod 已进入 Running（当时 0/1）。已请求 Flux 重试 Web SaaS HelmRelease。Accounts、Billing 和 Canary 尚待复验，业务数据库身份仍需单独交付。
 
 - Web SaaS 签名凭据同步后，Content 与 Console 均达 1/1 Ready。Accounts 和 Billing 的当前容器等待原因分别是缺少 accounts-db-runtime 和 billing-db-runtime。Vault 元数据确认 sit/accounts-service 与 sit/billing-service 均无记录。两个工作负载当前声明同一个 account 库且使用 postgres，业务账户交付须先核对共享表权限及 schema 初始化，再生成各自的连接凭据。
+
+- Web SaaS 数据库只读核查：目标 PostgreSQL 已有 `account` 库，`public` 下业务表计数为 0，未发现 `public.schema_migrations` 或名称匹配 account/billing 的数据库角色。当前状态适合从对应 Accounts 镜像的原生 schema 初始化入口开始，随后按实际表访问契约交付业务角色与 ESO 凭据。
