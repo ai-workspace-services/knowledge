@@ -51,6 +51,13 @@
 - **断网续传**：状态只在成功步骤后推进；`/plan` 只请求缺失文件，重跑即续传。
 - **SSE**：`GET /events` 推送 `fence` 事件。
 
+### 入口认证（与 desktop.svc.plus 同一模式）
+
+- `qmd.svc.plus` 所有路径（含 `/health`、`/mcp`、任意路径）先经 Traefik `forwardAuth`（Middleware `ingress-sit/qmd-hub-accounts-auth` → `qmd-hub-syncd /api/v1/sync/auth`），未认证 401；浏览器请求的 401 页附 `https://console.svc.plus/login` 登录链接。
+- 人类访问：共享 **PROD** `accounts.svc.plus`（由 `prod-k3s-v6.svc.plus` 集群提供，非 SIT 新机 web-saas Accounts）。凭据为 accounts 会话：`Authorization: Bearer` 或 `xc_session` cookie（域 `.svc.plus`），跨集群调用 `https://accounts.svc.plus/api/auth/session` 校验（缓存 60s），并限定角色 `admin`（`qmd_hub_allowed_roles` / `qmd_hub_allowed_emails`）。
+- 机器同步：Spoke 的 sync token（Hub 本机 0600 文件）作为机器凭据继续有效；后端对每个请求再次校验同一凭据，不存在无认证路径。
+- accounts 侧无需注册 OAuth client / 回调，也未改动生产集群任何资源。
+
 ## 五、验证结果
 
 | 验证 | 命令 / 方式 | 结果 |
@@ -64,6 +71,8 @@
 | Hub → box | Hub `qmd-hub-note verify/hub-canary.md` → `sync.sh` | fence 728，pull fetched=1；box `qmd search qmd-hub-canary-91c2` 命中 `hub-mirror` |
 | 增量 / 幂等 | 修改 1 篇笔记 → `sync.sh` ×2 | 仅新增 fence 729；第二次 outbox 空、changes=0 |
 | HTTPS 入口 | 临时（无 DNS 标签）应用 GitOps 同款对象，在主机 `curl --resolve qmd.svc.plus:443:5.189.172.69` | 证书 `CN=svc.plus`，SAN `*.svc.plus`，Let's Encrypt YE2，到期 2027-01-05，verify=0；`/health` 200；无 token 401；带 token `/changes`、SSE 正常；`/mcp` 404。验证后已删除临时对象 |
+| PROD accounts（只读） | DoH + `curl` | `accounts.svc.plus` → CNAME `accounts-selfhost-prod-v6.svc.plus` → `172.237.24.232`（与 `prod-k3s-v6.svc.plus` 同址）；`/healthz` 200；`/api/auth/session` 无会话 401；证书 `CN=svc.plus` 到期 2027-01-05 |
+| 入口认证 | 临时应用 GitOps 同款对象（含 forwardAuth Middleware），`curl --resolve` | 无凭据 `/`、`/api/v1/sync/health`、`/auth`、`/changes`、`/events`、`/mcp`、任意路径均 401；HTML 401 带登录链接；伪造 Bearer / 伪造 `xc_session` 经 accounts 校验 401；sync token：health 200，push（plan→put→commit 得 fence 730）、`/changes`、`/file` sha256 一致、SSE `fence` 事件正常；box `sync.sh` 拉取 fence 730 并可检索；删除测试 origin 后 fence 731 `delete` 同步到 box。验证后已删除临时对象 |
 | DNS | Cloudflare DoH | `qmd.svc.plus` 当前 NXDOMAIN；待 gitops#931 随新 release ref 生效后由 ExternalDNS 创建 |
 
 ## 六、与规范的差异 / 待办
@@ -72,4 +81,4 @@
 2. **Embedding**：两端均未配置 `QMD_EMBED_API_*`，当前为 BM25（SQLite FTS5 / PG FTS）；“Hub 集中计算向量并随增量下发 sqlite-vec”未实现。
 3. **L3 Google Drive 凭据缺失**：需用户提供 `/etc/qmd-hub/rclone.conf`（owner `qmdhub`，`0600`），内含 remote `[qmd-archive]`（Drive 服务账号 JSON 或 OAuth token，建议存 Vault 如 `kv/sit/qmd-hub/archive` 后由运维落盘）；目标路径 `qmd-archive:ai-workspace-archive/qmd-hub/sit-k3s-v6`。未复制任何个人 token。
 4. **对外入口未生效**：gitops#931 待合并且需新的 Flux release ref（当前 tag `sit-k3s-v6-contabo-r20`）；期间 box 自动走 SSH 隧道兜底（已验证）。box 出站对未解析的 SNI 会被拦截，DNS 生效后再复测 HTTPS 直连。
-5. **鉴权粒度**：单一共享 sync token，未按 Spoke 区分；`pg_jieba` 未安装（FTS 使用 english 配置）。
+5. **鉴权粒度**：单一共享 sync token，未按 Spoke 区分；人类账户登录后从 console 跳回 `qmd.svc.plus` 依赖 console 登录页对回跳地址的放行策略（未验证真实账户登录，未改生产）；`pg_jieba` 未安装（FTS 使用 english 配置）。
