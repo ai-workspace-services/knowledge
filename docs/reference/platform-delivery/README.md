@@ -75,6 +75,7 @@ docs/reference/platform-delivery/
 - [PROD-K3S-V6 独立节点、集群冷启动规划与部署状态归档](clusters/prod-k3s-v6/PROD-K3S-V6-规划与部署状态归档.md) — 节点规格、持久化卷规划、集群冷启动与运行状态基线归档。
 - [PROD-K3S-V6 用户迁移操作手册](clusters/prod-k3s-v6/PROD-K3S-V6-用户迁移操作手册.md) — 生产环境用户数据单向迁移、数据库初始化与割接验证。
 - [PROD-K3S-V6 Accounts 迁移 API 单向同步规划](clusters/prod-k3s-v6/PROD-K3S-V6-Accounts迁移API单向同步规划.md) — 账户系统数据单向同步接口契约与网关限制。
+- [PROD-K3S-V6 主机换机迁移规划（172.237.24.232 → 103.14.33.60）](clusters/prod-k3s-v6/PROD-K3S-V6-主机换机迁移规划-20261115.md) — 同代换机 P0–P8 阶段与放行门、无 DNS 的 --resolve 验收矩阵、PostgreSQL/Vault 数据通道，以及 P0 实测裁定（OS 族/容量两项未通过、数据目录降级经批准）。
 
 ### 2. 测试集群 (`clusters/sit-k3s-v6/`)
 - [SIT-K3S-V6 模块化交付与特性泳道规划](clusters/sit-k3s-v6/SIT-K3S-V6-模块化交付与特性泳道规划.md) — 模块化乐高交付体系、免本地 Vault Server 设计，支持 Feature $\rightarrow$ SIT 特性泳道持续验证。
