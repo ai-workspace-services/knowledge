@@ -5,6 +5,18 @@
 > **核心原则**：**基础底座、平台服务、业务工作负载全面模块化解耦与可组合装配（Composable Architecture）**；本地构建安全闭环（集成内建单节点 Vault Raft 状态机与企业级 Victoria 全栈可观测）；支持基于 Flagger 的渐进式金丝雀发布（Canary Release）；严格贯彻落地 **操作系统、Kubernetes 集群、PostgreSQL 数据库全链路三权分立** 治理体系。  
 > **交付模式**：Ansible Playbook 基础设施底座引导（本地自闭环离线安装） + GitOps (FluxCD v2) 声明式模块装配与持续对账。
 
+> [!IMPORTANT]
+> **文档修订（2026-11-16）：入口实现纠正为 Traefik + K3s ServiceLB**
+>
+> 本文原按 Caddy Ingress 描述入口层，与现网不符。只读核对 GitOps 声明（`gitops` `services/prod-k3s-v6/ingress-prod/`）与实际集群回执后确认：
+>
+> - HelmRelease 名称为 **`traefik-ingress`**（命名空间 `ingress-prod`），chart 为 `distributed-web-saas-fullstack`，固定 digest `sha256:9ff979e214f3355947d6033d8d0d108239bbf33c0912db8365c626a233d0e0dd`。values 中 `traefik.enabled: true`、`caddy.enabled: false`，Console/Accounts/Billing/Content/PostgreSQL/Flagger/stunnel 组件全部关闭。
+> - Service 类型 `LoadBalancer`（`single: true`）。单节点没有独立负载均衡器，由 K3s 内置 **ServiceLB（klipper）** 把节点 IP `172.237.24.232` 分配给该 Service，对外监听 80/443（容器 8000/8443），另暴露 9100 指标端口。
+> - 路由以 `traefik.io/v1alpha1` 的 `IngressRoute` 声明（`prod-platform-routes`、`prod-brand-console-route`、`prod-observability-ingest`、`prod-observability-query`），providers 启用 `kubernetesCRD`（跨命名空间）与 `kubernetesIngress`。
+> - 节点 k3s 参数只有 `--disable traefik`（禁用 K3s 内置 Traefik 实例），**未**禁用 `servicelb`。
+>
+> 本文其余章节保留当初的规划语境；文中残留的 Caddy 表述一律以本节为准。
+
 ---
 
 ## 一、PROD-K3S-V6 独立节点的 8 大核心 HelmRelease
@@ -20,7 +32,7 @@
 | **5** | **`observability-agent`**| `observability-prod`| 平台服务层 | `observability-agent` (kube-state-metrics) | 生产集群节点、命名空间、Workload 状态与指标全量上报代理 |
 | **6** | **`datakit`** | `observability-prod` | 平台服务层 | `guance/datakit` (DaemonSet) | 观测云采集器，直连外部 DataWay 网关，承接深度 APM、OTLP 与主机审计指标 |
 | **7** | **`web-saas-prod`** | `web-saas-prod` | 业务应用层 | `distributed-web-saas-fullstack` (业务集) | Accounts (统一认证中心) + Billing (计费) + Console (控制台 UI) + Content (内容) |
-| **8** | **`caddy-ingress`** | `ingress-prod` | 基础网关层 | `distributed-web-saas-fullstack` (caddy) | 生产入口流量路由与反向代理，负责 `*.svc.plus` 与 `xworktech.com` TLS 终结与 Flagger Canary 灰度 |
+| **8** | **`traefik-ingress`** | `ingress-prod` | 基础网关层 | `distributed-web-saas-fullstack` (traefik) | 生产入口流量路由与反向代理（Traefik CRD `IngressRoute`），经 K3s **ServiceLB** 暴露 80/443，负责 `*.svc.plus` 与 `xworktech.com` TLS 终结与 Flagger Canary 灰度 |
 
 > [!NOTE]
 > **非 HelmRelease 核心组件与扩展说明**：
@@ -32,7 +44,7 @@
 
 ## 二、PROD-K3S-V6 生产权威域名规划与路由映射体系
 
-生产环境严格以权威域名 **`*.svc.plus`** 和品牌官网主域名 **`xworktech.com`** 为基准，禁止混入测试域名（如 `onwalk.net`）。所有对外端点均强制启用 HTTPS / TLSv1.3，由 Caddy Ingress 统一调度分发。
+生产环境严格以权威域名 **`*.svc.plus`** 和品牌官网主域名 **`xworktech.com`** 为基准，禁止混入测试域名（如 `onwalk.net`）。所有对外端点均强制启用 HTTPS / TLSv1.3，由 Traefik 入口控制器（经 K3s ServiceLB 暴露 80/443）统一调度分发。
 
 ### 2.1 生产域名与入口转发矩阵
 
@@ -58,7 +70,7 @@
 
 | 凭据用途与业务场景 | 实际生产 Vault KV V2 路径 | 核心 Key / 字段清单 | 消费命名空间 | 映射 Kubernetes Secret 名称 | 消费组件与用途 |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **通配 TLS 证书 (`*.svc.plus`)** | `CICD/domains/svc.plus` | `tls_fullchain_pem_b64`<br/>`tls_key_pem_b64` | `ingress-prod`<br/>`vault-prod` | `console-tls`<br/>`accounts-tls`<br/>`billing-tls`<br/>`vault-tls` | Caddy 网关 HTTPS 终结与 Vault 传输加密 |
+| **通配 TLS 证书 (`*.svc.plus`)** | `CICD/domains/svc.plus` | `tls_fullchain_pem_b64`<br/>`tls_key_pem_b64` | `ingress-prod`<br/>`vault-prod` | `console-tls`<br/>`accounts-tls`<br/>`billing-tls`<br/>`vault-tls` | Traefik 网关 HTTPS 终结与 Vault 传输加密 |
 | **品牌独立域名 TLS (`xworktech.com`)** | `CICD/domains/xworktech.com` | `tls_fullchain_pem_b64`<br/>`tls_key_pem_b64` | `ingress-prod` | `brand-console-tls` | Console 品牌官网入口 HTTPS 终结 |
 | **数据库 Admin 根凭据** | `prod/database/postgresql/admin` | `password` | `postgresql-prod` | `postgresql-admin` | 数据库全库最高权限（DDL 与迁移专用） |
 | **数据库 Operator 运维凭据** | `prod/database/postgresql/operator` | `password` | `postgresql-prod` | `postgresql-operator` | 数据库日常维护、VACUUM、逻辑备份 |
@@ -136,7 +148,7 @@ flowchart TB
         end
 
         subgraph IngressLayer["入口网关与路由层 (ingress-prod)"]
-            CADDY["Caddy Ingress 控制器 (端口 80/443)<br/>双域名终结: *.svc.plus / xworktech.com"]
+            TRAEFIK["Traefik Ingress 控制器 (端口 80/443，经 K3s ServiceLB)<br/>双域名终结: *.svc.plus / xworktech.com"]
             FLAGGER["Flagger Canary 控制器<br/>(Accounts / Billing 10% 灰度阶梯与熔断)"]
         end
 
@@ -177,13 +189,13 @@ flowchart TB
     K3S_STORAGE --> VM
 
     CF_DNS -->|HTTPS 流量| ETH0
-    ETH0 --> CADDY
-    CADDY -->|console.svc.plus / xworktech.com| CON
-    CADDY -->|accounts.svc.plus (Canary)| FLAGGER --> ACC
-    CADDY -->|billing.svc.plus (Canary)| FLAGGER --> BIL
-    CADDY -->|observability.svc.plus| GF
-    CADDY -->|/ingest/* & /api/v1/*| VMAUTH
-    CADDY -->|vault.svc.plus| VAULT
+    ETH0 --> TRAEFIK
+    TRAEFIK -->|console.svc.plus / xworktech.com| CON
+    TRAEFIK -->|accounts.svc.plus (Canary)| FLAGGER --> ACC
+    TRAEFIK -->|billing.svc.plus (Canary)| FLAGGER --> BIL
+    TRAEFIK -->|observability.svc.plus| GF
+    TRAEFIK -->|/ingest/* & /api/v1/*| VMAUTH
+    TRAEFIK -->|vault.svc.plus| VAULT
 
     GITOPS_REPO -->|FluxCD 对账| K3S_Core
     VAULT -->|提供动态密钥| ESO
@@ -210,7 +222,7 @@ flowchart TD
         K3S_RT["K3s 运行时<br/>(Debian 13 + Linux 6.12)"]
         FLUX_RT["FluxCD 控制面<br/>(GitOps 持续对账)"]
         ESO_RT["External Secrets Operator<br/>(统一凭据治理)"]
-        CADDY_RT["Caddy Ingress 控制器<br/>(高性能网关与 TLS 终结)"]
+        TRAEFIK_RT["Traefik Ingress 控制器 + K3s ServiceLB<br/>(入口网关与 TLS 终结)"]
     end
 
     subgraph Tier2["【第二层：通用平台核心服务 (Platform Core)】"]
@@ -258,7 +270,7 @@ flowchart TD
 | **基础层** | K3s 核心控制面 + 内置 etcd | 200m | 1000m | 600 MiB | 900 MiB | 系统盘 `/opt/rancher/k3s` | 稳定运行 (etcd 2379/2380) |
 | **基础层** | FluxCD 控制面 (`flux-system`) | 100m | 500m | 150 MiB | 300 MiB | 无 | 4 核心控制器正常调谐 |
 | **基础层** | ESO (`external-secrets`) | 50m | 200m | 80 MiB | 150 MiB | 无 | 3 核心控制器正常对账 |
-| **基础层** | Caddy 网关 (`ingress-prod`) | 100m | 500m | 150 MiB | 300 MiB | 无 | 80/443 稳定监听，TLS 终结 |
+| **基础层** | Traefik 网关 (`ingress-prod`) | 50m | 200m | 64 MiB | 128 MiB | 无 | 80/443 稳定监听（ServiceLB 暴露），TLS 终结 |
 | **平台层** | Vault Server (`vault-prod`) | 100m | 400m | 250 MiB | 512 MiB | 10 GiB PVC (`/data/k3s/storage`) | Raft 引擎正常，本地 HTTPS |
 | **平台层** | PostgreSQL 17 (`postgresql-prod`) | 150m | 600m | 350 MiB | 700 MiB | 10 GiB PVC (`/data/k3s/storage`) | 内存与连接池健康，三权生效 |
 | **平台层** | 可观测中枢 (VM+VL+VT+Grafana) | 250m | 800m | 700 MiB | 1200 MiB | 15 GiB PVC (`/data/k3s/storage`) | 21 看板全量装配，vmauth 代理 |
@@ -288,7 +300,7 @@ gitops/
 │   ├── source.yaml                               # GitRepository: 跟踪主干分支
 │   ├── namespaces.yaml                           # 全局生产命名空间定义 (vault-prod, web-saas-prod 等)
 │   ├── kustomization.yaml                        # 生产启用的核心 HelmRelease 与组件装配清单
-│   ├── ingress-kustomization.yaml                # 生产 Caddy Ingress 网关装配
+│   ├── ingress-kustomization.yaml                # 生产 Traefik Ingress 网关装配（K3s ServiceLB 暴露）
 │   ├── vault-kustomization.yaml                  # 本地 Vault Raft 引擎装配
 │   ├── postgresql-kustomization.yaml             # 生产 PostgreSQL 数据库装配
 │   ├── observability-kustomization.yaml          # 全栈可观测性中枢与 21 个看板装配
@@ -327,7 +339,7 @@ gitops/
   - Pod 网络 CIDR `10.52.0.0/16` (节点子网 `10.52.0.0/24`，网卡 `cni0`，MTU 1450)。
   - 跨代互联 WireGuard 网卡 `v5v6` (IP `10.254.250.2/30`)，直连 V5 节点（静态路由 `10.42.0.0/16 dev v5v6`）。
 * **K3s 单节点配置**：
-  - 数据目录位于 `/opt/rancher/k3s`，内置 Traefik 已显式禁用（`disable: ["traefik"]`），使用独立 Caddy 控制器；嵌入式 etcd 启用（`cluster-init: true`）。
+  - 数据目录位于 `/opt/rancher/k3s`，内置 Traefik 已显式禁用（`disable: ["traefik"]`），入口改用独立 Traefik 控制器并经 **K3s ServiceLB**（未禁用 `servicelb`）暴露 LoadBalancer；嵌入式 etcd 启用（`cluster-init: true`）。
 
 ### 2. 8 大核心 HelmRelease 与控制器运行状态
 * **外部凭据代理**：`external-secrets` 控制器就绪，自动维系生产各命名空间 Secret 对账。
