@@ -19,3 +19,4 @@ tags:
 | 2026-10-10 | [jp-xconnect 内存与日志优化分析报告](jp-xconnect-memory-log-optimization-20261010.zh.md) | Caddy 日志、journald、Vector 内存与凭据治理 |
 | 2026-10-14 | [JP XConnect 稳定性增量配置验证报告](../reference/performance-optimization-jp-xconnect-stability-20261014.zh.md) | XHTTP buffer、Caddy 刷新策略与短窗口验证 |
 | 2026-10-18 | [XConnect Free 节点大文件上传实测与优化验收](xconnect-free-proxy-upload-acceptance-20261018.zh.md) | JP/SG/US 三节点真实文件阶梯；60 项中 58 项通过，附 CSV/JSON 原始数据 |
+| 2026-11-16 | [边缘反向代理演进与低延迟流式传输性能优化全景报告](edge-reverse-proxy-performance-and-architecture-evolution-20261116.zh.md) | 四大优化维度（H2 流控、UDS 缓冲、Flush 策略、HPACK）、Caddy -> HAProxy 3.0 / 自研 Rust Pingora Fluxgate 双轨演进 |
