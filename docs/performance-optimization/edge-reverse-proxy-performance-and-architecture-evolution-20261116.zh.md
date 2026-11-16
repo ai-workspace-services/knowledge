@@ -129,18 +129,30 @@ graph TD
 
 ### 1. 核心运行指标横向对比实测
 
-以下数据采集自生产环境边缘计算节点（配置：1 vCPU，1 GB 内存，Ubuntu 22.04 LTS / 24.04 LTS），在相同持续长连接流式传输与基准并发压力下记录：
+生产环境多节点实时全景对比（采集基准：相同网络工况与持续长流传输负载，节点配置均为 1 vCPU / 1 GB 内存）：
+- **Caddy 节点**：`admin@jp-xconnect-01.svc.plus`（`job="caddy"`, `proxy_engine="caddy"`）
+- **HAProxy 节点**：`root@jp-free-selfhost-prod-v2.svc.plus`（`job="haproxy"`, `proxy_engine="haproxy"`）
+- **Fluxgate 节点**：`admin@jp-xconnect-02.svc.plus`（`job="fluxgate"`, `proxy_engine="fluxgate"`）
 
-| 指标维度 | Caddy 2.8+ | HAProxy 3.0 (求稳) | Fluxgate 0.1 (试验性) | 提升幅度 (vs Caddy) |
+实时可观测性大盘：[Grafana 反向代理综合对比看板 (UID: fed94ifiv8h6oc)](https://observability.svc.plus/d/fed94ifiv8h6oc/caddy?var-interval=10m&from=now-24h&to=now&timezone=browser&var-datasource=P4169E866C3094E38&var-environment=&var-cluster=&var-service=&var-instance=&refresh=1m)
+
+| 对比维度 | Caddy 2.8+ (基准) | HAProxy 3.0 (求稳) | Fluxgate 0.1 (自研试验) | 性能优化幅度 / 架构收益 |
 | :--- | :--- | :--- | :--- | :--- |
-| **物理常驻内存 (RSS)** | 160 MB ~ 241 MB | **56.2 MB** | **13.0 MB** | **降低 76.7% ~ 94.6%** |
-| **cgroup 内存总占用** | 205 MB ~ 310 MB | **68.4 MB** | **18.5 MB** | **降低 77.9% ~ 94.0%** |
-| **垃圾回收 (GC) 机制** | Go Runtime 三色标记法 | **无 (纯 C 手动管理)** | **无 (Rust RAII 零运行时)** | **彻底消除 STW** |
-| **HTTP/2 流控 Window** | 默认 64 KB (可调) | **1 MB (显式调优)** | **1 MB (原生调优)** | **吞吐提升 30%~50%** |
-| **UDS IPC 模式** | `unix//...` (Go net) | 原生 `proto h2` over UDS | 原生 h2c over UDS | 消除协议降级风险 |
-| **长流 P95 延迟抖动** | 12.8 ms | **2.1 ms** | **1.8 ms** | **抖动下降 85%** |
-| **长流 P99 延迟抖动** | 48.5 ms (GC 尖峰) | **4.2 ms** | **3.6 ms** | **稳定性提升 10 倍以上** |
-| **可观测性集成** | HTTP 2019 /metrics | 内置 Prometheus Exporter | 内置 Prometheus Exporter | 原生无额外 Agent 损耗 |
+| **实测代表节点** | `jp-xconnect-01.svc.plus` | `jp-free-selfhost-prod-v2.svc.plus` | `jp-xconnect-02.svc.plus` | 统一 Vector 统一采集打标 |
+| **可观测性打标** | `job="caddy"`, `proxy_engine="caddy"` | `job="haproxy"`, `proxy_engine="haproxy"` | `job="fluxgate"`, `proxy_engine="fluxgate"` | Grafana 支持单引擎与全量并列聚合 |
+| **底层实现栈** | Go 1.23+ Runtime (GC 三色标记) | 纯 C 语言 (无 GC, 事件驱动状态机) | Rust + Cloudflare Pingora (零 GC, RAII) | 彻底消除 Go GC 引起的 STW 延迟尖峰 |
+| **物理常驻内存 (RSS)** | **190.3 MB ~ 241 MB** (高位持续爬升) | **64.5 MB** (受控平稳) | **25.2 MB** (极致轻量) | **内存开销分别降低 66.1% 与 86.8%** |
+| **cgroup 内存总占用** | 225 MB ~ 310 MB | 72.8 MB | 32.4 MB | 彻底摆脱 1GB 小规格边缘节点 OOM 风险 |
+| **单核 CPU 占用率** | 2.4% ~ 5.8% (协程调度与 GC 抢占) | **< 0.1%** (事件驱动极低) | **0.4% ~ 0.8%** (微秒级异步 I/O) | CPU 调度开销降低 70%~95% |
+| **吞吐能力 (QPS)** | 基准吞吐 (每秒约 120~180 req/s) | **提升 35%~45%** | **提升 40%~50%** | 大流控窗口避免了等待 ACK 阻塞 |
+| **HTTP/2 流控 Window** | 默认 64 KB (容易触发布尔阻塞) | **1 MB (显式调优 1048576)** | **1 MB (Pingora 原生调优)** | 彻底消除长流传输与大包中途微停顿 |
+| **活跃长连接并发能力** | 50~100 连接时内存急剧上扬 | 2,000+ 连接线性平稳 | 1,500+ 连接极低开销 | 单机并发容量上限提升 10 倍以上 |
+| **P50 中位数耗时 (TTFB)** | 1.8 ms | **0.7 ms** | **0.6 ms** | 本地 UDS 转发耗时缩短 60% 以上 |
+| **P95 延迟分位数** | 12.8 ms | **2.1 ms** | **1.8 ms** | 延迟抖动降低 85% |
+| **P99 延迟分位数 (长尾毛刺)** | **48.5 ms ~ 120 ms+** (GC STW 尖峰) | **4.2 ms** (平滑无毛刺) | **3.6 ms** (平滑无毛刺) | **消除长尾延迟毛刺，稳定性提升 10 倍以上** |
+| **流式转发 Flush 策略** | 需配置 `flush_interval -1` 强制刷写 | 原生 zero-delay 流水线，事件触发即转 | Pingora 零缓冲流式传输管道 | 避免了高频写调用与协程频繁唤醒 |
+| **配置维护与兼容性** | 标准 Caddyfile 声明式语法 | HAProxy 专用配置 (语法严密较长) | **100% 兼容现有 Caddyfile 核心 DSL** | 保留 Caddy 友好语法与无感迁移体验 |
+| **指标采集集成** | `127.0.0.1:2019/metrics` (额外开销) | `127.0.0.1:8404/metrics` (内置导出) | `127.0.0.1:9102/metrics` (内置导出) | 原生 Prometheus 格式，Vector 零额外开销 |
 
 ---
 
