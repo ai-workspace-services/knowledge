@@ -143,6 +143,15 @@ GitHub 组织入口：[ai-workspace-infra](https://github.com/ai-workspace-infra
 | 44 | JP XConnect 稳定性增量配置验证报告（2026-10-14） | zh | knowledge working tree · v0.1 · prod-partial-validated | [docs/reference/performance-optimization-jp-xconnect-stability-20261014.zh.md](performance-optimization-jp-xconnect-stability-20261014.zh.md) |
 | 45 | XConnect Free 节点大文件上传实测与优化验收（2026-10-18） | zh | knowledge working tree · v1.1 · partial-acceptance · Linux 58/60 & MacOS 27/60 | [docs/performance-optimization/xconnect-free-proxy-upload-acceptance-20261018.zh.md](../performance-optimization/xconnect-free-proxy-upload-acceptance-20261018.zh.md) |
 
+### XConnect Zero 控制面/数据面解耦与混合部署规划
+
+| 文档 | 用途 | 状态 |
+| --- | --- | --- |
+| [XConnect Zero 控制面与数据面解耦、混合部署及控制台全链路规划](xconnect-zero-control-data-plane/README.md) | 目标架构、职责边界与导航索引 | 规划草案 |
+| [目标架构、控制/数据面边界与 Agent Proxy 混合部署规范](xconnect-zero-control-data-plane/01-architecture-and-hybrid-deployment.md) | 混合部署（同代理引擎、不同域名入口、各自独立 Xray 后端）与统一认证选点 | 规划草案 |
+| [全链路接口契约、数据模型与控制台对齐规范](xconnect-zero-control-data-plane/02-wire-contracts-and-apis.md) | 本地遥测/apply 契约、Edge Agent 上报、One login/enroll 与 Portal 对齐 | 规划草案 |
+| [后续任务拆解与跨仓并行调度矩阵](xconnect-zero-control-data-plane/03-task-breakdown-and-roadmap.md) | 跨 5 仓 16 个可执行开发任务（Task A1–E2，含分支/文件/验收标准）与 Wave 1–3 并行调度矩阵 | 规划草案 |
+
 ### 全链路网络性能与双链路可观测性专题（2026-10-23）
 
 | 文档 | 用途 | 状态 |
