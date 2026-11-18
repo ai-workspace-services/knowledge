@@ -151,6 +151,7 @@ GitHub 组织入口：[ai-workspace-infra](https://github.com/ai-workspace-infra
 | [目标架构、控制/数据面边界与 Agent Proxy 混合部署规范](xconnect-zero-control-data-plane/01-architecture-and-hybrid-deployment.md) | 混合部署（同代理引擎、不同域名入口、各自独立 Xray 后端）与统一认证选点 | 规划草案 |
 | [全链路接口契约、数据模型与控制台对齐规范](xconnect-zero-control-data-plane/02-wire-contracts-and-apis.md) | 本地遥测/apply 契约、Edge Agent 上报、One login/enroll 与 Portal 对齐 | 规划草案 |
 | [后续任务拆解与跨仓并行调度矩阵](xconnect-zero-control-data-plane/03-task-breakdown-and-roadmap.md) | 跨 5 仓 16 个可执行开发任务（Task A1–E2，含分支/文件/验收标准）与 Wave 1–3 并行调度矩阵 | 规划草案 |
+| [边缘节点 8 个 Role 职责边界、归属矩阵与组合编排规划](xconnect-zero-control-data-plane/04-ansible-role-decomposition-and-orchestration.md) | 8 个 Ansible Role 的单一职责、资源归属、契约变量、Proxy / Gateway 流量账单标签、组合场景与迁移步骤 | 规划草案 |
 
 ### 全链路网络性能与双链路可观测性专题（2026-10-23）
 

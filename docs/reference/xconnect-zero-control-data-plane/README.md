@@ -70,7 +70,7 @@ tags:
    - 每个 Agent Proxy 节点均可混合部署一个拥有唯一 `Gateway ID` 与独立域名入口的 `XConnect-Gateway` 服务；
    - 两者复用同一宿主代理引擎二进制（`xray-core`）与宿主 Ingress（`Caddy` / `Fluxgate` / `HAProxy :443` 按域名 SNI/Host 分流），但运行各自独立的 `xray` 后端进程、配置文件与 Socket：
      - **Agent Proxy**：`xray.service` + `/usr/local/etc/xray/config.json` + `/dev/shm/xray.sock` + Stats `127.0.0.1:10086`；
-     - **`XConnect-Gateway`**：`xconnect-gateway-xray.service` + `/var/lib/xconnect-gateway/runtime/xray.json` + `/run/xconnect-gateway/xray.sock` + Stats `127.0.0.1:10087`。
+     - **`XConnect-Gateway`**：`xconnect-gateway-xray.service` + `/var/lib/xconnect-gateway/runtime/xray.json` + `/run/xconnect-gateway/xray.sock` + Stats `127.0.0.1:10088`（规划；`10087` 已被 Agent Proxy 的 `xray-tcp.service` 占用，见 [04 文档](04-ansible-role-decomposition-and-orchestration.md) 第三、七节）。
 3. **Clean Cut（无需向后兼容）**：
    - 直接下线 `XConnect-One` 与 `accounts` 中未签名的旧版 `ConfigContractLegacy`（`/api/overlay/v1/devices/register` + `/api/overlay/v1/config`）以及 `XConnect-Gateway` 内嵌的独立控制面轮询器。
 4. **Web Console 保持 UI 布局不变**：
@@ -85,6 +85,7 @@ tags:
 | [01-architecture-and-hybrid-deployment.md](01-architecture-and-hybrid-deployment.md) | 控制面/数据面边界定义、`XConnect-Gateway` 与 `Agent Proxy` 混合部署架构（同引擎/独立域名/独立 Xray 后端）、`XConnect-One` 统一认证与选点模型 |
 | [02-wire-contracts-and-apis.md](02-wire-contracts-and-apis.md) | 各组件间本地契约与 HTTP API 规范（Gateway 本地状态/遥测、`xconnect-edge-agent` 上报与同步、`XConnect-One` 登录与入网、`accounts` 聚合存储、`portal` BFF 与 UI 数据绑定） |
 | [03-task-breakdown-and-roadmap.md](03-task-breakdown-and-roadmap.md) | 可直接派发执行的 **5 大模块、16 个具体开发任务**（`Task A1–A4` / `B1–B3` / `C1–C3` / `D1–D3` / `E1–E2`，含建议分支、文件/签名与可机器判定验收标准）及 **Wave 1–3** 跨仓并行调度矩阵 |
+| [04-ansible-role-decomposition-and-orchestration.md](04-ansible-role-decomposition-and-orchestration.md) | 边缘节点 8 个 Ansible Role（`xray-core` / `caddy` / `fluxgate` / `haproxy` / `xconnect-proxy` / `xconnect-gateway` / `xray-exporter` / `xconnect-edge-agent`）的职责边界、资源归属矩阵、契约变量、Proxy / Gateway 流量与账单标签规范、组合场景与迁移步骤（以 `ph-xconnect.svc.plus` 运行态为基线） |
 
 ---
 
