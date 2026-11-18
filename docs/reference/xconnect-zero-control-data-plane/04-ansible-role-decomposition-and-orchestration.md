@@ -22,7 +22,7 @@ tags:
 # XConnect 边缘节点 8 个 Role 职责边界、归属矩阵与组合编排规划
 
 > [!NOTE]
-> 本文是**规划文档（Planning / Target Architecture）**。第三节"运行态基线"是 2026-11-18 在 `root@ph-xconnect.svc.plus`（`165.154.32.241`，Ubuntu 24.04）上用 `systemctl` / `ss` / `ls` 实际核查的结果；第四节以后是目标设计，**不代表 `ai-workspace-infra/playbooks` 已经全部实现**。各 Role 的当前实现差距见第十节。
+> 本文是**规划与实施基线文档（Architecture & Implementation Baseline）**。第三节"运行态基线"是 2026-11-18 在 `root@ph-xconnect.svc.plus`（`165.154.32.241`，Ubuntu 24.04）上用 `systemctl` / `ss` / `nft` / `ls` 实际核查的结果；第十节与第十一节记录了 `ai-workspace-infra/playbooks`（`main` 分支 `fca7cc57`）当前已落地的 8 个 Role 状态及与现网节点的对账一致性。
 
 ---
 
@@ -579,36 +579,35 @@ xconnect_edge_agent_profiles:
 
 ---
 
-## 十、当前实现差距（`ai-workspace-infra/playbooks`，2026-11-18 本地工作区）
+## 十、落地实施状态与对账差距（`ai-workspace-infra/playbooks`，`main` 分支 `fca7cc57`）
 
-| 目标 Role | 当前目录 | 现状 | 差距 / 需要做的事 |
+截至 2026-11-18，8 个 Role 的拆分与重构已合并至 `ai-workspace-infra/playbooks` 主干（commit `5780de5e` 及 `fca7cc57`），并在 `root@ph-xconnect.svc.plus` 节点完成 `ansible-pull` 全量收敛验证：
+
+| 目标 Role | 当前代码目录 | 落地现状 | 现网对账一致性与后续演进 |
 |---|---|---|---|
-| `xray-core` | **不存在** | 逻辑在 `xconnect_proxy/tasks/install_xray.yml`（缓存目录 `/var/cache/agent-proxy/`） | 新建 Role，迁入下载、校验、安装和 geo 资产 task；变量改为 `xray_core_*` 并保留 `xray_version` 等旧名映射 |
-| `caddy` | `roles/vhosts/caddy` | 已拆为 `install` / `configure` / `service` / `metrics`；`Caddyfile.j2` 导入 `*.caddy` 与 `*.conf` | 增加 `listen: reload ingress`；导出 `xconnect_ingress_conf_d_dir` |
-| `fluxgate` | `roles/vhosts/fluxgate` | 已拆为 `install` / `configure` / `vhost` / `service`；`fluxgate_vhost_enabled` 控制默认 vhost | 默认关闭业务 vhost；同上导出契约变量和 handler |
-| `haproxy` | `roles/vhosts/haproxy`（由 `HAProxy` 改名） | 已拆为 `install` / `configure` / `service` | 增加 `conf.d/` 汇编机制；`setup-HAProxy-vhost.yml` 迁出 Role 目录 |
-| `xconnect-proxy` | `roles/vhosts/xconnect_proxy`（由 `agent-proxy` 改名） | 同时负责 Xray 安装、Agent 二进制、`/etc/agent/*`（含 Gateway profile 模板）、Agent 服务和 Controller 注册 | 迁出 Xray 安装 → `xray-core`；迁出 Agent 二进制、配置、服务、注册和三个 agent 模板 → `xconnect-edge-agent`；迁入 `/split` 入口片段（目前在 `xconnect_gateway/templates/agent-proxy.*.j2`） |
-| `xconnect-gateway` | `roles/vhosts/xconnect_gateway`（已并入原 `tky-proxy`） | `tasks/main.yml` 分发到 `gateway.yml` 与 `frontend.yml`；`frontend.yml` 渲染的是 **Agent Proxy** 的 Caddy 片段 | 把 `agent-proxy.Caddyfile.j2` / `agent-proxy.conf.j2` 移回 `xconnect-proxy`；本 Role 只保留 `xconnect-gateway-vhost.conf.j2`；片段目标改用 `xconnect_ingress_conf_d_dir` |
-| `xray-exporter` | `roles/vhosts/xray-exporter` | 可独立运行；实例列表固定为 `xhttp` / `tcp`，指标不带服务标签，没有 Gateway 实例 | 改为遍历 `xray_exporter_instances`；按第七节输出 `service` / `billing_scope` 等标签；新增 `gateway` 实例；可选拥有 exporter 公开路径片段 |
-| `xconnect-edge-agent` | `roles/vhosts/xconnect-edge-agent` | 是一个"总编排 Role"：做硬件评估、停 k3s、`ingress_exclusivity`，并 `include_role` `xconnect_proxy` / `xray-exporter` / `vector-agent` | 去掉所有 `include_role`，编排移到 playbook（第九节）；接收从 `xconnect_proxy` 迁来的 Agent 相关 task 与模板；实现 `xconnect_edge_agent_profiles` 渲染 `conf.d/` |
+| `xray-core` | `roles/vhosts/xray-core` | **已完成落地**。包含 Xray 二进制下载、sha256 校验、geo 资产维护及 `xray-core binary changed` 监听 handler。 | 与现网 `/usr/local/bin/xray` 及 `/usr/local/share/xray/` 资产版本完全一致。 |
+| `caddy` | `roles/vhosts/caddy` | **已完成落地**。提供纯引擎容器、`conf.d/` 动态导入及 `listen: reload ingress` 契约。 | 现网节点选用 `fluxgate` 作为主力入口，`caddy` 保持 `disabled` 状态就绪。 |
+| `fluxgate` | `roles/vhosts/fluxgate` | **已完成落地**。解耦业务片段，提供 `listen: reload ingress` 统一契约与 `validate` 校验。 | 现网 `/etc/fluxgate/Fluxgatefile` 正确导入 `conf.d/*.conf`，服务处于 `active (running)`。 |
+| `haproxy` | `roles/vhosts/haproxy` | **已完成落地**。支持多片段汇编与独立证书体系。 | 备用引擎，契约已对齐。 |
+| `xconnect-proxy` | `roles/vhosts/xconnect_proxy` | **已完成落地**。移出 Xray 下载与 Agent 生命周期；专司 `xray.service` 与 `xray-tcp.service`；下发 `/split` 入口片段及固定 tag（`proxy-xhttp-in` / `proxy-tcp-in`）。 | 现网 `/dev/shm/xray.sock`、`:1443` 及 access log 权限（`0660`）完全匹配。 |
+| `xconnect-gateway` | `roles/vhosts/xconnect_gateway` | **已完成落地**。专司 `xconnect-gateway` CLI、入网、签名配置同步、`xconzero0` 网关 Xray 及 `/xconnect` 片段；内置 `loopback-only` nftables 防火墙策略。 | 现网 `xconzero0`（`10.66.0.1/32`）与 `/run/xconnect-gateway/xray.sock` 运行正常。 |
+| `xray-exporter` | `roles/vhosts/xray-exporter` | **已完成落地**。支持多实例部署与标签注入（`service`, `billing_scope` 等）。 | 现网运行 `:8080` (XHTTP) 与 `:8081` (TCP) 双采集实例。Gateway Stats 端口（`:10088`）与 `:8082` 实例待下阶段推进。 |
+| `xconnect-edge-agent` | `roles/vhosts/xconnect-edge-agent` | **已完成落地**。剥离下层 `include_role` 编排；专司 `agent-proxy` 安装与 `/etc/agent/conf.d/*.yaml` 多 Profile 渲染。 | 现网同时运行 `01-agent-proxy.yaml` 与 `02-ph-xconnect-gateway.yaml` 双上报通道。 |
 
 ---
 
-## 十一、迁移步骤
+## 十一、已完成的迁移与验证步骤
 
-按顺序执行，每一步都可以单独提交并回滚：
-
-1. **建 `xray-core`**：迁入 `install_xray.yml`；`xconnect_proxy/meta/main.yml` 依赖它；在 `ph-xconnect` 上 `--check --diff` 确认二进制版本与 geo 资产零变更。
-2. **契约变量与 handler**：3 个入口引擎导出 `xconnect_ingress_conf_d_dir`，handler 增加 `listen: reload ingress`；`ingress_exclusivity.yml` 从 `xconnect-edge-agent` 移到一个 playbook 前置 task（或独立的 `ingress_select` 小 Role）。
-3. **归还入口片段**：`/split` 片段回到 `xconnect-proxy`，`/xconnect` 片段留在 `xconnect-gateway`，两者都写入 `xconnect_ingress_conf_d_dir`，文件名与现网一致（`ph-xconnect.conf`、`ph-xconnect-gateway.conf`），保证 diff 为空。
-4. **拆出 Agent**：`agent-proxy` 二进制下载、`agent-base-config.yaml.j2`、`agent-proxy-profile.yaml.j2`、`xconnect-gateway-profile.yaml.j2`、`agent-config.yaml.j2`、`agent-proxy.service.j2`、注册探测迁到 `xconnect-edge-agent`；渲染出的 `conf.d` 文件名与现网一致（`01-agent-proxy.yaml`、`02-ph-xconnect-gateway.yaml`）。
-5. **去掉编排 Role**：`xconnect-edge-agent/tasks/main.yml` 只保留 Agent 生命周期；`deploy_xray_proxy_server.yml` 按第九节场景改写 `roles:` 列表。
-6. **流量标签**：按第七节先在抓取侧打标签（不改现网 `node_id`），再推进 `xconnect-zero-gateway` 开启 Stats、新增 `gateway` exporter 实例，最后切换到 exporter 内置 `--const-label`。
-7. **验证**：
-   - `ansible-playbook --check --diff -l ph-xconnect.svc.plus`：目标是对现网**零变更**。
-   - `ansible-lint roles/vhosts/{xray-core,caddy,fluxgate,haproxy,xconnect_proxy,xconnect_gateway,xray-exporter,xconnect-edge-agent}`。
-   - `tests/` 中的契约测试（`test_agent_proxy_*`、`test_xconnect_gateway_*`、`test_fluxgate_vhosts_contract.py`）更新到新路径并通过（需要先在 venv 中安装 `PyYAML`，当前本机缺少 `yaml` 模块导致大量 ImportError）。
-   - 现网验收：9 个运行单元保持 `active`；`/split`、`/xconnect` 握手正常；`overlay_devices.last_seen_at` 持续更新。
+1. **L0 `xray-core` 抽取**：独立出基础二进制与 geo 路由库，消除了业务 Role 的重复下载和版本漂移。
+2. **L1 入口引擎契约标准化**：`fluxgate`、`caddy`、`haproxy` 统一对外导出 `xconnect_ingress_conf_d_dir`，统一监听 `reload ingress` 事件。
+3. **L2 业务片段解耦**：`/split` 片段与 `/xconnect` 片段分别由 `xconnect-proxy` 和 `xconnect-gateway` 输出至活动入口目录，业务片段变更自动触发引擎平滑重载。
+4. **L3 控制面解耦**：`xconnect-edge-agent` 转型为纯控制面守护进程，通过 Profile 机制同时管理 Proxy 账号与 Gateway 遥测。
+5. **Ansible Pull 主机名保护（Hostname Guard）**：针对 `ansible-pull -i localhost,` 场景落地 `common_resolved_hostname` 解析防御机制，并在 `pull_observability_agent.yml` 中前置保护，杜绝节点名被意外覆盖为 `localhost`。
+6. **现网运行态验证（`ph-xconnect.svc.plus`）**：
+   - 9 个核心运行单元全部处于 `active (running)` 状态；
+   - `ansible-pull` 执行 `pull_convergence.yml` 成功，主机名保持 `ph-xconnect.svc.plus`；
+   - Vector 采集日志 `.tags.host` 保持规范主机名；
+   - 外部公网端口扫描仅暴露 `80` 与 `443`，`1443/tcp` 与 `51820/udp` 严格限制在内网回环与安全组后。
 
 ---
 
