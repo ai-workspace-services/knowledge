@@ -69,6 +69,7 @@ tags:
 5. **变量命名空间隔离**：每个 Role 只读写自己前缀的变量，跨 Role 共享的契约变量统一使用 `xconnect_` 前缀（见第六节）。
 6. **一个资源只有一个 Owner**：任何文件、systemd 单元、端口只能由一个 Role 创建和修改（见第五节）。
 7. **兼容性**：重命名过程中保留旧变量名的映射（`agent_proxy_*` → 新前缀），保证现有 `-e` 覆盖仍然有效；不在 git 中提交任何密钥。
+8. **公网只开 443**：节点对外只暴露 `TCP 443`（`80` 只用于 ACME 和跳转 HTTPS）。所有业务流量都走 `443` 上的入口引擎，按域名和路径分流到本地 Unix Socket：Agent Proxy 走 `/split`，Zero Gateway 走 `/xconnect`，WireGuard UDP 封装在 `/xconnect` 的 VLESS 里。其他监听（`51820/udp`、`1443`、Stats、exporter）一律不对公网开放，并且要用**云防火墙和主机防火墙两层**拦截，不能只靠其中一层。
 
 ---
 
@@ -98,10 +99,10 @@ tags:
 | `127.0.0.1:9102` | fluxgate | 引擎 metrics | `fluxgate` |
 | `unix:/dev/shm/xray.sock` | xray (XHTTP) | Agent Proxy XHTTP 后端（`/split`） | `xconnect-proxy` |
 | `127.0.0.1:10086` | xray (XHTTP) | Stats / 用户 API | `xconnect-proxy` |
-| `*:1443` | xray (TCP) | Agent Proxy TCP 直连入口 | `xconnect-proxy` |
+| `*:1443` | xray (TCP) | Agent Proxy TCP 入口。主机上监听所有地址，但**公网不可达**（被云防火墙挡住，见 3.5） | `xconnect-proxy` |
 | `127.0.0.1:10087` | xray (TCP) | Stats / 用户 API | `xconnect-proxy` |
 | `unix:/run/xconnect-gateway/xray.sock`（`0660`） | xray (Gateway) | Gateway VLESS/XHTTP 后端（`/xconnect`） | `xconnect-gateway` |
-| `0.0.0.0:51820/udp`, `[::]:51820/udp` | kernel WireGuard | `xconzero0`（`10.66.0.1/32`） | `xconnect-gateway` |
+| `0.0.0.0:51820/udp`, `[::]:51820/udp` | kernel WireGuard | `xconzero0`（`10.66.0.1/32`）。**不是公网入口**：WireGuard UDP 封装在 VLESS 中，经 `443 /xconnect` 进入，再由 Gateway Xray 的 `freedom` 出站 `redirect: 127.0.0.1:51820` 交给内核。内核 WireGuard 无法只绑定 `127.0.0.1`，所以监听在所有地址上；公网不可达同样只靠云防火墙（见 3.5） | `xconnect-gateway` |
 | `127.0.0.1:8080` / `127.0.0.1:8081` | xray-exporter | XHTTP / TCP 指标 | `xray-exporter` |
 | `127.0.0.1:10088`（**规划**） | xray (Gateway) | Gateway Stats API，用于账单区分（第七节） | `xconnect-gateway` |
 | `127.0.0.1:8082`（**规划**） | xray-exporter | Gateway 指标 | `xray-exporter` |
@@ -134,27 +135,28 @@ tags:
 ### 3.4 运行态拓扑
 
 ```text
-                         [ 公网: TCP 80 / 443 / 1443   UDP 51820 ]
+            [ 公网入口：只有 TCP 443（80 仅用于 ACME / 跳转） —— 2026-11-18 实测 ]
+            [ TCP 1443、UDP 51820 在主机上监听，但被云防火墙挡住，公网不可达 ]
                                          │
-          ┌──────────────────────────────┼───────────────────────────────┐
-          ▼                              ▼                               ▼
- [ fluxgate.service :80/:443 ]    [ xray-tcp :1443 ]          [ xconzero0 :51820/udp ]
-   (fluxgate)                       (xconnect-proxy)             (xconnect-gateway)
-          │ 按 Host 分流
-   ┌──────┴───────────────────────────────┐
-   ▼ ph-xconnect.svc.plus                 ▼ ph-xconnect-gateway-01.svc.plus
-   conf.d/ph-xconnect.conf                conf.d/ph-xconnect-gateway.conf
-   (片段 Owner: xconnect-proxy)            (片段 Owner: xconnect-gateway)
-   │ /split                               │ /xconnect
-   ▼ h2c over unix                        ▼ h2c over unix
- /dev/shm/xray.sock                     /run/xconnect-gateway/xray.sock
- [ xray.service ]                       [ xconnect-gateway-xray.service ]
-   │ Stats :10086                          ▲ 签名配置 apply
-   │       (xray-tcp Stats :10087)         │
-   ▼                                    [ xconnect-gateway-sync.timer ]
- [ xray-exporter-xhttp :8080 ]
- [ xray-exporter-tcp   :8081 ]  ◀── /var/log/xray/access.log
-   (xray-exporter)                    ▲ 两个 vhost 都把 /xray-exporter/* 反代到这里
+                                         ▼
+                          [ fluxgate.service :80/:443 ]
+                            (fluxgate)
+                                         │ 按 Host 分流
+   ┌─────────────────────────────────────┴──────────────────────────┐
+   ▼ ph-xconnect.svc.plus                                           ▼ ph-xconnect-gateway-01.svc.plus
+   conf.d/ph-xconnect.conf                                          conf.d/ph-xconnect-gateway.conf
+   (片段 Owner: xconnect-proxy)                                      (片段 Owner: xconnect-gateway)
+   │ /split                                                         │ /xconnect（VLESS over XHTTP，内含 WireGuard UDP）
+   ▼ h2c over unix                                                  ▼ h2c over unix
+ /dev/shm/xray.sock                                               /run/xconnect-gateway/xray.sock
+ [ xray.service ]                                                 [ xconnect-gateway-xray.service ]
+   │ Stats :10086                                                   │ inbound xconnect-vless-in
+   │ (xray-tcp :1443 / Stats :10087)                                │ → outbound xconnect-wireguard
+   ▼                                                                │   freedom redirect 127.0.0.1:51820
+ [ xray-exporter-xhttp :8080 ]                                      ▼
+ [ xray-exporter-tcp   :8081 ]  ◀── /var/log/xray/access.log      [ xconzero0 :51820/udp，只应接收回环流量 ]
+   (xray-exporter)                                                  ▲ 签名配置 apply
+                                                                 [ xconnect-gateway-sync.timer ]
 
  ───────────────────────────────────────────────────────────────────────────
  [ xconnect-edge-agent.service ]  (xconnect-edge-agent)
@@ -163,6 +165,21 @@ tags:
    └─ conf.d/02-ph-xconnect-gateway.yaml ──▶ 读 overlay-status / gateway-telemetry 上报 accounts
    ↕ HTTPS: https://accounts.svc.plus (/api/agent-server/v1/*)
 ```
+
+### 3.5 公网入口与防火墙实测（2026-11-18）
+
+从外部节点 `prod-k3s-v6.svc.plus` 向 `ph-xconnect.svc.plus`（`165.154.32.241`）发起主动探测，并在宿主机 `eth0` 上同步执行 `tcpdump` 验证，结果如下：
+
+| 探测端口 / 路径 | 外部探测结果 | 宿主机 `eth0` 抓包 | 实际状态与机制 |
+|---|---|---|---|
+| `TCP 443` (`/split/`, `/xconnect/`) | 可达，HTTP/2 返回 `400`（已进入后端 XHTTP 解析器） | 有完整 TLS 握手与载荷 | 唯一公网业务入口，经 `fluxgate` 按 Host/Path 转发至 `/dev/shm/xray.sock` 或 `/run/xconnect-gateway/xray.sock` |
+| `TCP 80` | `open` | — | 供 ACME / HTTPS 跳转使用 |
+| `TCP 1443` / `10086` / `8080` | `closed/filtered`（超时） | `0 packets` | 被上层云防火墙拦截，未到达宿主机网卡 |
+| `UDP 51820` | 发送 UDP 探针无响应 | `0 packets captured` | 被上层云防火墙拦截，未到达宿主机网卡 |
+
+内部路由与宿主机防火墙核查结论：
+1. **UDP over VLESS 封装链路已打通**：`/var/lib/xconnect-gateway/runtime/xray.json` 中 `xconnect-vless-in` 监听 `/run/xconnect-gateway/xray.sock,0660`（`xhttp`，路径 `/xconnect`），路由规则将其流量全部送往 `freedom` 出站 `xconnect-wireguard`（`redirect: "127.0.0.1:51820"`），再注入内核 `xconzero0` 接口（`ListenPort = 51820`）。
+2. **宿主机防护缺失（需补齐双层防御）**：当前宿主机 `ufw` 处于 `inactive`、`iptables` 为 `INPUT ACCEPT`、`nftables` 仅挂载 Fail2ban（`sshd`），`51820/udp` 与 `1443/tcp` 当前完全依赖云厂商安全组挡在外面。按照原则 8，`xconnect-gateway` 应在宿主机侧额外下发 `nftables` 规则，**仅允许 `iif "lo"` 访问 `51820/udp`**，彻底杜绝主机级误暴露。
 
 ---
 
@@ -223,7 +240,8 @@ tags:
 - **拥有**：
   - `/usr/local/bin/xconnect-gateway`、`/var/lib/xconnect-gateway/`（含 `state.json` 和 `runtime/`）
   - `xconnect-gateway-xray.service`、`xconnect-gateway-sync.{service,timer}`、`xconnect-gateway.service` alias
-  - `xconzero0`、`51820/udp` 防火墙放行
+  - `xconzero0`（`ListenPort 51820`，只承接 Gateway Xray `freedom` 出站重定向来的回环流量）
+  - 主机防火墙规则：丢弃非回环来源的 `51820/udp`（`nftables`，表名 `xconnect_gateway`），不再"放行 51820"
   - 入口片段：`{{ xconnect_ingress_conf_d_dir }}/{{ xconnect_gateway_domain }}.conf`（`/xconnect` → `/run/xconnect-gateway/xray.sock`）
 - **输入**：`xray-core`；`wireguard-tools`；一次性 join URI（Vault 读取，`no_log: true`）；`xconnect_ingress_*`。
 - **输出**：`/run/xconnect-gateway/xray.sock`、`xconzero0`、`overlay-status.json`、`gateway-telemetry.json`；事实变量 `xconnect_gateway_id`、`xconnect_gateway_network_id`、`xconnect_gateway_state_dir`、`xconnect_gateway_domain`；向 `xray_exporter_instances` 追加 `gateway` 一项（带 `service: xconnect-gateway`、`billing_scope: zero`、`gateway_id`、`network_id` 标签）。
@@ -279,7 +297,7 @@ tags:
 | `runtime/overlay-status.json`、`gateway-telemetry.json` | | | | | | G | | R |
 | `xconnect-gateway-xray.service`、`-sync.timer` | | | | | | O | | |
 | `/run/xconnect-gateway/xray.sock` | | R | R | R | | O | | |
-| `xconzero0` / `51820/udp` | | | | | | O | | |
+| `xconzero0` / `51820/udp`（仅回环）及其主机防火墙规则 | | | | | | O | | |
 | `xray-exporter-*.service`、`:8080/:8081/:8082` | | | | | | | O | |
 | `xray_exporter_instances` 中的实例描述与标签值 | | | | | O（xhttp / tcp） | O（gateway） | R | |
 | `/var/log/xray/gateway-access.log`（规划） | | | | | | O | R | |
@@ -432,7 +450,7 @@ xray_traffic_uplink_bytes_total{service="xconnect-gateway",billing_scope="zero",
 | Role / 仓库 | 需要做的事 |
 |---|---|
 | `xconnect-proxy` | XHTTP / TCP 模板补 inbound tag `proxy-xhttp-in` / `proxy-tcp-in`；TCP 实例改写独立 access log；向 `xray_exporter_instances` 追加两项 |
-| `xconnect-gateway` | 向 `xray_exporter_instances` 追加 `gateway` 项；`51820/udp` 之外不新增公网端口（`10088` / `8082` 只监听 `127.0.0.1`） |
+| `xconnect-gateway` | 向 `xray_exporter_instances` 追加 `gateway` 项；不新增任何公网端口（`10088` / `8082` 只监听 `127.0.0.1`，`51820/udp` 也只接收回环流量） |
 | `xconnect-zero-gateway` 源码 | 渲染 `runtime/xray.json` 时加入 `stats`、`api`（`HandlerService` + `StatsService`，`127.0.0.1:10088`）、`policy`（`statsUserUplink` / `statsUserDownlink` / inbound 统计），`log.access` 指向 `/var/log/xray/gateway-access.log` |
 | `xray-exporter` Role | 改为遍历 `xray_exporter_instances` 生成 `xray-exporter-<instance>.service`；渲染抓取侧标签映射（过渡）或 `--const-label`（目标） |
 | `xray-exporter` 源码 | 实现 `--const-label`；快照记录增加 `service` / `billing_scope` / `transport` / `gateway_id` / `network_id` |
