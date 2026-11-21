@@ -121,6 +121,8 @@
 
 ## 4. IaC、GitOps 与 DevSecOps
 
+- [Grok Bot 换机重部署与内网 DNS 切换手册](docs/reference/platform-delivery/clusters/sit-k3s-v6/Grok-Bot-换机重部署与内网DNS切换手册.md)：独立四业务调试环境、测试数据、内网解析与回退门禁。
+
 ### 云基础设施 DevSecOps 基线（系列）
 
 - [云基础设施 DevSecOps 基线方法论](content/02-iac-devops/cloud-infrastructure-devsecops-baseline/09-cloud-infrastructure-devsecops-baseline-closing-the-loop.md)
