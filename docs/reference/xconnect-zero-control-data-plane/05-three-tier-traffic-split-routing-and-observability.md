@@ -412,3 +412,5 @@ sum by (routing_pool, pricing_group, instance, target) (
    - `ai-workspace-xstream/xconnect-app` 不展示 Pro 节点流媒体限制提醒，统一依赖服务端套餐流量配额管控。
 3. **Phase 3（控制台 `/panel/gateway` 状态对齐与容量巡检）**：
    - 在 `console.svc.plus/panel/gateway` 展示 `Media-Pool` 与 `Pro-EC2-Pool` 策略配置并支持 GitOps 同步，结合 `k6-performance` 与 Grafana 看板巡检 `Pro-EC2-Pool` 节点 P95 延迟与配额消耗。
+4. **Phase 4（双桶配额分池计费采集与平滑滚动升级）**：
+   - 详见独立工程落地与零停机升级方案文档：[07-dual-bucket-quota-metering-and-smooth-upgrade-plan.md](07-dual-bucket-quota-metering-and-smooth-upgrade-plan.md)（涵盖 `Expand -> Shadow -> Verify -> Enforce` 五波次演进、`billing-service` 分池扣减、`accounts` 独立 `Pro` 准入开关与 `< 30s` 无损回滚）。
