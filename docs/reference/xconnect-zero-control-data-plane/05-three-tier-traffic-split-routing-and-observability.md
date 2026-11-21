@@ -1,6 +1,6 @@
 ---
 title: XConnect 三层智能分流路由、5+1 节点池标签分组与 Grafana 流量调度监控规划
-description: 基于 console.svc.plus/panel/gateway 现有 5+1 节点分组（Free/Shared/Plus/Pro/Custom/Team）与订阅配额体系，在 ai-workspace-service 与 ai-workspace-xstream 落地“国内与局域网直连 -> Media-Pool 承载 VPS 流量（流媒体优先 + MATCH 兜底）-> Pro-EC2-Pool 定义为高速流量（不再限制流媒体与下载，移除客户端流媒体提醒）”及 Grafana 监控面板的完整工程方案。
+description: 基于 console.svc.plus/panel/gateway 现有 5+1 节点分组（Free/Shared/Plus/Pro/Custom/Team）与订阅配额体系，在 ai-workspace-service 与 ai-workspace-xstream 落地“国内与局域网直连 -> Media-Pool 承载 VPS 流量（流媒体优先 + MATCH 兜底）-> Pro-EC2-Pool 定义为高速流量（不做流媒体与下载限制；Pro 可用双池、Plus 仅用 Media-Pool 且 Pro 节点不可见）”及 Grafana 监控面板的完整工程方案。
 slug: xconnect-zero-three-tier-traffic-split-routing-and-observability
 lang: zh
 tags:
@@ -21,11 +21,11 @@ tags:
 > **核心设计原则与订阅边界**：
 > 1. **第一优先级（国内与局域网）→ `DIRECT`（直连）**：`GEOIP,private`、`GEOSITE,cn`、`GEOIP,cn` 本地直出，不消耗任何节点流量；
 > 2. **第二优先级 `Media-Pool` 标签分组（`Free` / `Shared` / `Plus` VPS 资源池：VPS 流量、优先流媒体与 `MATCH` 兜底，无限制）**：承载普通日常流量、流媒体、下载、测速及全网 `MATCH` 兜底流量，**客户端与服务端均不做任何流量类型限制**（架构上预留后续在 `Media-Pool` 多台 VPS 节点间按 **视频 / 购物 / AI 应用** 细分子标签的能力，当前阶段统一归入 `Media-Pool`）；
-> 3. **第三优先级 `Pro-EC2-Pool` 标签分组（`Pro` 公共商业精品池，AWS EC2 `t4g.small` / `c8g` 等：定义为「高速流量」，不再限制流媒体与下载，移除客户端流媒体提醒）**：`Pro-EC2-Pool` 为高 SLA 低延迟高速流量池，在自动分流下优先承接 AI、开发与商务办公白名单流量；同时**取消服务端 `blackhole` 阻断与客户端流媒体提醒弹窗/横幅**，若用户手动切选 `Pro` 节点或切全局使用视频/下载等请求，服务端统一通过 `freedom` 正常放行并计入高速流量配额管控（`mediaOnProAction: "allow"`）；
+> 3. **第三优先级 `Pro-EC2-Pool` 标签分组（`Pro` 公共商业精品池，AWS EC2 `t4g.small` / `c8g` 等：定义为「高速流量」，不做流媒体与下载限制）**：`Pro-EC2-Pool` 为高 SLA 低延迟高速流量池，在自动分流下优先承接 AI、开发与商务办公白名单流量；服务端不做 `blackhole` 阻断，客户端不设流媒体限制提醒，所有经 `Pro` 节点的请求统一通过 `freedom` 正常放行并计入高速流量配额管控（`mediaOnProAction: "allow"`）；
 > 4. **订阅权限与节点可见性矩阵**：
 >    - **`Pro` 订阅**：可同时使用 **`Media-Pool` 与 `Pro-EC2-Pool`** 全部公共资源（例如 **50 元套餐：30GB 高速流量（`Pro-EC2-Pool`） + 50GB VPS 流量（`Media-Pool`）**）；
 >    - **`Plus` 订阅（及 `Free` / `Shared`）**：**仅能使用 `Media-Pool` 的资源，保持 `Pro` 专属资源节点不可见**（订阅下发与节点发现接口自动过滤 `Pro-EC2-Pool` 节点）；
->    - **`Custom` 专属节点（`Custom-Dedicated`：白名单客户独享，无限制）**：非公共资源，仅对绑定该节点的 Custom 白名单用户下发，绝不混入公共订阅池，客户端与服务端均不做限制。
+>    - **`Custom` 专属节点（`Custom-Dedicated`：白名单绑定机制，没有使用限制）**：非公共资源，仅对绑定该节点的 Custom 白名单用户下发，绝不混入公共订阅池，客户端与服务端均没有使用或流量类型限制。
 
 ---
 
@@ -42,17 +42,18 @@ tags:
 | `jp-xconnect-free-01.svc.plus` | `Shared` | 正常 | **`Media-Pool`（VPS 流量池，无限制）** | 大流量基础 VPS / Lightsail（3TB 流量包），承接流媒体、下载及全网 `MATCH` 兜底流量，**无限制** |
 | `jp-xconnect-01.svc.plus` | `Plus` | 正常 | **`Media-Pool`（VPS 流量池，无限制）** | 大流量 VPS 节点（HAProxy / Fluxgate），**主力承接 Plus/Pro 用户的 VPS 流量、流媒体与 `MATCH` 兜底，无限制** |
 | `ph-xconnect.svc.plus` | `Plus` | 正常 | **`Media-Pool`（VPS 流量池，无限制）** | 东南亚大流量 VPS 节点，承接区域 VPS 流量、流媒体与 `MATCH` 兜底，**无限制** |
-| `jp-xconnect-02.svc.plus` | `Pro` | 正常 | **`Pro-EC2-Pool`（高速流量池，无限制）** | **AWS EC2 `t4g.small` / `c8g` 等精品节点**（Fluxgate），定义为**高速流量**；**仅对 `Pro` 订阅可见**（`Plus`/`Free`/`Shared` 不可见），**不做流媒体与下载限制**，统一按高速流量配额（如 30GB）计量管控 |
+| `jp-xconnect-pro-01.svc.plus` | `Pro` | 正常 | **`Pro-EC2-Pool`（高速流量池，无限制）** | **AWS EC2 `t4g.small` / `c8g` 等精品节点**（Fluxgate），定义为**高速流量**；**仅对 `Pro` 订阅可见**（`Plus`/`Free`/`Shared` 不可见），**不做流媒体与下载限制**，统一按高速流量配额（如 30GB）计量管控 |
 | `us-xconnect-los-angeles-custom-01.svc.plus` | `Custom` | 正常 | **`Custom-Dedicated`（非公共专属节点，无限制）** | **非公共资源节点**：权益严格绑定至 Custom 白名单用户，**绝不进入公共订阅池**，全流量直出不做限制 |
 | `us-xconnect.svc.plus` | `Custom` | 正常 | **`Custom-Dedicated`（非公共专属节点，无限制）** | **非公共资源节点**：权益严格绑定至 Custom 白名单用户，**绝不进入公共订阅池**，全流量直出不做限制 |
 
 ### 1.2 订阅套餐资源可见性与配额示例
 
-| 订阅等级 | 可见资源池 | 配额结构示例 | 不可见/隔离范围 |
+| 订阅等级 / 权益类型 | 可见资源池 | 配额与使用限制说明 | 不可见/隔离范围 |
 | :--- | :--- | :--- | :--- |
-| **`Pro` 订阅** | `Media-Pool` + `Pro-EC2-Pool` | 如 **50 元套餐**：`30GB` 高速流量（`Pro-EC2-Pool`）+ `50GB` VPS 流量（`Media-Pool`） | `Custom-Dedicated`（除非同时命中白名单） |
-| **`Plus` 订阅** | 仅 **`Media-Pool`** | 对应套餐 VPS 流量配额 | **`Pro-EC2-Pool` 节点对 Plus 用户不可见**；`Custom-Dedicated` 不可见 |
+| **`Pro` 订阅** | `Media-Pool` + `Pro-EC2-Pool` | 如 **50 元套餐**：`30GB` 高速流量（`Pro-EC2-Pool`）+ `50GB` VPS 流量（`Media-Pool`），不限制流媒体与下载 | `Custom-Dedicated`（除非同时命中白名单） |
+| **`Plus` 订阅** | 仅 **`Media-Pool`** | 对应套餐 VPS 流量配额 | **`Pro-EC2-Pool` 专属资源节点对 Plus 用户不可见**；`Custom-Dedicated` 不可见 |
 | **`Free` / `Shared`** | 仅 **`Media-Pool`**（`Shared` / `Free` 节点） | 基础/试用 VPS 流量配额 | `Pro-EC2-Pool`、`Custom-Dedicated` 均不可见 |
+| **`Custom` 专属节点（白名单绑定）** | **`Custom-Dedicated`**（及自身订阅对应的公共池） | **白名单绑定机制，没有使用限制**（`unlimited: true`，不做流媒体、下载或配额限制） | 非白名单用户完全不可见，绝不进入公共订阅池 |
 
 ### 1.3 `Media-Pool` 二级子标签预留设计（架构预留，当前暂不实现）
 
@@ -81,7 +82,7 @@ flowchart TD
 | 匹配顺序 | 流量分类层级 | 客户端默认分流目标 | `Media-Pool` (VPS) 服务端行为 & `outboundTag` | `Pro-EC2-Pool` (高速流量 EC2) 服务端行为 & `outboundTag` | 设计目的 |
 | :---: | :--- | :---: | :---: | :---: | :--- |
 | **1** | **国内与局域网**<br>(`geoip:private`, `geosite:cn`, `geoip:cn`) | **`DIRECT`** | 私有 IP 走 `blocked-private` (`blackhole`)；国内走 `direct-cn` (`freedom`) | 私有 IP 走 `blocked-private` (`blackhole`)；国内走 `direct-cn` (`freedom`) | 0 节点流量消耗，防 SSRF 内网探测 |
-| **2（优先）** | **高流量流媒体 / 下载 / 测速**<br>(`youtube`, `netflix`, `disney`, `tiktok`, `twitch`, `spotify`, `bilibili`, `speedtest`, `steamcontent` 等) | **`Media-Pool`**<br>*(默认走 VPS 流量池)* | **正常直出 (`freedom`)**<br>`outboundTag: pool-media-stream` | **正常直出 (`freedom`)**<br>`outboundTag: pool-pro-unclassified`<br>*(不再拦截或弹窗提醒，按高速流量配额计量)* | 自动分流模式下为 Pro 用户节省 30GB 高速流量；手动直连 Pro 节点时保证视频/下载可用 |
+| **2（优先）** | **高流量流媒体 / 下载 / 测速**<br>(`youtube`, `netflix`, `disney`, `tiktok`, `twitch`, `spotify`, `bilibili`, `speedtest`, `steamcontent` 等) | **`Media-Pool`**<br>*(默认走 VPS 流量池)* | **正常直出 (`freedom`)**<br>`outboundTag: pool-media-stream` | **正常直出 (`freedom`)**<br>`outboundTag: pool-pro-unclassified`<br>*(不做限制，直接计入高速流量配额)* | 自动分流模式下为 Pro 用户节省 30GB 高速流量；手动直连 Pro 节点时保证视频/下载可用 |
 | **3-A** | **AI / 开发 / 办公低延迟白名单**<br>(`openai`, `anthropic`, `claude`, `cursor`, `github`, `google`, `cloudflare` 等) | **`Pro-EC2-Pool`** *(仅 Pro 订阅可见)*<br>**`Media-Pool`** *(Plus/Shared)* | **正常直出 (`freedom`)**<br>`outboundTag: pool-pro-ai-dev` | **正常直出 (`freedom`)**<br>`outboundTag: pool-pro-ai-dev` | Pro 用户 AI/研发/办公自动享 EC2 高速低延迟通道；Plus 用户走 VPS 通道 |
 | **3-B** | **全网未知长尾流量 (`MATCH` 兜底)**<br>(所有未命中上述规则的海外长尾流量) | **`Media-Pool`**<br>*(VPS 流量兜底)* | **正常直出 (`freedom`)**<br>`outboundTag: pool-media-fallback` | **正常直出 (`freedom`)**<br>`outboundTag: pool-pro-unclassified` | 默认由 50GB VPS 流量承接长尾请求，避免无谓消耗 30GB 高速流量 |
 
@@ -97,7 +98,7 @@ flowchart TD
 | **`ai-workspace-service/accounts`** | `internal/routingpolicy/policy.go`<br>`internal/agentserver/registry.go`<br>`internal/subscription/*.go`<br>`api/regional_pools*.go` | 1. 维护 `5+1` 节点类别到 `routingPoolTag`（`Media-Pool` / `Pro-EC2-Pool` / `Custom-Dedicated`）映射；<br>2. **可见性隔离**：`Plus` / `Free` / `Shared` 订阅与节点列表**仅返回 `Media-Pool` 节点，保持 `Pro-EC2-Pool` 节点不可见**；`Pro` 订阅同时返回 `Media-Pool` 与 `Pro-EC2-Pool`；<br>3. 向 `xconnect-edge-agent` 下发 `RoutingPolicy`（默认 `MediaOnProAction: "allow"`）。 |
 | **`ai-workspace-service/portal`** | `src/modules/extensions/builtin/user-center/*`<br>`src/app/api/panel/gateway/routing-policy/*` | 在 `console.svc.plus/panel/gateway` 展示路由策略与节点池标签，编辑提交直连 GitOps `topology/xconnect/routing-policy.yaml`。 |
 | **`ai-workspace-xstream/xconnect-edge-agent`** | `internal/xrayconfig/templates.go`<br>`internal/xrayconfig/generator.go` | 1. 开启 Xray `sniffing` 与 `statsOutboundUplink/Downlink`；<br>2. 对 `Pro-EC2-Pool` 默认将流媒体规则指向 `pool-pro-unclassified`（`freedom` 放行，不再使用 `blackhole`）；`Media-Pool` 指向 `pool-media-stream` / `pool-media-fallback`。 |
-| **`ai-workspace-xstream/xconnect-app`** | `lib/screens/home_screen.dart`<br>`lib/l10n/app_localizations.dart` | **移除客户端 Pro 节点流媒体提醒逻辑与提示文案**（`Pro` 节点定义为高速流量，按套餐配额消费，不再向用户弹出流媒体/下载限制提醒）。 |
+| **`ai-workspace-xstream/xconnect-app`** | `lib/screens/home_screen.dart`<br>`lib/l10n/app_localizations.dart` | 保持极简选点与分流覆写体验（不展示任何 Pro 节点流媒体限制提示），统一依赖服务端订阅可见性与套餐流量配额管控。 |
 | **`ai-workspace-xstream/xray-exporter`** | `exporter.go` | 采集 `outbound>>>{outboundTag}>>>traffic>>>uplink/downlink`，按 `pool-media-stream`、`pool-media-fallback`、`pool-pro-ai-dev`、`pool-pro-unclassified` 导出分类流量字节数，用于 Grafana 监控与配额核算。 |
 
 ---
@@ -127,7 +128,7 @@ type RoutingPolicy struct {
 
 #### 2. 客户端订阅分流与权限边界 (`accounts` 订阅中心生成)
 
-- **Pro 订阅资源范围**：可同时获得公共 `Media-Pool`（如 `jp-xconnect-01.svc.plus`、`ph-xconnect.svc.plus`、`jp-xconnect-free-01.svc.plus`，计入 VPS 流量配额）与公共 `Pro-EC2-Pool`（如 `jp-xconnect-02.svc.plus`，计入高速流量配额，例如 50 元套餐 = `30GB` 高速流量 + `50GB` VPS 流量）；
+- **Pro 订阅资源范围**：可同时获得公共 `Media-Pool`（如 `jp-xconnect-01.svc.plus`、`ph-xconnect.svc.plus`、`jp-xconnect-free-01.svc.plus`，计入 VPS 流量配额）与公共 `Pro-EC2-Pool`（如 `jp-xconnect-pro-01.svc.plus`，计入高速流量配额，例如 50 元套餐 = `30GB` 高速流量 + `50GB` VPS 流量）；
 - **Plus / Free / Shared 订阅资源范围**：**仅下发 `Media-Pool` 节点，`Pro-EC2-Pool` 专属资源节点保持完全不可见**；
 - **`Custom` 专属节点**：仅当用户命中对应白名单时作为 `Custom-Dedicated` 策略组下发；
 - **智能分流模板（Pro 订阅示例）**：
@@ -148,7 +149,7 @@ proxy-groups:
     url: https://cp.cloudflare.com/generate_204
     interval: 180
     proxies:
-      - jp-xconnect-02.svc.plus      # Pro (公共 AWS EC2 高速节点，Plus 不可见)
+      - jp-xconnect-pro-01.svc.plus  # Pro (公共 AWS EC2 高速节点，Plus 不可见)
 
 rules:
   # [第一层] 国内与局域网 -> DIRECT 直连
@@ -190,7 +191,7 @@ rules:
 
 在 `xconnect-edge-agent/internal/xrayconfig/generator.go` 中，根据节点所属的 `PoolTag`（`Pro-EC2-Pool` vs `Media-Pool`）渲染服务端 `outbounds` 与 `routing.rules`：
 
-#### 1. `Pro-EC2-Pool` 节点（如 `jp-xconnect-02.svc.plus`）服务端 Xray 配置（高速流量，无流媒体限制）
+#### 1. `Pro-EC2-Pool` 节点（如 `jp-xconnect-pro-01.svc.plus`）服务端 Xray 配置（高速流量，无流媒体限制）
 
 ```json
 {
@@ -305,6 +306,48 @@ rules:
 
 ---
 
+### 3.4 高速流量（`Pro-EC2-Pool`）与 VPS 流量（`Media-Pool`）计费采集与双桶配额设计
+
+> [!NOTE]
+> 在现网 Xray-core 与 `xray-exporter` 架构下，按物理节点池（`node_id` -> `routing_pool`）天然隔离**高速流量**与 **VPS 流量**，无需在单台 Xray 内部维护高基数的 `user × outbound` 交叉计数器，即可精确完成分池计费与配额扣减。
+
+#### 1. 物理分池与用户计费采集链路
+
+```mermaid
+flowchart LR
+    Xray["边缘 Xray-core<br/>user>>>{email}>>>traffic>>>uplink/downlink"] --> Exp["xray-exporter<br/>按 AccountUUID 归一化生成分钟级 Snapshot<br/>携带 node_id / env / inbound_tag"]
+    Exp -- "POST :8686" --> Vec["本机 Vector (xray_snapshot_input)<br/>512MiB 磁盘缓冲队列 + 重试"]
+    Vec -- "sinks.billing_snapshot_ingest" --> Bill["billing-service / accounts<br/>写入 traffic_minute_buckets<br/>关联 node_id -> routing_pool"]
+    Bill --> BucketPro["高速流量配额桶<br/>(node_id ∈ Pro-EC2-Pool)"]
+    Bill --> BucketVPS["VPS 流量配额桶<br/>(node_id ∈ Media-Pool)"]
+    Bill --> BucketCustom["Custom 白名单审计<br/>(node_id ∈ Custom-Dedicated，无限制)"]
+```
+
+1. **为什么按 `node_id` 映射 `routing_pool` 即可 100% 区分**：
+   - `xray-exporter` (`internal/snapshot/service.go`) 读取 Xray gRPC `user>>>{email}>>>traffic>>>uplink/downlink`，归一化为 `AccountUUID`，打包为带 **`node_id`** 与 **`collected_at`** 的 `Snapshot`；
+   - 由于 `Pro-EC2-Pool`（如 `jp-xconnect-pro-01.svc.plus`）与 `Media-Pool`（如 `jp-xconnect-01.svc.plus`、`ph-xconnect.svc.plus`、`jp-xconnect-free-01.svc.plus`）部署在相互独立的边缘节点上：
+     - 凡从 **`Pro-EC2-Pool` 节点**采集上来的 `traffic_minute_buckets`，100% 计入用户的 **高速流量（High-Speed Quota）**；
+     - 凡从 **`Media-Pool` 节点**采集上来的 `traffic_minute_buckets`，100% 计入用户的 **VPS 流量（VPS Quota）**；
+     - 凡从 **`Custom-Dedicated` 专属节点**采集上来的流量仅用于观测与审计，**遵循白名单绑定机制，不扣减公共配额、没有使用限制**。
+2. **数据可靠性与多维度可观测**：
+   - **计费采集通道**：`xray-exporter` 推送至本机 Vector `127.0.0.1:8686` (`sources.xray_snapshot_input`)，经 Vector `512MiB` 磁盘缓冲 `sinks.billing_snapshot_ingest` 投递至 `billing-service`，再按 `(storageNodeID, sample.UUID)` 增量累加写入 PostgreSQL `traffic_minute_buckets`；
+   - **监控指标通道**：同时 `xray-exporter` 导出 `dimension="outbound", target="pool-pro-ai-dev" | "pool-pro-unclassified" | "pool-media-stream" | "pool-media-fallback"` 至 VictoriaMetrics，与 `user` 维度计费总额互为对账基准。
+
+#### 2. 双桶配额模型与超额准入策略（以 50 元 Pro 套餐为例）
+
+| 订阅等级 | 高速流量配额桶 (`Pro-EC2-Pool`) | VPS 流量配额桶 (`Media-Pool`) | 超额后行为与控制面下发策略 |
+| :--- | :--- | :--- | :--- |
+| **`Pro` 订阅**（如 50 元套餐） | **`30GB` 高速流量**<br>仅汇总 `node_id ∈ Pro-EC2-Pool` 节点的 `total_bytes` | **`50GB` VPS 流量**<br>仅汇总 `node_id ∈ Media-Pool` 节点的 `total_bytes` | 1. 当 `30GB` 高速流量耗尽而 `50GB` VPS 流量仍有剩余时：仅停用该用户在 `Pro-EC2-Pool` 节点下发/准入（客户端与 `/api/agent-server/v1/users` 同步剔除 Pro 节点权限），**保留 `Media-Pool` 节点继续可用**；<br>2. 仅当双桶均耗尽（且无无限白名单豁免）时进入全局 `quota_exhausted`；<br>3. `/api/account/usage/summary` 分别返回 `highSpeedUsedBytes / highSpeedQuotaBytes` 与 `vpsUsedBytes / vpsQuotaBytes`。 |
+| **`Plus` 订阅** | **`0`（不可见 / 不开通）** | **对应套餐 VPS 流量配额** | 控制面节点发现、订阅渲染与 `authorizedAgentClients` **始终过滤 `Pro-EC2-Pool`，保持 `Pro` 专属资源节点不可见**；仅按 `Media-Pool` 扣减 VPS 配额。 |
+| **`Custom` 专属白名单** | — | — | **白名单绑定机制，没有使用限制**；`quotaExhausted` 对专属节点白名单豁免。 |
+
+#### 3. 存量结构平滑演进字段（`accounts` / `billing-service`）
+
+- **`traffic_minute_buckets`**：保留 `(bucket_start, node_id, account_uuid)` 主键，补充 `routing_pool`（或由 `node_id -> registry.RoutingPool` 维表关联）与 `line_code`（例如 `pro-ec2` vs `vps-media`），确保历史账单数据零迁移兼容；
+- **`billing_plans` / `account_quota_states`**：在保留现有 `included_quota_bytes` / `remaining_included_quota` 作为主（VPS/总）配额字段基础上，扩展 **`high_speed_quota_bytes`** 与 **`remaining_high_speed_quota`**，由 `billing-service` 根据 `node_id` 所属 `routing_pool` 路由扣减对应配额桶。
+
+---
+
 ## 四、流量类型可观测性与 Grafana 监控调度面板设计
 
 ### 4.1 统一流量分类 `target` (`outboundTag`) 指标字典
@@ -366,6 +409,6 @@ sum by (routing_pool, pricing_group, instance, target) (
    - 在 `ai-workspace-xstream/xconnect-edge-agent` 中将 `Pro-EC2-Pool` 通用与流媒体流量统一指向 `pool-pro-unclassified`（`freedom` 放行，取消 `blackhole` 限制），`Media-Pool` 维持 `pool-media-stream` + `pool-media-fallback`。
 2. **Phase 2（`accounts` 订阅中心分流与套餐可见性对齐 & 客户端简化）**：
    - `ai-workspace-service/accounts` 保持 `Pro` 订阅同时可访问 `Media-Pool` 与 `Pro-EC2-Pool`（例如 50 元套餐：`30GB` 高速流量 + `50GB` VPS 流量），`Plus` / `Free` / `Shared` 订阅仅返回 `Media-Pool` 且保持 `Pro` 专属节点不可见；
-   - `ai-workspace-xstream/xconnect-app` 移除 Pro 节点流媒体提示横幅/Toast，统一依赖服务端套餐流量配额管控。
+   - `ai-workspace-xstream/xconnect-app` 不展示 Pro 节点流媒体限制提醒，统一依赖服务端套餐流量配额管控。
 3. **Phase 3（控制台 `/panel/gateway` 状态对齐与容量巡检）**：
    - 在 `console.svc.plus/panel/gateway` 展示 `Media-Pool` 与 `Pro-EC2-Pool` 策略配置并支持 GitOps 同步，结合 `k6-performance` 与 Grafana 看板巡检 `Pro-EC2-Pool` 节点 P95 延迟与配额消耗。
