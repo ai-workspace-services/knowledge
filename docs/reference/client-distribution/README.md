@@ -25,8 +25,8 @@ tags:
 
 | 决策维度 | 锁定方案 | 说明与演进预留 |
 | :--- | :--- | :--- |
-| **CN 镜像域名与存储** | `https://cn-dl.svc.plus`（阿里云 OSS + 阿里云 CDN） | 面向中国大陆用户提供高速、稳定、无需代理即可直达的客户端下载源 |
-| **Global 镜像域名与存储** | `https://dl.svc.plus`（Cloudflare R2） | 沿用既有 `dl.svc.plus` 域名承担海外主镜像分发，与 CN 镜像保持目录与 `release-matrix.json` 同构 |
+| **CN 镜像域名与存储** | `https://cn-dl.svc.plus`（阿里云 OSS + 阿里云 CDN） | **面向所有产品矩阵设计**的中国大陆主镜像根域，统一承接 `/releases/<product>/*` 与 `/offline-package/<product>/*` |
+| **Global 镜像域名与存储** | `https://dl.svc.plus`（Cloudflare R2） | **面向所有产品矩阵设计**的全球主镜像根域（沿用既有 `dl.svc.plus`），与 CN 镜像保持目录与 `release-matrix.json` 同构 |
 | **应用商店渠道状态** | 四端商店当前均标记为 **暂未上架 / 仅提供直装**，并在 GitOps 与 UI 中**完整预留链接槽** | 覆盖 iOS（App Store / TestFlight）、Android（Google Play）、Windows（Microsoft Store）、macOS（Mac App Store）；后续商店过审上架后仅需更新 GitOps ConfigMap 状态与 URL，无需改动前端代码 |
 | **CN OSS 防盗链 / 防刷策略** | 首期采用 **公开读 + CDN 带宽封顶** | 降低首期对接复杂度，通过阿里云 CDN 带宽封顶与告警控制异常流量成本；在 Vault KV 与 Portal 中预留后续切换为 **阿里云 CDN Type-A 短期签名鉴权** 的扩展位 |
 | **版本矩阵权威源与前端边界** | **CI 生成 Release 版本矩阵（Single Source of Truth），前端 UI 纯展示** | 由 `xconnect-app/.github/workflows/build-and-release.yml` 产出统一 `release-matrix.json`（含 `stable` / `latest` 通道与近期版本历史、各平台架构/格式/校验值/受众分类）并原子同步至 `cn-dl.svc.plus` 与 `dl.svc.plus`；`portal` 仅拉取该矩阵并叠加 GitOps 商店预留槽进行纯数据驱动渲染，**零文件名正则猜测、零硬编码平台/格式表** |
@@ -48,5 +48,19 @@ tags:
 | :--- | :--- | :--- |
 | `ai-workspace-services/portal` | `console.svc.plus`（`/download`） | **纯展示渲染层**：读取 GitOps 挂载的渠道配置、根据 `CF-IPCountry` 推断初始地区、拉取并缓存双镜像 `release-matrix.json`（叠加上架预留槽），直接渲染版本/通道切换、地区切换、商店与直装分流、多格式切换及 SHA-256 校验，不做文件正则猜测 |
 | `ai-workspace-infra/gitops` | `services/*/web-saas-*`、`security/vault/*`、`services/*/observability-*` | 声明非密 `download-channels` ConfigMap（域名、矩阵路径与商店预留槽）、`HelmRelease` 挂载配置、Vault ACL Policy / JWT Auth Role 与 `ExternalSecret`、双镜像黑盒探活 |
-| `ai-workspace-xstream/xconnect-app` | `.github/workflows/build-and-release.yml`、`scripts/ci/*` | **权威版本矩阵生产者**：构建多平台安装包并解析版本/通道元数据，生成 `<tag>/matrix.json`、`channels/{stable,latest}.json` 与聚合 `release-matrix.json`，经 Vault JWT OIDC 获取 OSS 与 R2 最小权限凭据并原子同步至双镜像 |
+| `ai-workspace-xstream/xconnect-app` | `.github/workflows/build-and-release.yml`、`scripts/ci/*` | **权威版本矩阵生产者（全产品矩阵首批试点）**：构建多平台安装包并解析版本/通道元数据，生成 `<tag>/matrix.json`、`channels/{stable,latest}.json` 与聚合 `release-matrix.json`，经 Vault JWT OIDC 获取 OSS 与 R2 最小权限凭据并原子同步至双镜像 |
 | `ai-workspace-services/knowledge` | `docs/reference/client-distribution/` | 沉淀全链路设计契约、跨仓接口规范与分阶段验收标准 |
+
+---
+
+## 四、上线前人工前置清单（`P2-4`）与关联 PR
+
+1. **Vault KV 写入最小权限凭据（`https://vault.svc.plus`）**：
+   - `kv/prod/platform/storage/aliyun-oss`：`access_key_id`、`access_key_secret`、`bucket`、`endpoint`、`cdn_domain`（`cn-dl.svc.plus`）
+   - `kv/prod/platform/storage/cloudflare-r2`：`access_key_id`、`secret_access_key`、`bucket`、`endpoint`
+2. **存储与域名配置（面向全产品矩阵）**：
+   - 确认 `https://cn-dl.svc.plus` 已绑定阿里云 OSS + CDN（开启公开读或私有 Bucket 回源 + **CDN 带宽封顶与告警**），可服务 `/releases/<product>/*` 与 `/offline-package/*`。
+   - 确认 `https://dl.svc.plus` R2 自定义域可正常服务 `/releases/<product>/*`（含 `/releases/xconnect/*`），且不影响既有 `/dl-index/*` 与 `/offline-package/*`。
+3. **关联 PR 与开启强门禁（可选）**：
+   - 关联 PR：`knowledge#429`、`portal#541`、`gitops#964`、`xconnect-app#323`。
+   - 上述凭据与域名验证通过、且合并全部 4 个 PR 后，可在 `ai-workspace-xstream/xconnect-app` 仓库变量设置 `XCONNECT_REQUIRE_MIRROR_SYNC=true` 启用同步强门禁。

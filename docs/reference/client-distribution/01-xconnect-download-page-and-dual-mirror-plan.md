@@ -77,8 +77,8 @@ tags:
 
 | 序号 | 决策项 | 锁定内容 |
 | :---: | :--- | :--- |
-| **1** | **CN 阿里云 OSS 镜像域名** | `https://cn-dl.svc.plus`（阿里云 OSS + 阿里云 CDN，服务中国大陆用户） |
-| **2** | **Global Cloudflare R2 镜像域名** | `https://dl.svc.plus`（沿用现有 Cloudflare R2 自定义域，服务全球及海外用户） |
+| **1** | **CN 阿里云 OSS 镜像域名（全产品矩阵）** | `https://cn-dl.svc.plus`（阿里云 OSS + 阿里云 CDN，**面向所有产品矩阵设计**，统一提供 `/releases/<product>/*` 与 `/offline-package/<product>/*` 的中国大陆下载入口） |
+| **2** | **Global Cloudflare R2 镜像域名（全产品矩阵）** | `https://dl.svc.plus`（沿用现有 Cloudflare R2 自定义域，**面向所有产品矩阵设计**，与 `cn-dl.svc.plus` 保持同构布局，服务全球及海外用户） |
 | **3** | **各平台应用商店状态** | iOS（App Store / TestFlight）、Android（Google Play）、Windows（Microsoft Store）、macOS（Mac App Store）当前统一标记为 **暂未上架 / 仅提供直装**，在 GitOps 配置与前端 UI 中**完整预留链接槽与状态切换能力** |
 | **4** | **CN 阿里云 OSS 防盗链 / 防刷策略** | 首期采用 **公开读 + 阿里云 CDN 带宽封顶**，暂不启用 URL 动态签名；在 Vault KV 与 Portal 中预留后续接入阿里云 CDN Type-A 短期签名鉴权的扩展槽位 |
 | **5** | **本次规划与实施范围** | 覆盖 **Phase 1（`portal` 前端与配置层）+ Phase 2（`gitops` 模板与 Vault KV 契约）+ Phase 3（`xconnect-app` CI 双镜像自动同步与观测探针）** |
@@ -173,42 +173,61 @@ flowchart LR
 | `src/lib/download/channels.ts`（新增） | 读取 `process.env.DOWNLOAD_CHANNELS_CONFIG_PATH` 指向的 GitOps JSON 文件（缺省时使用内置安全默认值：`cn-dl.svc.plus`、`dl.svc.plus`、4 个商店 `coming_soon` 预留槽）；定义 `DownloadChannelsConfig`、`MirrorRegion`、`StoreChannelInfo`；预留 `signMirrorUrl()` 扩展钩子。 |
 | `src/lib/download/release-matrix.ts`（新增） | 拉取选定产品的 `release-matrix.json`（首选区域镜像优先，超时 `3000ms` 自动回退对端镜像，缓存 `revalidate = 300`），严格校验 `schemaVersion === 1`，直接转换为前端纯展示 ViewModel（结合 GitOps `stores` 预留槽），**不执行任何文件名正则匹配**。 |
 | `src/lib/download/catalog.ts` | 对尚未接入 `release-matrix.json` 的既有产品（如 `xworkmate`、`ai-workspace-offline`、`open-platform-offline`）保持向后兼容（同时顺手修复其中 `.some()` 正则风险）；当产品已声明 `matrixPath` 并成功获取 `release-matrix.json` 时，**完全旁路正则匹配**。 |
-| `src/app/download/page.tsx` | 读取请求头 `cf-ipcountry`、`accept-language` 与 `searchParams`（`product` / `region` / `channel` / `track`），加载渠道配置与 `release-matrix.json`（失败时兜底 `getGithubReleaseListings`），将纯展示视图模型传入客户端组件。 |
+| `src/app/download/page.tsx` | 读取请求头 `cf-ipcountry`、`accept-language` 与 `searchParams`（`product` / `region` / `channel` / `track`），加载渠道配置并对所有在 `products.<id>.matrixPath` 登记的产品并行拉取 `release-matrix.json`（失败时兜底 `getGithubReleaseListings`），将纯展示视图模型传入客户端组件。 |
 | `src/components/download/DownloadCatalog.tsx` | 纯数据驱动渲染：顶部线路/商店/版本通道切换栏、多格式切换胶囊（遍历 `packages[]`）、商店预留槽状态卡、iOS `sideload` 折叠区、SHA-256 复制按钮（复用 `CopyButton`）与镜像降级提示徽标。 |
 | `src/lib/download/release-matrix.test.ts` & `channels.test.ts` | 补充 `release-matrix.json` 解析、CN/Global 镜像切换与故障降级、`stable`/`latest`/`history` 通道切换、`sideload`/`store_only` 渲染边界、GitOps 商店槽状态映射的 Vitest 单元测试。 |
 
 ---
 
-## 五、统一对象存储布局与 `release-matrix.json` 契约（OSS & R2 同构）
+## 五、全产品矩阵统一对象存储布局与 `release-matrix.json` 契约（OSS & R2 同构）
 
-为保证 `cn-dl.svc.plus`（阿里云 OSS）与 `dl.svc.plus`（Cloudflare R2）之间**可 100% 互相替代降级**，两者必须保持**完全一致的三层对象 Key 结构与 HTTP 缓存策略**。
+`https://cn-dl.svc.plus`（阿里云 OSS）与 `https://dl.svc.plus`（Cloudflare R2）**面向所有产品矩阵统一设计**，而不只是单一产品专用域名。全站产品共享同一个双镜像域名根，按产品前缀与交付形态清晰分区，保证任意产品之间**可 100% 互相替代降级**并保持一致的三层对象 Key 结构与 HTTP 缓存策略。
 
-### 5.1 三层同构对象路径与 Cache-Control 规范
+### 5.1 全产品矩阵接入规划（Product Matrix Onboarding）
+
+| 产品 ID | 镜像命名空间 | 接入阶段 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `xconnect` | `/releases/xconnect/*` | **Phase 1–3 首批落地** | 本次完整打通 `portal` 纯展示、`gitops` 配置、Vault OIDC 与 `xconnect-app` CI 双镜像自动同步 |
+| `xworkmate` | `/releases/xworkmate/*` | **后续增量接入** | 复用同一套 `cn-dl.svc.plus` / `dl.svc.plus` 根域与 `release-matrix.json` 契约，仅需在 GitOps `download-channels.json` 增加 `products.xworkmate` 槽位并在 `xworkmate-app` CI 接入同名同步脚本 |
+| `ai-workspace-offline` / `open-platform-offline` | `/offline-package/*`（及可选 `/releases/<product>/*`） | **共享双镜像基座** | 离线安装包目录在 `cn-dl.svc.plus` 与 `dl.svc.plus` 保持路径同构，由 `dl-index/` 与后续矩阵索引统一暴露 |
+
+### 5.2 三层同构对象路径与 Cache-Control 规范
 
 ```text
+https://{cn-dl.svc.plus | dl.svc.plus}/
+├── releases/<product>/
+│   ├── release-matrix.json                 # 聚合权威矩阵（stable + latest + 近期 history[]）
+│   │                                       # Cache-Control: public, max-age=60, must-revalidate
+│   ├── channels/
+│   │   ├── stable.json                     # 当前稳定版快照（Cache-Control: public, max-age=60, must-revalidate）
+│   │   └── latest.json                     # 当前 main 最新构建快照（Cache-Control: public, max-age=60, must-revalidate）
+│   └── <tag>/                              # 不可变版本目录（例如 v1.2.0 或 latest-43702841981-33947f3）
+│       ├── matrix.json                     # 该版本单次构建的原始不可变版本矩阵
+│       ├── SHA256SUMS.txt                  # 该版本全部安装包校验清单
+│       └── <artifact-files...>             # Cache-Control: public, max-age=31536000, immutable
+└── offline-package/<product>/...           # 离线安装包共享双镜像目录
+
+# 以首批落地的 xconnect 为例：
 /releases/xconnect/
-  ├── release-matrix.json                   # 聚合权威矩阵（stable + latest + 近期 history[]）
-  │                                         # Cache-Control: public, max-age=60, must-revalidate
-  ├── channels/
-  │   ├── stable.json                       # 当前稳定版快照（Cache-Control: public, max-age=60, must-revalidate）
-  │   └── latest.json                       # 当前 main 最新构建快照（Cache-Control: public, max-age=60, must-revalidate）
-  └── <tag>/                                # 不可变版本目录（例如 v1.2.0 或 latest-43702841981-33947f3）
-      ├── matrix.json                       # 该版本单次构建的原始不可变版本矩阵
-      ├── SHA256SUMS.txt                    # 该版本全部安装包校验清单
-      ├── xconnect.dmg                      # Cache-Control: public, max-age=31536000, immutable
-      ├── xconnect-windows.msi              # Cache-Control: public, max-age=31536000, immutable
-      ├── xconnect-windows.zip              # Cache-Control: public, max-age=31536000, immutable
-      ├── xconnect-linux-amd64.deb          # Cache-Control: public, max-age=31536000, immutable
-      ├── xconnect-linux-x86_64.rpm         # Cache-Control: public, max-age=31536000, immutable
-      ├── xconnect-linux.AppImage           # Cache-Control: public, max-age=31536000, immutable
-      ├── xconnect-linux.zip                # Cache-Control: public, max-age=31536000, immutable
-      ├── app-release.apk                   # Cache-Control: public, max-age=31536000, immutable
-      └── xconnect.ipa                      # Cache-Control: public, max-age=31536000, immutable
+  ├── release-matrix.json
+  ├── channels/{stable.json, latest.json}
+  └── <tag>/
+      ├── matrix.json
+      ├── SHA256SUMS.txt
+      ├── xconnect.dmg
+      ├── xconnect-windows.msi
+      ├── xconnect-windows.zip
+      ├── xconnect-linux-amd64.deb
+      ├── xconnect-linux-x86_64.rpm
+      ├── xconnect-linux.AppImage
+      ├── xconnect-linux.zip
+      ├── app-release.apk
+      └── xconnect.ipa
 ```
 
-> 说明：由于 `dl.svc.plus` 目前已托管 `dl-index/` 与 `offline-package/` 目录，新产物统一置于 `/releases/xconnect/...` 前缀下，**不干扰既有目录**；现有 `dl-index/artifacts-manifest.json` 继续服务离线包与其他历史资源。
+> 说明：由于 `dl.svc.plus` 目前已托管 `dl-index/` 与 `offline-package/` 目录，桌面/移动客户端发布物统一置于 `/releases/<product>/...` 前缀下，**不干扰既有目录**；现有 `dl-index/artifacts-manifest.json` 继续服务离线包与其他历史资源。
 
-### 5.2 `release-matrix.json` 权威数据契约
+### 5.3 `release-matrix.json` 权威数据契约
 
 由 `xconnect-app` CI 生成并同步至双镜像，**前端只按此结构纯展示**：
 
@@ -397,7 +416,7 @@ flowchart LR
 
 > 说明：当首个 `v*` Tag 发布后，CI 自动将 `channels.stable` 写入该稳定版对象并将 `defaultChannel` 切换为 `"stable"`；`main` 分支后续构建仅更新 `channels.latest` 与 `history` 队列（保留最近 10 个版本），不会覆盖稳定版指针。
 
-### 5.3 原子发布与跨通道归并顺序（避免同步窗口期 404）
+### 5.4 原子发布与跨通道归并顺序（避免同步窗口期 404）
 
 1. 将 `<tag>/*` 所有安装包、`<tag>/SHA256SUMS.txt` 与 `<tag>/matrix.json` 并行上传至阿里云 OSS 与 Cloudflare R2。
 2. 对两端 `<tag>/*` 对象执行 `HEAD` 校验，确认 `Content-Length` 与期望字节数一致。
@@ -645,7 +664,45 @@ prepare-release (计算 app_version / build_number / msi_version / release_chann
 | **P3-3** | `xconnect-app`：`.github/workflows/build-and-release.yml` & `scripts/update_readme_downloads.py` | 新增 `sync-release-matrix` Job（Vault OIDC + 并行原子上传 OSS/R2 + CDN 刷新 + `HEAD` 校验）；对齐 `update-readme` 数据源 | Release 工作流绿灯，`cn-dl.svc.plus` 与 `dl.svc.plus` 的 `release-matrix.json` 返回一致版本号、通道与 SHA-256 |
 | **P3-4** | `gitops`：`services/prod-k3s-v6/observability-prod/agent-release.yaml` | 添加双镜像 `release-matrix.json` 与 `/download?product=xconnect` 黑盒探针 | VictoriaMetrics 可查询到 3 条探针 `probe_success == 1` |
 
-### 8.4 回滚策略
+### 8.4 上线前人工前置清单（`P2-4`）
+
+1. **Vault KV 写入最小权限凭据（`https://vault.svc.plus`）**：
+   - 先确认 `gitops` PR #964 中的 `VaultACLPolicy` 与 `VaultJWTAuthRole`（`github-actions-xconnect-app`）已同步生效；后续接入 `xworkmate` 等产品时，按同样模式为对应仓库创建只读这两个存储路径的 `github-actions-<repo>` 角色。
+   - 在 Vault KV v2 `prod` 命名空间写入以下两条记录（以下为占位符示例，严禁将真实密钥写入 Git）：
+
+   ```bash
+   # 1) CN 阿里云 OSS 最小权限子账号（仅限目标 Bucket 读写 + cn-dl.svc.plus CDN 刷新）
+   vault kv put -mount=kv prod/platform/storage/aliyun-oss \
+     access_key_id="<ALIYUN_RAM_AK>" \
+     access_key_secret="<ALIYUN_RAM_SK>" \
+     bucket="<ALIYUN_OSS_BUCKET>" \
+     endpoint="oss-cn-hangzhou.aliyuncs.com" \
+     cdn_domain="cn-dl.svc.plus"
+
+   # 2) Global Cloudflare R2 Scoped API Token（仅限目标 Bucket Object Read & Write）
+   vault kv put -mount=kv prod/platform/storage/cloudflare-r2 \
+     access_key_id="<CF_R2_ACCESS_KEY_ID>" \
+     secret_access_key="<CF_R2_SECRET_ACCESS_KEY>" \
+     bucket="<CF_R2_BUCKET>" \
+     endpoint="https://<CF_ACCOUNT_ID>.r2.cloudflarestorage.com"
+   ```
+
+2. **存储与域名配置（面向全产品矩阵）**：
+   - **CN 域名 `https://cn-dl.svc.plus`**：确认已绑定阿里云 OSS + 阿里云 CDN（开启公开读或私有 Bucket 回源 + **CDN 带宽封顶与用量告警** + 强制 HTTPS + `https://console.svc.plus` / `https://xworktech.com` CORS），作为全产品矩阵（`/releases/<product>/*`、`/offline-package/*`）中国大陆主镜像入口。
+   - **Global 域名 `https://dl.svc.plus`**：确认 Cloudflare R2 自定义域可正常服务 `/releases/<product>/*`（含 `/releases/xconnect/*`），且不影响既有 `/dl-index/*` 与 `/offline-package/*`。
+   - **上线可用性验证**：首次 CI 同步完成后，人工复核以下命令均返回 HTTP 200 且内容一致：
+
+   ```bash
+   curl -fsSI https://cn-dl.svc.plus/releases/xconnect/release-matrix.json
+   curl -fsSI https://dl.svc.plus/releases/xconnect/release-matrix.json
+   curl -fsSI "https://console.svc.plus/download?product=xconnect"
+   ```
+
+3. **关联 PR 合并顺序与开启强门禁（可选）**：
+   - 关联 PR 列表：`knowledge#429`、`portal#541`、`gitops#964`、`xconnect-app#323`（建议先合并 `gitops#964` 与 `portal#541`，待 Vault KV 与域名配置就绪后再验证 `xconnect-app#323` 触发的首次矩阵同步）。
+   - 上述凭据与域名验证通过、且合并全部 4 个 PR 后，可在 `ai-workspace-xstream/xconnect-app` 的 GitHub **Repository Variables** 中设置 `XCONNECT_REQUIRE_MIRROR_SYNC=true` 开启同步强门禁（未设置前凭据缺失仅输出 warning，不会阻塞 GitHub Release）。
+
+### 8.5 回滚策略
 
 - **Portal 回退**：保留 `github-releases.ts` 与既有 `dl-index-data-artifacts.ts` 兜底路径；若任一镜像出现异常，只需将 GitOps ConfigMap 中对应镜像的 `enabled` 设为 `false`，`console.svc.plus` 在下次缓存刷新内自动切换至健康镜像或 GitHub Release，无需回滚前端镜像。
 - **CI 矩阵回退**：由于 `<tag>/*` 与 `<tag>/matrix.json` 按版本目录不可变存储，若新版本需要回退，只需将 `channels/<channel>.json` 与 `release-matrix.json` 指向 `history` 中前一稳定 `<tag>/matrix.json` 并刷新 CDN 即可秒级恢复。
