@@ -664,40 +664,43 @@ prepare-release (计算 app_version / build_number / msi_version / release_chann
 | **P3-3** | `xconnect-app`：`.github/workflows/build-and-release.yml` & `scripts/update_readme_downloads.py` | 新增 `sync-release-matrix` Job（Vault OIDC + 并行原子上传 OSS/R2 + CDN 刷新 + `HEAD` 校验）；对齐 `update-readme` 数据源 | Release 工作流绿灯，`cn-dl.svc.plus` 与 `dl.svc.plus` 的 `release-matrix.json` 返回一致版本号、通道与 SHA-256 |
 | **P3-4** | `gitops`：`services/prod-k3s-v6/observability-prod/agent-release.yaml` | 添加双镜像 `release-matrix.json` 与 `/download?product=xconnect` 黑盒探针 | VictoriaMetrics 可查询到 3 条探针 `probe_success == 1` |
 
-### 8.4 上线前前置清单与 IaC 自动对接（`P2-4`）
+### 8.4 上线前前置清单、IaC 与 SaaS Role 自动对接（`P2-4`）
 
 > [!NOTE]
-> 双镜像基础设施与凭据分发现已提供 **GitOps + Terraform IaC + Vault KV 自动回写** 全链路实现，运维只需在 Vault 写入一次性管理凭据，即可一键完成 OSS / CDN / R2 / DNS / CORS / 最小权限 CI 凭据签发与双域端到端探针校验：
+> 双镜像基础设施与凭据分发采用 **GitOps + IaC（云资源编排）+ Playbooks SaaS Role（API 对接与验收）+ Vault KV 自动回写** 分层架构：
 > - **GitOps 资源声明**：`ai-workspace-infra/gitops` `resources/svc.plus/prod/client-mirrors/mirrors.yaml`（`oss_region: cn-hongkong`、`oss_acl: public-read`、`cdn_scope: overseas`，注：`svc.plus` 已备案，后续可一行切换 `domestic`/`global`；`dl.svc.plus` R2 `location: apac`）
-> - **Vault OIDC 角色与权限**：`ai-workspace-infra/gitops` `security/vault/{policies,roles}/github-actions-iac-client-mirrors-prod.yaml`
-> - **Terraform IaC 与 CI 自动对接**：`ai-workspace-infra/iac_modules` `terraform-hcl-standard/client-mirrors/` 与 `.github/workflows/client-mirrors-iac.yml`
+> - **Vault OIDC 角色与权限**：`ai-workspace-infra/gitops` `security/vault/{policies,roles}/github-actions-iac-client-mirrors-prod.yaml`（IaC）与 `github-actions-playbooks-client-mirrors-prod.yaml`（Playbooks SaaS Role）
+> - **IaC 资源层**：`ai-workspace-infra/iac_modules` `terraform-hcl-standard/client-mirrors/` 与 `.github/workflows/client-mirrors-iac.yml`
+> - **Playbooks SaaS Role 层**：`ai-workspace-infra/playbooks` `roles/saas/client_mirrors/`、`configure_client_mirrors.yml` 与 `.github/workflows/client-mirrors-reconcile.yml`
 
-1. **在 Vault KV v2（`https://vault.svc.plus`）写入两份一次性管理凭据**：
-   - 使用 `iac_modules/terraform-hcl-standard/client-mirrors/scripts/bootstrap-admin-vault-kv.sh --provider cloudflare|alicloud`（无回显、`stdin` + CAS 写入，严禁将真实密钥写入 Git）：
+1. **复用既有 Vault 记录并写入唯一新增的阿里云凭据（`https://vault.svc.plus`）**：
+   - 经对 `vault.svc.plus` 核查，**`kv/prod/serverless/cloudflare`**（`CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`）与 **`kv/CICD/prod/iac_state`** 已存在并将直接复用；运维仅需补录阿里云 AK/SK（`kv/prod/platform/alicloud`）：
 
    ```bash
-   # 1) Cloudflare 管理 API Token + Account ID（用于 R2 Bucket / Custom Domain / CORS / CDN DNS 与 Scoped R2 Token 签发）
-   ./scripts/bootstrap-admin-vault-kv.sh --provider cloudflare
-   # 对应 Vault KV 路径: kv/prod/platform/cloudflare (api_token, account_id)
+   cd /Users/shenlan/workspaces/ai-workspace-infra/playbooks/roles/saas/client_mirrors/files
+   export VAULT_ADDR="https://vault.svc.plus"
 
-   # 2) 阿里云主/管理员 AK/SK（用于 cn-hongkong OSS / CDN / RAM 最小权限子账号与 AccessKey 自动签发）
-   ./scripts/bootstrap-admin-vault-kv.sh --provider alicloud
-   # 对应 Vault KV 路径: kv/prod/platform/alicloud (access_key_id, access_key_secret)
+   # 校验已存在的 Cloudflare 记录（无需重复写入）
+   ./bootstrap-admin-vault-kv.sh --provider cloudflare --preflight
+
+   # 仅首次写入阿里云管理员 AK/SK -> kv/prod/platform/alicloud (access_key_id, access_key_secret)
+   ./bootstrap-admin-vault-kv.sh --provider alicloud
    ```
 
-2. **触发 IaC 工作流自动创建资源、回写存储 Vault KV 并做端到端探针校验**：
-   - 在 `ai-workspace-infra/iac_modules` 手动触发 `.github/workflows/client-mirrors-iac.yml`（先选 `mode=plan` 检查变更，确认后选 `mode=apply`）：
-     1. 自动从 GitOps 渲染显式平铺 HCL 并对接 `kv/CICD/prod/iac_state` 远端状态锁；
-     2. 自动执行 `ensure_aliyun_cdn_verify_txt.py` 检查并同步 `verification.svc.plus` TXT 验证阿里云 CDN 归属权；
-     3. 自动创建/对账 R2 (`dl.svc.plus`, `apac`)、OSS (`oss-cn-hongkong`, `public-read`)、CDN (`cn-dl.svc.plus`, `scope=overseas`, `limit_rate`)、Cloudflare CORS 与非代理 CNAME；
-     4. 自动签发最小权限 R2 Bucket-Scoped S3 Token 与阿里云 RAM OSS Publisher AK/SK（限 `releases/*` 与 `offline-package/*`），并通过 `generate.py vault-sync` 安全写入 Vault：
-        - `kv/prod/platform/storage/cloudflare-r2`（`access_key_id`, `secret_access_key`, `bucket`, `endpoint`, `custom_domain`）
-        - `kv/prod/platform/storage/aliyun-oss`（`access_key_id`, `access_key_secret`, `bucket`, `endpoint`, `cdn_domain`, `oss_region`, `cdn_scope`）
-     5. 自动调用 `verify_dual_mirrors.sh --upload-from-vault` 向双端上传 `releases/_health/probe.json` 并校验 HTTPS `200` + `Access-Control-Allow-Origin` CORS 响应头。
+2. **执行对接（任选或组合使用 IaC / Playbooks SaaS Role）**：
+   - **方式 A（Playbooks SaaS Role，本机或 GitHub Actions 一键 API 对账 + 探针验收，无 tfstate 依赖）**：
+     - 本机：`cd /Users/shenlan/workspaces/ai-workspace-infra/playbooks && ansible-playbook -i 'localhost,' configure_client_mirrors.yml -e client_mirrors_mode=plan` 预览，确认后 `-e client_mirrors_mode=apply`。
+     - GitHub Actions：手动触发 `.github/workflows/client-mirrors-reconcile.yml`（`mode=plan` → `mode=apply`）。
+   - **方式 B（Terraform IaC 资源全托管）**：
+     - 在 `ai-workspace-infra/iac_modules` 手动触发 `.github/workflows/client-mirrors-iac.yml`（`mode=plan` → `mode=apply`），自动使用 `kv/CICD/prod/iac_state` 远端 state 创建 R2/OSS/CDN/RAM/DNS 资源，并将最小权限存储凭据写回 Vault。
+   - **自动回写与探针校验产物**：
+     - `kv/prod/platform/storage/cloudflare-r2`（`access_key_id`, `secret_access_key`, `bucket`, `endpoint`, `custom_domain`）
+     - `kv/prod/platform/storage/aliyun-oss`（`access_key_id`, `access_key_secret`, `bucket`, `endpoint`, `cdn_domain`, `oss_region`, `cdn_scope`）
+     - 双端上传 `releases/_health/probe.json` 并校验 `https://dl.svc.plus` 与 `https://cn-dl.svc.plus` 返回 `200` + `Access-Control-Allow-Origin` CORS 响应头。
 
 3. **后续产品矩阵扩展与阿里云 CDN 控制台可选项**：
    - 新增 `xworkmate` 等产品 CI 同步时，只需为其仓库在 `gitops/security/vault/` 创建只读上述两个 `kv/data/prod/platform/storage/*` 路径的 `github-actions-<repo>` Role。
-   - **阿里云 CDN 用量封顶与 HTTPS 证书**：`limit_rate` 限速已在 Terraform 下发；建议在阿里云 CDN 控制台为 `cn-dl.svc.plus` 配置**用量封顶（Usage Cap）**，如需强制 301 HTTPS 重定向，可在绑定 CAS 证书后将 `cdn_cas_cert_id` 与告警组 `cdn_alarm_contact_group` 填入 `mirrors.yaml`。
+   - **阿里云 CDN 用量封顶与 HTTPS 证书**：`limit_rate` 限速已自动下发；建议在阿里云 CDN 控制台为 `cn-dl.svc.plus` 配置**用量封顶（Usage Cap）**，如需强制 301 HTTPS 重定向，可在绑定 CAS 证书后将 `cdn_cas_cert_id` 与告警组 `cdn_alarm_contact_group` 填入 `mirrors.yaml`。
    - **开启发布门禁与上线可用性复核**：确认 `xconnect-app` Linux/全平台构建及首次 `sync-release-matrix` 绿灯后，可在 `ai-workspace-xstream/xconnect-app` 设置 Repository Variable `XCONNECT_REQUIRE_MIRROR_SYNC=true`，并人工复核：
 
    ```bash
