@@ -38,7 +38,8 @@ tags:
 
 | 文档 | 内容概要 | 状态 |
 | :--- | :--- | :--- |
-| [01-xconnect-download-page-and-dual-mirror-plan.md](01-xconnect-download-page-and-dual-mirror-plan.md) | `console.svc.plus/download?product=xconnect` 现状诊断、CI Release 版本矩阵同步规范（`build-and-release.yml`）、前端纯展示 UX 与数据层设计、同构对象存储与 `release-matrix.json` 契约、Vault KV v2 与 GitOps 声明式模板及 Phase 1–3 任务单 | 规划草案 |
+| [01-xconnect-download-page-and-dual-mirror-plan.md](01-xconnect-download-page-and-dual-mirror-plan.md) | `console.svc.plus/download?product=xconnect` 现状诊断、CI Release 版本矩阵同步规范（`build-and-release.yml`）、前端纯展示 UX 与数据层设计、同构对象存储与 `release-matrix.json` 契约、Vault KV v2 与 GitOps 声明式模板及 Phase 1–3 任务单 | 已落地 / 待线上验收 |
+| [02-client-mirrors-tldr-runbook.md](02-client-mirrors-tldr-runbook.md) | 双镜像（Cloudflare R2 + Aliyun OSS/CDN）Token 最小权限创建、Vault 非交互轮换、Ansible `roles/saas/client_mirrors` `plan`/`apply`/`verify` 操作手册 | Runbook（TL;DR） |
 
 ---
 
