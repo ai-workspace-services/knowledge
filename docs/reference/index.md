@@ -153,6 +153,13 @@ GitHub 组织入口：[ai-workspace-infra](https://github.com/ai-workspace-infra
 | [后续任务拆解与跨仓并行调度矩阵](xconnect-zero-control-data-plane/03-task-breakdown-and-roadmap.md) | 跨 5 仓 16 个可执行开发任务（Task A1–E2，含分支/文件/验收标准）与 Wave 1–3 并行调度矩阵 | 规划草案 |
 | [边缘节点 8 个 Role 职责边界、归属矩阵与组合编排规划](xconnect-zero-control-data-plane/04-ansible-role-decomposition-and-orchestration.md) | 8 个 Ansible Role 的单一职责、资源归属、契约变量、Proxy / Gateway 流量账单标签、组合场景与迁移步骤 | 规划草案 |
 
+### 客户端多区域下载与双镜像分发规划（2026-11-23）
+
+| 文档 | 用途 | 状态 |
+| --- | --- | --- |
+| [客户端多区域下载与双镜像分发规划索引](client-distribution/README.md) | 锁定决策摘要、目录导航与跨仓职责归属 | 规划草案 |
+| [XConnect 下载页微调、双镜像分发与 Vault/GitOps 对接规划](client-distribution/01-xconnect-download-page-and-dual-mirror-plan.md) | `console.svc.plus/download?product=xconnect` UX 与数据层优化、`cn-dl.svc.plus`（OSS）与 `dl.svc.plus`（R2）同构契约、Vault KV v2 / GitOps 模板及 Phase 1–3 任务单 | 规划草案 |
+
 ### 全链路网络性能与双链路可观测性专题（2026-10-23）
 
 | 文档 | 用途 | 状态 |
