@@ -11,6 +11,7 @@
 - 依赖管理
 
 ### 🚨 故障排查
+- [Fix Duplicate Node ID Billing Pingpong](./Fix-Duplicate-Node-ID-Billing-Pingpong.md) - 修复多边缘节点共用 `EXPORTER_NODE_ID` 导致的 Checkpoint 乒乓重复计费与配额误耗尽。
 - 常见问题
 - 错误诊断
 - 应急处理
