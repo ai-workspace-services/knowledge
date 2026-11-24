@@ -18,8 +18,8 @@ tags:
 
 > [!NOTE]
 > **当前演进状态（基线更新：`2026-11-24`）**：  
-> - **直装双镜像已上线**：`xconnect` 的直装双镜像分发（`https://dl.svc.plus` Cloudflare R2、`https://cn-dl.svc.plus` 阿里云香港 OSS + CDN 与 `https://console.svc.plus/download?product=xconnect`）**已正式上线运行**（见 `01` 与 `02`）。  
-> - **统一包仓库平面规划中**：在已有直装双镜像之上，新增统一包仓库平面（`https://repo.svc.plus` / `https://cn-repo.svc.plus`）与 Hub 编排中心（`ai-workspace-lab/distribution`），以支持 Homebrew、APT、YUM/DNF、Scoop、WinGet 及一键脚本（见 `03`）。
+> - **直装双镜像已上线**：`https://dl.svc.plus`（Cloudflare R2）、`https://cn-dl.svc.plus`（阿里云香港 OSS + CDN）与 `https://console.svc.plus/download`（4 产品位矩阵 + `https://console.svc.plus/docs/` 入口 + CLI 快速安装命令条）**已正式上线运行**（见 `01`、`02` 与 `04`）。  
+> - **统一包仓库平面与 Go V2 引擎已合入主干**：`https://repo.svc.plus` 与 `https://cn-repo.svc.plus` 已上线并完成 20 端点全量验收；`ai-workspace-lab/distribution` 已升级为纯 Go 单二进制（`distd`）+ Cloudflare Workers Go-WASM 统一分发架构，支持 8 类制品聚合/同步/分发及 Wave 1 六大产品矩阵（见 `03` 与 `04`）。
 
 ---
 
@@ -44,7 +44,8 @@ tags:
 | :--- | :--- | :--- |
 | [01-xconnect-download-page-and-dual-mirror-plan.md](01-xconnect-download-page-and-dual-mirror-plan.md) | `console.svc.plus/download?product=xconnect` 现状诊断、CI Release 版本矩阵同步规范（`build-and-release.yml`）、前端纯展示 UX 与数据层设计、同构对象存储与 `release-matrix.json` 契约、Vault KV v2 与 GitOps 声明式模板及 Phase 1–3 任务单 | 已上线（`xconnect` 直装双镜像与下载页已投产） |
 | [02-client-mirrors-tldr-runbook.md](02-client-mirrors-tldr-runbook.md) | 双镜像（Cloudflare R2 + Aliyun OSS/CDN）Token 最小权限创建、Vault 非交互轮换、Ansible `roles/saas/client_mirrors` `plan`/`apply`/`verify` 操作手册 | Runbook（TL;DR） |
-| [03-unified-package-repository-plan.md](03-unified-package-repository-plan.md) | 统一客户端分发与包仓库架构规划：直装平面（`dl.svc.plus` / `cn-dl.svc.plus`）+ 包仓库平面（`repo.svc.plus` / `cn-repo.svc.plus`）双平面隔离、`ai-workspace-lab/distribution` Hub-and-Spoke 编排与单一 GPG 签名边界、多端包管理器矩阵（`install.sh`/`install.ps1`/Homebrew/APT/DNF/Scoop/WinGet）、基础设施复用（`repos.yaml` / `client_mirrors_stack=repos`）及 Phase 0–4 验收标准 | 规划中（Target Architecture） |
+| [03-unified-package-repository-plan.md](03-unified-package-repository-plan.md) | 统一客户端分发与包仓库架构规划：直装平面（`dl.svc.plus` / `cn-dl.svc.plus`）+ 包仓库平面（`repo.svc.plus` / `cn-repo.svc.plus`）双平面隔离、`ai-workspace-lab/distribution` Hub-and-Spoke 编排与单一 GPG 签名边界、多端包管理器矩阵（`install.sh`/`install.ps1`/Homebrew/APT/DNF/Scoop/WinGet）、基础设施复用（`repos.yaml` / `client_mirrors_stack=repos`）及 Phase 0–4 验收标准 | 已落地（双镜像与 Wave 1 已上线） |
+| [04-go-distribution-v2-and-delivery-record.md](04-go-distribution-v2-and-delivery-record.md) | 统一分发中心 V2（纯 Go 单二进制 `distd` + Cloudflare Workers Go-WASM）架构规范、8 类制品（Files/npm/GitHub GHCR/Docker OCI/Helm/APT+PPA+Debian buildd/DNF+openSUSE OBS/WinGet REST）协议与同步设计、部署运维手册、全链路 PR 交付清单与线上验收证据 | 已合入 `main`（实测验收通过） |
 
 ---
 
