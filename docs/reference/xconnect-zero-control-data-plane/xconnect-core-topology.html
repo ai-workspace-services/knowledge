@@ -3,306 +3,971 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>XConnect 边缘节点五大核心服务链路拓扑 (jp-xconnect-02.svc.plus)</title>
-  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <title>XConnect 边缘节点核心拓扑与 2C1G Lightsail 动态 ROI 面板 (Grafana Panel Preview)</title>
+  <style>
+    :root {
+      --bg: #090d16;
+      --panel: #0f172a;
+      --card: #0b1120;
+      --border: #1e293b;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --cyan: #38bdf8;
+      --emerald: #34d399;
+      --amber: #fbbf24;
+      --rose: #fb7185;
+      --violet: #a78bfa;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 16px 20px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", Inter, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .container {
+      max-width: 1580px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .panel-box {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+    }
+    .row-between {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .btn {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #e2e8f0;
+      border-radius: 6px;
+      padding: 5px 11px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn:hover { border-color: #60a5fa; }
+    .btn.active {
+      background: #2563eb;
+      border-color: #60a5fa;
+      color: #ffffff;
+    }
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .kpi-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+    .kpi-label { font-size: 11px; color: var(--muted); }
+    .kpi-val {
+      font-size: 19px;
+      font-weight: 800;
+      margin-top: 3px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+    .kpi-sub { font-size: 11px; color: #64748b; margin-top: 2px; }
+    table.roi-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      background: var(--card);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-top: 12px;
+    }
+    table.roi-table th {
+      background: #1e293b;
+      color: #cbd5e1;
+      text-align: left;
+      padding: 8px 10px;
+    }
+    table.roi-table td {
+      padding: 7px 10px;
+      border-top: 1px solid #1e293b;
+    }
+    table.roi-table tr { cursor: pointer; }
+    table.roi-table tr:hover { background: rgba(56,189,248,0.08); }
+    table.roi-table tr.selected-row { background: rgba(56,189,248,0.15); }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+  </style>
 </head>
-<body class="bg-[var(--background)] text-[var(--foreground)] antialiased m-0 p-6">
-  <div class="max-w-[1520px] mx-auto space-y-4">
-    <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-[var(--border)]">
-      <div>
-        <h1 class="text-xl font-semibold tracking-tight">XConnect 边缘节点核心服务链路拓扑</h1>
-        <p class="text-xs text-[var(--muted-foreground)] mt-1">
-          节点基准：<span class="font-mono">jp-xconnect-02.svc.plus</span>（939 MB RAM · 已用 507 MB · 可用 432 MB · 5 大核心链路总 RSS ~275.4 MB · systemd-journald 16.0 MB）
-        </p>
+<body>
+  <div class="container">
+    <!-- Top Grafana Plugin Control Bar -->
+    <div class="panel-box">
+      <div class="row-between">
+        <div>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <span style="font-size:19px;font-weight:800;color:#ffffff;">
+              XConnect 边缘节点单体聚合拓扑与 2C1G Lightsail 动态 ROI 面板
+            </span>
+            <span style="padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;background:rgba(56,189,248,0.18);border:1px solid #38bdf8;color:#7dd3fc;">
+              ● GRAFANA PANEL PLUGIN: xconnect-topology-roi-panel v1.0.0
+            </span>
+          </div>
+          <div style="font-size:12px;color:#94a3b8;margin-top:3px;">
+            金丝雀节点：<code class="mono" style="color:#38bdf8;">jp-xconnect-02.svc.plus</code>（AWS Lightsail 2 vCPU / 939 MiB RAM / 0 Swap）· 拖动并发滑块或点击图表，四大面板实时联动计算
+          </div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;" id="view-tabs">
+          <button class="btn active" data-view="all">全景四合一视图</button>
+          <button class="btn" data-view="topology">① 核心服务拓扑</button>
+          <button class="btn" data-view="timeseries">② 40 vs 500 VU 时序</button>
+          <button class="btn" data-view="knee_memory">③ 拐点与内存缩放</button>
+          <button class="btn" data-view="slo_roi">④ P95 SLO &amp; Lightsail ROI</button>
+        </div>
       </div>
-      <div class="flex flex-wrap items-center gap-2 text-xs">
-        <button data-layer="all" class="layer-btn px-3 py-1.5 rounded-md border border-[var(--primary)] bg-[var(--primary)] text-[var(--primary-foreground)] font-medium">全部链路</button>
-        <button data-layer="control" class="layer-btn px-3 py-1.5 rounded-md border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)]">控制面链路</button>
-        <button data-layer="proxy" class="layer-btn px-3 py-1.5 rounded-md border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)]">Proxy 数据链路</button>
-        <button data-layer="gateway" class="layer-btn px-3 py-1.5 rounded-md border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)]">Gateway 链路</button>
-        <button data-layer="obs" class="layer-btn px-3 py-1.5 rounded-md border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)]">监控与计费链路</button>
+
+      <!-- Interactive Sliders & Toggles -->
+      <div class="row-between" style="margin-top:12px;background:#0b1120;border:1px solid #1e293b;border-radius:8px;padding:10px 14px;">
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;">
+          <span style="font-size:12px;font-weight:700;">
+            调度并发水位: <strong id="vu-readout" class="mono" style="color:#38bdf8;font-size:14px;">120 VU</strong>
+          </span>
+          <input id="vu-slider" type="range" min="10" max="500" step="5" value="120" style="width:180px;accent-color:#38bdf8;cursor:pointer;" />
+          <div style="display:flex;gap:5px;flex-wrap:wrap;" id="vu-presets">
+            <button class="btn" data-vu="40" style="padding:3px 8px;font-size:11px;">40 VU 基线</button>
+            <button class="btn active" data-vu="120" style="padding:3px 8px;font-size:11px;">120 VU 最佳甜点</button>
+            <button class="btn" data-vu="150" style="padding:3px 8px;font-size:11px;">150 VU 拐点前</button>
+            <button class="btn" data-vu="200" style="padding:3px 8px;font-size:11px;">200 VU 排空线</button>
+            <button class="btn" data-vu="500" style="padding:3px 8px;font-size:11px;">500 VU 极限</button>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;">
+          <button id="toggle-tmpfs" class="btn" style="background:rgba(52,211,153,0.18);border-color:#34d399;color:#34d399;font-size:11px;padding:4px 10px;">
+            ✓ 已清理 /tmp 75M (+120 VU)
+          </button>
+          <button id="toggle-vector" class="btn" style="background:rgba(167,139,250,0.2);border-color:#a78bfa;color:#c4b5fd;font-size:11px;padding:4px 10px;">
+            ✓ Vector THP 瘦身 (71.5 MiB)
+          </button>
+          <div style="display:flex;align-items:center;gap:4px;font-size:11px;color:#94a3b8;" id="mult-btns">
+            <span>用户复用:</span>
+            <button class="btn" data-mult="3" style="padding:2px 7px;font-size:11px;">3x</button>
+            <button class="btn active" data-mult="4" style="padding:2px 7px;font-size:11px;">4x</button>
+            <button class="btn" data-mult="5" style="padding:2px 7px;font-size:11px;">5x</button>
+          </div>
+        </div>
       </div>
+
+      <!-- 6 Dynamic KPI Cards -->
+      <div class="kpi-grid" id="kpi-strip"></div>
     </div>
 
-    <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 overflow-x-auto">
-      <svg id="topo" viewBox="0 0 1560 920" class="w-full min-w-[1160px] h-auto select-none" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <marker id="arrow-cyan" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-            <path d="M 0 1 L 10 5 L 0 9 z" fill="#38bdf8" />
-          </marker>
-          <marker id="arrow-emerald" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-            <path d="M 0 1 L 10 5 L 0 9 z" fill="#34d399" />
-          </marker>
-          <marker id="arrow-amber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-            <path d="M 0 1 L 10 5 L 0 9 z" fill="#fbbf24" />
-          </marker>
-          <marker id="arrow-violet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-            <path d="M 0 1 L 10 5 L 0 9 z" fill="#a78bfa" />
-          </marker>
-          <marker id="arrow-rose" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-            <path d="M 0 1 L 10 5 L 0 9 z" fill="#fb7185" />
-          </marker>
-        </defs>
+    <!-- Section 1: XConnect 5-Service Core Topology -->
+    <div class="panel-box" id="sec-topology">
+      <div class="row-between" style="margin-bottom:10px;">
+        <div>
+          <div style="font-size:16px;font-weight:700;">① XConnect 边缘节点五大核心服务动态链路拓扑 (jp-xconnect-02.svc.plus)</div>
+          <div style="font-size:12px;color:#94a3b8;margin-top:2px;" id="topo-subtitle"></div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;" id="layer-btns">
+          <button class="btn active" data-layer="all">全部链路</button>
+          <button class="btn" data-layer="control">① 控制面链路</button>
+          <button class="btn" data-layer="proxy">② Proxy 数据链路</button>
+          <button class="btn" data-layer="gateway">③ Gateway 链路</button>
+          <button class="btn" data-layer="obs">④ 监控与计费链路</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto;background:#0b1120;border:1px solid #1e293b;border-radius:10px;padding:10px;" id="topo-svg-wrap"></div>
+      <div id="service-drawer" style="margin-top:10px;background:#0b1120;border:1px solid #334155;border-radius:10px;padding:10px 14px;"></div>
+    </div>
 
-        <!-- Background Zone Frames -->
-        <rect x="20" y="20" width="270" height="880" rx="14" fill="rgba(148,163,184,0.06)" stroke="rgba(148,163,184,0.28)" stroke-dasharray="6 4" />
-        <text x="38" y="48" font-size="13" font-weight="700" fill="currentColor" opacity="0.7">外部客户端 / 云端中心</text>
+    <!-- Section 2: 40 VU vs 500 VU (30m) k6 Dynamic Timeseries -->
+    <div class="panel-box" id="sec-timeseries">
+      <div class="row-between" style="margin-bottom:10px;">
+        <div>
+          <div style="font-size:16px;font-weight:700;">② 40 VU vs 500 VU（30 分钟 / 1s 采样分箱）实测吞吐与延迟动态对比</div>
+          <div style="font-size:12px;color:#94a3b8;margin-top:2px;">
+            目标节点：<code class="mono" style="color:#38bdf8;">jp-xconnect-02.svc.plus</code>（VLESS+XHTTP+TLS <code>/split</code>）· 拖动时间切片或悬停曲线实时查看 15s 分箱数据
+          </div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;">
+          <button id="btn-play-time" class="btn" style="background:#2563eb;border-color:#60a5fa;color:#fff;">▶ 动态回放 30m</button>
+          <span style="font-size:12px;color:#cbd5e1;" id="time-slice-label">时间切片: 15.00m</span>
+          <input id="time-slider" type="range" min="0" max="120" step="1" value="60" style="width:140px;accent-color:#38bdf8;cursor:pointer;" />
+        </div>
+      </div>
+      <div id="ts-readout" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;margin-bottom:10px;background:#0b1120;border:1px solid #1e293b;border-radius:8px;padding:8px 12px;font-size:12px;"></div>
+      <div style="overflow-x:auto;" id="ts-svg-wrap"></div>
+    </div>
 
-        <rect x="315" y="20" width="935" height="880" rx="16" fill="rgba(56,189,248,0.04)" stroke="rgba(56,189,248,0.35)" stroke-width="1.5" />
-        <text x="335" y="48" font-size="14" font-weight="700" fill="#38bdf8">边缘节点：jp-xconnect-02.svc.plus（4 进程严格隔离 + Vector 汇聚）</text>
+    <!-- Section 3: Little's Law Knee & 939 MiB Memory Scaling -->
+    <div class="panel-box" id="sec-knee-memory">
+      <div class="row-between" style="margin-bottom:10px;">
+        <div>
+          <div style="font-size:16px;font-weight:700;">③ 实测并发拐点（Little's Law Knee）与 939 MiB 内存动态缩放模型</div>
+          <div style="font-size:12px;color:#94a3b8;margin-top:2px;">
+            基于 500 VU 爬坡阶段 1s 级分箱采样 · Proxy 边际内存斜率 <code>0.587 MiB/VU</code> · 点击图表任意并发位置可直接联动全盘
+          </div>
+        </div>
+        <div id="knee-badges" style="display:flex;flex-wrap:wrap;gap:8px;font-size:12px;"></div>
+      </div>
+      <div style="overflow-x:auto;" id="knee-svg-wrap"></div>
+    </div>
 
-        <rect x="1275" y="20" width="265" height="880" rx="14" fill="rgba(148,163,184,0.06)" stroke="rgba(148,163,184,0.28)" stroke-dasharray="6 4" />
-        <text x="1293" y="48" font-size="13" font-weight="700" fill="currentColor" opacity="0.7">上游出站与中心存储</text>
-
-        <!-- Band Labels inside node -->
-        <rect x="335" y="66" width="895" height="170" rx="12" fill="rgba(251,191,36,0.05)" stroke="rgba(251,191,36,0.28)" />
-        <text x="352" y="88" font-size="12" font-weight="700" fill="#fbbf24">① 控制面 (Control Plane)</text>
-
-        <rect x="335" y="254" width="895" height="400" rx="12" fill="rgba(52,211,153,0.04)" stroke="rgba(52,211,153,0.25)" />
-        <text x="352" y="276" font-size="12" font-weight="700" fill="#34d399">② 数据面 (L7 Ingress + Proxy / Gateway 独立实例)</text>
-
-        <rect x="335" y="672" width="895" height="212" rx="12" fill="rgba(167,139,250,0.05)" stroke="rgba(167,139,250,0.28)" />
-        <text x="352" y="694" font-size="12" font-weight="700" fill="#a78bfa">③ 核心监控与计费汇聚面 (Observability &amp; Billing)</text>
-
-        <!-- EXTERNAL LEFT NODES -->
-        <g class="node layer-control" data-layers="control">
-          <rect x="40" y="95" width="230" height="106" rx="10" fill="var(--card)" stroke="#fbbf24" stroke-width="2" />
-          <text x="56" y="122" font-size="14" font-weight="700" fill="currentColor">accounts.svc.plus</text>
-          <text x="56" y="143" font-size="12" fill="currentColor" opacity="0.75">控制面 SaaS / 调度中心</text>
-          <text x="56" y="164" font-size="11" font-family="monospace" fill="#fbbf24">Users · Routing · Gateway Policy</text>
-          <text x="56" y="182" font-size="11" font-family="monospace" fill="currentColor" opacity="0.65">HTTPS / Sync 5m + SSE</text>
-        </g>
-
-        <g class="node layer-proxy" data-layers="proxy">
-          <rect x="40" y="295" width="230" height="104" rx="10" fill="var(--card)" stroke="#38bdf8" stroke-width="2" />
-          <text x="56" y="322" font-size="14" font-weight="700" fill="currentColor">代理客户端 (XHTTP)</text>
-          <text x="56" y="343" font-size="12" fill="currentColor" opacity="0.75">VLESS + XHTTP + TLS (fp=chrome)</text>
-          <text x="56" y="364" font-size="11" font-family="monospace" fill="#38bdf8">jp-xconnect-02.svc.plus:443</text>
-          <text x="56" y="382" font-size="11" font-family="monospace" fill="currentColor" opacity="0.65">path=/split · alpn=h2,http/1.1</text>
-        </g>
-
-        <g class="node layer-proxy" data-layers="proxy">
-          <rect x="40" y="425" width="230" height="92" rx="10" fill="var(--card)" stroke="#34d399" stroke-width="2" />
-          <text x="56" y="452" font-size="14" font-weight="700" fill="currentColor">代理客户端 (TCP Vision)</text>
-          <text x="56" y="473" font-size="12" fill="currentColor" opacity="0.75">VLESS + TLS + xtls-rprx-vision</text>
-          <text x="56" y="494" font-size="11" font-family="monospace" fill="#34d399">jp-xconnect-02.svc.plus:1443</text>
-        </g>
-
-        <g class="node layer-gateway" data-layers="gateway">
-          <rect x="40" y="545" width="230" height="98" rx="10" fill="var(--card)" stroke="#fb7185" stroke-width="2" />
-          <text x="56" y="572" font-size="14" font-weight="700" fill="currentColor">零信任 Gateway 客户端</text>
-          <text x="56" y="593" font-size="12" fill="currentColor" opacity="0.75">XConnect Overlay Tunnel</text>
-          <text x="56" y="614" font-size="11" font-family="monospace" fill="#fb7185">jp-xconnect-gateway-02.svc.plus:443</text>
-          <text x="56" y="631" font-size="11" font-family="monospace" fill="currentColor" opacity="0.65">path=/xconnect</text>
-        </g>
-
-        <g class="node layer-obs" data-layers="obs">
-          <rect x="40" y="715" width="230" height="118" rx="10" fill="var(--card)" stroke="#a78bfa" stroke-width="1.5" />
-          <text x="56" y="742" font-size="14" font-weight="700" fill="currentColor">GitOps + Playbooks</text>
-          <text x="56" y="763" font-size="12" fill="currentColor" opacity="0.75">每日定时自我收敛 (ansible-pull)</text>
-          <text x="56" y="784" font-size="11" font-family="monospace" fill="#a78bfa">xconnect-regional-pools.yaml</text>
-          <text x="56" y="802" font-size="11" font-family="monospace" fill="currentColor" opacity="0.7">sysctl / fluxgate / xray / journald</text>
-          <text x="56" y="820" font-size="11" font-family="monospace" fill="currentColor" opacity="0.65">已停非核心: fail2ban/unattended/auditd</text>
-        </g>
-
-        <!-- CORE 1: xconnect-edge-agent -->
-        <g class="node layer-control" data-layers="control">
-          <rect x="480" y="102" width="540" height="118" rx="12" fill="var(--card)" stroke="#fbbf24" stroke-width="2.5" />
-          <text x="500" y="129" font-size="15" font-weight="700" fill="currentColor">1. xconnect-edge-agent.service</text>
-          <rect x="895" y="110" width="110" height="22" rx="6" fill="rgba(251,191,36,0.18)" />
-          <text x="950" y="125" text-anchor="middle" font-size="11" font-weight="700" fill="#fbbf24">RSS 24.1 MB</text>
-          <text x="500" y="150" font-size="12" font-family="monospace" fill="currentColor" opacity="0.8">/usr/local/bin/agent-proxy -config /etc/agent/account-agent.yaml</text>
-          <text x="500" y="171" font-size="12" fill="currentColor" opacity="0.85">• 01-agent-proxy.yaml -> 单一目标 "proxy" (/usr/local/etc/xray/config.json · 14 clients)</text>
-          <text x="500" y="190" font-size="12" fill="currentColor" opacity="0.85">• 02-xconnect-gateway.yaml -> jp-xconnect-gateway-02 (net-jp-xconnect-02)</text>
-          <text x="500" y="209" font-size="11" font-family="monospace" fill="#fbbf24">校验: xray run -test -config {config} · 热重载: reload-or-restart (SIGHUP)</text>
-        </g>
-
-        <!-- CORE 2: fluxgate -->
-        <g class="node layer-proxy layer-gateway layer-obs" data-layers="proxy,gateway,obs">
-          <rect x="355" y="300" width="295" height="315" rx="12" fill="var(--card)" stroke="#38bdf8" stroke-width="2.5" />
-          <text x="373" y="328" font-size="15" font-weight="700" fill="currentColor">2. fluxgate.service</text>
-          <rect x="530" y="309" width="104" height="22" rx="6" fill="rgba(56,189,248,0.18)" />
-          <text x="582" y="324" text-anchor="middle" font-size="11" font-weight="700" fill="#38bdf8">RSS 28.1 MB</text>
-          <text x="373" y="350" font-size="12" font-family="monospace" fill="currentColor" opacity="0.8">fluxgate v0.2.1 · L7 Ingress</text>
-          <text x="373" y="372" font-size="12" font-family="monospace" fill="#38bdf8">Listen :443 (TLS *.svc.plus)</text>
-          <text x="373" y="391" font-size="11" font-family="monospace" fill="currentColor" opacity="0.7">Metrics: 127.0.0.1:9102/metrics</text>
-
-          <rect x="371" y="408" width="263" height="62" rx="8" fill="rgba(56,189,248,0.08)" stroke="rgba(56,189,248,0.35)" />
-          <text x="382" y="427" font-size="12" font-weight="600" fill="#38bdf8">Route A: /split/* (Proxy XHTTP)</text>
-          <text x="382" y="445" font-size="11" font-family="monospace" fill="currentColor" opacity="0.75">H2 Win 4MiB/16MiB · flush -1</text>
-          <text x="382" y="461" font-size="11" font-family="monospace" fill="currentColor" opacity="0.75">-> unix:///dev/shm/xray.sock</text>
-
-          <rect x="371" y="482" width="263" height="58" rx="8" fill="rgba(251,113,133,0.08)" stroke="rgba(251,113,133,0.35)" />
-          <text x="382" y="501" font-size="12" font-weight="600" fill="#fb7185">Route B: /xconnect/* (Gateway)</text>
-          <text x="382" y="518" font-size="11" font-family="monospace" fill="currentColor" opacity="0.75">h2c · flush -1 · strip x_padding</text>
-          <text x="382" y="534" font-size="11" font-family="monospace" fill="currentColor" opacity="0.75">-> unix:///run/xconnect-gateway/xray.sock</text>
-
-          <rect x="371" y="552" width="263" height="48" rx="8" fill="rgba(148,163,184,0.08)" stroke="rgba(148,163,184,0.3)" />
-          <text x="382" y="571" font-size="11" font-weight="600" fill="currentColor">Route C: /xray-exporter/*</text>
-          <text x="382" y="588" font-size="11" font-family="monospace" fill="currentColor" opacity="0.75">-> http://127.0.0.1:8080</text>
-        </g>
-
-        <!-- CORE 3: xconnect-proxy-xray -->
-        <g class="node layer-proxy layer-control layer-obs" data-layers="proxy,control,obs">
-          <rect x="735" y="294" width="475" height="202" rx="12" fill="var(--card)" stroke="#34d399" stroke-width="2.5" />
-          <text x="755" y="322" font-size="15" font-weight="700" fill="currentColor">3. xconnect-proxy-xray.service</text>
-          <rect x="1090" y="303" width="104" height="22" rx="6" fill="rgba(52,211,153,0.18)" />
-          <text x="1142" y="318" text-anchor="middle" font-size="11" font-weight="700" fill="#34d399">RSS 59.4 MB</text>
-          <text x="755" y="343" font-size="12" font-family="monospace" fill="currentColor" opacity="0.8">Xray-core + 内嵌 xray-exporter (user=xray, groups=caddy,xray-access)</text>
-          <text x="755" y="363" font-size="11" font-family="monospace" fill="currentColor" opacity="0.75">Config: /usr/local/etc/xray/config.json (bufferSize=128, connIdle=3600)</text>
-
-          <rect x="753" y="376" width="215" height="54" rx="8" fill="rgba(56,189,248,0.08)" stroke="rgba(56,189,248,0.35)" />
-          <text x="763" y="395" font-size="12" font-weight="600" fill="#38bdf8">Inbound: proxy-xhttp-in</text>
-          <text x="763" y="414" font-size="11" font-family="monospace" fill="currentColor" opacity="0.8">/dev/shm/xray.sock (0666)</text>
-
-          <rect x="980" y="376" width="212" height="54" rx="8" fill="rgba(52,211,153,0.08)" stroke="rgba(52,211,153,0.35)" />
-          <text x="990" y="395" font-size="12" font-weight="600" fill="#34d399">Inbound: proxy-tcp-in</text>
-          <text x="990" y="414" font-size="11" font-family="monospace" fill="currentColor" opacity="0.8">0.0.0.0:1443 (TLS Vision)</text>
-
-          <rect x="753" y="440" width="439" height="44" rx="8" fill="rgba(167,139,250,0.1)" stroke="rgba(167,139,250,0.4)" />
-          <text x="765" y="458" font-size="12" font-weight="600" fill="#a78bfa">进程内内存 stats.Manager（零 gRPC 10086/10087）</text>
-          <text x="765" y="475" font-size="11" font-family="monospace" fill="currentColor" opacity="0.8">Expose 127.0.0.1:8080/scrape · 1m Push Snapshot -> 127.0.0.1:8686</text>
-        </g>
-
-        <!-- CORE 4: xconnect-gateway-xray -->
-        <g class="node layer-gateway layer-control" data-layers="gateway,control">
-          <rect x="735" y="514" width="475" height="122" rx="12" fill="var(--card)" stroke="#fb7185" stroke-width="2.5" />
-          <text x="755" y="542" font-size="15" font-weight="700" fill="currentColor">4. xconnect-gateway-xray.service</text>
-          <rect x="1090" y="523" width="104" height="22" rx="6" fill="rgba(251,113,133,0.18)" />
-          <text x="1142" y="538" text-anchor="middle" font-size="11" font-weight="700" fill="#fb7185">RSS 36.8 MB</text>
-          <text x="755" y="563" font-size="12" font-family="monospace" fill="currentColor" opacity="0.8">独立裸 /usr/local/bin/xray 进程（无 exporter，user=root）</text>
-          <text x="755" y="583" font-size="11" font-family="monospace" fill="currentColor" opacity="0.75">Config: /var/lib/xconnect-gateway/runtime/xray.json (配置完全独立)</text>
-          <text x="755" y="603" font-size="12" font-family="monospace" fill="#fb7185">Inbound: xconnect-vless-in (/run/xconnect-gateway/xray.sock)</text>
-          <text x="755" y="622" font-size="12" font-family="monospace" fill="currentColor" opacity="0.8">Outbound: xconnect-wireguard -> redirect 127.0.0.1:51820</text>
-        </g>
-
-        <!-- CORE 5: vector -->
-        <g class="node layer-obs" data-layers="obs">
-          <rect x="440" y="712" width="485" height="154" rx="12" fill="var(--card)" stroke="#a78bfa" stroke-width="2.5" />
-          <text x="460" y="740" font-size="15" font-weight="700" fill="currentColor">5. vector.service（核心监控与计费汇聚探针）</text>
-          <rect x="795" y="721" width="114" height="22" rx="6" fill="rgba(167,139,250,0.18)" />
-          <text x="852" y="736" text-anchor="middle" font-size="11" font-weight="700" fill="#a78bfa">RSS 124.1 MB</text>
-          <text x="460" y="762" font-size="12" font-family="monospace" fill="currentColor" opacity="0.8">/etc/vector/vector.toml · cgroup MemoryHigh=96M / MemoryMax=160M</text>
-          <text x="460" y="784" font-size="12" fill="currentColor" opacity="0.85">• Billing HTTP Server (:8686) -> 512MiB Disk Buffer 异步推送计费</text>
-          <text x="460" y="805" font-size="12" fill="currentColor" opacity="0.85">• 15s Prometheus Scrape: xray:8080 · fluxgate:9102 · node:9100 · proc:9256</text>
-          <text x="460" y="826" font-size="12" fill="currentColor" opacity="0.85">• Single Journald Reader: 采集单元日志并提炼 xhttp_events_total 事件</text>
-          <text x="460" y="847" font-size="11" font-family="monospace" fill="#a78bfa">TLS verify_certificate=true · Basic Auth via remote-write-auth.json</text>
-        </g>
-
-        <!-- Supporting Probes inside obs band -->
-        <g class="node layer-obs" data-layers="obs">
-          <rect x="960" y="712" width="250" height="154" rx="10" fill="var(--card)" stroke="rgba(167,139,250,0.45)" stroke-width="1.5" />
-          <text x="976" y="738" font-size="13" font-weight="700" fill="currentColor">基础支撑采集进程</text>
-          <text x="976" y="762" font-size="12" font-family="monospace" fill="currentColor" opacity="0.85">• systemd-journald  16.0 MB</text>
-          <text x="976" y="781" font-size="11" font-family="monospace" fill="#a78bfa">  cap: 24M/48M · disk 64M/3d</text>
-          <text x="976" y="803" font-size="12" font-family="monospace" fill="currentColor" opacity="0.85">• node_exporter     20.3 MB</text>
-          <text x="976" y="822" font-size="12" font-family="monospace" fill="currentColor" opacity="0.85">• process-exporter  16.9 MB</text>
-          <text x="976" y="841" font-size="12" font-family="monospace" fill="currentColor" opacity="0.85">• metrics-sup.py     7.0 MB</text>
-        </g>
-
-        <!-- EXTERNAL RIGHT NODES -->
-        <g class="node layer-proxy" data-layers="proxy">
-          <rect x="1295" y="295" width="225" height="186" rx="10" fill="var(--card)" stroke="#34d399" stroke-width="2" />
-          <text x="1312" y="322" font-size="14" font-weight="700" fill="currentColor">Proxy 策略路由出站</text>
-          <text x="1312" y="346" font-size="12" font-family="monospace" fill="#34d399">• pool-media-stream</text>
-          <text x="1312" y="366" font-size="12" font-family="monospace" fill="#34d399">• pool-pro-ai-dev</text>
-          <text x="1312" y="386" font-size="12" font-family="monospace" fill="#34d399">• pool-media-fallback</text>
-          <text x="1312" y="408" font-size="12" font-family="monospace" fill="currentColor" opacity="0.8">• direct-cn (geosite/ip)</text>
-          <text x="1312" y="428" font-size="12" font-family="monospace" fill="currentColor" opacity="0.65">• blocked-private</text>
-          <text x="1312" y="458" font-size="11" fill="currentColor" opacity="0.65">DomainStrategy: IPIfNonMatch</text>
-        </g>
-
-        <g class="node layer-gateway" data-layers="gateway">
-          <rect x="1295" y="514" width="225" height="122" rx="10" fill="var(--card)" stroke="#fb7185" stroke-width="2" />
-          <text x="1312" y="542" font-size="14" font-weight="700" fill="currentColor">WireGuard Overlay</text>
-          <text x="1312" y="566" font-size="12" font-family="monospace" fill="#fb7185">interface: xconzero0</text>
-          <text x="1312" y="586" font-size="12" font-family="monospace" fill="currentColor" opacity="0.8">UDP 127.0.0.1:51820</text>
-          <text x="1312" y="608" font-size="11" font-family="monospace" fill="currentColor" opacity="0.7">net-jp-xconnect-02</text>
-        </g>
-
-        <g class="node layer-obs" data-layers="obs">
-          <rect x="1295" y="685" width="225" height="92" rx="10" fill="var(--card)" stroke="#a78bfa" stroke-width="2" />
-          <text x="1312" y="712" font-size="14" font-weight="700" fill="currentColor">billing.svc.plus</text>
-          <text x="1312" y="734" font-size="12" font-family="monospace" fill="#a78bfa">/v1/ingest/snapshots</text>
-          <text x="1312" y="754" font-size="11" fill="currentColor" opacity="0.75">每分钟流量计费入库 (PG)</text>
-        </g>
-
-        <g class="node layer-obs" data-layers="obs">
-          <rect x="1295" y="795" width="225" height="92" rx="10" fill="var(--card)" stroke="#a78bfa" stroke-width="2" />
-          <text x="1312" y="822" font-size="14" font-weight="700" fill="currentColor">observability.svc.plus</text>
-          <text x="1312" y="844" font-size="11" font-family="monospace" fill="#a78bfa">VictoriaMetrics + VictoriaLogs</text>
-          <text x="1312" y="864" font-size="11" fill="currentColor" opacity="0.75">节点/进程/Xray/Fluxgate 全景监控</text>
-        </g>
-
-        <!-- EDGES -->
-        <!-- Control edges -->
-        <path class="edge" data-layers="control" d="M 270 148 L 474 148" fill="none" stroke="#fbbf24" stroke-width="2.5" marker-end="url(#arrow-amber)" />
-        <text class="edge-label" data-layers="control" x="372" y="138" text-anchor="middle" font-size="11" font-weight="600" fill="#fbbf24">5m Sync / SSE</text>
-
-        <path class="edge" data-layers="control" d="M 880 220 L 880 288" fill="none" stroke="#fbbf24" stroke-width="2.3" stroke-dasharray="6 3" marker-end="url(#arrow-amber)" />
-        <text class="edge-label" data-layers="control" x="888" y="250" font-size="11" font-weight="600" fill="#fbbf24">写 config.json + SIGHUP 热加载</text>
-
-        <path class="edge" data-layers="control" d="M 700 220 L 700 575 L 729 575" fill="none" stroke="#fbbf24" stroke-width="2.3" stroke-dasharray="6 3" marker-end="url(#arrow-amber)" />
-        <text class="edge-label" data-layers="control" x="706" y="425" font-size="11" font-weight="600" fill="#fbbf24" transform="rotate(-90 706 425)">xconnect-gateway apply</text>
-
-        <!-- Proxy XHTTP edges -->
-        <path class="edge" data-layers="proxy" d="M 270 347 L 349 347" fill="none" stroke="#38bdf8" stroke-width="2.8" marker-end="url(#arrow-cyan)" />
-        <text class="edge-label" data-layers="proxy" x="308" y="337" text-anchor="middle" font-size="11" font-weight="600" fill="#38bdf8">:443 TLS</text>
-
-        <path class="edge" data-layers="proxy" d="M 634 438 L 729 403" fill="none" stroke="#38bdf8" stroke-width="2.8" marker-end="url(#arrow-cyan)" />
-        <text class="edge-label" data-layers="proxy" x="684" y="403" text-anchor="middle" font-size="11" font-weight="600" fill="#38bdf8">UDS h2c</text>
-
-        <!-- Proxy TCP direct edge -->
-        <path class="edge" data-layers="proxy" d="M 270 471 C 320 471, 305 648, 675 648 C 710 648, 705 422, 974 422" fill="none" stroke="#34d399" stroke-width="2.5" marker-end="url(#arrow-emerald)" />
-        <text class="edge-label" data-layers="proxy" x="500" y="641" text-anchor="middle" font-size="11" font-weight="600" fill="#34d399">TCP :1443 直连 VLESS+TLS+Vision (绕过 Fluxgate)</text>
-
-        <!-- Proxy outbounds -->
-        <path class="edge" data-layers="proxy" d="M 1210 388 L 1289 388" fill="none" stroke="#34d399" stroke-width="2.8" marker-end="url(#arrow-emerald)" />
-
-        <!-- Gateway edges -->
-        <path class="edge" data-layers="gateway" d="M 270 594 L 349 514" fill="none" stroke="#fb7185" stroke-width="2.6" marker-end="url(#arrow-rose)" />
-        <path class="edge" data-layers="gateway" d="M 634 514 L 729 586" fill="none" stroke="#fb7185" stroke-width="2.6" marker-end="url(#arrow-rose)" />
-        <text class="edge-label" data-layers="gateway" x="682" y="564" text-anchor="middle" font-size="11" font-weight="600" fill="#fb7185">GW UDS</text>
-        <path class="edge" data-layers="gateway" d="M 1210 575 L 1289 575" fill="none" stroke="#fb7185" stroke-width="2.6" marker-end="url(#arrow-rose)" />
-
-        <!-- Observability & Billing edges -->
-        <path class="edge" data-layers="obs" d="M 880 484 L 880 706" fill="none" stroke="#a78bfa" stroke-width="2.5" marker-end="url(#arrow-violet)" />
-        <text class="edge-label" data-layers="obs" x="888" y="660" font-size="11" font-weight="600" fill="#a78bfa">POST :8686 + Scrape :8080</text>
-
-        <path class="edge" data-layers="obs" d="M 505 615 L 505 706" fill="none" stroke="#a78bfa" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow-violet)" />
-        <text class="edge-label" data-layers="obs" x="512" y="662" font-size="11" fill="#a78bfa">:9102/metrics</text>
-
-        <path class="edge" data-layers="obs" d="M 960 790 L 931 790" fill="none" stroke="#a78bfa" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow-violet)" />
-
-        <path class="edge" data-layers="obs" d="M 925 752 L 1289 731" fill="none" stroke="#a78bfa" stroke-width="2.6" marker-end="url(#arrow-violet)" />
-        <path class="edge" data-layers="obs" d="M 925 832 L 1289 841" fill="none" stroke="#a78bfa" stroke-width="2.6" marker-end="url(#arrow-violet)" />
-      </svg>
+    <!-- Section 4: P95 SLO Thresholds & 2C1G Lightsail ROI -->
+    <div class="panel-box" id="sec-slo-roi">
+      <div class="row-between" style="margin-bottom:10px;">
+        <div>
+          <div style="font-size:16px;font-weight:700;">④ P95 延迟分级监控上限与 AWS Lightsail 2C1G ($7 / $10 / $12) 动态 ROI 面板</div>
+          <div style="font-size:12px;color:#94a3b8;margin-top:2px;" id="roi-subtitle"></div>
+        </div>
+        <div style="display:flex;gap:6px;" id="tier-btns">
+          <button class="btn active" data-tier="7">$7/月 (标准 IPv4)</button>
+          <button class="btn" data-tier="10">$10/月 (对照档)</button>
+          <button class="btn" data-tier="12">$12/月 (对照档)</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto;" id="roi-svg-wrap"></div>
+      <div style="overflow-x:auto;" id="roi-table-wrap"></div>
     </div>
   </div>
 
   <script>
-    const buttons = document.querySelectorAll('.layer-btn');
-    const nodes = document.querySelectorAll('.node');
-    const edges = document.querySelectorAll('.edge, .edge-label');
+    const RAW_S40 = [[0.0, 1.2, 1.08, 107.1], [0.25, 2.4, 2.0, 183.3], [0.5, 3.6, 3.2, 135.4], [0.75, 4.9, 4.33, 138.5], [1.0, 6.3, 5.53, 138.6], [1.25, 7.6, 6.4, 182.3], [1.5, 8.8, 7.53, 168.1], [1.75, 10.2, 8.93, 145.5], [2.0, 11.5, 10.47, 98.7], [2.25, 12.7, 10.93, 161.6], [2.5, 14.1, 12.07, 165.7], [2.75, 15.4, 13.13, 170.1], [3.0, 16.6, 14.87, 118.8], [3.25, 17.9, 15.8, 135.0], [3.5, 19.3, 16.87, 144.3], [3.75, 20.6, 17.93, 146.8], [4.0, 21.8, 19.6, 112.2], [4.25, 23.2, 20.2, 150.2], [4.5, 24.5, 21.6, 134.3], [4.75, 25.7, 22.6, 137.2], [5.0, 27.1, 23.2, 166.7], [5.25, 28.4, 25.13, 128.6], [5.5, 29.6, 26.07, 136.8], [5.75, 30.9, 26.93, 148.5], [6.0, 32.3, 28.0, 153.6], [6.25, 33.6, 29.2, 149.5], [6.5, 34.8, 30.8, 129.9], [6.75, 36.2, 31.47, 151.5], [7.0, 37.5, 33.2, 129.5], [7.25, 38.7, 34.8, 112.1], [7.5, 39.9, 34.87, 144.4], [7.75, 40.0, 35.93, 113.2], [8.0, 40.0, 35.33, 132.1], [8.25, 40.0, 35.53, 125.7], [8.5, 40.0, 35.47, 127.8], [8.75, 40.0, 36.07, 109.1], [9.0, 40.0, 35.8, 117.3], [9.25, 40.0, 35.73, 119.4], [9.5, 40.0, 35.8, 117.3], [9.75, 40.0, 36.0, 111.1], [10.0, 40.0, 35.6, 123.6], [10.25, 40.0, 35.73, 119.4], [10.5, 40.0, 35.87, 115.2], [10.75, 40.0, 35.87, 115.2], [11.0, 40.0, 35.8, 117.3], [11.25, 40.0, 33.93, 178.8], [11.5, 40.0, 35.13, 138.5], [11.75, 40.0, 35.8, 117.3], [12.0, 40.0, 35.6, 123.6], [12.25, 40.0, 36.0, 111.1], [12.5, 40.0, 35.4, 129.9], [12.75, 40.0, 35.47, 127.8], [13.0, 40.0, 36.4, 98.9], [13.25, 40.0, 35.2, 136.4], [13.5, 40.0, 36.73, 88.9], [13.75, 40.0, 35.13, 138.5], [14.0, 40.0, 36.07, 109.1], [14.25, 40.0, 35.07, 140.7], [14.5, 40.0, 33.4, 197.6], [14.75, 40.0, 34.67, 153.8], [15.0, 40.0, 33.6, 190.5], [15.25, 40.0, 35.07, 140.7], [15.5, 40.0, 35.33, 132.1], [15.75, 40.0, 35.33, 132.1], [16.0, 40.0, 35.07, 140.7], [16.25, 40.0, 35.33, 132.1], [16.5, 40.0, 34.73, 151.6], [16.75, 40.0, 36.27, 102.9], [17.0, 40.0, 35.53, 125.7], [17.25, 40.0, 35.73, 119.4], [17.5, 40.0, 35.67, 121.5], [17.75, 40.0, 35.4, 129.9], [18.0, 40.0, 35.87, 115.2], [18.25, 40.0, 35.4, 129.9], [18.5, 40.0, 34.67, 153.8], [18.75, 40.0, 35.53, 125.7], [19.0, 40.0, 35.53, 125.7], [19.25, 40.0, 35.6, 123.6], [19.5, 40.0, 35.4, 129.9], [19.75, 40.0, 35.2, 136.4], [20.0, 40.0, 35.53, 125.7], [20.25, 40.0, 35.2, 136.4], [20.5, 40.0, 35.4, 129.9], [20.75, 40.0, 35.47, 127.8], [21.0, 40.0, 35.13, 138.5], [21.25, 40.0, 32.27, 239.7], [21.5, 40.0, 34.8, 149.4], [21.75, 40.0, 35.13, 138.5], [22.0, 40.0, 34.6, 156.1], [22.25, 40.0, 34.27, 167.3], [22.5, 39.9, 34.93, 142.2], [22.75, 38.6, 33.87, 138.8], [23.0, 37.4, 33.07, 130.0], [23.25, 35.9, 31.67, 134.7], [23.5, 34.6, 30.67, 129.3], [23.75, 33.4, 29.53, 129.8], [24.0, 31.9, 28.07, 137.8], [24.25, 30.6, 27.2, 126.2], [24.5, 29.4, 26.2, 120.9], [24.75, 27.9, 24.47, 141.7], [25.0, 26.6, 24.0, 106.9], [25.25, 25.3, 22.53, 122.8], [25.5, 24.0, 21.33, 125.0], [25.75, 22.6, 20.2, 117.2], [26.0, 21.4, 19.13, 116.7], [26.25, 20.0, 18.07, 107.0], [26.5, 18.6, 16.47, 127.5], [26.75, 17.4, 15.4, 127.7], [27.0, 16.0, 14.6, 95.9], [27.25, 14.6, 12.87, 132.1], [27.5, 13.4, 11.87, 126.4], [27.75, 11.9, 10.87, 98.2], [28.0, 10.6, 9.2, 148.6], [28.25, 9.3, 8.53, 89.8], [28.5, 7.9, 7.07, 122.6], [28.75, 6.6, 6.0, 105.6], [29.0, 5.4, 4.8, 118.1], [29.25, 3.9, 3.6, 92.6], [29.5, 2.6, 2.33, 128.6], [29.75, 1.4, 1.2, 138.9], [30.0, 0.8, 1.25, 0.0]];
+    const RAW_S500 = [[0.0, 8.8, 6.0, 474.4], [0.25, 24.3, 17.13, 418.3], [0.5, 40.9, 29.4, 392.3], [0.75, 57.6, 28.87, 994.2], [1.0, 74.2, 48.53, 528.2], [1.25, 90.9, 58.6, 550.6], [1.5, 107.4, 62.2, 727.2], [1.75, 124.1, 66.87, 855.4], [2.0, 140.8, 75.6, 862.9], [2.25, 157.3, 87.2, 803.9], [2.5, 174.0, 94.6, 839.3], [2.75, 190.7, 83.87, 1273.8], [3.0, 207.2, 80.13, 1585.3], [3.25, 223.9, 97.67, 1292.8], [3.5, 240.6, 101.53, 1369.3], [3.75, 257.1, 84.93, 2027.5], [4.0, 273.8, 105.13, 1604.6], [4.25, 290.4, 94.53, 2072.3], [4.5, 307.1, 100.93, 2042.3], [4.75, 323.7, 84.2, 2844.4], [5.0, 340.3, 106.67, 2190.3], [5.25, 357.0, 95.47, 2739.5], [5.5, 373.6, 96.73, 2862.5], [5.75, 390.2, 98.27, 2970.5], [6.0, 406.9, 96.33, 3224.2], [6.25, 423.5, 93.67, 3521.4], [6.5, 440.1, 94.93, 3635.5], [6.75, 456.8, 84.0, 4438.5], [7.0, 473.4, 86.53, 4470.3], [7.25, 490.0, 99.53, 3923.0], [7.5, 499.9, 88.93, 4620.7], [7.75, 500.0, 95.33, 4244.8], [8.0, 500.0, 86.13, 4805.0], [8.25, 500.0, 89.33, 4597.0], [8.5, 500.0, 101.8, 3911.6], [8.75, 500.0, 86.53, 4778.1], [9.0, 500.0, 103.8, 3817.0], [9.25, 500.0, 92.93, 4380.2], [9.5, 500.0, 88.2, 4668.9], [9.75, 500.0, 33.2, 14060.2], [10.0, 500.0, 53.67, 8316.8], [10.25, 500.0, 76.93, 5499.1], [10.5, 500.0, 70.4, 6102.3], [10.75, 500.0, 138.2, 2617.9], [11.0, 500.0, 121.07, 3130.0], [11.25, 500.0, 121.73, 3107.3], [11.5, 500.0, 132.6, 2770.7], [11.75, 500.0, 160.47, 2115.9], [12.0, 500.0, 159.07, 2143.3], [12.25, 500.0, 161.53, 2095.3], [12.5, 500.0, 152.27, 2283.7], [12.75, 500.0, 156.67, 2191.5], [13.0, 500.0, 170.47, 1933.1], [13.25, 500.0, 173.2, 1886.8], [13.5, 500.0, 183.8, 1720.3], [13.75, 500.0, 168.27, 1971.5], [14.0, 500.0, 181.73, 1751.3], [14.25, 500.0, 206.0, 1427.2], [14.5, 500.0, 202.2, 1472.8], [14.75, 500.0, 205.8, 1429.5], [15.0, 500.0, 197.47, 1532.1], [15.25, 500.0, 210.53, 1374.9], [15.5, 500.0, 216.93, 1304.9], [15.75, 500.0, 218.13, 1292.2], [16.0, 500.0, 207.6, 1408.5], [16.25, 500.0, 201.13, 1485.9], [16.5, 500.0, 218.27, 1290.8], [16.75, 500.0, 214.47, 1331.4], [17.0, 500.0, 204.73, 1442.2], [17.25, 500.0, 209.73, 1384.0], [17.5, 500.0, 218.07, 1292.9], [17.75, 500.0, 212.4, 1354.0], [18.0, 500.0, 202.07, 1474.4], [18.25, 500.0, 189.33, 1640.8], [18.5, 500.0, 218.6, 1287.3], [18.75, 500.0, 217.2, 1302.0], [19.0, 500.0, 206.27, 1424.0], [19.25, 500.0, 201.47, 1481.8], [19.5, 500.0, 213.0, 1347.4], [19.75, 500.0, 218.4, 1289.4], [20.0, 500.0, 216.87, 1305.6], [20.25, 500.0, 208.27, 1400.8], [20.5, 500.0, 194.13, 1575.5], [20.75, 500.0, 220.33, 1269.3], [21.0, 500.0, 188.13, 1657.7], [21.25, 500.0, 172.8, 1893.5], [21.5, 500.0, 197.33, 1533.8], [21.75, 500.0, 182.33, 1742.2], [22.0, 500.0, 202.8, 1465.5], [22.25, 500.0, 206.8, 1417.8], [22.5, 494.2, 213.67, 1312.9], [22.75, 478.2, 210.27, 1274.1], [23.0, 461.8, 194.13, 1378.6], [23.25, 444.8, 194.0, 1292.8], [23.5, 427.9, 195.93, 1183.7], [23.75, 411.2, 200.87, 1047.0], [24.0, 394.7, 178.73, 1208.1], [24.25, 378.0, 198.6, 903.2], [24.5, 361.1, 196.47, 838.0], [24.75, 344.5, 195.13, 765.5], [25.0, 328.0, 180.8, 814.0], [25.25, 311.0, 180.27, 725.4], [25.5, 294.2, 173.73, 693.2], [25.75, 277.5, 175.27, 583.5], [26.0, 260.9, 172.53, 512.4], [26.25, 244.0, 172.73, 412.6], [26.5, 227.5, 156.4, 454.6], [26.75, 210.9, 140.93, 496.2], [27.0, 194.1, 137.53, 411.1], [27.25, 177.2, 126.13, 404.6], [27.5, 160.6, 118.67, 353.7], [27.75, 144.1, 107.67, 338.1], [28.0, 127.3, 104.2, 221.4], [28.25, 110.5, 90.6, 219.6], [28.5, 94.1, 79.33, 185.7], [28.75, 77.4, 56.67, 365.9], [29.0, 60.5, 49.93, 211.6], [29.25, 44.0, 37.2, 181.9], [29.5, 27.3, 23.6, 155.4], [29.75, 10.6, 8.8, 200.8], [30.0, 1.2, 1.0, 250.0]];
+    const RAW_RAMP = [[40, 39.8, 29.67, 0.7457, 341.1], [80, 79.7, 53.43, 0.6701, 492.4], [100, 99.6, 59.24, 0.5945, 682.1], [120, 119.6, 65.71, 0.5493, 820.7], [150, 149.6, 86.62, 0.579, 727.0], [180, 179.5, 93.81, 0.5225, 914.0], [200, 199.5, 84.67, 0.4244, 1356.3], [250, 249.5, 96.24, 0.3858, 1592.0], [300, 299.4, 97.95, 0.3272, 2056.1], [350, 349.3, 100.52, 0.2878, 2474.4], [400, 399.1, 96.24, 0.2411, 3147.5], [450, 450.1, 92.0, 0.2044, 3892.9], [500, 497.6, 93.05, 0.187, 4347.7]];
+    const STEADY_QPS_ANCHORS = [[10, 9.2], [40, 35.34], [80, 58.0], [100, 69.0], [120, 80.0], [150, 95.0], [160, 100.0], [200, 110.0], [300, 122.0], [400, 131.0], [500, 138.9]];
+    const P95_LATENCY_ANCHORS = [[10, 145.0], [40, 207.1], [80, 440.0], [100, 560.0], [120, 680.0], [150, 950.0], [160, 1120.0], [200, 1800.0], [300, 2750.0], [400, 3680.0], [500, 4591.6]];
 
-    function setLayer(selected) {
-      buttons.forEach(btn => {
-        const active = btn.dataset.layer === selected;
-        btn.className = active
-          ? 'layer-btn px-3 py-1.5 rounded-md border border-[var(--primary)] bg-[var(--primary)] text-[var(--primary-foreground)] font-medium'
-          : 'layer-btn px-3 py-1.5 rounded-md border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)]';
-      });
-      nodes.forEach(el => {
-        const layers = (el.dataset.layers || '').split(',');
-        el.style.opacity = (selected === 'all' || layers.includes(selected)) ? '1' : '0.18';
-      });
-      edges.forEach(el => {
-        const layers = (el.dataset.layers || '').split(',');
-        el.style.opacity = (selected === 'all' || layers.includes(selected)) ? '1' : '0.12';
-      });
+    const SERVICE_CATALOG = {
+      'edge-agent': {
+        id: 'edge-agent',
+        title: '1. xconnect-edge-agent.service',
+        role: 'roles/vhosts/xconnect-edge-agent',
+        binary: '/usr/local/bin/agent-proxy -config /etc/agent/account-agent.yaml',
+        listen: '01-agent-proxy.yaml (Proxy) · 02-xconnect-gateway.yaml (Gateway)',
+        highlights: [
+          '控制面唯一同步器：5m 轮询 + SSE 监听 accounts.svc.plus',
+          '单一目标 "proxy" -> /usr/local/etc/xray/config.json (xray run -test + SIGHUP 热重载)',
+          '独立管理 jp-xconnect-gateway-02 (net-jp-xconnect-02)，修复 gateway_id 错配'
+        ],
+        color: '#fbbf24'
+      },
+      'fluxgate': {
+        id: 'fluxgate',
+        title: '2. fluxgate.service (v0.2.1 L7 Ingress)',
+        role: 'roles/vhosts/fluxgate',
+        binary: '/usr/local/bin/fluxgate v0.2.1',
+        listen: '*:443 (TLS *.svc.plus) · 127.0.0.1:9102/metrics',
+        highlights: [
+          'Route A: /split/* -> unix:///dev/shm/xray.sock (H2 Stream 4MiB / Conn 16MiB / flush -1)',
+          'Route B: /xconnect/* -> unix:///run/xconnect-gateway/xray.sock (h2c / strip x_padding)',
+          'Route C: /xray-exporter/* -> http://127.0.0.1:8080 (相比 HAProxy 110 MiB 节省 ~82 MiB)'
+        ],
+        color: '#38bdf8'
+      },
+      'proxy-xray': {
+        id: 'proxy-xray',
+        title: '3. xconnect-proxy-xray.service (单体聚合)',
+        role: 'roles/vhosts/xconnect_proxy (xray_merged_mode: true)',
+        binary: '/usr/local/bin/xray (内嵌 xray-exporter + 内存 stats.Manager)',
+        listen: '/dev/shm/xray.sock (XHTTP) · 0.0.0.0:1443 (TCP Vision) · 127.0.0.1:8080/scrape',
+        highlights: [
+          '4 进程 319.1 MiB 收敛为 1 进程 59.4 MiB (-83%)，消除 gRPC :10086/:10087 开销',
+          '同一进程直读内存 stats.Manager 暴露 :8080/scrape 并每分钟直推 Vector :8686',
+          '低延迟参数：bufferSize=128, connIdle=3600, uplinkOnly=15, downlinkOnly=30'
+        ],
+        color: '#34d399'
+      },
+      'gateway-xray': {
+        id: 'gateway-xray',
+        title: '4. xconnect-gateway-xray.service',
+        role: 'roles/vhosts/xconnect_gateway',
+        binary: '/usr/local/bin/xray -config /var/lib/xconnect-gateway/runtime/xray.json',
+        listen: '/run/xconnect-gateway/xray.sock (0660) -> WireGuard 127.0.0.1:51820 (xconzero0)',
+        highlights: [
+          '与 Proxy 共用同一 /usr/local/bin/xray 二进制，采用裸 -config 模式运行（无 exporter）',
+          '配置、Unix Socket 与 systemd 生命周期同 Proxy 完全隔离，互不干扰'
+        ],
+        color: '#fb7185'
+      },
+      'vector': {
+        id: 'vector',
+        title: '5. vector.service (核心监控与计费汇聚探针)',
+        role: 'roles/vhosts/vector-agent + roles/vhosts/xconnect_node_log_policy',
+        binary: '/usr/bin/vector 0.41.1 (MALLOC_CONF=narenas:1,thp:never,retain:false)',
+        listen: '127.0.0.1:8686 (256MiB disk_v2 计费缓冲) · 15s Prometheus Scrape',
+        highlights: [
+          '注入 jemalloc thp:never + TOKIO_WORKER_THREADS=1 + 停用无宿主 system_logs，AnonHugePages 61.4M -> 0',
+          '常驻 RSS 从 124.1 MiB 压降至 71.5 MiB (-39.6%)，cgroup MemoryHigh=72M / MemoryMax=128M',
+          'systemd-journald 同步收紧至 64M/3d + 24M/48M cgroup，RSS 从 105.8 MiB 降至 16.0 MiB'
+        ],
+        color: '#a78bfa'
+      }
+    };
+
+    const state = {
+      view: 'all',
+      layer: 'all',
+      serviceId: 'proxy-xray',
+      targetVu: 120,
+      userMultiplier: 4,
+      cleanTmpfs: true,
+      vectorOptimized: true,
+      selectedTier: 7,
+      scrubIndex: 60,
+      isPlayingTime: false,
+      timer: null
+    };
+
+    function lerpPiecewise(x, anchors) {
+      if (x <= anchors[0][0]) return (x / anchors[0][0]) * anchors[0][1];
+      for (let i = 1; i < anchors.length; i++) {
+        const [x0, y0] = anchors[i - 1];
+        const [x1, y1] = anchors[i];
+        if (x <= x1) {
+          const t = (x - x0) / Math.max(1e-6, x1 - x0);
+          return y0 + t * (y1 - y0);
+        }
+      }
+      return anchors[anchors.length - 1][1];
     }
 
-    buttons.forEach(btn => btn.addEventListener('click', () => setLayer(btn.dataset.layer)));
+    function round4(n) {
+      return Math.round((n + Number.EPSILON) * 10000) / 10000;
+    }
+
+    function computeModel(vuRaw, opts = {}) {
+      const vu = Math.max(1, Math.min(500, Math.round(vuRaw || 120)));
+      const mult = opts.userMultiplier || state.userMultiplier;
+      const cleanTmp = opts.cleanTmpfs !== undefined ? opts.cleanTmpfs : state.cleanTmpfs;
+      const vecOpt = opts.vectorOptimized !== undefined ? opts.vectorOptimized : state.vectorOptimized;
+      const totalRam = 939;
+
+      const rampAnchors = RAW_RAMP.map(p => [p[0], p[2]]);
+      const rampQps = Number(lerpPiecewise(vu, rampAnchors).toFixed(2));
+      const steadyQps = Number(lerpPiecewise(vu, STEADY_QPS_ANCHORS).toFixed(2));
+      const marginalEff = Number((rampQps / vu).toFixed(4));
+      const estimatedP95Ms = Number(lerpPiecewise(vu, P95_LATENCY_ANCHORS).toFixed(1));
+
+      const fluxgateRss = Number((28.1 + 0.342 * vu).toFixed(1));
+      const proxyXrayRss = Number((59.4 + 0.2452 * vu).toFixed(1));
+      const proxyCombined = Number((88.1 + 0.5872 * vu).toFixed(1));
+      const gatewayXrayRss = 36.8;
+      const edgeAgentRss = 24.1;
+      const vectorRss = vecOpt ? 71.5 : 124.1;
+      const coreFiveTotal = Number((edgeAgentRss + fluxgateRss + proxyXrayRss + gatewayXrayRss + vectorRss).toFixed(1));
+
+      const vecDelta = vecOpt ? 0 : 52.6;
+      const fixedWithTmp = 451.7 + vecDelta;
+      const fixedCleanTmp = 376.7 + vecDelta;
+      const nonProxyFixed = cleanTmp ? fixedCleanTmp : fixedWithTmp;
+
+      const totalUsedWithTmp = Number((fixedWithTmp + proxyCombined).toFixed(1));
+      const totalUsedCleanTmp = Number((fixedCleanTmp + proxyCombined).toFixed(1));
+      const totalUsed = cleanTmp ? totalUsedCleanTmp : totalUsedWithTmp;
+      const availMib = Number(Math.max(0, totalRam - totalUsed).toFixed(1));
+      const ramPct = Number(((totalUsed / totalRam) * 100).toFixed(1));
+
+      const maxSafeVu75 = Math.max(0, Math.floor((totalRam * 0.75 - nonProxyFixed - 88.1) / 0.5872));
+      const maxSafeVu80 = Math.max(0, Math.floor((totalRam * 0.80 - nonProxyFixed - 88.1) / 0.5872));
+
+      let sloLevel = 'PASS', sloLabel = 'SLO PASS · 正常调度区', sloAction = '正常流量调度 (最佳甜点 100–150 VU)', sloColor = '#34d399';
+      if (vu >= 100 && vu <= 150) sloLabel = 'SLO PASS · 最佳 ROI 甜蜜区';
+      if (estimatedP95Ms > 800 || ramPct >= 75 || vu >= 160) {
+        sloLevel = 'P1_WARN'; sloLabel = 'P1 临界预警 (>800ms / VU>=160)'; sloAction = '下调节点调度权重 / 预热备用节点'; sloColor = '#fbbf24';
+      }
+      if (estimatedP95Ms > 1500 || ramPct >= 80 || vu >= 200) {
+        sloLevel = 'P2_DRAIN'; sloLabel = 'P2 排空扩容 (>1500ms / VU>=200)'; sloAction = '调度器排空新连接至同区其他节点'; sloColor = '#f97316';
+      }
+      if (estimatedP95Ms > 3000 || ramPct >= 87 || vu >= 280) {
+        sloLevel = 'P3_CIRCUIT_BREAK'; sloLabel = 'P3 强制熔断隔离 (>3000ms / RAM>87%)'; sloAction = '强制从节点池摘除，防止 0-Swap OOM'; sloColor = '#ef4444';
+      }
+
+      const onlineUsers = Math.round(vu * mult);
+      const monthlyReqsM = Number(((steadyQps * 2592000) / 1e6).toFixed(1));
+      const tiers = {};
+      [7, 10, 12].forEach(p => {
+        tiers[p] = {
+          costPerVu: round4(p / vu),
+          costPerUser: round4(p / Math.max(1, onlineUsers)),
+          costPer1MReq: round4(p / Math.max(0.1, monthlyReqsM))
+        };
+      });
+
+      return {
+        vu, onlineUsers, mult, rampQps, steadyQps, marginalEff, estimatedP95Ms,
+        sloLevel, sloLabel, sloAction, sloColor,
+        fluxgateRss, proxyXrayRss, proxyCombined, gatewayXrayRss, edgeAgentRss, vectorRss, coreFiveTotal,
+        totalUsed, totalUsedWithTmp, totalUsedCleanTmp, availMib, ramPct, maxSafeVu75, maxSafeVu80,
+        monthlyReqsM, tiers
+      };
+    }
+
+    function svgPath(pts, xFn, yFn) {
+      return pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${xFn(p[0]).toFixed(1)} ${yFn(p[1]).toFixed(1)}`).join(' ');
+    }
+
+    function renderAll() {
+      const m = computeModel(state.targetVu);
+      document.getElementById('vu-readout').textContent = `${m.vu} VU`;
+      document.getElementById('vu-slider').value = m.vu;
+
+      // Update view visibility
+      document.getElementById('sec-topology').style.display = (state.view === 'all' || state.view === 'topology') ? 'block' : 'none';
+      document.getElementById('sec-timeseries').style.display = (state.view === 'all' || state.view === 'timeseries') ? 'block' : 'none';
+      document.getElementById('sec-knee-memory').style.display = (state.view === 'all' || state.view === 'knee_memory') ? 'block' : 'none';
+      document.getElementById('sec-slo-roi').style.display = (state.view === 'all' || state.view === 'slo_roi') ? 'block' : 'none';
+
+      // KPI Strip
+      const tc = m.tiers[state.selectedTier];
+      document.getElementById('kpi-strip').innerHTML = `
+        <div class="kpi-card">
+          <div class="kpi-label">当前并发 / 折算在线用户</div>
+          <div class="kpi-val" style="color:#38bdf8;">${m.vu} VU <span style="font-size:14px;color:#cbd5e1;">≈ ${m.onlineUsers} 人</span></div>
+          <div class="kpi-sub">按 ${m.mult}x 思考时间复用 · 边际效率 ${m.marginalEff} QPS/VU</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">稳态吞吐 QPS / 月处理能力</div>
+          <div class="kpi-val" style="color:#34d399;">${m.steadyQps} req/s <span style="font-size:13px;color:#cbd5e1;">(${m.monthlyReqsM}M/月)</span></div>
+          <div class="kpi-sub">爬坡期瞬时 QPS: ${m.rampQps} req/s</div>
+        </div>
+        <div class="kpi-card" style="border-color:${m.sloColor}66;">
+          <div class="kpi-label">预估 P95 延迟 / SLO 门禁状态</div>
+          <div class="kpi-val" style="color:${m.sloColor};">${m.estimatedP95Ms} ms <span style="font-size:12px;">(${m.sloLevel})</span></div>
+          <div class="kpi-sub" style="color:${m.sloColor};">${m.sloAction}</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">整机内存占用 / OOM 安全容量</div>
+          <div class="kpi-val">${m.totalUsed} MiB <span style="font-size:13px;color:${m.ramPct >= 80 ? '#ef4444' : '#34d399'};">(${m.ramPct}%)</span></div>
+          <div class="kpi-sub">可用 ${m.availMib} MiB · 75%安全线 ${m.maxSafeVu75} VU / 80%线 ${m.maxSafeVu80} VU</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Lightsail 2C1G ($${state.selectedTier}/月) 单位 ROI</div>
+          <div class="kpi-val" style="color:#34d399;">$${tc.costPerUser.toFixed(4)}/人/月</div>
+          <div class="kpi-sub">$${tc.costPerVu.toFixed(4)}/VU/月 · $${tc.costPer1MReq.toFixed(4)} / 1M req</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">5 大核心服务总 RSS</div>
+          <div class="kpi-val" style="color:#a78bfa;">${m.coreFiveTotal} MiB</div>
+          <div class="kpi-sub">Fluxgate ${m.fluxgateRss}M + Proxy ${m.proxyXrayRss}M + Vector ${m.vectorRss}M</div>
+        </div>
+      `;
+
+      renderTopology(m);
+      renderTimeseries(m);
+      renderKneeMemory(m);
+      renderSloRoi(m);
+    }
+
+    function isLayerOn(layersStr) {
+      if (state.layer === 'all') return true;
+      return layersStr.split(',').includes(state.layer);
+    }
+
+    function renderTopology(m) {
+      document.getElementById('topo-subtitle').innerHTML =
+        `物理内存 <code class="mono">939 MiB</code> · 当前 ${m.vu} VU 预计整机已用 <strong style="color:${m.sloColor}">${m.totalUsed} MiB</strong> · 可用 <strong style="color:#34d399">${m.availMib} MiB</strong> · 5 大核心服务总 RSS <strong style="color:#38bdf8">${m.coreFiveTotal} MiB</strong> · 点击任意核心服务查看对应 Playbook Role`;
+
+      const op = (l) => isLayerOn(l) ? '1' : '0.15';
+      document.getElementById('topo-svg-wrap').innerHTML = `
+        <svg viewBox="0 0 1560 900" style="width:100%;min-width:1060px;height:auto;display:block;user-select:none;">
+          <defs>
+            <marker id="arr-cyan" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 1 L 10 5 L 0 9 z" fill="#38bdf8"/></marker>
+            <marker id="arr-emerald" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 1 L 10 5 L 0 9 z" fill="#34d399"/></marker>
+            <marker id="arr-amber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 1 L 10 5 L 0 9 z" fill="#fbbf24"/></marker>
+            <marker id="arr-violet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 1 L 10 5 L 0 9 z" fill="#a78bfa"/></marker>
+            <marker id="arr-rose" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 1 L 10 5 L 0 9 z" fill="#fb7185"/></marker>
+          </defs>
+          <rect x="20" y="20" width="270" height="860" rx="14" fill="rgba(148,163,184,0.06)" stroke="rgba(148,163,184,0.28)" stroke-dasharray="6 4"/>
+          <text x="38" y="48" font-size="13" font-weight="700" fill="#cbd5e1">外部客户端 / 云端中心</text>
+
+          <rect x="315" y="20" width="935" height="860" rx="16" fill="rgba(56,189,248,0.04)" stroke="${m.sloColor}" stroke-width="1.8"/>
+          <text x="335" y="48" font-size="14" font-weight="700" fill="#38bdf8">边缘节点：jp-xconnect-02.svc.plus（4 进程严格隔离 + Vector 汇聚 · 当前 ${m.vu} VU / ${m.onlineUsers} 在线用户 · ${m.sloLabel}）</text>
+
+          <rect x="1275" y="20" width="265" height="860" rx="14" fill="rgba(148,163,184,0.06)" stroke="rgba(148,163,184,0.28)" stroke-dasharray="6 4"/>
+          <text x="1293" y="48" font-size="13" font-weight="700" fill="#cbd5e1">上游出站与中心存储</text>
+
+          <rect x="335" y="66" width="895" height="170" rx="12" fill="rgba(251,191,36,0.05)" stroke="rgba(251,191,36,0.28)"/>
+          <text x="352" y="88" font-size="12" font-weight="700" fill="#fbbf24">① 控制面 (Control Plane)</text>
+
+          <rect x="335" y="254" width="895" height="400" rx="12" fill="rgba(52,211,153,0.04)" stroke="rgba(52,211,153,0.25)"/>
+          <text x="352" y="276" font-size="12" font-weight="700" fill="#34d399">② 数据面 (L7 Ingress + Proxy / Gateway 独立实例 · 吞吐 ${m.steadyQps} req/s · P95 ~${m.estimatedP95Ms} ms)</text>
+
+          <rect x="335" y="672" width="895" height="196" rx="12" fill="rgba(167,139,250,0.05)" stroke="rgba(167,139,250,0.28)"/>
+          <text x="352" y="694" font-size="12" font-weight="700" fill="#a78bfa">③ 核心监控与计费汇聚面 (Observability &amp; Billing)</text>
+
+          <!-- Left External Nodes -->
+          <g opacity="${op('control')}">
+            <rect x="40" y="95" width="230" height="106" rx="10" fill="#0f172a" stroke="#fbbf24" stroke-width="2"/>
+            <text x="56" y="122" font-size="14" font-weight="700" fill="#f8fafc">accounts.svc.plus</text>
+            <text x="56" y="143" font-size="12" fill="#cbd5e1">控制面 SaaS / 调度中心</text>
+            <text x="56" y="164" font-size="11" font-family="monospace" fill="#fbbf24">Users · Routing · Gateway Policy</text>
+            <text x="56" y="182" font-size="11" font-family="monospace" fill="#94a3b8">HTTPS / Sync 5m + SSE</text>
+          </g>
+          <g opacity="${op('proxy')}">
+            <rect x="40" y="295" width="230" height="104" rx="10" fill="#0f172a" stroke="#38bdf8" stroke-width="2"/>
+            <text x="56" y="322" font-size="14" font-weight="700" fill="#f8fafc">代理客户端 (XHTTP · ${m.vu} VU)</text>
+            <text x="56" y="343" font-size="12" fill="#cbd5e1">VLESS + XHTTP + TLS (fp=chrome)</text>
+            <text x="56" y="364" font-size="11" font-family="monospace" fill="#38bdf8">jp-xconnect-02.svc.plus:443</text>
+            <text x="56" y="382" font-size="11" font-family="monospace" fill="#94a3b8">path=/split · alpn=h2,http/1.1</text>
+          </g>
+          <g opacity="${op('proxy')}">
+            <rect x="40" y="425" width="230" height="92" rx="10" fill="#0f172a" stroke="#34d399" stroke-width="2"/>
+            <text x="56" y="452" font-size="14" font-weight="700" fill="#f8fafc">代理客户端 (TCP Vision)</text>
+            <text x="56" y="473" font-size="12" fill="#cbd5e1">VLESS + TLS + xtls-rprx-vision</text>
+            <text x="56" y="494" font-size="11" font-family="monospace" fill="#34d399">jp-xconnect-02.svc.plus:1443</text>
+          </g>
+          <g opacity="${op('gateway')}">
+            <rect x="40" y="545" width="230" height="98" rx="10" fill="#0f172a" stroke="#fb7185" stroke-width="2"/>
+            <text x="56" y="572" font-size="14" font-weight="700" fill="#f8fafc">零信任 Gateway 客户端</text>
+            <text x="56" y="593" font-size="12" fill="#cbd5e1">XConnect Overlay Tunnel</text>
+            <text x="56" y="614" font-size="11" font-family="monospace" fill="#fb7185">jp-xconnect-gateway-02.svc.plus:443</text>
+            <text x="56" y="631" font-size="11" font-family="monospace" fill="#94a3b8">path=/xconnect</text>
+          </g>
+          <g opacity="${op('obs')}">
+            <rect x="40" y="715" width="230" height="118" rx="10" fill="#0f172a" stroke="#a78bfa" stroke-width="1.5"/>
+            <text x="56" y="742" font-size="14" font-weight="700" fill="#f8fafc">GitOps + Playbooks</text>
+            <text x="56" y="763" font-size="12" fill="#cbd5e1">每日定时自我收敛 (ansible-pull)</text>
+            <text x="56" y="784" font-size="11" font-family="monospace" fill="#a78bfa">xconnect-regional-pools.yaml</text>
+            <text x="56" y="802" font-size="11" font-family="monospace" fill="#cbd5e1">sysctl / fluxgate / xray / journald</text>
+          </g>
+
+          <!-- Core 1 -->
+          <g opacity="${op('control')}" style="cursor:pointer" onclick="selectService('edge-agent')">
+            <rect x="480" y="102" width="540" height="118" rx="12" fill="#0f172a" stroke="#fbbf24" stroke-width="${state.serviceId === 'edge-agent' ? 3.5 : 2.5}"/>
+            <text x="500" y="129" font-size="15" font-weight="700" fill="#f8fafc">1. xconnect-edge-agent.service</text>
+            <rect x="885" y="110" width="120" height="22" rx="6" fill="rgba(251,191,36,0.18)"/>
+            <text x="945" y="125" text-anchor="middle" font-size="11" font-weight="700" fill="#fbbf24">RSS ${m.edgeAgentRss} MB</text>
+            <text x="500" y="150" font-size="12" font-family="monospace" fill="#cbd5e1">/usr/local/bin/agent-proxy -config /etc/agent/account-agent.yaml</text>
+            <text x="500" y="171" font-size="12" fill="#e2e8f0">• 01-agent-proxy.yaml -&gt; 单一目标 "proxy" (/usr/local/etc/xray/config.json · 14 clients)</text>
+            <text x="500" y="190" font-size="12" fill="#e2e8f0">• 02-xconnect-gateway.yaml -&gt; jp-xconnect-gateway-02 (net-jp-xconnect-02)</text>
+            <text x="500" y="209" font-size="11" font-family="monospace" fill="#fbbf24">Role: roles/vhosts/xconnect-edge-agent · SIGHUP 热重载</text>
+          </g>
+
+          <!-- Core 2 -->
+          <g opacity="${op('proxy,gateway,obs')}" style="cursor:pointer" onclick="selectService('fluxgate')">
+            <rect x="355" y="300" width="295" height="315" rx="12" fill="#0f172a" stroke="#38bdf8" stroke-width="${state.serviceId === 'fluxgate' ? 3.5 : 2.5}"/>
+            <text x="373" y="328" font-size="15" font-weight="700" fill="#f8fafc">2. fluxgate.service</text>
+            <rect x="520" y="309" width="116" height="22" rx="6" fill="rgba(56,189,248,0.18)"/>
+            <text x="578" y="324" text-anchor="middle" font-size="11" font-weight="700" fill="#38bdf8">RSS ${m.fluxgateRss} MB</text>
+            <text x="373" y="350" font-size="12" font-family="monospace" fill="#cbd5e1">fluxgate v0.2.1 · L7 Ingress</text>
+            <text x="373" y="372" font-size="12" font-family="monospace" fill="#38bdf8">Listen :443 (TLS *.svc.plus)</text>
+            <text x="373" y="391" font-size="11" font-family="monospace" fill="#94a3b8">Metrics: 127.0.0.1:9102/metrics</text>
+            <rect x="371" y="408" width="263" height="62" rx="8" fill="rgba(56,189,248,0.08)" stroke="rgba(56,189,248,0.35)"/>
+            <text x="382" y="427" font-size="12" font-weight="600" fill="#38bdf8">Route A: /split/* (Proxy XHTTP)</text>
+            <text x="382" y="445" font-size="11" font-family="monospace" fill="#cbd5e1">H2 Win 4MiB/16MiB · flush -1</text>
+            <text x="382" y="461" font-size="11" font-family="monospace" fill="#cbd5e1">-&gt; unix:///dev/shm/xray.sock</text>
+            <rect x="371" y="482" width="263" height="58" rx="8" fill="rgba(251,113,133,0.08)" stroke="rgba(251,113,133,0.35)"/>
+            <text x="382" y="501" font-size="12" font-weight="600" fill="#fb7185">Route B: /xconnect/* (Gateway)</text>
+            <text x="382" y="518" font-size="11" font-family="monospace" fill="#cbd5e1">h2c · flush -1 · strip x_padding</text>
+            <text x="382" y="534" font-size="11" font-family="monospace" fill="#cbd5e1">-&gt; unix:///run/xconnect-gateway/xray.sock</text>
+            <rect x="371" y="552" width="263" height="48" rx="8" fill="rgba(148,163,184,0.08)" stroke="rgba(148,163,184,0.3)"/>
+            <text x="382" y="571" font-size="11" font-weight="600" fill="#e2e8f0">Route C: /xray-exporter/* -&gt; :8080</text>
+          </g>
+
+          <!-- Core 3 -->
+          <g opacity="${op('proxy,control,obs')}" style="cursor:pointer" onclick="selectService('proxy-xray')">
+            <rect x="735" y="294" width="475" height="202" rx="12" fill="#0f172a" stroke="#34d399" stroke-width="${state.serviceId === 'proxy-xray' ? 3.5 : 2.5}"/>
+            <text x="755" y="322" font-size="15" font-weight="700" fill="#f8fafc">3. xconnect-proxy-xray.service</text>
+            <rect x="1080" y="303" width="116" height="22" rx="6" fill="rgba(52,211,153,0.18)"/>
+            <text x="1138" y="318" text-anchor="middle" font-size="11" font-weight="700" fill="#34d399">RSS ${m.proxyXrayRss} MB</text>
+            <text x="755" y="343" font-size="12" font-family="monospace" fill="#cbd5e1">Xray-core + 内嵌 xray-exporter (Role: xconnect_proxy)</text>
+            <text x="755" y="363" font-size="11" font-family="monospace" fill="#94a3b8">Config: /usr/local/etc/xray/config.json (bufferSize=128, connIdle=3600)</text>
+            <rect x="753" y="376" width="215" height="54" rx="8" fill="rgba(56,189,248,0.08)" stroke="rgba(56,189,248,0.35)"/>
+            <text x="763" y="395" font-size="12" font-weight="600" fill="#38bdf8">Inbound: proxy-xhttp-in</text>
+            <text x="763" y="414" font-size="11" font-family="monospace" fill="#cbd5e1">/dev/shm/xray.sock (0666)</text>
+            <rect x="980" y="376" width="212" height="54" rx="8" fill="rgba(52,211,153,0.08)" stroke="rgba(52,211,153,0.35)"/>
+            <text x="990" y="395" font-size="12" font-weight="600" fill="#34d399">Inbound: proxy-tcp-in</text>
+            <text x="990" y="414" font-size="11" font-family="monospace" fill="#cbd5e1">0.0.0.0:1443 (TLS Vision)</text>
+            <rect x="753" y="440" width="439" height="44" rx="8" fill="rgba(167,139,250,0.1)" stroke="rgba(167,139,250,0.4)"/>
+            <text x="765" y="458" font-size="12" font-weight="600" fill="#a78bfa">进程内内存 stats.Manager（零 gRPC 10086/10087）</text>
+            <text x="765" y="475" font-size="11" font-family="monospace" fill="#cbd5e1">Expose 127.0.0.1:8080/scrape · 1m Push Snapshot -&gt; 127.0.0.1:8686</text>
+          </g>
+
+          <!-- Core 4 -->
+          <g opacity="${op('gateway,control')}" style="cursor:pointer" onclick="selectService('gateway-xray')">
+            <rect x="735" y="514" width="475" height="122" rx="12" fill="#0f172a" stroke="#fb7185" stroke-width="${state.serviceId === 'gateway-xray' ? 3.5 : 2.5}"/>
+            <text x="755" y="542" font-size="15" font-weight="700" fill="#f8fafc">4. xconnect-gateway-xray.service</text>
+            <rect x="1080" y="523" width="116" height="22" rx="6" fill="rgba(251,113,133,0.18)"/>
+            <text x="1138" y="538" text-anchor="middle" font-size="11" font-weight="700" fill="#fb7185">RSS ${m.gatewayXrayRss} MB</text>
+            <text x="755" y="563" font-size="12" font-family="monospace" fill="#cbd5e1">独立裸 /usr/local/bin/xray 进程 (Role: xconnect_gateway)</text>
+            <text x="755" y="583" font-size="11" font-family="monospace" fill="#94a3b8">Config: /var/lib/xconnect-gateway/runtime/xray.json (配置完全独立)</text>
+            <text x="755" y="603" font-size="12" font-family="monospace" fill="#fb7185">Inbound: xconnect-vless-in (/run/xconnect-gateway/xray.sock)</text>
+            <text x="755" y="622" font-size="12" font-family="monospace" fill="#cbd5e1">Outbound: xconnect-wireguard -&gt; redirect 127.0.0.1:51820</text>
+          </g>
+
+          <!-- Core 5 -->
+          <g opacity="${op('obs')}" style="cursor:pointer" onclick="selectService('vector')">
+            <rect x="440" y="712" width="485" height="146" rx="12" fill="#0f172a" stroke="#a78bfa" stroke-width="${state.serviceId === 'vector' ? 3.5 : 2.5}"/>
+            <text x="460" y="740" font-size="15" font-weight="700" fill="#f8fafc">5. vector.service（核心监控与计费汇聚探针）</text>
+            <rect x="780" y="721" width="130" height="22" rx="6" fill="rgba(167,139,250,0.18)"/>
+            <text x="845" y="736" text-anchor="middle" font-size="11" font-weight="700" fill="#a78bfa">RSS ${m.vectorRss} MB ${state.vectorOptimized ? '(-40%)' : ''}</text>
+            <text x="460" y="762" font-size="12" font-family="monospace" fill="#cbd5e1">/etc/vector/vector.toml · MemoryHigh=72M / MemoryMax=128M · thp:never</text>
+            <text x="460" y="784" font-size="12" fill="#e2e8f0">• Billing HTTP Server (:8686) -&gt; 256MiB Disk Buffer 异步推送计费</text>
+            <text x="460" y="805" font-size="12" fill="#e2e8f0">• 15s Prometheus Scrape: xray:8080 · fluxgate:9102 · node:9100 · proc:9256</text>
+            <text x="460" y="826" font-size="12" fill="#e2e8f0">• Single Journald Reader: 采集单元日志并提炼 xhttp_events_total 事件</text>
+          </g>
+
+          <g opacity="${op('obs')}">
+            <rect x="960" y="712" width="250" height="146" rx="10" fill="#0f172a" stroke="rgba(167,139,250,0.45)" stroke-width="1.5"/>
+            <text x="976" y="738" font-size="13" font-weight="700" fill="#f8fafc">基础支撑采集进程</text>
+            <text x="976" y="762" font-size="12" font-family="monospace" fill="#cbd5e1">• systemd-journald  16.0 MB</text>
+            <text x="976" y="781" font-size="11" font-family="monospace" fill="#a78bfa">  cap: 24M/48M · disk 64M/3d</text>
+            <text x="976" y="803" font-size="12" font-family="monospace" fill="#cbd5e1">• node_exporter     20.3 MB</text>
+            <text x="976" y="822" font-size="12" font-family="monospace" fill="#cbd5e1">• process-exporter  16.9 MB</text>
+          </g>
+
+          <!-- Right External Nodes -->
+          <g opacity="${op('proxy')}">
+            <rect x="1295" y="295" width="225" height="186" rx="10" fill="#0f172a" stroke="#34d399" stroke-width="2"/>
+            <text x="1312" y="322" font-size="14" font-weight="700" fill="#f8fafc">Proxy 策略路由出站</text>
+            <text x="1312" y="346" font-size="12" font-family="monospace" fill="#34d399">• pool-media-stream</text>
+            <text x="1312" y="366" font-size="12" font-family="monospace" fill="#34d399">• pool-pro-ai-dev</text>
+            <text x="1312" y="386" font-size="12" font-family="monospace" fill="#34d399">• pool-media-fallback</text>
+            <text x="1312" y="408" font-size="12" font-family="monospace" fill="#cbd5e1">• direct-cn (geosite/ip)</text>
+          </g>
+          <g opacity="${op('gateway')}">
+            <rect x="1295" y="514" width="225" height="122" rx="10" fill="#0f172a" stroke="#fb7185" stroke-width="2"/>
+            <text x="1312" y="542" font-size="14" font-weight="700" fill="#f8fafc">WireGuard Overlay</text>
+            <text x="1312" y="566" font-size="12" font-family="monospace" fill="#fb7185">interface: xconzero0</text>
+            <text x="1312" y="586" font-size="12" font-family="monospace" fill="#cbd5e1">UDP 127.0.0.1:51820</text>
+          </g>
+          <g opacity="${op('obs')}">
+            <rect x="1295" y="685" width="225" height="84" rx="10" fill="#0f172a" stroke="#a78bfa" stroke-width="2"/>
+            <text x="1312" y="712" font-size="14" font-weight="700" fill="#f8fafc">billing.svc.plus</text>
+            <text x="1312" y="734" font-size="12" font-family="monospace" fill="#a78bfa">/v1/ingest/snapshots</text>
+          </g>
+          <g opacity="${op('obs')}">
+            <rect x="1295" y="785" width="225" height="84" rx="10" fill="#0f172a" stroke="#a78bfa" stroke-width="2"/>
+            <text x="1312" y="812" font-size="14" font-weight="700" fill="#f8fafc">observability.svc.plus</text>
+            <text x="1312" y="834" font-size="11" font-family="monospace" fill="#a78bfa">VictoriaMetrics + VictoriaLogs</text>
+          </g>
+
+          <!-- Edges -->
+          <g opacity="${op('control')}">
+            <path d="M 270 148 L 474 148" fill="none" stroke="#fbbf24" stroke-width="2.5" marker-end="url(#arr-amber)"/>
+            <path d="M 880 220 L 880 288" fill="none" stroke="#fbbf24" stroke-width="2.3" stroke-dasharray="6 3" marker-end="url(#arr-amber)"/>
+            <path d="M 700 220 L 700 575 L 729 575" fill="none" stroke="#fbbf24" stroke-width="2.3" stroke-dasharray="6 3" marker-end="url(#arr-amber)"/>
+          </g>
+          <g opacity="${op('proxy')}">
+            <path d="M 270 347 L 349 347" fill="none" stroke="#38bdf8" stroke-width="2.8" marker-end="url(#arr-cyan)"/>
+            <path d="M 634 438 L 729 403" fill="none" stroke="#38bdf8" stroke-width="2.8" marker-end="url(#arr-cyan)"/>
+            <text x="684" y="400" text-anchor="middle" font-size="11" font-weight="600" fill="#38bdf8">UDS (${m.steadyQps}/s)</text>
+            <path d="M 270 471 C 320 471, 305 648, 675 648 C 710 648, 705 422, 974 422" fill="none" stroke="#34d399" stroke-width="2.5" marker-end="url(#arr-emerald)"/>
+            <path d="M 1210 388 L 1289 388" fill="none" stroke="#34d399" stroke-width="2.8" marker-end="url(#arr-emerald)"/>
+          </g>
+          <g opacity="${op('gateway')}">
+            <path d="M 270 594 L 349 514" fill="none" stroke="#fb7185" stroke-width="2.6" marker-end="url(#arr-rose)"/>
+            <path d="M 634 514 L 729 586" fill="none" stroke="#fb7185" stroke-width="2.6" marker-end="url(#arr-rose)"/>
+            <path d="M 1210 575 L 1289 575" fill="none" stroke="#fb7185" stroke-width="2.6" marker-end="url(#arr-rose)"/>
+          </g>
+          <g opacity="${op('obs')}">
+            <path d="M 880 484 L 880 706" fill="none" stroke="#a78bfa" stroke-width="2.5" marker-end="url(#arr-violet)"/>
+            <path d="M 505 615 L 505 706" fill="none" stroke="#a78bfa" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arr-violet)"/>
+            <path d="M 960 790 L 931 790" fill="none" stroke="#a78bfa" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arr-violet)"/>
+            <path d="M 925 752 L 1289 725" fill="none" stroke="#a78bfa" stroke-width="2.6" marker-end="url(#arr-violet)"/>
+            <path d="M 925 822 L 1289 825" fill="none" stroke="#a78bfa" stroke-width="2.6" marker-end="url(#arr-violet)"/>
+          </g>
+        </svg>
+      `;
+
+      const svc = SERVICE_CATALOG[state.serviceId];
+      document.getElementById('service-drawer').innerHTML = `
+        <div class="row-between">
+          <div>
+            <span style="font-size:14px;font-weight:700;color:${svc.color};">${svc.title}</span>
+            <span class="mono" style="margin-left:10px;font-size:11px;padding:2px 8px;border-radius:4px;background:#1e293b;color:#f8fafc;">Playbook Role: ${svc.role}</span>
+            <div class="mono" style="font-size:11px;color:#94a3b8;margin-top:4px;">Binary: ${svc.binary} | Listen: ${svc.listen}</div>
+            <div style="margin-top:6px;font-size:12px;color:#cbd5e1;line-height:1.6;">
+              ${svc.highlights.map(h => `<div>• ${h}</div>`).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderTimeseries(m) {
+      const idx = Math.max(0, Math.min(120, state.scrubIndex));
+      const p40 = RAW_S40[idx];
+      const p500 = RAW_S500[idx];
+      const curMin = p500[0];
+      const tBlend = Math.max(0, Math.min(1, (m.vu - 40) / 460));
+      const peakSteady = m.vu <= 150 ? m.steadyQps : m.steadyQps * (1 + 0.45 * tBlend);
+
+      const simPts = RAW_S40.map((pt40, i) => {
+        const pt500 = RAW_S500[i] || pt40;
+        const simVu = Number((m.vu * (pt40[1] / 40)).toFixed(1));
+        const blendedNorm = (1 - tBlend) * (pt40[2] / 35.34) + tBlend * (pt500[2] / 206.24);
+        const simQps = Number(Math.max(0.5, blendedNorm * peakSteady).toFixed(2));
+        const simLat = Number(Math.max(50, ((simVu / Math.max(0.5, simQps)) - 1) * 1000).toFixed(1));
+        return [pt40[0], simVu, simQps, simLat];
+      });
+      const pSim = simPts[idx];
+
+      document.getElementById('time-slice-label').textContent = `时间切片: ${curMin.toFixed(2)}m`;
+      document.getElementById('time-slider').value = idx;
+      document.getElementById('ts-readout').innerHTML = `
+        <div><span style="color:#94a3b8;">采样时刻：</span><strong class="mono">t = ${curMin.toFixed(2)} min</strong></div>
+        <div><span style="color:#34d399;font-weight:600;">40 VU 实测：</span><span class="mono">${p40[1]} VU · <strong>${p40[2]} req/s</strong> · <strong>${p40[3]} ms</strong></span></div>
+        <div><span style="color:#38bdf8;font-weight:600;">500 VU 实测：</span><span class="mono">${p500[1]} VU · <strong>${p500[2]} req/s</strong> · <strong>${p500[3]} ms</strong></span></div>
+        <div><span style="color:#a78bfa;font-weight:600;">当前 ${m.vu} VU 仿真：</span><span class="mono">${pSim[1]} VU · <strong>${pSim[2]} req/s</strong> · <strong>${pSim[3]} ms</strong></span></div>
+      `;
+
+      const px1 = (t) => 80 + (t / 30) * 640;
+      const py1 = (q) => 510 - (Math.min(q, 250) / 250) * 390;
+      const px2 = (t) => 840 + (t / 30) * 640;
+      const py2 = (l) => 510 - (Math.min(l, 6000) / 6000) * 390;
+
+      const path500Q = svgPath(RAW_S500.map(p => [p[0], p[2]]), px1, py1);
+      const path40Q = svgPath(RAW_S40.map(p => [p[0], p[2]]), px1, py1);
+      const pathSimQ = svgPath(simPts.map(p => [p[0], p[2]]), px1, py1);
+
+      const path500L = svgPath(RAW_S500.map(p => [p[0], p[3]]), px2, py2);
+      const path40L = svgPath(RAW_S40.map(p => [p[0], p[3]]), px2, py2);
+      const pathSimL = svgPath(simPts.map(p => [p[0], p[3]]), px2, py2);
+
+      document.getElementById('ts-svg-wrap').innerHTML = `
+        <svg viewBox="0 0 1560 580" style="width:100%;min-width:1020px;height:auto;display:block;">
+          <rect x="16" y="16" width="745" height="545" rx="10" fill="#0b1120" stroke="#1e293b"/>
+          <rect x="795" y="16" width="749" height="545" rx="10" fill="#0b1120" stroke="#1e293b"/>
+          <text x="80" y="48" font-size="14" font-weight="700" fill="#f8fafc">A. 实时吞吐量 QPS (req/s) 15s 平滑曲线</text>
+          <text x="840" y="48" font-size="14" font-weight="700" fill="#f8fafc">B. Little's Law 推算平均请求延迟 (ms) 曲线</text>
+          ${[0, 50, 100, 150, 200, 250].map(q => `<line x1="80" y1="${py1(q)}" x2="720" y2="${py1(q)}" stroke="#1e293b"/><text x="70" y="${py1(q)+4}" text-anchor="end" font-size="11" fill="#94a3b8">${q}</text>`).join('')}
+          ${[0, 1000, 1500, 3000, 4500, 6000].map(l => `<line x1="840" y1="${py2(l)}" x2="1480" y2="${py2(l)}" stroke="${l===1500?'#ef4444':'#1e293b'}" ${l===1500?'stroke-dasharray="5 4" stroke-width="1.5"':''}/><text x="830" y="${py2(l)+4}" text-anchor="end" font-size="11" fill="${l===1500?'#f87171':'#94a3b8'}">${l}</text>`).join('')}
+          <line x1="${px1(10)}" y1="80" x2="${px1(10)}" y2="510" stroke="#fbbf24" stroke-dasharray="4 3"/>
+          <text x="${px1(10)+8}" y="98" font-size="11" font-weight="600" fill="#fbbf24">t≈10m 连接池重连 -&gt; 206.2 req/s</text>
+          <path d="${path500Q}" fill="none" stroke="#38bdf8" stroke-width="2.4"/>
+          <path d="${path40Q}" fill="none" stroke="#34d399" stroke-width="2.4"/>
+          <path d="${pathSimQ}" fill="none" stroke="#a78bfa" stroke-width="2.2" stroke-dasharray="6 3"/>
+          <path d="${path500L}" fill="none" stroke="#fb7185" stroke-width="2.4"/>
+          <path d="${path40L}" fill="none" stroke="#34d399" stroke-width="2.4"/>
+          <path d="${pathSimL}" fill="none" stroke="#a78bfa" stroke-width="2.2" stroke-dasharray="6 3"/>
+          <line x1="${px1(curMin)}" y1="80" x2="${px1(curMin)}" y2="510" stroke="#ffffff" stroke-width="1.5"/>
+          <circle cx="${px1(curMin)}" cy="${py1(p500[2])}" r="5" fill="#38bdf8" stroke="#0b1120" stroke-width="1.5"/>
+          <circle cx="${px1(curMin)}" cy="${py1(p40[2])}" r="5" fill="#34d399" stroke="#0b1120" stroke-width="1.5"/>
+          <circle cx="${px1(curMin)}" cy="${py1(pSim[2])}" r="5" fill="#a78bfa" stroke="#0b1120" stroke-width="1.5"/>
+          <line x1="${px2(curMin)}" y1="80" x2="${px2(curMin)}" y2="510" stroke="#ffffff" stroke-width="1.5"/>
+          <circle cx="${px2(curMin)}" cy="${py2(p500[3])}" r="5" fill="#fb7185" stroke="#0b1120" stroke-width="1.5"/>
+          <circle cx="${px2(curMin)}" cy="${py2(p40[3])}" r="5" fill="#34d399" stroke="#0b1120" stroke-width="1.5"/>
+          <circle cx="${px2(curMin)}" cy="${py2(pSim[3])}" r="5" fill="#a78bfa" stroke="#0b1120" stroke-width="1.5"/>
+        </svg>
+      `;
+    }
+
+    function renderKneeMemory(m) {
+      document.getElementById('knee-badges').innerHTML = `
+        <span class="mono" style="padding:4px 10px;border-radius:6px;background:rgba(56,189,248,0.14);border:1px solid rgba(56,189,248,0.4);color:#38bdf8;">
+          当前 ${m.vu} VU: 爬坡 ${m.rampQps} req/s · 边际效率 ${m.marginalEff} QPS/VU
+        </span>
+        <span class="mono" style="padding:4px 10px;border-radius:6px;background:rgba(52,211,153,0.14);border:1px solid rgba(52,211,153,0.4);color:#34d399;">
+          75% RAM 安全上限: ${m.maxSafeVu75} VU · 80% 告警上限: ${m.maxSafeVu80} VU
+        </span>
+      `;
+      const px1 = (vu) => 85 + (vu / 500) * 600;
+      const py1Q = (q) => 505 - (Math.min(q, 120) / 120) * 390;
+      const py1M = (ef) => 505 - (Math.min(ef, 1.0) / 1.0) * 390;
+      const px2 = (vu) => 865 + (vu / 500) * 600;
+      const py2R = (r) => 505 - (Math.min(r, 1000) / 1000) * 390;
+
+      const qpsLine = svgPath(RAW_RAMP.map(p => [p[0], p[2]]), px1, py1Q);
+      const effLine = svgPath(RAW_RAMP.map(p => [p[0], p[3]]), px1, py1M);
+      const vus = [0, 40, 100, 120, 150, 200, 296, 370, 415, 500];
+      const pTmp = svgPath(vus.map(v => [v, computeModel(Math.max(1, v), { cleanTmpfs: false }).totalUsedWithTmp]), px2, py2R);
+      const pCln = svgPath(vus.map(v => [v, computeModel(Math.max(1, v), { cleanTmpfs: true }).totalUsedCleanTmp]), px2, py2R);
+      const pPrx = svgPath(vus.map(v => [v, computeModel(Math.max(1, v)).proxyCombined]), px2, py2R);
+
+      document.getElementById('knee-svg-wrap').innerHTML = `
+        <svg viewBox="0 0 1560 570" style="width:100%;min-width:1020px;height:auto;display:block;">
+          <rect x="16" y="16" width="745" height="535" rx="10" fill="#0b1120" stroke="#1e293b"/>
+          <rect x="795" y="16" width="749" height="535" rx="10" fill="#0b1120" stroke="#1e293b"/>
+          <text x="85" y="48" font-size="14" font-weight="700" fill="#f8fafc">A. 爬坡阶段 QPS 吞吐 vs 边际效率 (QPS/VU) 拐点</text>
+          <text x="865" y="48" font-size="14" font-weight="700" fill="#f8fafc">B. 内存随 VU 线性缩放模型与 939 MiB OOM 安全上限</text>
+          <rect x="${px1(100)}" y="95" width="${px1(150)-px1(100)}" height="410" fill="rgba(52,211,153,0.10)"/>
+          <line x1="${px1(200)}" y1="95" x2="${px1(200)}" y2="505" stroke="#fb7185" stroke-width="1.8" stroke-dasharray="5 3"/>
+          <text x="${px1(206)}" y="128" font-size="11" font-weight="700" fill="#fb7185">200 VU 排队拐点</text>
+          ${[0, 30, 60, 90, 120].map(q => `<line x1="85" y1="${py1Q(q)}" x2="685" y2="${py1Q(q)}" stroke="#1e293b"/><text x="76" y="${py1Q(q)+4}" text-anchor="end" font-size="11" fill="#38bdf8">${q}</text>`).join('')}
+          ${[0, 200, 400, 600, 800, 1000].map(r => `<line x1="865" y1="${py2R(r)}" x2="1465" y2="${py2R(r)}" stroke="#1e293b"/><text x="856" y="${py2R(r)+4}" text-anchor="end" font-size="11" fill="#94a3b8">${r}</text>`).join('')}
+          <path d="${qpsLine}" fill="none" stroke="#38bdf8" stroke-width="2.8"/>
+          <path d="${effLine}" fill="none" stroke="#fbbf24" stroke-width="2.8"/>
+          <line x1="${px1(m.vu)}" y1="95" x2="${px1(m.vu)}" y2="505" stroke="#ffffff" stroke-width="1.6"/>
+          <circle cx="${px1(m.vu)}" cy="${py1Q(m.rampQps)}" r="6" fill="#38bdf8" stroke="#ffffff" stroke-width="2"/>
+          <circle cx="${px1(m.vu)}" cy="${py1M(m.marginalEff)}" r="6" fill="#fbbf24" stroke="#ffffff" stroke-width="2"/>
+          <line x1="865" y1="${py2R(939)}" x2="1465" y2="${py2R(939)}" stroke="#ef4444" stroke-width="2"/>
+          <line x1="865" y1="${py2R(751.2)}" x2="1465" y2="${py2R(751.2)}" stroke="#f97316" stroke-dasharray="5 4"/>
+          <line x1="865" y1="${py2R(704.2)}" x2="1465" y2="${py2R(704.2)}" stroke="#fbbf24" stroke-dasharray="5 4"/>
+          <path d="${pTmp}" fill="none" stroke="#fb7185" stroke-width="2.4"/>
+          <path d="${pCln}" fill="none" stroke="#34d399" stroke-width="2.8" stroke-dasharray="6 3"/>
+          <path d="${pPrx}" fill="none" stroke="#38bdf8" stroke-width="2.5"/>
+          <line x1="${px2(m.vu)}" y1="95" x2="${px2(m.vu)}" y2="505" stroke="#ffffff" stroke-width="1.6"/>
+          <circle cx="${px2(m.vu)}" cy="${py2R(m.totalUsed)}" r="6.5" fill="${state.cleanTmpfs ? '#34d399' : '#fb7185'}" stroke="#ffffff" stroke-width="2"/>
+        </svg>
+      `;
+    }
+
+    function renderSloRoi(m) {
+      document.getElementById('roi-subtitle').innerHTML =
+        `SLO 阈值体系（800ms 预警 / 1500ms 排空 / 3000ms 熔断）及按 <strong>${m.mult}x</strong> 思考时间复用系数折算的单在线用户月成本`;
+
+      const py1 = (ms) => 500 - (Math.min(ms, 5000) / 5000) * 385;
+      const px2 = (vu) => 875 + ((vu - 40) / 460) * 590;
+      const py2 = (usd) => 500 - (Math.min(usd, 0.09) / 0.09) * 385;
+
+      const bars = [
+        { l1: '40 VU', l2: '实测基线', val: 207.1, col: '#34d399', vu: 40 },
+        { l1: '120 VU', l2: '最佳甜点', val: 680.0, col: '#38bdf8', vu: 120 },
+        { l1: '150 VU', l2: '拐点前', val: 950.0, col: '#38bdf8', vu: 150 },
+        { l1: '200 VU', l2: '排空线', val: 1800.0, col: '#fbbf24', vu: 200 },
+        { l1: '500 VU', l2: '极限实测', val: 4591.6, col: '#fb7185', vu: 500 },
+        { l1: `当前 ${m.vu} VU`, l2: '动态仿真', val: m.estimatedP95Ms, col: '#a78bfa', vu: m.vu }
+      ];
+
+      const roiVus = [40, 80, 100, 120, 150, 160, 200, 250, 300, 400, 500];
+      const roiModels = roiVus.map(v => computeModel(v));
+      const l7 = svgPath(roiModels.map(rm => [rm.vu, rm.tiers[7].costPerUser]), px2, py2);
+      const l10 = svgPath(roiModels.map(rm => [rm.vu, rm.tiers[10].costPerUser]), px2, py2);
+      const l12 = svgPath(roiModels.map(rm => [rm.vu, rm.tiers[12].costPerUser]), px2, py2);
+      const cVu = Math.max(40, Math.min(500, m.vu));
+
+      document.getElementById('roi-svg-wrap').innerHTML = `
+        <svg viewBox="0 0 1560 565" style="width:100%;min-width:1020px;height:auto;display:block;">
+          <rect x="16" y="16" width="745" height="530" rx="10" fill="#0b1120" stroke="#1e293b"/>
+          <rect x="795" y="16" width="749" height="530" rx="10" fill="#0b1120" stroke="#1e293b"/>
+          <text x="85" y="48" font-size="14" font-weight="700" fill="#f8fafc">A. P95 延迟阶梯对比与分级监控红线 (含当前 ${m.vu} VU 动态柱)</text>
+          <text x="875" y="48" font-size="14" font-weight="700" fill="#f8fafc">B. 单在线用户月成本 ($/User/mo @${m.mult}x) ROI 曲线</text>
+          ${[0, 800, 1500, 3000, 4000, 5000].map(ms => {
+            const col = ms===800?'#fbbf24':ms===1500?'#f97316':ms===3000?'#ef4444':'#1e293b';
+            const dash = (ms===800||ms===1500||ms===3000)?'stroke-dasharray="5 4" stroke-width="1.6"':'';
+            return `<line x1="85" y1="${py1(ms)}" x2="710" y2="${py1(ms)}" stroke="${col}" ${dash}/><text x="76" y="${py1(ms)+4}" text-anchor="end" font-size="11" fill="${dash?col:'#94a3b8'}">${ms}</text>`;
+          }).join('')}
+          ${bars.map((b, i) => {
+            const bx = 104 + i * 98, by = py1(b.val), bh = 500 - by;
+            return `<g style="cursor:pointer" onclick="setVu(${b.vu})"><rect x="${bx}" y="${by}" width="64" height="${bh}" rx="6" fill="${b.col}" fill-opacity="0.88" ${i===5?'stroke="#fff" stroke-width="2"':''}/><text x="${bx+32}" y="${by-8}" text-anchor="middle" font-size="11" font-weight="700" fill="${b.col}">${Math.round(b.val)} ms</text><text x="${bx+32}" y="522" text-anchor="middle" font-size="11" font-weight="600" fill="#e2e8f0">${b.l1}</text><text x="${bx+32}" y="538" text-anchor="middle" font-size="10" fill="#94a3b8">${b.l2}</text></g>`;
+          }).join('')}
+          <rect x="${px2(120)}" y="115" width="${px2(160)-px2(120)}" height="385" fill="rgba(52,211,153,0.12)"/>
+          ${[0.0, 0.02, 0.04, 0.06, 0.08].map(u => `<line x1="875" y1="${py2(u)}" x2="1465" y2="${py2(u)}" stroke="#1e293b"/><text x="866" y="${py2(u)+4}" text-anchor="end" font-size="11" fill="#94a3b8">$${u.toFixed(2)}</text>`).join('')}
+          <path d="${l12}" fill="none" stroke="#a78bfa" stroke-width="2.6"/>
+          <path d="${l10}" fill="none" stroke="#38bdf8" stroke-width="2.6"/>
+          <path d="${l7}" fill="none" stroke="#34d399" stroke-width="3.0"/>
+          <line x1="${px2(cVu)}" y1="115" x2="${px2(cVu)}" y2="500" stroke="#ffffff" stroke-width="1.6"/>
+          <circle cx="${px2(cVu)}" cy="${py2(m.tiers[7].costPerUser)}" r="5.5" fill="#34d399" stroke="#fff" stroke-width="1.8"/>
+          <circle cx="${px2(cVu)}" cy="${py2(m.tiers[10].costPerUser)}" r="5.5" fill="#38bdf8" stroke="#fff" stroke-width="1.8"/>
+          <circle cx="${px2(cVu)}" cy="${py2(m.tiers[12].costPerUser)}" r="5.5" fill="#a78bfa" stroke="#fff" stroke-width="1.8"/>
+        </svg>
+      `;
+
+      const rows = [
+        { vu: 40, tag: '40 VU 保守基线', note: 'PASS (207ms)' },
+        { vu: 120, tag: '120 VU 最佳甜点', note: 'PASS (最佳 ROI)' },
+        { vu: 150, tag: '150 VU 拐点前上限', note: 'P1 临界观察' },
+        { vu: 160, tag: '160 VU 软上限', note: 'P1 预警线' },
+        { vu: 200, tag: '200 VU 排空线', note: 'P2 排队拐点（切流）' },
+        { vu: 500, tag: '500 VU 极限压测', note: 'P3 FAIL (4.59s, 89% RAM)' }
+      ];
+      document.getElementById('roi-table-wrap').innerHTML = `
+        <table class="roi-table">
+          <thead>
+            <tr>
+              <th>运营并发水位 (点击切换)</th>
+              <th>折算在线用户 (@${m.mult}x)</th>
+              <th>稳态 QPS</th>
+              <th>月吞吐能力</th>
+              <th style="color:#34d399;">$7/月 ($/VU | $/用户 | $/1M req)</th>
+              <th style="color:#38bdf8;">$10/月 ($/VU | $/用户 | $/1M req)</th>
+              <th style="color:#a78bfa;">$12/月 ($/VU | $/用户 | $/1M req)</th>
+              <th>预估 P95 / SLO 状态</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map(r => {
+              const rm = computeModel(r.vu);
+              const sel = Math.abs(m.vu - r.vu) < 8;
+              return `<tr class="${sel ? 'selected-row' : ''}" onclick="setVu(${r.vu})">
+                <td style="font-weight:700;color:${sel ? '#38bdf8' : '#f8fafc'};">${sel ? '▶ ' : ''}${r.tag}</td>
+                <td class="mono">~${rm.onlineUsers} 人</td>
+                <td class="mono">${rm.steadyQps} req/s</td>
+                <td class="mono">${rm.monthlyReqsM}M / 月</td>
+                <td class="mono" style="color:#a7f3d0;">$${rm.tiers[7].costPerVu.toFixed(4)} | <strong>$${rm.tiers[7].costPerUser.toFixed(4)}</strong> | $${rm.tiers[7].costPer1MReq.toFixed(4)}</td>
+                <td class="mono" style="color:#bae6fd;">$${rm.tiers[10].costPerVu.toFixed(4)} | <strong>$${rm.tiers[10].costPerUser.toFixed(4)}</strong> | $${rm.tiers[10].costPer1MReq.toFixed(4)}</td>
+                <td class="mono" style="color:#ddd6fe;">$${rm.tiers[12].costPerVu.toFixed(4)} | <strong>$${rm.tiers[12].costPerUser.toFixed(4)}</strong> | $${rm.tiers[12].costPer1MReq.toFixed(4)}</td>
+                <td><span style="padding:2px 7px;border-radius:4px;background:${rm.sloColor}22;color:${rm.sloColor};font-weight:700;font-size:11px;">${rm.estimatedP95Ms} ms · ${r.note}</span></td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    window.selectService = function(id) {
+      state.serviceId = id;
+      renderAll();
+    };
+    window.setVu = function(vu) {
+      state.targetVu = vu;
+      document.querySelectorAll('#vu-presets .btn').forEach(b => b.classList.toggle('active', Number(b.dataset.vu) === vu));
+      renderAll();
+    };
+
+    document.getElementById('vu-slider').addEventListener('input', (e) => setVu(Number(e.target.value)));
+    document.querySelectorAll('#vu-presets .btn').forEach(btn => btn.addEventListener('click', () => setVu(Number(btn.dataset.vu))));
+    document.querySelectorAll('#view-tabs .btn').forEach(btn => btn.addEventListener('click', () => {
+      state.view = btn.dataset.view;
+      document.querySelectorAll('#view-tabs .btn').forEach(b => b.classList.toggle('active', b === btn));
+      renderAll();
+    }));
+    document.querySelectorAll('#layer-btns .btn').forEach(btn => btn.addEventListener('click', () => {
+      state.layer = btn.dataset.layer;
+      document.querySelectorAll('#layer-btns .btn').forEach(b => b.classList.toggle('active', b === btn));
+      renderAll();
+    }));
+    document.querySelectorAll('#mult-btns .btn').forEach(btn => btn.addEventListener('click', () => {
+      state.userMultiplier = Number(btn.dataset.mult);
+      document.querySelectorAll('#mult-btns .btn').forEach(b => b.classList.toggle('active', b === btn));
+      renderAll();
+    }));
+    document.querySelectorAll('#tier-btns .btn').forEach(btn => btn.addEventListener('click', () => {
+      state.selectedTier = Number(btn.dataset.tier);
+      document.querySelectorAll('#tier-btns .btn').forEach(b => b.classList.toggle('active', b === btn));
+      renderAll();
+    }));
+    document.getElementById('toggle-tmpfs').addEventListener('click', (e) => {
+      state.cleanTmpfs = !state.cleanTmpfs;
+      e.currentTarget.textContent = state.cleanTmpfs ? '✓ 已清理 /tmp 75M (+120 VU)' : '○ 保留 /tmp 75M tmpfs';
+      renderAll();
+    });
+    document.getElementById('toggle-vector').addEventListener('click', (e) => {
+      state.vectorOptimized = !state.vectorOptimized;
+      e.currentTarget.textContent = state.vectorOptimized ? '✓ Vector THP 瘦身 (71.5 MiB)' : '○ Vector 优化前 (124.1 MiB)';
+      renderAll();
+    });
+    document.getElementById('time-slider').addEventListener('input', (e) => {
+      state.scrubIndex = Number(e.target.value);
+      renderAll();
+    });
+    document.getElementById('btn-play-time').addEventListener('click', (e) => {
+      state.isPlayingTime = !state.isPlayingTime;
+      e.currentTarget.textContent = state.isPlayingTime ? '⏸ 暂停回放' : '▶ 动态回放 30m';
+      if (state.isPlayingTime) {
+        state.timer = setInterval(() => {
+          state.scrubIndex = (state.scrubIndex >= 120) ? 0 : state.scrubIndex + 1;
+          renderAll();
+        }, 160);
+      } else if (state.timer) {
+        clearInterval(state.timer);
+      }
+    });
+
+    renderAll();
   </script>
 </body>
 </html>
