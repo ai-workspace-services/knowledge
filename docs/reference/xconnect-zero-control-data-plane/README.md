@@ -91,6 +91,7 @@ tags:
 | [07-dual-bucket-quota-metering-and-smooth-upgrade-plan.md](07-dual-bucket-quota-metering-and-smooth-upgrade-plan.md) | 双桶配额（`Pro` 30GB 高速流量 + 50GB VPS 流量、`Plus` 仅 `Media-Pool` 且 `Pro` 节点不可见、`Custom` 专属白名单无限制）的分池计费采集任务拆解（`DB-1`、`B-1~B-2`、`A-1~A-3`、`P-1`、`G-1`）与 `Expand -> Shadow -> Verify -> Enforce` 零停机平滑滚动升级方案 |
 | [08-gateway-forwarding-policy-and-self-service-access-control.md](08-gateway-forwarding-policy-and-self-service-access-control.md) | Gateway 节点间转发策略执行器（`XCONNECT_ZERO_FWD` + `iptables-restore --noflush`）与 `console.svc.plus/panel/xconnect-zero` 自助访问控制策略全链路规划（含 v1/v2 `Accept` 协商、`accounts` Explain API 与 `ph-xconnect.svc.plus` 试点验收矩阵） |
 | [09-xconnect-one-embedded-runtime-libxray-wireguard-go.md](09-xconnect-one-embedded-runtime-libxray-wireguard-go.md) | `XConnect-One` Phase 1 单二进制内嵌运行时规划（`--runtime=embedded\|external`：最小化注册 `xray-core` / `libXray` 协同、内嵌 `wireguard-go` UAPI 与 Level-1 热重启、Linux/macOS/Windows 三端 `NetConfigurator` 替代 `wg-quick`） |
+| [10-jp-xconnect-02-monolithic-optimization-and-capacity-report.md](10-jp-xconnect-02-monolithic-optimization-and-capacity-report.md)（[PDF](10-jp-xconnect-02-monolithic-optimization-and-capacity-report.pdf) · [拓扑图](xconnect-core-topology.html)） | **`jp-xconnect-02.svc.plus` 单体聚合架构实战汇总报告**：五大核心服务拓扑、Xray-core+stats.Manager 内嵌合并、Fluxgate 0.2.1/sysctl/journald/Vector THP 极致内存优化、40/500 VU × 30m k6 全周期实测、Little's Law 拐点与 2C1G AWS Lightsail ROI 定标 |
 
 ---
 

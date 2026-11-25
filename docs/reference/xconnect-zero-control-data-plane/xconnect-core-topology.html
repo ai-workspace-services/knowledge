@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>XConnect 边缘节点五大核心服务链路拓扑 (jp-xconnect-02.svc.plus)</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+</head>
+<body class="bg-[var(--background)] text-[var(--foreground)] antialiased m-0 p-6">
+  <div class="max-w-[1520px] mx-auto space-y-4">
+    <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-[var(--border)]">
+      <div>
+        <h1 class="text-xl font-semibold tracking-tight">XConnect 边缘节点核心服务链路拓扑</h1>
+        <p class="text-xs text-[var(--muted-foreground)] mt-1">
+          节点基准：<span class="font-mono">jp-xconnect-02.svc.plus</span>（939 MB RAM · 已用 507 MB · 可用 432 MB · 5 大核心链路总 RSS ~275.4 MB · systemd-journald 16.0 MB）
+        </p>
+      </div>
+      <div class="flex flex-wrap items-center gap-2 text-xs">
+        <button data-layer="all" class="layer-btn px-3 py-1.5 rounded-md border border-[var(--primary)] bg-[var(--primary)] text-[var(--primary-foreground)] font-medium">全部链路</button>
+        <button data-layer="control" class="layer-btn px-3 py-1.5 rounded-md border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)]">控制面链路</button>
+        <button data-layer="proxy" class="layer-btn px-3 py-1.5 rounded-md border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)]">Proxy 数据链路</button>
+        <button data-layer="gateway" class="layer-btn px-3 py-1.5 rounded-md border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)]">Gateway 链路</button>
+        <button data-layer="obs" class="layer-btn px-3 py-1.5 rounded-md border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)]">监控与计费链路</button>
+      </div>
+    </div>
+
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 overflow-x-auto">
+      <svg id="topo" viewBox="0 0 1560 920" class="w-full min-w-[1160px] h-auto select-none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrow-cyan" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#38bdf8" />
+          </marker>
+          <marker id="arrow-emerald" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#34d399" />
+          </marker>
+          <marker id="arrow-amber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#fbbf24" />
+          </marker>
+          <marker id="arrow-violet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#a78bfa" />
+          </marker>
+          <marker id="arrow-rose" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#fb7185" />
+          </marker>
+        </defs>
+
+        <!-- Background Zone Frames -->
+        <rect x="20" y="20" width="270" height="880" rx="14" fill="rgba(148,163,184,0.06)" stroke="rgba(148,163,184,0.28)" stroke-dasharray="6 4" />
+        <text x="38" y="48" font-size="13" font-weight="700" fill="currentColor" opacity="0.7">外部客户端 / 云端中心</text>
+
+        <rect x="315" y="20" width="935" height="880" rx="16" fill="rgba(56,189,248,0.04)" stroke="rgba(56,189,248,0.35)" stroke-width="1.5" />
+        <text x="335" y="48" font-size="14" font-weight="700" fill="#38bdf8">边缘节点：jp-xconnect-02.svc.plus（4 进程严格隔离 + Vector 汇聚）</text>
+
+        <rect x="1275" y="20" width="265" height="880" rx="14" fill="rgba(148,163,184,0.06)" stroke="rgba(148,163,184,0.28)" stroke-dasharray="6 4" />
+        <text x="1293" y="48" font-size="13" font-weight="700" fill="currentColor" opacity="0.7">上游出站与中心存储</text>
+
+        <!-- Band Labels inside node -->
+        <rect x="335" y="66" width="895" height="170" rx="12" fill="rgba(251,191,36,0.05)" stroke="rgba(251,191,36,0.28)" />
+        <text x="352" y="88" font-size="12" font-weight="700" fill="#fbbf24">① 控制面 (Control Plane)</text>
+
+        <rect x="335" y="254" width="895" height="400" rx="12" fill="rgba(52,211,153,0.04)" stroke="rgba(52,211,153,0.25)" />
+        <text x="352" y="276" font-size="12" font-weight="700" fill="#34d399">② 数据面 (L7 Ingress + Proxy / Gateway 独立实例)</text>
+
+        <rect x="335" y="672" width="895" height="212" rx="12" fill="rgba(167,139,250,0.05)" stroke="rgba(167,139,250,0.28)" />
+        <text x="352" y="694" font-size="12" font-weight="700" fill="#a78bfa">③ 核心监控与计费汇聚面 (Observability &amp; Billing)</text>
+
+        <!-- EXTERNAL LEFT NODES -->
+        <g class="node layer-control" data-layers="control">
+          <rect x="40" y="95" width="230" height="106" rx="10" fill="var(--card)" stroke="#fbbf24" stroke-width="2" />
+          <text x="56" y="122" font-size="14" font-weight="700" fill="currentColor">accounts.svc.plus</text>
+          <text x="56" y="143" font-size="12" fill="currentColor" opacity="0.75">控制面 SaaS / 调度中心</text>
+          <text x="56" y="164" font-size="11" font-family="monospace" fill="#fbbf24">Users · Routing · Gateway Policy</text>
+          <text x="56" y="182" font-size="11" font-family="monospace" fill="currentColor" opacity="0.65">HTTPS / Sync 5m + SSE</text>
+        </g>
+
+        <g class="node layer-proxy" data-layers="proxy">
+          <rect x="40" y="295" width="230" height="104" rx="10" fill="var(--card)" stroke="#38bdf8" stroke-width="2" />
+          <text x="56" y="322" font-size="14" font-weight="700" fill="currentColor">代理客户端 (XHTTP)</text>
+          <text x="56" y="343" font-size="12" fill="currentColor" opacity="0.75">VLESS + XHTTP + TLS (fp=chrome)</text>
+          <text x="56" y="364" font-size="11" font-family="monospace" fill="#38bdf8">jp-xconnect-02.svc.plus:443</text>
+          <text x="56" y="382" font-size="11" font-family="monospace" fill="currentColor" opacity="0.65">path=/split · alpn=h2,http/1.1</text>
+        </g>
+
+        <g class="node layer-proxy" data-layers="proxy">
+          <rect x="40" y="425" width="230" height="92" rx="10" fill="var(--card)" stroke="#34d399" stroke-width="2" />
+          <text x="56" y="452" font-size="14" font-weight="700" fill="currentColor">代理客户端 (TCP Vision)</text>
+          <text x="56" y="473" font-size="12" fill="currentColor" opacity="0.75">VLESS + TLS + xtls-rprx-vision</text>
+          <text x="56" y="494" font-size="11" font-family="monospace" fill="#34d399">jp-xconnect-02.svc.plus:1443</text>
+        </g>
+
+        <g class="node layer-gateway" data-layers="gateway">
+          <rect x="40" y="545" width="230" height="98" rx="10" fill="var(--card)" stroke="#fb7185" stroke-width="2" />
+          <text x="56" y="572" font-size="14" font-weight="700" fill="currentColor">零信任 Gateway 客户端</text>
+          <text x="56" y="593" font-size="12" fill="currentColor" opacity="0.75">XConnect Overlay Tunnel</text>
+          <text x="56" y="614" font-size="11" font-family="monospace" fill="#fb7185">jp-xconnect-gateway-02.svc.plus:443</text>
+          <text x="56" y="631" font-size="11" font-family="monospace" fill="currentColor" opacity="0.65">path=/xconnect</text>
+        </g>
+
+        <g class="node layer-obs" data-layers="obs">
+          <rect x="40" y="715" width="230" height="118" rx="10" fill="var(--card)" stroke="#a78bfa" stroke-width="1.5" />
+          <text x="56" y="742" font-size="14" font-weight="700" fill="currentColor">GitOps + Playbooks</text>
+          <text x="56" y="763" font-size="12" fill="currentColor" opacity="0.75">每日定时自我收敛 (ansible-pull)</text>
+          <text x="56" y="784" font-size="11" font-family="monospace" fill="#a78bfa">xconnect-regional-pools.yaml</text>
+          <text x="56" y="802" font-size="11" font-family="monospace" fill="currentColor" opacity="0.7">sysctl / fluxgate / xray / journald</text>
+          <text x="56" y="820" font-size="11" font-family="monospace" fill="currentColor" opacity="0.65">已停非核心: fail2ban/unattended/auditd</text>
+        </g>
+
+        <!-- CORE 1: xconnect-edge-agent -->
+        <g class="node layer-control" data-layers="control">
+          <rect x="480" y="102" width="540" height="118" rx="12" fill="var(--card)" stroke="#fbbf24" stroke-width="2.5" />
+          <text x="500" y="129" font-size="15" font-weight="700" fill="currentColor">1. xconnect-edge-agent.service</text>
+          <rect x="895" y="110" width="110" height="22" rx="6" fill="rgba(251,191,36,0.18)" />
+          <text x="950" y="125" text-anchor="middle" font-size="11" font-weight="700" fill="#fbbf24">RSS 24.1 MB</text>
+          <text x="500" y="150" font-size="12" font-family="monospace" fill="currentColor" opacity="0.8">/usr/local/bin/agent-proxy -config /etc/agent/account-agent.yaml</text>
+          <text x="500" y="171" font-size="12" fill="currentColor" opacity="0.85">• 01-agent-proxy.yaml -> 单一目标 "proxy" (/usr/local/etc/xray/config.json · 14 clients)</text>
+          <text x="500" y="190" font-size="12" fill="currentColor" opacity="0.85">• 02-xconnect-gateway.yaml -> jp-xconnect-gateway-02 (net-jp-xconnect-02)</text>
+          <text x="500" y="209" font-size="11" font-family="monospace" fill="#fbbf24">校验: xray run -test -config {config} · 热重载: reload-or-restart (SIGHUP)</text>
+        </g>
+
+        <!-- CORE 2: fluxgate -->
+        <g class="node layer-proxy layer-gateway layer-obs" data-layers="proxy,gateway,obs">
+          <rect x="355" y="300" width="295" height="315" rx="12" fill="var(--card)" stroke="#38bdf8" stroke-width="2.5" />
+          <text x="373" y="328" font-size="15" font-weight="700" fill="currentColor">2. fluxgate.service</text>
+          <rect x="530" y="309" width="104" height="22" rx="6" fill="rgba(56,189,248,0.18)" />
+          <text x="582" y="324" text-anchor="middle" font-size="11" font-weight="700" fill="#38bdf8">RSS 28.1 MB</text>
+          <text x="373" y="350" font-size="12" font-family="monospace" fill="currentColor" opacity="0.8">fluxgate v0.2.1 · L7 Ingress</text>
+          <text x="373" y="372" font-size="12" font-family="monospace" fill="#38bdf8">Listen :443 (TLS *.svc.plus)</text>
+          <text x="373" y="391" font-size="11" font-family="monospace" fill="currentColor" opacity="0.7">Metrics: 127.0.0.1:9102/metrics</text>
+
+          <rect x="371" y="408" width="263" height="62" rx="8" fill="rgba(56,189,248,0.08)" stroke="rgba(56,189,248,0.35)" />
+          <text x="382" y="427" font-size="12" font-weight="600" fill="#38bdf8">Route A: /split/* (Proxy XHTTP)</text>
+          <text x="382" y="445" font-size="11" font-family="monospace" fill="currentColor" opacity="0.75">H2 Win 4MiB/16MiB · flush -1</text>
+          <text x="382" y="461" font-size="11" font-family="monospace" fill="currentColor" opacity="0.75">-> unix:///dev/shm/xray.sock</text>
+
+          <rect x="371" y="482" width="263" height="58" rx="8" fill="rgba(251,113,133,0.08)" stroke="rgba(251,113,133,0.35)" />
+          <text x="382" y="501" font-size="12" font-weight="600" fill="#fb7185">Route B: /xconnect/* (Gateway)</text>
+          <text x="382" y="518" font-size="11" font-family="monospace" fill="currentColor" opacity="0.75">h2c · flush -1 · strip x_padding</text>
+          <text x="382" y="534" font-size="11" font-family="monospace" fill="currentColor" opacity="0.75">-> unix:///run/xconnect-gateway/xray.sock</text>
+
+          <rect x="371" y="552" width="263" height="48" rx="8" fill="rgba(148,163,184,0.08)" stroke="rgba(148,163,184,0.3)" />
+          <text x="382" y="571" font-size="11" font-weight="600" fill="currentColor">Route C: /xray-exporter/*</text>
+          <text x="382" y="588" font-size="11" font-family="monospace" fill="currentColor" opacity="0.75">-> http://127.0.0.1:8080</text>
+        </g>
+
+        <!-- CORE 3: xconnect-proxy-xray -->
+        <g class="node layer-proxy layer-control layer-obs" data-layers="proxy,control,obs">
+          <rect x="735" y="294" width="475" height="202" rx="12" fill="var(--card)" stroke="#34d399" stroke-width="2.5" />
+          <text x="755" y="322" font-size="15" font-weight="700" fill="currentColor">3. xconnect-proxy-xray.service</text>
+          <rect x="1090" y="303" width="104" height="22" rx="6" fill="rgba(52,211,153,0.18)" />
+          <text x="1142" y="318" text-anchor="middle" font-size="11" font-weight="700" fill="#34d399">RSS 59.4 MB</text>
+          <text x="755" y="343" font-size="12" font-family="monospace" fill="currentColor" opacity="0.8">Xray-core + 内嵌 xray-exporter (user=xray, groups=caddy,xray-access)</text>
+          <text x="755" y="363" font-size="11" font-family="monospace" fill="currentColor" opacity="0.75">Config: /usr/local/etc/xray/config.json (bufferSize=128, connIdle=3600)</text>
+
+          <rect x="753" y="376" width="215" height="54" rx="8" fill="rgba(56,189,248,0.08)" stroke="rgba(56,189,248,0.35)" />
+          <text x="763" y="395" font-size="12" font-weight="600" fill="#38bdf8">Inbound: proxy-xhttp-in</text>
+          <text x="763" y="414" font-size="11" font-family="monospace" fill="currentColor" opacity="0.8">/dev/shm/xray.sock (0666)</text>
+
+          <rect x="980" y="376" width="212" height="54" rx="8" fill="rgba(52,211,153,0.08)" stroke="rgba(52,211,153,0.35)" />
+          <text x="990" y="395" font-size="12" font-weight="600" fill="#34d399">Inbound: proxy-tcp-in</text>
+          <text x="990" y="414" font-size="11" font-family="monospace" fill="currentColor" opacity="0.8">0.0.0.0:1443 (TLS Vision)</text>
+
+          <rect x="753" y="440" width="439" height="44" rx="8" fill="rgba(167,139,250,0.1)" stroke="rgba(167,139,250,0.4)" />
+          <text x="765" y="458" font-size="12" font-weight="600" fill="#a78bfa">进程内内存 stats.Manager（零 gRPC 10086/10087）</text>
+          <text x="765" y="475" font-size="11" font-family="monospace" fill="currentColor" opacity="0.8">Expose 127.0.0.1:8080/scrape · 1m Push Snapshot -> 127.0.0.1:8686</text>
+        </g>
+
+        <!-- CORE 4: xconnect-gateway-xray -->
+        <g class="node layer-gateway layer-control" data-layers="gateway,control">
+          <rect x="735" y="514" width="475" height="122" rx="12" fill="var(--card)" stroke="#fb7185" stroke-width="2.5" />
+          <text x="755" y="542" font-size="15" font-weight="700" fill="currentColor">4. xconnect-gateway-xray.service</text>
+          <rect x="1090" y="523" width="104" height="22" rx="6" fill="rgba(251,113,133,0.18)" />
+          <text x="1142" y="538" text-anchor="middle" font-size="11" font-weight="700" fill="#fb7185">RSS 36.8 MB</text>
+          <text x="755" y="563" font-size="12" font-family="monospace" fill="currentColor" opacity="0.8">独立裸 /usr/local/bin/xray 进程（无 exporter，user=root）</text>
+          <text x="755" y="583" font-size="11" font-family="monospace" fill="currentColor" opacity="0.75">Config: /var/lib/xconnect-gateway/runtime/xray.json (配置完全独立)</text>
+          <text x="755" y="603" font-size="12" font-family="monospace" fill="#fb7185">Inbound: xconnect-vless-in (/run/xconnect-gateway/xray.sock)</text>
+          <text x="755" y="622" font-size="12" font-family="monospace" fill="currentColor" opacity="0.8">Outbound: xconnect-wireguard -> redirect 127.0.0.1:51820</text>
+        </g>
+
+        <!-- CORE 5: vector -->
+        <g class="node layer-obs" data-layers="obs">
+          <rect x="440" y="712" width="485" height="154" rx="12" fill="var(--card)" stroke="#a78bfa" stroke-width="2.5" />
+          <text x="460" y="740" font-size="15" font-weight="700" fill="currentColor">5. vector.service（核心监控与计费汇聚探针）</text>
+          <rect x="795" y="721" width="114" height="22" rx="6" fill="rgba(167,139,250,0.18)" />
+          <text x="852" y="736" text-anchor="middle" font-size="11" font-weight="700" fill="#a78bfa">RSS 124.1 MB</text>
+          <text x="460" y="762" font-size="12" font-family="monospace" fill="currentColor" opacity="0.8">/etc/vector/vector.toml · cgroup MemoryHigh=96M / MemoryMax=160M</text>
+          <text x="460" y="784" font-size="12" fill="currentColor" opacity="0.85">• Billing HTTP Server (:8686) -> 512MiB Disk Buffer 异步推送计费</text>
+          <text x="460" y="805" font-size="12" fill="currentColor" opacity="0.85">• 15s Prometheus Scrape: xray:8080 · fluxgate:9102 · node:9100 · proc:9256</text>
+          <text x="460" y="826" font-size="12" fill="currentColor" opacity="0.85">• Single Journald Reader: 采集单元日志并提炼 xhttp_events_total 事件</text>
+          <text x="460" y="847" font-size="11" font-family="monospace" fill="#a78bfa">TLS verify_certificate=true · Basic Auth via remote-write-auth.json</text>
+        </g>
+
+        <!-- Supporting Probes inside obs band -->
+        <g class="node layer-obs" data-layers="obs">
+          <rect x="960" y="712" width="250" height="154" rx="10" fill="var(--card)" stroke="rgba(167,139,250,0.45)" stroke-width="1.5" />
+          <text x="976" y="738" font-size="13" font-weight="700" fill="currentColor">基础支撑采集进程</text>
+          <text x="976" y="762" font-size="12" font-family="monospace" fill="currentColor" opacity="0.85">• systemd-journald  16.0 MB</text>
+          <text x="976" y="781" font-size="11" font-family="monospace" fill="#a78bfa">  cap: 24M/48M · disk 64M/3d</text>
+          <text x="976" y="803" font-size="12" font-family="monospace" fill="currentColor" opacity="0.85">• node_exporter     20.3 MB</text>
+          <text x="976" y="822" font-size="12" font-family="monospace" fill="currentColor" opacity="0.85">• process-exporter  16.9 MB</text>
+          <text x="976" y="841" font-size="12" font-family="monospace" fill="currentColor" opacity="0.85">• metrics-sup.py     7.0 MB</text>
+        </g>
+
+        <!-- EXTERNAL RIGHT NODES -->
+        <g class="node layer-proxy" data-layers="proxy">
+          <rect x="1295" y="295" width="225" height="186" rx="10" fill="var(--card)" stroke="#34d399" stroke-width="2" />
+          <text x="1312" y="322" font-size="14" font-weight="700" fill="currentColor">Proxy 策略路由出站</text>
+          <text x="1312" y="346" font-size="12" font-family="monospace" fill="#34d399">• pool-media-stream</text>
+          <text x="1312" y="366" font-size="12" font-family="monospace" fill="#34d399">• pool-pro-ai-dev</text>
+          <text x="1312" y="386" font-size="12" font-family="monospace" fill="#34d399">• pool-media-fallback</text>
+          <text x="1312" y="408" font-size="12" font-family="monospace" fill="currentColor" opacity="0.8">• direct-cn (geosite/ip)</text>
+          <text x="1312" y="428" font-size="12" font-family="monospace" fill="currentColor" opacity="0.65">• blocked-private</text>
+          <text x="1312" y="458" font-size="11" fill="currentColor" opacity="0.65">DomainStrategy: IPIfNonMatch</text>
+        </g>
+
+        <g class="node layer-gateway" data-layers="gateway">
+          <rect x="1295" y="514" width="225" height="122" rx="10" fill="var(--card)" stroke="#fb7185" stroke-width="2" />
+          <text x="1312" y="542" font-size="14" font-weight="700" fill="currentColor">WireGuard Overlay</text>
+          <text x="1312" y="566" font-size="12" font-family="monospace" fill="#fb7185">interface: xconzero0</text>
+          <text x="1312" y="586" font-size="12" font-family="monospace" fill="currentColor" opacity="0.8">UDP 127.0.0.1:51820</text>
+          <text x="1312" y="608" font-size="11" font-family="monospace" fill="currentColor" opacity="0.7">net-jp-xconnect-02</text>
+        </g>
+
+        <g class="node layer-obs" data-layers="obs">
+          <rect x="1295" y="685" width="225" height="92" rx="10" fill="var(--card)" stroke="#a78bfa" stroke-width="2" />
+          <text x="1312" y="712" font-size="14" font-weight="700" fill="currentColor">billing.svc.plus</text>
+          <text x="1312" y="734" font-size="12" font-family="monospace" fill="#a78bfa">/v1/ingest/snapshots</text>
+          <text x="1312" y="754" font-size="11" fill="currentColor" opacity="0.75">每分钟流量计费入库 (PG)</text>
+        </g>
+
+        <g class="node layer-obs" data-layers="obs">
+          <rect x="1295" y="795" width="225" height="92" rx="10" fill="var(--card)" stroke="#a78bfa" stroke-width="2" />
+          <text x="1312" y="822" font-size="14" font-weight="700" fill="currentColor">observability.svc.plus</text>
+          <text x="1312" y="844" font-size="11" font-family="monospace" fill="#a78bfa">VictoriaMetrics + VictoriaLogs</text>
+          <text x="1312" y="864" font-size="11" fill="currentColor" opacity="0.75">节点/进程/Xray/Fluxgate 全景监控</text>
+        </g>
+
+        <!-- EDGES -->
+        <!-- Control edges -->
+        <path class="edge" data-layers="control" d="M 270 148 L 474 148" fill="none" stroke="#fbbf24" stroke-width="2.5" marker-end="url(#arrow-amber)" />
+        <text class="edge-label" data-layers="control" x="372" y="138" text-anchor="middle" font-size="11" font-weight="600" fill="#fbbf24">5m Sync / SSE</text>
+
+        <path class="edge" data-layers="control" d="M 880 220 L 880 288" fill="none" stroke="#fbbf24" stroke-width="2.3" stroke-dasharray="6 3" marker-end="url(#arrow-amber)" />
+        <text class="edge-label" data-layers="control" x="888" y="250" font-size="11" font-weight="600" fill="#fbbf24">写 config.json + SIGHUP 热加载</text>
+
+        <path class="edge" data-layers="control" d="M 700 220 L 700 575 L 729 575" fill="none" stroke="#fbbf24" stroke-width="2.3" stroke-dasharray="6 3" marker-end="url(#arrow-amber)" />
+        <text class="edge-label" data-layers="control" x="706" y="425" font-size="11" font-weight="600" fill="#fbbf24" transform="rotate(-90 706 425)">xconnect-gateway apply</text>
+
+        <!-- Proxy XHTTP edges -->
+        <path class="edge" data-layers="proxy" d="M 270 347 L 349 347" fill="none" stroke="#38bdf8" stroke-width="2.8" marker-end="url(#arrow-cyan)" />
+        <text class="edge-label" data-layers="proxy" x="308" y="337" text-anchor="middle" font-size="11" font-weight="600" fill="#38bdf8">:443 TLS</text>
+
+        <path class="edge" data-layers="proxy" d="M 634 438 L 729 403" fill="none" stroke="#38bdf8" stroke-width="2.8" marker-end="url(#arrow-cyan)" />
+        <text class="edge-label" data-layers="proxy" x="684" y="403" text-anchor="middle" font-size="11" font-weight="600" fill="#38bdf8">UDS h2c</text>
+
+        <!-- Proxy TCP direct edge -->
+        <path class="edge" data-layers="proxy" d="M 270 471 C 320 471, 305 648, 675 648 C 710 648, 705 422, 974 422" fill="none" stroke="#34d399" stroke-width="2.5" marker-end="url(#arrow-emerald)" />
+        <text class="edge-label" data-layers="proxy" x="500" y="641" text-anchor="middle" font-size="11" font-weight="600" fill="#34d399">TCP :1443 直连 VLESS+TLS+Vision (绕过 Fluxgate)</text>
+
+        <!-- Proxy outbounds -->
+        <path class="edge" data-layers="proxy" d="M 1210 388 L 1289 388" fill="none" stroke="#34d399" stroke-width="2.8" marker-end="url(#arrow-emerald)" />
+
+        <!-- Gateway edges -->
+        <path class="edge" data-layers="gateway" d="M 270 594 L 349 514" fill="none" stroke="#fb7185" stroke-width="2.6" marker-end="url(#arrow-rose)" />
+        <path class="edge" data-layers="gateway" d="M 634 514 L 729 586" fill="none" stroke="#fb7185" stroke-width="2.6" marker-end="url(#arrow-rose)" />
+        <text class="edge-label" data-layers="gateway" x="682" y="564" text-anchor="middle" font-size="11" font-weight="600" fill="#fb7185">GW UDS</text>
+        <path class="edge" data-layers="gateway" d="M 1210 575 L 1289 575" fill="none" stroke="#fb7185" stroke-width="2.6" marker-end="url(#arrow-rose)" />
+
+        <!-- Observability & Billing edges -->
+        <path class="edge" data-layers="obs" d="M 880 484 L 880 706" fill="none" stroke="#a78bfa" stroke-width="2.5" marker-end="url(#arrow-violet)" />
+        <text class="edge-label" data-layers="obs" x="888" y="660" font-size="11" font-weight="600" fill="#a78bfa">POST :8686 + Scrape :8080</text>
+
+        <path class="edge" data-layers="obs" d="M 505 615 L 505 706" fill="none" stroke="#a78bfa" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow-violet)" />
+        <text class="edge-label" data-layers="obs" x="512" y="662" font-size="11" fill="#a78bfa">:9102/metrics</text>
+
+        <path class="edge" data-layers="obs" d="M 960 790 L 931 790" fill="none" stroke="#a78bfa" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow-violet)" />
+
+        <path class="edge" data-layers="obs" d="M 925 752 L 1289 731" fill="none" stroke="#a78bfa" stroke-width="2.6" marker-end="url(#arrow-violet)" />
+        <path class="edge" data-layers="obs" d="M 925 832 L 1289 841" fill="none" stroke="#a78bfa" stroke-width="2.6" marker-end="url(#arrow-violet)" />
+      </svg>
+    </div>
+  </div>
+
+  <script>
+    const buttons = document.querySelectorAll('.layer-btn');
+    const nodes = document.querySelectorAll('.node');
+    const edges = document.querySelectorAll('.edge, .edge-label');
+
+    function setLayer(selected) {
+      buttons.forEach(btn => {
+        const active = btn.dataset.layer === selected;
+        btn.className = active
+          ? 'layer-btn px-3 py-1.5 rounded-md border border-[var(--primary)] bg-[var(--primary)] text-[var(--primary-foreground)] font-medium'
+          : 'layer-btn px-3 py-1.5 rounded-md border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)]';
+      });
+      nodes.forEach(el => {
+        const layers = (el.dataset.layers || '').split(',');
+        el.style.opacity = (selected === 'all' || layers.includes(selected)) ? '1' : '0.18';
+      });
+      edges.forEach(el => {
+        const layers = (el.dataset.layers || '').split(',');
+        el.style.opacity = (selected === 'all' || layers.includes(selected)) ? '1' : '0.12';
+      });
+    }
+
+    buttons.forEach(btn => btn.addEventListener('click', () => setLayer(btn.dataset.layer)));
+  </script>
+</body>
+</html>
