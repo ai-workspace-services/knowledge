@@ -20,7 +20,8 @@ tags:
 > [!NOTE]
 > 本文档沉淀 **2026-11-24 ~ 2026-11-25** 在 `jp-xconnect-02.svc.plus`（`AWS Lightsail 2 vCPU / 939 MiB RAM / 0 Swap`）金丝雀节点及 `jp-xconnect-01.svc.plus`（`1936 MiB RAM` 对照基线）上完成的端到端优化、现网实测、压测数据与跨仓库持久化证据。
 
-- **交互式分面拓扑页面**：[xconnect-core-topology.html](xconnect-core-topology.html)
+- **交互式 Grafana 动态 ROI 面板预览页面**：[xconnect-core-topology.html](xconnect-core-topology.html)（四合一动态拓扑 + `40 vs 500 VU` 时序 + 拐点/内存缩放 + `P95 SLO & Lightsail ROI` 联动仿真器）
+- **Grafana 仪表盘 JSON 定义**：[xconnect-topology-roi-dashboard.json](xconnect-topology-roi-dashboard.json)（对应 `ai-workspace-infra/artifacts` 插件 `plugins/xconnect-topology-roi-panel`）
 - **PDF 归档版本**：[10-jp-xconnect-02-monolithic-optimization-and-capacity-report.pdf](10-jp-xconnect-02-monolithic-optimization-and-capacity-report.pdf)
 
 ---
