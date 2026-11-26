@@ -200,3 +200,13 @@ flowchart TD
 
 1. **代码仓库组织**：新建独立仓库 `ai-workspace-services/xconnect-controller`（推荐：Go 自部署源码 + `workers/edge` TS Worker + `contracts/` 跨语言契约同仓统一维护），还是先在 `accounts` 仓内建 `cmd/xconnect-controller` 过渡？
 2. **执行启动顺序**：确认后立即按 **Phase 1（T1.1 固定 Ed25519 签名私钥持久化 → T1.2 已绑定 One 节点幂等 Re-join → T1.3 策略契约统一与网关热修复固化 → T1.4 过期会话清理）** 依次推进并逐项上线验收。
+
+
+---
+
+## 七、执行验收记录（Form A 已完成 / Form B 代码就绪）
+
+- **Phase 1（T1.1–T1.4）**：已完成并上线（`accounts#343`、`gitops#989`、`xconnect-gateway#32/#33`、`xconnect-one#75/#76`）。
+- **Phase 2（T2.1–T2.3）**：已完成并上线（`accounts#344` 启用 `EdDSA` JWKS、`xconnect-controller#1/#3` 独立 Go 服务与契约库、`gitops#992/#994` 完成 Stage-1/Stage-2 全量切流及 `console` `RUNTIME_XCONNECT_ZERO_URL` 指向 `xconnect-controller`）。
+- **Phase 3（T3.1–T3.2，Form B 代码就绪）**：已完成 `workers/xconnect-controller-edge/`（TypeScript + Hono + Cloudflare Hyperdrive + Web Crypto `Ed25519`/JWKS + Golden Vectors 字节级一致性 CI，`xconnect-controller#2`）；**T3.3** 线上部署待私有 PostgreSQL 的 Cloudflare Tunnel / Hyperdrive ID 就绪后执行。
+- **Phase 4（T4.1，Form A 域隔离收口）**：`accounts#345` 默认下线 `/api/overlay/*`、`/api/overlay/v1/*` 与 `/api/internal/overlay/*`（保留全部 IAM、团队/网络权益、计费、Task Sessions 与 `GET /api/internal/network/identities`），`accounts` 回归核心业务服务。
