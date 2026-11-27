@@ -40,6 +40,10 @@
 > * **`flagger-canary`**：集成 Flagger 自动化发布控制器，为生产 Accounts 与 Billing 服务提供流量切分、金丝雀步进（10% 阶梯）、指标自检与自动熔断回滚能力。
 > * **`WireGuard 互联通道 (v5v6)`**：主机原生接口 `v5v6`（IP `10.254.250.2/30`），直连历史 V5 节点（`10.254.250.1/30`），保障生产平滑迁移与跨代安全通信。
 
+> [!NOTE]
+> **演进补充（2026-11-27）：`web-saas-xconnect-controller` 独立拆分与 OTel 开关**
+> 在 `web-saas-prod` 业务集后续模块化演进中，`web-saas-xconnect-controller` 已从单体 `accounts` 中独立拆分部署并集成 OpenTelemetry 能力（其中 `DD_TRACE_ENABLED` 默认设为 `false` 并支持热加载切换）；本文其余历史审计与验收基线章节保留原貌，完整拆分与双形态演进方案参见 [第十节](#十accounts-纯净回归与非核心服务双形态拆分演进2026-11-27-增补)。
+
 ---
 
 ## 二、PROD-K3S-V6 生产权威域名规划与路由映射体系
@@ -362,3 +366,46 @@ gitops/
 * 本机系统、Kubernetes 集群与 PostgreSQL 数据库三大层次的身份隔离全部经验收无误。
 * 审计身份 `auditor` 严格执行只读无提权约束，日常探针采集完全符合合规基线。
 * 全量业务 Pod 仅持有受限 DML 账号连接串，生产密钥材料实现 Vault KV V2 闭环纳管与自动化轮换。
+
+---
+
+## 十、Accounts 纯净回归与非核心服务双形态拆分演进（2026-11-27 增补）
+
+为彻底消除 `accounts` 进程内的非核心阻塞（营销邮件循环 `33s` 扫表超时、`Agent-Server` 读路径同步全表写对账 `19s–21s` 延迟尖刺）与高频控制面轮询，在 `web-saas-xconnect-controller` 已拆出的基础上，明确 **`accounts` 纯净回归边界** 与 **非核心服务双形态拆分决策**。
+
+### 10.1 `accounts` 纯净核心边界
+完成拆分后，`accounts` 仅保留强一致核心域：
+1. **IAM 身份认证与强实时事务邮件**：`/api/auth/{login,register*,oauth*,mfa*,password*,session,token*,refresh}`、`/.well-known/jwks.json`、`/api/users`；**注册验证码、找回密码、MFA 恢复** 等强实时认证事务邮件保留在 `accounts` 内直连轻量 `SMTP_*` 投递，完全独立于营销邮件队列。
+2. **订阅与计费商业域**：`/api/billing/*`、`/api/auth/stripe/*`、`/api/auth/subscriptions*`、`/api/referrals*`、`/api/account/*`、`/api/auth/network-access`、`/api/auth/network-team*`、`/api/auth/admin/agents/*` 及内部权威只读契约（`/api/internal/network/identities`、`/api/internal/policy/:accountUUID`）。
+3. **后台任务收敛**：仅保留轻量、限批的 `annual-quota` 与 `subscription-access`（`StartSubscriptionAccessReconciler` 每分钟最多 500 用户）。
+
+### 10.2 非核心服务拆分决策矩阵
+
+| 服务名称 | 部署形态 | 是否开 CF Worker | 数据与凭据边界 | 关键说明 |
+| :--- | :--- | :--- | :--- | :--- |
+| **`marketing-email-service`** | **纯 Go 自部署独立微服务（VPS / K3s）** | **否（不开 Cloudflare Worker）** | 共享 PG 营销表 + 复用 `web-saas-secrets` 的 `SMTP_*`；只读 `accounts` 视图 | CF Worker Free 无原生 TCP SMTP（587/465）且无免费 Queues；注册验证码、找回密码、MFA 恢复保留在 `accounts` 内直连 SMTP |
+| **`xconnect-controller`**（Overlay + Agent-Server / Sync） | **CF Worker Free 优先 + Go 自部署兜底** | **是**（`workers/xconnect-controller-edge` + Edge Cache） | JWKS 离线验签 + PG（Cloudflare Tunnel + Hyperdrive Free / 直连） | 已完成 Overlay 拆分并集成 OTel（`DD_TRACE_ENABLED=false` 默认关闭且支持热加载），补齐 `/api/agent-server/v1/*`、`/api/agent/nodes`、`/api/auth/sync/*`、`/api/internal/nodes/heartbeat`；SSE 长连接与超限流量回切 Go 兜底 |
+| **`portal-public-config`** | **CF Worker Free 优先 + Go 兜底** | **是**（Workers + KV/Cache API） | `homepage-video`、`/api/internal/public-overview`、`/api/internal/sandbox/guest` | 纯读多写少、零核心状态，Edge Cache/KV 免费扛匿名突发流量 |
+| **`task-session-orchestrator`** | **CF Worker Free 优先 + Go 兜底** | **是**（SQLite Durable Objects / Hyperdrive） | `task_namespaces`、`task_sessions`、`task_session_events`、`task_runs` + `TASK_SCHEDULER_TOKEN` | 与用户/计费零外键耦合，DO SQLite 天然适配单会话顺序 `seq` 与 `fence` 租约锁 |
+| **`xworkmate-profile-bridge`** | **Go 自部署优先 + 可选 CF Worker 边缘自省** | **可选**（仅 `/bridge/credentials/introspect` 等无 Vault 管理接口） | `tenants`、`tenant_domains`、`xworkmate_profiles`、`bridge_credentials` + Vault KV HTTP | 将 `XWORKMATE_VAULT_TOKEN` 彻底移出 `accounts` Pod |
+
+### 10.3 XConnect Gateway/One 打通 Cloudflare Tunnel + Hyperdrive 与防自环死锁约束
+
+不在 `prod-k3s-v6` 单节点额外运行 `cloudflared` Pod，直接复用现网 **XConnect Gateway/One（`jp-xconnect-gateway-01` `10.67.0.1` -> `prod-k3s-v6` `10.67.0.2:5432` -> `postgresql-postgresql` `10.55.35.251:5432`）** 挂载 **Cloudflare Tunnel + Hyperdrive / Workers VPC TCP Service**：
+
+```mermaid
+flowchart LR
+    CFW["Cloudflare Worker (Free)"] -->|"Hyperdrive / Workers VPC TCP Service (port 5432)"| CFT["Cloudflare Tunnel (cloudflared on jp-xconnect-gateway-01 10.67.0.1)"]
+    CFT -->|"XConnect Zero WireGuard Mesh (Ed25519 policy_json ACL)"| XONE["prod-k3s-v6 xconnect-one (10.67.0.2:5432)"]
+    XONE -->|"ClusterIP Forward"| PG["postgresql-postgresql (10.55.35.251:5432)"]
+    GW_CTRL["Gateway / xconnect-one Control Plane"] -->|"Anti-Deadlock Direct Origin (Bypass Tunnel/Worker)"| GO_ORIGIN["Go Origin (accounts-selfhost-prod-v6.svc.plus)"]
+```
+
+- **防自环死锁硬约束（Anti-Deadlock Rule）**：`jp-xconnect-gateway-01`（`10.67.0.1`）与 `prod-k3s-v6` `xconnect-one`（`10.67.0.2`）的控制面引导、凭据刷新与配置同步（`/api/overlay/v1/*`）**必须直连 Go 自部署入口 `accounts-selfhost-prod-v6.svc.plus`**，严禁经由自身隧道所支撑的 Cloudflare Worker 回源，确保 Tunnel 或 Worker 异常时底层 WireGuard Mesh 仍可独立自愈拉起。
+
+### 10.4 关联专题规划索引
+
+| 专题方向 | 目标文档 | 核心覆盖范围 |
+| :--- | :--- | :--- |
+| **`accounts` 纯净回归与四波段拆分路线图** | [PROD-K3S-V6-Accounts纯净回归与非核心服务双形态拆分规划.md](./PROD-K3S-V6-Accounts纯净回归与非核心服务双形态拆分规划.md) | 线上慢请求审计、`marketing-email-service` 纯 Go 决策、CF Worker Free 配额、Gateway/One + Tunnel 集成与 Wave 1–4 实施计划 |
+| **`xconnect-controller` 拆分与双形态控制面持久化** | [11-xconnect-controller-accounts-split-and-persistence-plan.md](../../../xconnect-zero-control-data-plane/11-xconnect-controller-accounts-split-and-persistence-plan.md) | Overlay / Agent-Server API 归属矩阵、Ed25519 签名密钥环持久化、One 节点幂等重入与跨语言契约测试基线 |
