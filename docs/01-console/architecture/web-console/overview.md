@@ -52,7 +52,7 @@ flowchart TB
 | Home | `/` | Public landing page and site entry |
 | Docs | `/docs`, `/docs/[collection]`, `/docs/[collection]/[...slug]` | Documentation reader, sidebar, and TOC |
 | Auth | `/login`, `/register`, `/email-verification`, `/logout` | Sign in / sign up / email verification / session cleanup |
-| Panel | `/panel`, `/panel/account`, `/panel/agent`, `/panel/api`, `/panel/appearance`, `/panel/ldp`, `/panel/management`, `/panel/subscription`, `/panel/[...segments]` | Signed-in account and admin console |
+| Panel | `/panel`, `/panel/account`, `/panel/agent`, `/panel/connector`, `/panel/appearance`, `/panel/ldp`, `/panel/management`, `/panel/subscription`, `/panel/[...segments]` | Signed-in account and admin console |
 | Tools | `/editor`, `/editor/wechat`, `/editor/xiaohongshu`, `/download`, `/download/[...segments]`, `/cloud_iac`, `/cloud_iac/[provider]`, `/cloud_iac/[provider]/[service]`, `/xworkmate`, `/xworkmate/admin`, `/xworkmate/integrations` | Product tools and service explorers |
 | Content | `/blogs`, `/blogs/[...slug]`, `/services`, `/services/openclaw`, `/services/insight`, `/support`, `/support/discussions`, `/about`, `/prices`, `/privacy`, `/terms`, `/[slug]` | Marketing / informational pages |
 | Admin / CMS | `/dashboard/cms` | CMS or content-management entry |

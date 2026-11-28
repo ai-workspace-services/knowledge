@@ -21,7 +21,7 @@ These variables are read on the server side and used to prefill:
 
 - the homepage AI assistant
 - the sidebar assistant dialog
-- the `/panel/api` integrations page
+- the `/panel/connector` integrations page
 
 | Variable | Used by | Notes |
 |---|---|---|

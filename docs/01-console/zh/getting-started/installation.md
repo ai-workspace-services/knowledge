@@ -23,7 +23,7 @@ cp .env.example .env
 
 - 首页 AI 助手
 - 侧栏 AI 助手
-- `/panel/api` 集成页
+- `/panel/connector` 集成页
 
 | 变量 | 用途 | 说明 |
 |---|---|---|
